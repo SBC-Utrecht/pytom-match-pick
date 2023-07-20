@@ -75,7 +75,7 @@ class TemplateMatchingGPU(threading.Thread):
             volume: npt.NDArray[float],
             template: npt.NDArray[float],
             mask: npt.NDArray[float],
-            angle_list: list[tuple[float]],
+            angle_list: list[tuple[float, float, float]],
             angle_ids: list[int],
             mask_is_spherical: bool = True,
             wedge: Optional[npt.NDArray[float]] = None
@@ -100,7 +100,7 @@ class TemplateMatchingGPU(threading.Thread):
         self.plan = TemplateMatchingPlan(volume, template, mask, wedge, device_id)
 
     def run(self):
-        print("Starting job_{:03d} on device {:d}".format(self.job_id, self.device_id))
+        print("Starting job_{} on device {:d}".format(self.job_id, self.device_id))
         self.template_matching_gpu()
         self.completed = True
         self.active = False
@@ -115,8 +115,6 @@ class TemplateMatchingGPU(threading.Thread):
         sxv, syv, szv = self.plan.template_padded.shape
         cxv, cyv, czv = sxv // 2, syv // 2, szv // 2
 
-        std_volume = None  # needs to be initialized before assignment
-
         if self.mask_is_spherical:  # Then we only need to calculate std volume once
             self.plan.mask_padded[cxv - cxt:cxv + cxt + mx,
                                   cyv - cyt:cyv + cyt + my,
@@ -127,6 +125,8 @@ class TemplateMatchingGPU(threading.Thread):
                 self.plan.mask_weight,
                 volume_rft=self.plan.volume_rft
             )
+        else:
+            std_volume = None  # but will be calculated during iterations
 
         # Track iterations with a tqdm progress bar
         for i in tqdm(range(len(self.angle_ids))):
