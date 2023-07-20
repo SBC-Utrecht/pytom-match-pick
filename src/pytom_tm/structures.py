@@ -47,7 +47,7 @@ class TemplateMatchingGPU(threading.Thread):
         self.angle_list = angle_list
 
         self.update_results = cp.ElementwiseKernel(
-            'float32 scores, float32 angles, float32 ccc_map, float32 angle_id',
+            'float32 scores, float32 angle_lists, float32 ccc_map, float32 angle_id',
             'float32 out, float32 out2',
             'if (scores < ccc_map) {out = ccc_map; out2 = angle_id;}',
             'update_results')
@@ -118,7 +118,7 @@ class TemplateMatchingGPU(threading.Thread):
             self.plan.ccc_map = self.normalized_cross_correlation(self.plan.volume_ft, self.plan.template_padded,
                                                                   std_v, self.plan.mask_weight, fft_plan=self.plan.fft_plan)
 
-            # Update the scores and angles
+            # Update the scores and angle_lists
             self.update_results(self.plan.scores, self.plan.angles, self.plan.ccc_map,
                                 angle_id, self.plan.scores, self.plan.angles)
 

@@ -1,1 +1,12 @@
+# ignore .idea folder from pycharm
 .idea
+
+# ignore eggs
+*.egg-info/
+*.egg
+
+# build
+build/
+
+# skip pycache
+*__pycache__*

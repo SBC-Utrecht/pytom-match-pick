@@ -15,16 +15,13 @@ def parallel_start(job, volume_splits, gpu_ids):
 
     # Split the tomograms into subvolumes
 
-
-
-
     if len(gpu_ids) > len(jobs):  # We need to queue jobs by splitting the rotation search
         splits = math.ceil(len(gpu_ids) / pieces)
         rotation_slices = [slice(x, len(job.n_rotations), splits) for x in range(splits)]
         # Apply the rotation slice to each subjob
-    elif:  # We need to queue subvolumes for the gpu's
-
-        jobs
+    elif True:  # We need to queue subvolumes for the gpu's
+        # jobs ...
+        pass
 
 
 def splitVolumes(self, job, splitX, splitY, splitZ, verbose=True):
@@ -50,10 +47,10 @@ def splitVolumes(self, job, splitX, splitY, splitZ, verbose=True):
         vsizeY = job.volume.subregion[4]
         vsizeZ = job.volume.subregion[5]
 
-    sizeX = vsize X/ /splitX; sizeY = vsize Y/ /splitY; sizeZ = vsize Z/ /splitZ
+    sizeX = vsizeX // splitX; sizeY = vsizeY // splitY; sizeZ = vsizeZ // splitZ
     r = job.reference.getVolume()
     rsizeX = r.sizeX(); rsizeY = r.sizeY(); rsizeZ = r.sizeZ()
-    if rsize X >sizeX or rsize Y >sizeY or rsize Z >sizeZ:
+    if rsizeX >sizeX or rsizeY >sizeY or rsizeZ >sizeZ:
         raise RuntimeError("Not big enough volume to split!")
 
     # initialize the jobInfo structure

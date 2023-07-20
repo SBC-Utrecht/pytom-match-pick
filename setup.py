@@ -19,14 +19,14 @@ setuptools.setup(
     python_requires='>=3.9',
     install_requires=[
         'numpy',
-        'cupy',
         'voltools',
         'tqdm',
         'mrcfile',
         'starfile',
+        'importlib_resources',
     ],
     package_data={
-        'pytom.angles': ['*.txt'],
+        'pytom_tm.angle_lists': ['*.txt'],
     },
     # include_package_data=True,
     test_suite='tests',
