@@ -36,7 +36,7 @@ class TemplateMatchingPlan:
             template: npt.NDArray[float],
             mask: npt.NDArray[float],
             wedge: npt.NDArray[float],
-            deviceid: int
+            device_id: int
     ):
         # Search volume + and fft transform plan for the volume
         self.volume = cp.asarray(volume, dtype=cp.float32, order='C')
@@ -46,13 +46,13 @@ class TemplateMatchingPlan:
 
         # Data for the mask
         self.mask = cp.asarray(mask, dtype=cp.float32, order='C')
-        self.mask_texture = vt.StaticVolume(self.mask, interpolation='filt_bspline', device=f'gpu:{deviceid}')
+        self.mask_texture = vt.StaticVolume(self.mask, interpolation='filt_bspline', device=f'gpu:{device_id}')
         self.mask_padded = cp.zeros_like(self.volume).astype(cp.float32)
         self.mask_weight = self.mask.sum()  # weight of the mask
 
         # Init template data
         self.template = cp.asarray(template, dtype=cp.float32, order='C')
-        self.template_texture = vt.StaticVolume(self.template, interpolation='filt_bspline', device=f'gpu:{deviceid}')
+        self.template_texture = vt.StaticVolume(self.template, interpolation='filt_bspline', device=f'gpu:{device_id}')
         self.template_padded = cp.zeros_like(self.volume)
 
         # fourier binary wedge weight for the template
@@ -70,25 +70,26 @@ class TemplateMatchingPlan:
 class TemplateMatchingGPU(threading.Thread):
     def __init__(
             self,
-            jobid: int,
-            deviceid: int,
+            job_id: str,
+            device_id: int,
             volume: npt.NDArray[float],
             template: npt.NDArray[float],
             mask: npt.NDArray[float],
             angle_list: list[tuple[float]],
+            angle_ids: list[int],
             mask_is_spherical: bool = True,
             wedge: Optional[npt.NDArray[float]] = None
     ):
         threading.Thread.__init__(self)
-        cp.cuda.Device(deviceid).use()
+        cp.cuda.Device(device_id).use()
 
-        self.Device = cp.cuda.Device
-        self.jobid = jobid
-        self.deviceid = deviceid
+        self.job_id = job_id
+        self.device_id = device_id
         self.active = True
         self.completed = False
         self.mask_is_spherical = mask_is_spherical  # whether mask is spherical
         self.angle_list = angle_list
+        self.angle_ids = angle_ids
 
         self.update_results = cp.ElementwiseKernel(
             'float32 scores, float32 ccc_map, float32 angle_id',
@@ -96,10 +97,10 @@ class TemplateMatchingGPU(threading.Thread):
             'if (scores < ccc_map) {out1 = ccc_map; out2 = angle_id;}',
             'update_results')
 
-        self.plan = TemplateMatchingPlan(volume, template, mask, wedge, deviceid)
+        self.plan = TemplateMatchingPlan(volume, template, mask, wedge, device_id)
 
     def run(self):
-        print("Starting job_{:03d} on device {:d}".format(self.jobid, self.deviceid))
+        print("Starting job_{:03d} on device {:d}".format(self.job_id, self.device_id))
         self.template_matching_gpu()
         self.completed = True
         self.active = False
@@ -128,9 +129,10 @@ class TemplateMatchingGPU(threading.Thread):
             )
 
         # Track iterations with a tqdm progress bar
-        for angle_id in tqdm(range(len(self.angle_list))):
+        for i in tqdm(range(len(self.angle_ids))):
 
-            rotation = self.angle_list[angle_id]
+            # tqdm cannot loop over zipped lists, so need to do it like this
+            angle_id, rotation = self.angle_ids[i], self.angle_list[i]
 
             if not self.mask_is_spherical:
                 self.plan.mask_texture.transform(

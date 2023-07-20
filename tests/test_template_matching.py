@@ -40,7 +40,8 @@ class TestTM(unittest.TestCase):
             device='cpu'
         )
 
-        tm_thread = TemplateMatchingGPU(0, 0, self.volume, self.template, self.mask, self.angles)
+        tm_thread = TemplateMatchingGPU(0, 0, self.volume, self.template, self.mask, self.angles, list(range(len(
+            self.angles))))
         tm_thread.run()
         while tm_thread.active:
             time.sleep(0.5)
