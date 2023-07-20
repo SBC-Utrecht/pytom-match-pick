@@ -59,3 +59,7 @@ class TestTM(unittest.TestCase):
         # viewer.add_image(score_volume)
         # viewer.add_image(self.volume)
         # napari.run()
+
+
+if __name__ == '__main__':
+    unittest.main()
