@@ -1,20 +1,20 @@
 
 
-def mean_under_mask(data, mask):
-    return (data * mask).sum() / mask.sum()
+def mean_under_mask(data, mask, mask_weight=None):
+    return (data * mask).sum() / (mask_weight if mask_weight is not None else mask.sum())
 
 
-def std_under_mask(data, mask, mean):
-    return (mean_under_mask(data ** 2, mask) - mean ** 2) ** 0.5
+def std_under_mask(data, mask, mean, mask_weight=None):
+    return (mean_under_mask(data ** 2, mask, mask_weight=mask_weight) - mean ** 2) ** 0.5
 
 
-def normalise(data, mask=None):
+def normalise(data, mask=None, mask_weight=None):
     new = data.copy()
     if mask is None:
         mean, std = data.mean(), data.std()
     else:
-        mean = mean_under_mask(data, mask)
-        std = std_under_mask(data, mask, mean)
+        mean = mean_under_mask(data, mask, mask_weight=mask_weight)
+        std = std_under_mask(data, mask, mean, mask_weight=mask_weight)
     return (new - mean) / std
 
 

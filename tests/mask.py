@@ -43,8 +43,8 @@ class TestMask(unittest.TestCase):
                 rotation=self.angles[i],
                 rotation_units='rad',
                 rotation_order='rzxz',
-                center=np.divide(np.subtract(mask.shape, 1), 2, dtype=np.float32),
-                output=mask_rotated
+                output=mask_rotated,
+                # center=np.divide(np.subtract(mask.shape, 1), 2, dtype=np.float32),
             )
 
             nxcc_centered.append(normalised_cross_correlation(mask, mask_rotated).get())
@@ -82,8 +82,8 @@ class TestMask(unittest.TestCase):
                 rotation=self.angles[i],
                 rotation_units='rad',
                 rotation_order='rzxz',
-                center=np.divide(np.subtract(mask.shape, 1), 2, dtype=np.float32),
-                output=mask_rotated
+                output=mask_rotated,
+                # center=np.divide(np.subtract(mask.shape, 1), 2, dtype=np.float32),
             )
 
             nxcc_centered.append(normalised_cross_correlation(mask, mask_rotated).get())
