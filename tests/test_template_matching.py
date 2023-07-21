@@ -19,7 +19,7 @@ class TestTM(unittest.TestCase):
         self.template[3:8, 4:8, 3:7] = 1.
         self.mask = spherical_mask(self.t_size, 5, 0.5).get()
         self.gpu_id = 'gpu:0'
-        self.angles = load_angle_list(str(files('pytom_tm.angle_lists').joinpath('angles_38.53_256.txt')))
+        self.angles = load_angle_list(files('pytom_tm.angle_lists').joinpath('angles_38.53_256.txt'))
 
     def test_search(self):
         # Instantiate monitor with a 1-second delay between updates

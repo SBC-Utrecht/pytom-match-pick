@@ -10,7 +10,7 @@ from pytom_tm.correlation import normalised_cross_correlation
 
 class TestMask(unittest.TestCase):
     def setUp(self):
-        self.angles = load_angle_list(str(files('pytom_tm.angle_lists').joinpath('angles_50.00_100.txt')))
+        self.angles = load_angle_list(files('pytom_tm.angle_lists').joinpath('angles_50.00_100.txt'))
 
     def test_rotational_invariance_even(self):
         # TEST EVEN MASK
