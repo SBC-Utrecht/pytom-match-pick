@@ -4,6 +4,7 @@ import time
 import numpy as np
 import numpy.typing as npt
 import mrcfile
+from typing import Optional
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.structures import TemplateMatchingGPU
 from functools import reduce
@@ -24,8 +25,9 @@ class Job:
             mask: pathlib.Path,
             mask_is_spherical: bool,
             output_dir: pathlib.Path,
-            subregion: list[tuple[int]],
-            angle_increment: str
+            angle_increment: str,
+            search_origin: Optional[tuple[int, int, int]] = None,
+            search_size: Optional[tuple[int, int, int]] = None
     ):
         self.tomogram = mrcfile.mmap(tomogram, mode='r+')
         self.template = mrcfile.mmap(template, mode='r+')
@@ -33,9 +35,24 @@ class Job:
         self.mask_is_spherical = mask_is_spherical
         self.output_dir = output_dir
 
-        # Region of the tomogram to search
-        self.subregion = subregion
-        # self.indices => for placing subvolume back in large volume?
+        # Check if tomogram origin is valid
+        tomo_shape = self.tomogram.shape[::-1]
+        if search_origin is None:
+            self.search_origin = (0, 0, 0)
+        elif all([0 <= x < y for x, y in zip(search_origin, tomo_shape)]):
+            self.search_origin = search_origin
+        else:
+            raise ValueError('Invalid input provided for search origin of tomogram.')
+
+        # Check if search size is valid
+        if search_size is None:
+            self.search_size = tuple([x - y for x, y in zip(tomo_shape, self.search_origin)])
+        elif all([(x + y <= z) and (x > 0) for x, y, z in zip(search_size, self.search_origin, tomo_shape)]):
+            self.search_size = search_size
+        else:
+            raise ValueError('Invalid input provided for search size in the tomogram.')
+
+        self.whole_start, self.sub_start, self.split_size = None, None, None
 
         # Rotations to search
         self.rotation_file = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][0]
@@ -70,16 +87,8 @@ class Job:
         if len(self.sub_jobs) > 0:
             raise TMJobError('Could not further split this job as it already has subjobs assigned!')
 
-        # check whether this job already has a subregion
-        if self.subregion == [0, 0, 0, 0, 0, 0]:
-            origin = [0, 0, 0]
-            tomo_shape = self.tomogram.shape[::-1]  # tranposed
-        else:
-            origin = self.subregion[0:3]
-            tomo_shape = self.subregion[3:6]
-
         # size of sub-volumes after splitting
-        split_size = [x // y for x, y in zip(tomo_shape, split)]
+        split_size = tuple([x // y for x, y in zip(self.search_size, split)])
 
         # shape of template for overhang
         template_shape = self.template.shape[::-1]  # tranposed
@@ -88,8 +97,8 @@ class Job:
         if any([x > y for x, y in zip(template_shape, split_size)]):
             raise RuntimeError("Not big enough volume to split!")
 
-        # size of subvolume with overhang
-        _size = [x + y for x, y in zip(template_shape, split_size)]
+        # size of subvolume with overhang (underscore indicates not final tuple)
+        _size = tuple([x + y for x, y in zip(template_shape, split_size)])
 
         number_of_pieces = reduce((lambda x, y: x * y), split)
 
@@ -97,36 +106,41 @@ class Job:
             stride_z, stride_y = split[0] * split[1], split[0]
             inc_z, inc_y, inc_x = i // stride_z, (i % stride_z) // stride_y, i % stride_y
 
-            start = [
-                -template_shape[0] // 2 + origin[0] + inc_x * split_size[0],
-                -template_shape[1] // 2 + origin[1] + inc_y * split_size[1],
-                -template_shape[2] // 2 + origin[2] + inc_z * split_size[2]
-            ]
+            _start = tuple([
+                -template_shape[0] // 2 + self.search_origin[0] + inc_x * split_size[0],
+                -template_shape[1] // 2 + self.search_origin[1] + inc_y * split_size[1],
+                -template_shape[2] // 2 + self.search_origin[2] + inc_z * split_size[2]
+            ])
 
-            end = [start[j] + _size[j] for j in range(len(start))]
+            _end = tuple([_start[j] + _size[j] for j in range(len(_start))])
 
             # adjust boundaries if they go outside the box
-            start = [o if s < o else s for s, o in zip(start, origin)]
-            end = [t + o if e > t + o else e for e, t, o in zip(end, tomo_shape, origin)]
-            size = [end[j] - start[j] for j in range(len(start))]
+            start = tuple([o if s < o else s for s, o in zip(_start, self.search_origin)])
+            end = tuple([s + o if e > s + o else e for e, s, o in zip(_end, self.search_size, self.search_origin)])
+            size = tuple([end[j] - start[j] for j in range(len(start))])
 
             # for reassembling the result
-            whole_start = start[:]  # whole_start and sub_start should also be job attributes
+            whole_start = list(start[:])  # whole_start and sub_start should also be job attributes
             sub_start = [0, 0, 0]
-            if start[0] != origin[0]:
+            if start[0] != self.search_origin[0]:
                 whole_start[0] = start[0] + template_shape[0] // 2
                 sub_start[0] = template_shape[0] // 2
-            if start[1] != origin[1]:
+            if start[1] != self.search_origin[1]:
                 whole_start[1] = start[1] + template_shape[1] // 2
                 sub_start[1] = template_shape[1] // 2
-            if start[2] != origin[2]:
+            if start[2] != self.search_origin[2]:
                 whole_start[2] = start[2] + template_shape[2] // 2
                 sub_start[2] = template_shape[2] // 2
 
+            # create a split volume job
             new_job = self.copy()
             new_job.leader = self.job_key
             new_job.job_id = self.job_key + str(i)
-            new_job.subregion = [start[0], start[1], start[2], size[0], size[1], size[2]]
+            new_job.search_origin = (start[0], start[1], start[2])
+            new_job.search_size = (size[0], size[1], size[2])
+            new_job.whole_start = tuple(whole_start)
+            new_job.sub_start = tuple(sub_start)
+            new_job.split_size = split_size
             self.sub_jobs.append(new_job)
 
         return self.sub_jobs
@@ -152,10 +166,33 @@ class Job:
                 angles = np.where(s > scores, a, angles)
                 scores = np.where(s > scores, s, scores)
         else:
-            scores, angles = np.zeros(self.subregion), np.zeros(self.subregion)  # or something like this
-            for i, x in enumerate(self.sub_jobs):
-                pass
+            scores, angles = (
+                np.zeros(self.search_size, dtype=np.float32),
+                np.zeros(self.search_size, dtype=np.float32)
+            )
+            for x, s, a in zip(self.sub_jobs, score_volumes, angle_volumes):
+                [vsize_x, vsize_y, vsize_z] = self.search_size
+                [size_x, size_y, size_z] = x.split_size
+                sub_start = x.sub_start
+                start = x.whole_start
 
+                step_size_x = min(vsize_x - sub_start[0], size_x)
+                step_size_y = min(vsize_y - sub_start[1], size_y)
+                step_size_z = min(vsize_z - sub_start[2], size_z)
+
+                sub_scores = s[sub_start[0]: step_size_x, sub_start[1], step_size_y, sub_start[2], step_size_z]
+                sub_angles = a[sub_start[0]: step_size_x, sub_start[1], step_size_y, sub_start[2], step_size_z]
+
+                scores[
+                    start[0] - self.search_origin[0]: start[0] - self.search_origin[0] + sub_scores.shape[0],
+                    start[1] - self.search_origin[1]: start[1] - self.search_origin[1] + sub_scores.shape[1],
+                    start[2] - self.search_origin[2]: start[2] - self.search_origin[2] + sub_scores.shape[2]
+                ] = sub_scores
+                angles[
+                    start[0] - self.search_origin[0]: start[0] - self.search_origin[0] + sub_scores.shape[0],
+                    start[1] - self.search_origin[1]: start[1] - self.search_origin[1] + sub_scores.shape[1],
+                    start[2] - self.search_origin[2]: start[2] - self.search_origin[2] + sub_scores.shape[2]
+                ] = sub_angles
         return scores, angles
 
     def start_job(self, gpu_id: int):
