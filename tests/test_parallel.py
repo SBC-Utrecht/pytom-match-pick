@@ -10,7 +10,7 @@ from pytom_tm.angles import load_angle_list
 from pytom_tm.parallel import TMJob
 
 
-TOMO_SHAPE = (100, 108, 60)
+TOMO_SHAPE = (100, 107, 59)
 LOCATION = (77, 26, 40)
 ANGLE_ID = 100
 ANGULAR_SEARCH = 'angles_38.53_256.txt'
@@ -20,10 +20,10 @@ TEST_TEMPLATE = TEST_DATA_DIR.joinpath('template.mrc')
 TEST_MASK = TEST_DATA_DIR.joinpath('mask.mrc')
 
 
-class TestJob(unittest.TestCase):
+class TestTMJob(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        t_size = 12  # template size
+        t_size = 13  # template size
 
         # Create template, mask and tomogram
         volume = np.zeros(TOMO_SHAPE, dtype=np.float32)
@@ -32,9 +32,9 @@ class TestJob(unittest.TestCase):
         mask = spherical_mask(t_size, 5, 0.5).get()
         rotation = load_angle_list(files('pytom_tm.angle_lists').joinpath(ANGULAR_SEARCH))[ANGLE_ID]
 
-        volume[LOCATION[0] - t_size // 2: LOCATION[0] + t_size // 2,
-               LOCATION[1] - t_size // 2: LOCATION[1] + t_size // 2,
-               LOCATION[2] - t_size // 2: LOCATION[2] + t_size // 2] = vt.transform(
+        volume[LOCATION[0] - t_size // 2: LOCATION[0] + t_size // 2 + t_size % 2,
+               LOCATION[1] - t_size // 2: LOCATION[1] + t_size // 2 + t_size % 2,
+               LOCATION[2] - t_size // 2: LOCATION[2] + t_size // 2 + t_size % 2] = vt.transform(
             template,
             rotation=rotation,
             rotation_units='rad',
@@ -46,6 +46,8 @@ class TestJob(unittest.TestCase):
         mrcfile.write(TEST_MASK, mask.T, overwrite=True, voxel_size=1)
         mrcfile.write(TEST_TEMPLATE, template.T, overwrite=True, voxel_size=1)
         mrcfile.write(TEST_TOMOGRAM, volume.T, overwrite=True, voxel_size=1)
+
+        # do a run without splitting to compare against
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -71,13 +73,6 @@ class TestJob(unittest.TestCase):
     def test_tm_job_split_volume(self):
         sub_jobs = self.job.split_volume_search((1, 2, 1))
         for x in sub_jobs:
-            # print(x.job_key)
-            # print(x.leader)
-            # print(x.search_origin)
-            # print(x.search_size)
-            # print(x.split_size)
-            # print(x.sub_start)
-            # print(x.whole_start)
             x.start_job(0)
             job_scores = TEST_DATA_DIR.joinpath(f'scores_{x.job_key}.mrc')
             job_angles = TEST_DATA_DIR.joinpath(f'angles_{x.job_key}.mrc')
@@ -89,22 +84,36 @@ class TestJob(unittest.TestCase):
                 job_angles.exists(),
                 msg='Expected output from job does not exist.'
             )
-            # job_scores.unlink()
-            # job_angles.unlink()
         score, angle = self.job.merge_sub_jobs()
+        ind = np.unravel_index(score.argmax(), score.shape)
+        self.assertTrue(score.max() > 0.99, msg='lcc max value lower than expected')
+        self.assertEqual(ANGLE_ID, angle[ind])
+        self.assertSequenceEqual(LOCATION, ind)
 
-        viewer = napari.Viewer()
-        viewer.add_image(mrcfile.read(TEST_TOMOGRAM))
-        viewer.add_image(score.T)
-        napari.run()
+        # viewer = napari.Viewer()
+        # viewer.add_image(mrcfile.read(TEST_TOMOGRAM))
+        # viewer.add_image(score.T)
+        # napari.run()
 
     def test_tm_job_split_angles(self):
-        pass
-
-
-class TestSplit(unittest.TestCase):
-    def test(self):
-        pass
+        sub_jobs = self.job.split_rotation_search(2)
+        for x in sub_jobs:
+            x.start_job(0)
+            job_scores = TEST_DATA_DIR.joinpath(f'scores_{x.job_key}.mrc')
+            job_angles = TEST_DATA_DIR.joinpath(f'angles_{x.job_key}.mrc')
+            self.assertTrue(
+                job_scores.exists(),
+                msg='Expected output from job does not exist.'
+            )
+            self.assertTrue(
+                job_angles.exists(),
+                msg='Expected output from job does not exist.'
+            )
+        score, angle = self.job.merge_sub_jobs()
+        ind = np.unravel_index(score.argmax(), score.shape)
+        self.assertTrue(score.max() > 0.99, msg='lcc max value lower than expected')
+        self.assertEqual(ANGLE_ID, angle[ind])
+        self.assertSequenceEqual(LOCATION, ind)
 
 
 if __name__ == '__main__':
