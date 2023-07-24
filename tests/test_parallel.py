@@ -54,8 +54,7 @@ class TestTMJob(unittest.TestCase):
 
         # do a run without splitting to compare against
         job = TMJob('0', TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, '38.53')
-        job.start_job(0)
-        score, angle = job.merge_sub_jobs()
+        score, angle = job.start_job(0, return_volumes=True)
         mrcfile.write(
             TEST_SCORES,
             score.T,

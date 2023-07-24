@@ -1,9 +1,10 @@
+from __future__ import annotations
 import pathlib
 import copy
-import time
 import numpy as np
 import numpy.typing as npt
 import mrcfile
+import multiprocessing
 from operator import attrgetter
 from typing import Optional
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
@@ -20,6 +21,58 @@ def read_mrc_meta_data(file_name):
         else:
             meta_data['voxel_size'] = float(mrc.voxel_size.x)
     return meta_data
+
+
+def run_parallel(
+        main_job: TMJob, volume_splits: tuple[int, int, int], gpu_ids: tuple[int, ...]
+) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    """
+    :param main_job: a TMJob object from pytom_tm that contains all data for a search
+    :param volume_splits: tuple of len 3 with splits in x, y, and z
+    :param gpu_ids: list of gpu indices available for the job
+    :return: the volumes with the LCCmax and angle ids
+    """
+    n_pieces = reduce(lambda x, y: x * y, volume_splits)
+    jobs = []
+
+    # Split the tomograms into subvolumes
+    if n_pieces == 1:
+        if len(gpu_ids) > 1:  # split rotation search
+
+            jobs = main_job.split_rotation_search(len(gpu_ids))
+
+        else:  # we just run the whole tomo on a single gpu
+
+            jobs.append(main_job)
+
+    elif n_pieces > 1:
+
+        rotation_split_factor = len(gpu_ids) % n_pieces
+
+        if rotation_split_factor >= 2:  # we can split the rotation search for the subvolumes
+
+            for j in main_job.split_volume_search(volume_splits):
+
+                jobs.append(j.split_rotation_search(rotation_split_factor))
+
+        else:  # only split the subvolume search
+
+            jobs = main_job.split_volume_search(volume_splits)
+
+    else:
+        raise ValueError('Invalid number of pieces in split volume')
+
+    if len(jobs) == 1:
+        score_volume, angle_volume = main_job.start_job(gpu_ids[0], return_volumes=True)
+    else:
+        # multiprocessing pool
+
+
+
+        # finally merge the jobs
+        score_volume, angle_volume = main_job.merge_sub_jobs()
+
+    return ...
 
 
 class TMJobError(Exception):
@@ -254,7 +307,7 @@ class TMJob:
                 ] = sub_angles
         return scores, angles
 
-    def start_job(self, gpu_id: int):
+    def start_job(self, gpu_id: int, return_volumes: bool = False):
         # load the (sub)volume
         search_volume = np.ascontiguousarray(mrcfile.read(self.tomogram).T)[
             self.search_origin[0]: self.search_origin[0] + self.search_size[0],
@@ -298,16 +351,18 @@ class TMJob:
         score_volume, angle_volume = tm_thread.plan.scores.get(), tm_thread.plan.angles.get()
         del tm_thread
 
-        # write out scores and angles volume
-        mrcfile.write(
-            self.output_dir.joinpath(f'scores_{self.job_key}.mrc'),
-            score_volume.T,
-            voxel_size=self.voxel_size,
-            overwrite=True
-        )
-        mrcfile.write(
-            self.output_dir.joinpath(f'angles_{self.job_key}.mrc'),
-            angle_volume.T,
-            voxel_size=self.voxel_size,
-            overwrite=True
-        )
+        if return_volumes:
+            return score_volume, angle_volume
+        else:  # otherwise write them out with job_key
+            mrcfile.write(
+                self.output_dir.joinpath(f'scores_{self.job_key}.mrc'),
+                score_volume.T,
+                voxel_size=self.voxel_size,
+                overwrite=True
+            )
+            mrcfile.write(
+                self.output_dir.joinpath(f'angles_{self.job_key}.mrc'),
+                angle_volume.T,
+                voxel_size=self.voxel_size,
+                overwrite=True
+            )
