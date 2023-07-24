@@ -3,11 +3,11 @@ import pathlib
 import mrcfile
 import numpy as np
 import voltools as vt
-import napari
 from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list
-from pytom_tm.parallel import TMJob
+from pytom_tm.parallel import run_job_parallel
+from pytom_tm.tmjob import TMJob
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -123,13 +123,6 @@ class TestTMJob(unittest.TestCase):
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
         self.assertTrue(angle_diff == 0, msg='angle diff should not change')
 
-        # viewer = napari.Viewer()
-        # viewer.add_image(mrcfile.read(TEST_TOMOGRAM), name='tomogram')
-        # viewer.add_image(score.T, name='split_scores')
-        # viewer.add_image(mrcfile.read(TEST_SCORES), name='scores')
-        # viewer.add_image(np.abs(score - mrcfile.read(TEST_SCORES).T).T, name='score_diff')
-        # napari.run()
-
     def test_tm_job_split_angles(self):
         sub_jobs = self.job.split_rotation_search(3)
         for x in sub_jobs:
@@ -155,6 +148,25 @@ class TestTMJob(unittest.TestCase):
                         msg='split rotation search should be identical')
         self.assertTrue(np.abs(angle - mrcfile.read(TEST_ANGLES).T).sum() == 0,
                         msg='split rotation search should be identical')
+
+    def test_parallel_manager(self):
+        score, angle = run_job_parallel(self.job, volume_splits=(1, 3, 1), gpu_ids=[0])
+        ind = np.unravel_index(score.argmax(), score.shape)
+
+        self.assertTrue(score.max() > 0.934, msg='lcc max value lower than expected')
+        self.assertEqual(ANGLE_ID, angle[ind])
+        self.assertSequenceEqual(LOCATION, ind)
+
+        # Small difference in the edge regions of the split dimension. This is because the cross correlation function
+        # is not well defined in the boundary area, only a small part of the template is correlated here (and we are
+        # not really interested in it). Probably the inaccuracy in this area becomes more apparent when splitting
+        # into subvolumes due to a smaller number of sampling points in Fourier space.
+        score_diff = np.abs(score[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
+                     mrcfile.read(TEST_SCORES).T[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
+        angle_diff = np.abs(angle[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
+                     mrcfile.read(TEST_ANGLES).T[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
+        self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
+        self.assertTrue(angle_diff == 0, msg='angle diff should not change')
 
 
 if __name__ == '__main__':

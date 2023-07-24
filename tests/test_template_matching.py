@@ -1,8 +1,8 @@
 import unittest
 import voltools as vt
 import numpy as np
-import time
-from pytom_tm.matching import TemplateMatchingGPU, Monitor
+from pytom_tm.matching import TemplateMatchingGPU
+from pytom_tm._utils import Monitor
 from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list
@@ -40,13 +40,11 @@ class TestTM(unittest.TestCase):
             device='cpu'
         )
 
-        tm_thread = TemplateMatchingGPU(0, 0, self.volume, self.template, self.mask, self.angles, list(range(len(
+        tm = TemplateMatchingGPU(0, 0, self.volume, self.template, self.mask, self.angles, list(range(len(
             self.angles))))
-        tm_thread.run()
-        while tm_thread.active:
-            time.sleep(0.5)
-        score_volume, angle_volume = tm_thread.plan.scores.get(), tm_thread.plan.angles.get()
-        del tm_thread
+        tm.run()
+        score_volume, angle_volume = tm.plan.scores.get(), tm.plan.angles.get()
+        del tm
 
         ind = np.unravel_index(score_volume.argmax(), self.volume.shape)
         self.assertTrue(score_volume.max() > 0.99, msg='lcc max value lower than expected')

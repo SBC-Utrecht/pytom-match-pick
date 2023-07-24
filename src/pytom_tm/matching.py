@@ -1,4 +1,3 @@
-import threading
 import cupy as cp
 import cupy.typing as cpt
 import numpy.typing as npt
@@ -47,7 +46,7 @@ class TemplateMatchingPlan:
         cp.cuda.stream.get_current_stream().synchronize()
 
 
-class TemplateMatchingGPU(threading.Thread):
+class TemplateMatchingGPU:
     def __init__(
             self,
             job_id: str,
@@ -60,7 +59,6 @@ class TemplateMatchingGPU(threading.Thread):
             mask_is_spherical: bool = True,
             wedge: Optional[npt.NDArray[float]] = None
     ):
-        threading.Thread.__init__(self)
         cp.cuda.Device(device_id).use()
 
         self.job_id = job_id
@@ -80,12 +78,8 @@ class TemplateMatchingGPU(threading.Thread):
         self.plan = TemplateMatchingPlan(volume, template, mask, wedge, device_id)
 
     def run(self):
-        print("Starting job_{} on device {:d}".format(self.job_id, self.device_id))
-        self.template_matching_gpu()
-        self.completed = True
-        self.active = False
+        print("Progress job_{} on device {:d}:".format(self.job_id, self.device_id))
 
-    def template_matching_gpu(self):
         # Size x template (sxz) and center x template (cxt)
         sxt, syt, szt = self.plan.template.shape
         cxt, cyt, czt = sxt // 2, syt // 2, szt // 2
@@ -173,12 +167,6 @@ class TemplateMatchingGPU(threading.Thread):
                 self.plan.scores,
                 self.plan.angles
             )
-
-    def is_alive(self):
-        """
-        whether process is running
-        """
-        return self.active
 
 
 def std_under_mask_convolution(volume, padded_mask, mask_weight, volume_rft=None):
