@@ -281,8 +281,7 @@ class TMJob:
         template_wedge = None
         if self.wedge_angles is not None:
             # convolute tomo with wedge
-            sx, sy, sz = search_volume.shape
-            tomo_wedge = create_wedge(self.wedge_angles, sx // 2, sx, sy, sz)
+            tomo_wedge = create_wedge(search_volume.shape, self.wedge_angles, 1.).astype(np.float32)
             search_volume = np.real(np.fft.irfftn(np.fft.rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
 
             mrcfile.write(
@@ -293,8 +292,7 @@ class TMJob:
             )
 
             # get template wedge
-            sx, sy, sz = self.template_shape
-            template_wedge = create_wedge(self.wedge_angles, sx // 2, sx, sy, sz)
+            template_wedge = create_wedge(self.template_shape, self.wedge_angles, 1.).astype(np.float32)
 
         # load rotation search
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
