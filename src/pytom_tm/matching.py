@@ -14,8 +14,8 @@ class TemplateMatchingPlan:
             volume: npt.NDArray[float],
             template: npt.NDArray[float],
             mask: npt.NDArray[float],
-            wedge: npt.NDArray[float],
-            device_id: int
+            device_id: int,
+            wedge: Optional[npt.NDArray[float]] = None
     ):
         # Search volume + and fft transform plan for the volume
         self.volume = cp.asarray(volume, dtype=cp.float32, order='C')
@@ -75,7 +75,7 @@ class TemplateMatchingGPU:
             'if (scores < ccc_map) {out1 = ccc_map; out2 = angle_id;}',
             'update_results')
 
-        self.plan = TemplateMatchingPlan(volume, template, mask, wedge, device_id)
+        self.plan = TemplateMatchingPlan(volume, template, mask, device_id, wedge=wedge)
 
     def run(self):
         print("Progress job_{} on device {:d}:".format(self.job_id, self.device_id))

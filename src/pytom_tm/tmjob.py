@@ -7,6 +7,7 @@ from operator import attrgetter
 from typing import Optional
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
+from pytom_tm.weights import create_wedge
 from functools import reduce
 
 
@@ -37,6 +38,7 @@ class TMJob:
             output_dir: pathlib.Path,
             angle_increment: str,
             mask_is_spherical: bool = True,
+            wedge_angles: Optional[tuple[float, float]] = None,
             search_origin: Optional[tuple[int, int, int]] = None,
             search_size: Optional[tuple[int, int, int]] = None,
             voxel_size: Optional[float] = None
@@ -89,10 +91,17 @@ class TMJob:
         self.sub_start, self.sub_step = None, None
 
         # Rotations to search
-        self.rotation_file = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][0]
-        self.n_rotations = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][1]
+        try:
+            self.rotation_file = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][0]
+            self.n_rotations = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][1]
+        except KeyError:
+            raise TMJobError('Provided angular search is not available in  the default lists.')
+
         self.start_slice = 0
         self.steps_slice = 1
+
+        # missing wedge
+        self.wedge_angles = wedge_angles
 
         # Job details
         self.job_key = job_key
@@ -268,8 +277,24 @@ class TMJob:
         )
 
         # TODO apply optionally a bandpass filter to the volume
-        # TODO create wedge and apply to volume
-        # TODO create wedge for template and pass to TM structure
+
+        template_wedge = None
+        if self.wedge_angles is not None:
+            # convolute tomo with wedge
+            sx, sy, sz = search_volume.shape
+            tomo_wedge = create_wedge(self.wedge_angles, sx // 2, sx, sy, sz)
+            search_volume = np.real(np.fft.irfftn(np.fft.rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
+
+            mrcfile.write(
+                self.output_dir.joinpath(f'wedge_{self.job_key}.mrc'),
+                tomo_wedge.T,
+                voxel_size=self.voxel_size,
+                overwrite=True
+            )
+
+            # get template wedge
+            sx, sy, sz = self.template_shape
+            template_wedge = create_wedge(self.wedge_angles, sx // 2, sx, sy, sz)
 
         # load rotation search
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
@@ -283,7 +308,8 @@ class TMJob:
             mask=mask,
             angle_list=angle_list,
             angle_ids=angle_ids,
-            mask_is_spherical=self.mask_is_spherical
+            mask_is_spherical=self.mask_is_spherical,
+            wedge=template_wedge
         )
 
         tm.run()
@@ -295,6 +321,7 @@ class TMJob:
         if return_volumes:
             return score_volume, angle_volume
         else:  # otherwise write them out with job_key
+            # TODO files should be written with tomogram name in it
             mrcfile.write(
                 self.output_dir.joinpath(f'scores_{self.job_key}.mrc'),
                 score_volume.T,
