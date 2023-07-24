@@ -1,7 +1,6 @@
 import unittest
 import voltools as vt
 import cupy as cp
-import numpy as np
 from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list
@@ -16,7 +15,7 @@ class TestMask(unittest.TestCase):
         # TEST EVEN MASK
         nxcc_offcenter, nxcc_centered = [], []
 
-        mask = spherical_mask(12, 4, 0.5)
+        mask = cp.asarray(spherical_mask(12, 4, 0.5))
         mask_rotated = cp.zeros_like(mask)
 
         mask_texture = vt.StaticVolume(
@@ -57,7 +56,7 @@ class TestMask(unittest.TestCase):
         # TEST UNEVEN MASK
         nxcc_offcenter, nxcc_centered = [], []
 
-        mask = spherical_mask(13, 4, 0.5)
+        mask = cp.asarray(spherical_mask(13, 4, 0.5))
         mask_rotated = cp.zeros_like(mask)
 
         mask_texture = vt.StaticVolume(

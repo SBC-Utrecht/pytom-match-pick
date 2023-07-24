@@ -1,5 +1,5 @@
-import cupy as cp
-import cupy.typing as cpt
+import numpy as np
+import numpy.typing as npt
 from typing import Optional
 # TODO create mask on CPU?
 
@@ -9,7 +9,7 @@ def spherical_mask(
         radius: float,
         smooth: Optional[float] = None,
         cutoff_sd: float = 3.
-) -> cpt.NDArray[float]:
+) -> npt.NDArray[float]:
     return ellipsoidal_mask(box_size, radius, radius, radius, smooth, cutoff_sd=cutoff_sd)
 
 
@@ -20,7 +20,7 @@ def ellipsoidal_mask(
         minor2: float,
         smooth: Optional[float] = None,
         cutoff_sd: float = 3.
-) -> cpt.NDArray[float]:
+) -> npt.NDArray[float]:
     """
     Center of the ellipsoid or sphere is (box_size - 1) / 2 => important for rotation center in template matching.
     @param box_size: box size of the mask, equal in each dimension
@@ -34,14 +34,14 @@ def ellipsoidal_mask(
     if not all([box_size > 0, major > 0, minor1 > 0, minor2 > 0]):
         raise ValueError('Invalid input for mask creation: box_size or radii are <= 0')
 
-    x, y, z = (cp.arange(box_size) - (box_size - 1) / 2,
-               cp.arange(box_size) - (box_size - 1) / 2,
-               cp.arange(box_size) - (box_size - 1) / 2)
+    x, y, z = (np.arange(box_size) - (box_size - 1) / 2,
+               np.arange(box_size) - (box_size - 1) / 2,
+               np.arange(box_size) - (box_size - 1) / 2)
 
     # use broadcasting
-    r = cp.sqrt(((x / major)**2)[:, cp.newaxis, cp.newaxis] +
-                ((y / minor1)**2)[:, cp.newaxis] +
-                (z / minor2)**2).astype(cp.float32)
+    r = np.sqrt(((x / major)**2)[:, np.newaxis, np.newaxis] +
+                ((y / minor1)**2)[:, np.newaxis] +
+                (z / minor2)**2).astype(np.float32)
 
     if smooth is not None:
 
@@ -50,12 +50,12 @@ def ellipsoidal_mask(
 
         r[r <= 1] = 1
         sigma = (smooth / ((major + minor1 + minor2) / 3))
-        mask = cp.exp(-1 * ((r - 1) / sigma) ** 2)
-        mask[mask <= cp.exp(-cutoff_sd**2/2.)] = 0
+        mask = np.exp(-1 * ((r - 1) / sigma) ** 2)
+        mask[mask <= np.exp(-cutoff_sd**2/2.)] = 0
 
     else:
 
-        mask = cp.zeros_like(r)
+        mask = np.zeros_like(r)
         mask[r <= 1] = 1.
 
     return mask

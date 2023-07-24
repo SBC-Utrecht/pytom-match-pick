@@ -28,7 +28,7 @@ def run_job_parallel(
     n_pieces = reduce(lambda x, y: x * y, volume_splits)
     jobs = []
 
-    # Split the tomograms into subvolumes
+    # =================== Splitting into subjobs ===============
     if n_pieces == 1:
         if len(gpu_ids) > 1:  # split rotation search
 
@@ -55,18 +55,20 @@ def run_job_parallel(
     else:
         raise ValueError('Invalid number of pieces in split volume')
 
+    # ================== Execution of jobs =========================
     if len(jobs) == 1:
 
         score_volume, angle_volume = main_job.start_job(gpu_ids[0], return_volumes=True)
 
     elif len(jobs) >= len(gpu_ids):
 
-        # open pool with number of gpu's
+        # map the pool onto all the subjobs
         with mp.Pool(len(gpu_ids)) as pool:
             pool.starmap(start_single_job, zip(jobs, cycle(gpu_ids)))
 
         # finally merge the jobs
         score_volume, angle_volume = main_job.merge_sub_jobs()
+
     else:
         ValueError('For some reason there are more gpu_ids than split job, this should never happen.')
 

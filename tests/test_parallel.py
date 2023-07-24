@@ -30,7 +30,7 @@ class TestTMJob(unittest.TestCase):
         volume = np.zeros(TOMO_SHAPE, dtype=np.float32)
         template = np.zeros((TEMPLATE_SIZE,) * 3, dtype=np.float32)
         template[3:8, 4:8, 3:7] = 1.
-        mask = spherical_mask(TEMPLATE_SIZE, 5, 0.5).get()
+        mask = spherical_mask(TEMPLATE_SIZE, 5, 0.5)
         rotation = load_angle_list(files('pytom_tm.angle_lists').joinpath(ANGULAR_SEARCH))[ANGLE_ID]
 
         volume[LOCATION[0] - TEMPLATE_SIZE // 2: LOCATION[0] + TEMPLATE_SIZE // 2 + TEMPLATE_SIZE % 2,
