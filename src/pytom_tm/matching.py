@@ -3,30 +3,10 @@ import cupy as cp
 import cupy.typing as cpt
 import numpy.typing as npt
 import voltools as vt
-import time
 from typing import Optional
 from cupyx.scipy.fft import rfftn, irfftn, fftshift
 from tqdm import tqdm
 from pytom_tm.correlation import mean_under_mask, std_under_mask
-
-# gpu monitoring
-import GPUtil
-
-
-class Monitor(threading.Thread):
-    def __init__(self, delay):
-        super(Monitor, self).__init__()
-        self.stopped = False
-        self.delay = delay # Time between calls to GPUtil
-        self.start()
-
-    def run(self):
-        while not self.stopped:
-            GPUtil.showUtilization()
-            time.sleep(self.delay)
-
-    def stop(self):
-        self.stopped = True
 
 
 class TemplateMatchingPlan:

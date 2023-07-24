@@ -2,7 +2,7 @@ import unittest
 import voltools as vt
 import numpy as np
 import time
-from pytom_tm.structures import TemplateMatchingGPU, Monitor
+from pytom_tm.matching import TemplateMatchingGPU, Monitor
 from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list

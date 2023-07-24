@@ -1,6 +1,7 @@
 import cupy as cp
 import cupy.typing as cpt
 from typing import Optional
+# TODO create mask on CPU?
 
 
 def spherical_mask(
@@ -21,14 +22,14 @@ def ellipsoidal_mask(
         cutoff_sd: float = 3.
 ) -> cpt.NDArray[float]:
     """
-
-    @param box_size:
-    @param major:
-    @param minor1:
-    @param minor2:
-    @param smooth:
-    @param cutoff_sd:
-    @return:
+    Center of the ellipsoid or sphere is (box_size - 1) / 2 => important for rotation center in template matching.
+    @param box_size: box size of the mask, equal in each dimension
+    @param major: radius of ellipsoid in x
+    @param minor1: radius of ellipsoid in y
+    @param minor2: radius of ellipsoid in z
+    @param smooth: sigma (float relative to number of pixels) of gaussian falloff of mask
+    @param cutoff_sd: how many standard deviations of the falloff to include, default of 3 is a good choice
+    @return: volume with the mask
     """
     if not all([box_size > 0, major > 0, minor1 > 0, minor2 > 0]):
         raise ValueError('Invalid input for mask creation: box_size or radii are <= 0')

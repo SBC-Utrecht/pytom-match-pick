@@ -7,7 +7,7 @@ import mrcfile
 from operator import attrgetter
 from typing import Optional
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
-from pytom_tm.structures import TemplateMatchingGPU
+from pytom_tm.matching import TemplateMatchingGPU
 from functools import reduce
 
 
@@ -86,7 +86,8 @@ class TMJob:
         else:
             raise ValueError('Invalid input provided for search size in the tomogram.')
 
-        self.whole_start, self.sub_start, self.split_size = None, None, None
+        self.whole_start = None
+        self.sub_start, self.sub_step = None, None
 
         # Rotations to search
         self.rotation_file = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][0]
@@ -153,23 +154,31 @@ class TMJob:
 
             _end = tuple([_start[j] + _size[j] for j in range(len(_start))])
 
-            # adjust boundaries if they go outside the box
+            # if start location is smaller than search origin we need to reset it to search origin
             start = tuple([o if s < o else s for s, o in zip(_start, self.search_origin)])
+            # if end location is larger than origin + search size it needs to be set to origin + search size
             end = tuple([s + o if e > s + o else e for e, s, o in zip(_end, self.search_size, self.search_origin)])
             size = tuple([end[j] - start[j] for j in range(len(start))])
 
             # for reassembling the result
             whole_start = list(start[:])  # whole_start and sub_start should also be job attributes
-            sub_start = [0, 0, 0]
+            sub_start = [0, ] * 3
+            sub_step = list(split_size)
             if start[0] != self.search_origin[0]:
-                whole_start[0] = start[0] + template_shape[0] // 2
+                whole_start[0] = start[0] + template_shape[0] // 2 - self.search_origin[0]
                 sub_start[0] = template_shape[0] // 2
             if start[1] != self.search_origin[1]:
-                whole_start[1] = start[1] + template_shape[1] // 2
+                whole_start[1] = start[1] + template_shape[1] // 2 - self.search_origin[0]
                 sub_start[1] = template_shape[1] // 2
             if start[2] != self.search_origin[2]:
-                whole_start[2] = start[2] + template_shape[2] // 2
+                whole_start[2] = start[2] + template_shape[2] // 2 - self.search_origin[0]
                 sub_start[2] = template_shape[2] // 2
+            if end[0] == self.search_origin[0] + self.search_size[0]:
+                sub_step[0] = size[0] - sub_start[0]
+            if end[1] == self.search_origin[1] + self.search_size[1]:
+                sub_step[1] = size[1] - sub_start[1]
+            if end[2] == self.search_origin[2] + self.search_size[2]:
+                sub_step[2] = size[2] - sub_start[2]
 
             # create a split volume job
             new_job = self.copy()
@@ -179,6 +188,7 @@ class TMJob:
             new_job.search_size = (size[0], size[1], size[2])
             new_job.whole_start = tuple(whole_start)
             new_job.sub_start = tuple(sub_start)
+            new_job.sub_step = tuple(sub_step)
             new_job.split_size = split_size
             sub_jobs.append(new_job)
 
@@ -222,31 +232,25 @@ class TMJob:
             )
             for job, s, a in zip(self.sub_jobs, score_volumes, angle_volumes):
 
-                # The full subvolume is not needed as there is some overhang from the template, so we first extract
-                # the useful part
-                step_size_x = min(self.search_size[0] - job.sub_start[0], job.split_size[0])
-                step_size_y = min(self.search_size[1] - job.sub_start[1], job.split_size[1])
-                step_size_z = min(self.search_size[2] - job.sub_start[2], job.split_size[2])
-
                 sub_scores = s[
-                             job.sub_start[0]: job.sub_start[0] + step_size_x,
-                             job.sub_start[1]: job.sub_start[1] + step_size_y,
-                             job.sub_start[2]: job.sub_start[2] + step_size_z]
+                             job.sub_start[0]: job.sub_start[0] + job.sub_step[0],
+                             job.sub_start[1]: job.sub_start[1] + job.sub_step[1],
+                             job.sub_start[2]: job.sub_start[2] + job.sub_step[2]]
                 sub_angles = a[
-                             job.sub_start[0]: job.sub_start[0] + step_size_x,
-                             job.sub_start[1]: job.sub_start[1] + step_size_y,
-                             job.sub_start[2]: job.sub_start[2] + step_size_z]
+                             job.sub_start[0]: job.sub_start[0] + job.sub_step[0],
+                             job.sub_start[1]: job.sub_start[1] + job.sub_step[1],
+                             job.sub_start[2]: job.sub_start[2] + job.sub_step[2]]
 
                 # Then the corrected sub part needs to be placed back into the full volume
                 scores[
-                    job.whole_start[0] - self.search_origin[0]: job.whole_start[0] - self.search_origin[0] + sub_scores.shape[0],
-                    job.whole_start[1] - self.search_origin[1]: job.whole_start[1] - self.search_origin[1] + sub_scores.shape[1],
-                    job.whole_start[2] - self.search_origin[2]: job.whole_start[2] - self.search_origin[2] + sub_scores.shape[2]
+                    job.whole_start[0]: job.whole_start[0] + sub_scores.shape[0],
+                    job.whole_start[1]: job.whole_start[1] + sub_scores.shape[1],
+                    job.whole_start[2]: job.whole_start[2] + sub_scores.shape[2]
                 ] = sub_scores
                 angles[
-                    job.whole_start[0] - self.search_origin[0]: job.whole_start[0] - self.search_origin[0] + sub_scores.shape[0],
-                    job.whole_start[1] - self.search_origin[1]: job.whole_start[1] - self.search_origin[1] + sub_scores.shape[1],
-                    job.whole_start[2] - self.search_origin[2]: job.whole_start[2] - self.search_origin[2] + sub_scores.shape[2]
+                    job.whole_start[0]: job.whole_start[0] + sub_scores.shape[0],
+                    job.whole_start[1]: job.whole_start[1] + sub_scores.shape[1],
+                    job.whole_start[2]: job.whole_start[2] + sub_scores.shape[2]
                 ] = sub_angles
         return scores, angles
 
