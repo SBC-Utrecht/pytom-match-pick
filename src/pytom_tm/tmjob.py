@@ -1,8 +1,10 @@
+from __future__ import annotations
 import pathlib
 import copy
 import numpy as np
 import numpy.typing as npt
 import mrcfile
+import json
 from operator import attrgetter
 from typing import Optional
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
@@ -22,6 +24,34 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
     return meta_data
 
 
+def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
+    with open(file_name, 'r') as fstream:
+        data = json.load(fstream)
+
+    job = TMJob(
+        data['job_key'],
+        pathlib.Path(data['tomogram']),
+        pathlib.Path(data['template']),
+        pathlib.Path(data['mask']),
+        pathlib.Path(data['output_dir']),
+        mask_is_spherical=data['mask_is_spherical'],
+        wedge_angles=data['wedge_angles'],
+        search_origin=data['search_origin'],
+        search_size=data['search_size'],
+        voxel_size=data['voxel_size'],
+        bandpass=data['resolution_bands']
+    )
+    job.rotation_file = pathlib.Path(data['rotation_file'])
+    job.whole_start = data['whole_start']
+    job.sub_start = data['sub_start']
+    job.sub_step = data['sub_step']
+    job.n_rotations = data['n_rotations']
+    job.start_slice = data['start_slice']
+    job.steps_slice = data['steps_slice']
+    job.job_stats = data['job_stats']
+    return job
+
+
 class TMJobError(Exception):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
@@ -36,12 +66,13 @@ class TMJob:
             template: pathlib.Path,
             mask: pathlib.Path,
             output_dir: pathlib.Path,
-            angle_increment: str,
+            angle_increment: str = '7.00',
             mask_is_spherical: bool = True,
             wedge_angles: Optional[tuple[float, float]] = None,
             search_origin: Optional[tuple[int, int, int]] = None,
             search_size: Optional[tuple[int, int, int]] = None,
-            voxel_size: Optional[float] = None
+            voxel_size: Optional[float] = None,
+            bandpass: Optional[list[float, float]] = None
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -49,6 +80,7 @@ class TMJob:
 
         self.tomogram = tomogram
         self.template = template
+        self.tomo_id = self.tomogram.stem
 
         meta_data_tomo = read_mrc_meta_data(self.tomogram)
         meta_data_template = read_mrc_meta_data(self.template)
@@ -102,15 +134,34 @@ class TMJob:
 
         # missing wedge
         self.wedge_angles = wedge_angles
+        # set the bandpass resolution shells
+        if bandpass is not None and bandpass[0] <= 0 and bandpass[1] <= 0:
+            self.resolution_bands = None
+        else:
+            self.resolution_bands = bandpass
 
         # Job details
         self.job_key = job_key
         self.leader = None  # the job that spawned this job
         self.sub_jobs = []  # if this job had no sub jobs it should be executed
-        self.finished_run = False
+
+        # dict to keep track of job statistics
+        self.job_stats = None
 
     def copy(self):
         return copy.deepcopy(self)
+
+    def write_to_json(self, file_name):
+        d = self.__dict__.copy()
+        d.pop('sub_jobs')
+        for key, value in d.items():
+            if isinstance(value, pathlib.PosixPath):
+                d[key] = str(value)
+        with open(file_name, 'w') as fstream:
+            json.dump(d, fstream, indent=4)
+
+    def load_from_json(self):
+        pass
 
     def split_rotation_search(self, n: int):
         if len(self.sub_jobs) > 0:
@@ -208,8 +259,8 @@ class TMJob:
         if len(self.sub_jobs) == 0:
             # read the volumes, remove them and return them
             score_file, angle_file = (
-                self.output_dir.joinpath(f'scores_{self.job_key}.mrc'),
-                self.output_dir.joinpath(f'angles_{self.job_key}.mrc')
+                self.output_dir.joinpath(f'{self.tomo_id}_scores_{self.job_key}.mrc'),
+                self.output_dir.joinpath(f'{self.tomo_id}_angles_{self.job_key}.mrc')
             )
             result = (
                 np.ascontiguousarray(mrcfile.read(score_file).T),
@@ -276,23 +327,46 @@ class TMJob:
             np.ascontiguousarray(mrcfile.read(self.mask).T)
         )
 
-        # TODO apply optionally a bandpass filter to the volume
-
+        # create weighting, include missing wedge and bandpass filters
         template_wedge = None
         if self.wedge_angles is not None:
             # convolute tomo with wedge
-            tomo_wedge = create_wedge(search_volume.shape, self.wedge_angles, 1.).astype(np.float32)
+            tomo_wedge = create_wedge(
+                search_volume.shape,
+                self.wedge_angles, 1.,
+                voxel_size=self.voxel_size,
+                resolution_bands=self.resolution_bands
+            ).astype(np.float32)
+
             search_volume = np.real(np.fft.irfftn(np.fft.rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
 
-            mrcfile.write(
-                self.output_dir.joinpath(f'wedge_{self.job_key}.mrc'),
-                tomo_wedge.T,
-                voxel_size=self.voxel_size,
-                overwrite=True
-            )
+            # mrcfile.write(
+            #     self.output_dir.joinpath(f'wedge_{self.job_key}.mrc'),
+            #     tomo_wedge.T,
+            #     voxel_size=self.voxel_size,
+            #     overwrite=True
+            # )
+            # mrcfile.write(
+            #     self.output_dir.joinpath(f'tomo_filt_{self.job_key}.mrc'),
+            #     search_volume.T.copy().astype(np.float32),
+            #     voxel_size=self.voxel_size,
+            #     overwrite=True
+            # )
 
             # get template wedge
-            template_wedge = create_wedge(self.template_shape, self.wedge_angles, 1.).astype(np.float32)
+            template_wedge = create_wedge(
+                self.template_shape,
+                self.wedge_angles, 1.,
+                voxel_size=self.voxel_size,
+                resolution_bands=self.resolution_bands
+            ).astype(np.float32)
+
+            # mrcfile.write(
+            #     self.output_dir.joinpath(f'wedge_template_{self.job_key}.mrc'),
+            #     template_wedge.T,
+            #     voxel_size=self.voxel_size,
+            #     overwrite=True
+            # )
 
         # load rotation search
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
@@ -313,7 +387,7 @@ class TMJob:
         tm.run()
 
         score_volume, angle_volume = tm.plan.scores.get(), tm.plan.angles.get()
-        # stats = tm_thread.get_std_stats()
+        self.job_stats = tm.stats
         del tm
 
         if return_volumes:
@@ -321,13 +395,13 @@ class TMJob:
         else:  # otherwise write them out with job_key
             # TODO files should be written with tomogram name in it
             mrcfile.write(
-                self.output_dir.joinpath(f'scores_{self.job_key}.mrc'),
+                self.output_dir.joinpath(f'{self.tomo_id}_scores_{self.job_key}.mrc'),
                 score_volume.T,
                 voxel_size=self.voxel_size,
                 overwrite=True
             )
             mrcfile.write(
-                self.output_dir.joinpath(f'angles_{self.job_key}.mrc'),
+                self.output_dir.joinpath(f'{self.tomo_id}_angles_{self.job_key}.mrc'),
                 angle_volume.T,
                 voxel_size=self.voxel_size,
                 overwrite=True

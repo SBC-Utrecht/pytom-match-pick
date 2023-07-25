@@ -1,6 +1,15 @@
 import GPUtil
 import threading
 import time
+import numpy as np
+
+
+def hwhm_to_sigma(hwhm):
+    return hwhm / (np.sqrt(2 * np.log(2)))
+
+
+def sigma_to_hwhm(sigma):
+    return sigma * (np.sqrt(2 * np.log(2)))
 
 
 class Monitor(threading.Thread):

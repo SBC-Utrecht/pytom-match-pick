@@ -29,12 +29,15 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--voxel-spacing-angstrom', type=float, required=False,
                         help='Voxel spacing of tomogram/template in angstrom, if not provided will try to read from '
                              'the MRC files. Argument is important for bandpass filtering!')
+    parser.add_argument('--bandpass', nargs=2, type=float, required=False,
+                        help='Apply ta bandpass to the weights of the tomogram and template. Option requires two '
+                             'arguments: one for the high pass and one for low pass. 0 indicates no cutoff, i.e. '
+                             '--bandpass 0 40 will just apply a low pass filter to 40A resolution. Resolution is '
+                             'determined from the voxel spacing, so set appropriately if your MRCs are not annotated!.')
     parser.add_argument('-g', '--gpu-ids', nargs='+', type=int, required=True,
                         help='GPU indices to run the program on.')
 
     args = parser.parse_args()
-
-    print(args.gpu_ids)
 
     # check if all locations are valid
     tomogram_path = pathlib.Path(args.tomogram)
@@ -60,11 +63,17 @@ if __name__ == '__main__':
         angle_increment=args.angular_search,
         mask_is_spherical=True,
         wedge_angles=tuple([90 - abs(w) for w in args.wedge_angles]),
-        voxel_size=args.voxel_spacing_angstrom
+        voxel_size=args.voxel_spacing_angstrom,
+        bandpass=args.bandpass
     )
 
     score_volume, angle_volume = run_job_parallel(job, tuple(args.volume_split), args.gpu_ids)
 
     # set the appropriate headers when writing!
-    mrcfile.write(destination.joinpath('scores.mrc'), score_volume.T, voxel_size=job.voxel_size, overwrite=True)
-    mrcfile.write(destination.joinpath('angles.mrc'), angle_volume.T, voxel_size=job.voxel_size, overwrite=True)
+    mrcfile.write(destination.joinpath(f'{job.tomo_id}_scores.mrc'), score_volume.T, voxel_size=job.voxel_size,
+                  overwrite=True)
+    mrcfile.write(destination.joinpath(f'{job.tomo_id}_angles.mrc'), angle_volume.T, voxel_size=job.voxel_size,
+                  overwrite=True)
+
+    # write the job as well
+    job.write_to_json(destination.joinpath(f'{job.tomo_id}_job.json'))

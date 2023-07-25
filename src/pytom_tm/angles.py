@@ -1,4 +1,5 @@
 from importlib_resources import files
+from scipy.spatial.transform import Rotation as R
 
 
 ANGLE_LIST_DIR = files('pytom_tm.angle_lists')
@@ -26,5 +27,6 @@ def load_angle_list(file_name):
     return [tuple(map(float, x.strip().split(' '))) for x in lines]
 
 
-def convert(angle, order_in='zxz', order_out='zyz'):
-    pass
+def convert_euler(angles, order_in='ZXZ', order_out='ZXZ', degrees_in=True, degrees_out=True):
+    r = R.from_euler(order_in, angles, degrees=degrees_in)
+    return r.as_euler(order_out, degrees=degrees_out)

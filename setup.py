@@ -31,10 +31,10 @@ setuptools.setup(
     # include_package_data=True,
     test_suite='tests',
     scripts=[
-        'src/bin/create_mask.py',
-        'src/bin/create_template.py',
-        'src/bin/match_template.py',
-        'src/bin/extract_candidates.py'
+        'src/bin/pytom_create_mask.py',
+        'src/bin/pytom_create_template.py',
+        'src/bin/pytom_match_template.py',
+        'src/bin/pytom_extract_candidates.py'
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

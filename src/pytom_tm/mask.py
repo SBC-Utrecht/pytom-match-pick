@@ -8,9 +8,10 @@ def spherical_mask(
         box_size: int,
         radius: float,
         smooth: Optional[float] = None,
-        cutoff_sd: float = 3.
+        cutoff_sd: float = 3.,
+        center: Optional[float] = None
 ) -> npt.NDArray[float]:
-    return ellipsoidal_mask(box_size, radius, radius, radius, smooth, cutoff_sd=cutoff_sd)
+    return ellipsoidal_mask(box_size, radius, radius, radius, smooth, cutoff_sd=cutoff_sd, center=center)
 
 
 def ellipsoidal_mask(
@@ -19,7 +20,8 @@ def ellipsoidal_mask(
         minor1: float,
         minor2: float,
         smooth: Optional[float] = None,
-        cutoff_sd: float = 3.
+        cutoff_sd: float = 3.,
+        center: Optional[float] = None
 ) -> npt.NDArray[float]:
     """
     Center of the ellipsoid or sphere is (box_size - 1) / 2 => important for rotation center in template matching.
@@ -29,14 +31,16 @@ def ellipsoidal_mask(
     @param minor2: radius of ellipsoid in z
     @param smooth: sigma (float relative to number of pixels) of gaussian falloff of mask
     @param cutoff_sd: how many standard deviations of the falloff to include, default of 3 is a good choice
+    @param center: alternative center for the mask, default is (size - 1) / 2
     @return: volume with the mask
     """
     if not all([box_size > 0, major > 0, minor1 > 0, minor2 > 0]):
         raise ValueError('Invalid input for mask creation: box_size or radii are <= 0')
 
-    x, y, z = (np.arange(box_size) - (box_size - 1) / 2,
-               np.arange(box_size) - (box_size - 1) / 2,
-               np.arange(box_size) - (box_size - 1) / 2)
+    center = (box_size - 1) / 2 if center is None else center
+    x, y, z = (np.arange(box_size) - center,
+               np.arange(box_size) - center,
+               np.arange(box_size) - center)
 
     # use broadcasting
     r = np.sqrt(((x / major)**2)[:, np.newaxis, np.newaxis] +

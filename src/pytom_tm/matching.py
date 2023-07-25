@@ -68,12 +68,7 @@ class TemplateMatchingGPU:
         self.mask_is_spherical = mask_is_spherical  # whether mask is spherical
         self.angle_list = angle_list
         self.angle_ids = angle_ids
-
-        self.update_results = cp.ElementwiseKernel(
-            'float32 scores, float32 ccc_map, float32 angle_id',
-            'float32 out1, float32 out2',
-            'if (scores < ccc_map) {out1 = ccc_map; out2 = angle_id;}',
-            'update_results')
+        self.stats = {'search_space': 0, 'variance_sum': 0., 'std': 0.}
 
         self.plan = TemplateMatchingPlan(volume, template, mask, device_id, wedge=wedge)
 
@@ -160,13 +155,19 @@ class TemplateMatchingGPU:
             )
 
             # Update the scores and angle_lists
-            self.update_results(
+            update_results_kernel(
                 self.plan.scores,
                 self.plan.ccc_map,
                 angle_id,
                 self.plan.scores,
                 self.plan.angles
             )
+
+            self.stats['variance_sum'] += (square_sum_kernel(self.plan.ccc_map) / self.plan.volume.size)
+
+        self.stats['search_space'] = int(self.plan.volume.size * len(self.angle_ids))
+        self.stats['variance_sum'] = float(self.stats['variance_sum'])
+        self.stats['std'] = float(cp.sqrt(self.stats['variance_sum'] / len(self.angle_ids)))
 
 
 def std_under_mask_convolution(volume, padded_mask, mask_weight, volume_rft=None):
@@ -189,3 +190,23 @@ def mean_under_mask_convolution(volume_rft, mask, mask_weight):
     return irfftn(
         volume_rft * rfftn(mask).conj(), s=mask.shape
     ).real / mask_weight
+
+
+update_results_kernel = cp.ElementwiseKernel(
+    'float32 scores, float32 ccc_map, float32 angle_id',
+    'float32 out1, float32 out2',
+    'if (scores < ccc_map) {out1 = ccc_map; out2 = angle_id;}',
+    'update_results'
+)
+
+
+# mean is assumed to be 0 which makes this operation a lot faster
+square_sum_kernel = cp.ReductionKernel(
+    'T x',  # input params
+    'T y',  # output params
+    'x * x',  # map
+    'a + b',  # reduce
+    'y = a',  # post-reduction map
+    '0',  # identity value
+    'variance'  # kernel name
+)
