@@ -63,7 +63,7 @@ def run_job_parallel(
     elif len(jobs) >= len(gpu_ids):
 
         # map the pool onto all the subjobs
-        with mp.Pool(len(gpu_ids)) as pool:
+        with mp.Pool(len(gpu_ids)) as pool:  # TODO need to prevent new job starting on an already used GPU
             pool.starmap(start_single_job, zip(jobs, cycle(gpu_ids)))
 
         # finally merge the jobs
