@@ -180,6 +180,8 @@ def _create_asymmetric_wedge(
     @param smooth: smoothing around wedge object in number of pixels
     @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
+    raise NotImplementedError('Asymmetric wedge needs to be fixed')
+
     size_x, size_y, size_z = shape
     angle1, angle2 = wedge_angles
     wedge = np.zeros((size_x, size_y, size_z // 2 + 1))
@@ -212,3 +214,7 @@ def _create_asymmetric_wedge(
     wedge[r > cut_off_radius] = 0
 
     return np.fft.ifftshift(wedge, axes=(0, 1))
+
+
+def ctf():
+    raise NotImplementedError()

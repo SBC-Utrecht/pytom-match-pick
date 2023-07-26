@@ -10,7 +10,7 @@ except RuntimeError:
     pass
 
 
-def start_single_job(job: TMJob, gpu_id: int) -> None:  # function for starting each process
+def start_single_job(job: TMJob, gpu_id: int) -> dict:  # function for starting each process
     print('{}: got assigned GPU {}'.format(mp.current_process().ident, gpu_id))
     return job.start_job(gpu_id, return_volumes=False)
 
@@ -19,10 +19,10 @@ def run_job_parallel(
         main_job: TMJob, volume_splits: tuple[int, int, int], gpu_ids: list[int, ...]
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
     """
-    :param main_job: a TMJob object from pytom_tm that contains all data for a search
-    :param volume_splits: tuple of len 3 with splits in x, y, and z
-    :param gpu_ids: list of gpu indices available for the job
-    :return: the volumes with the LCCmax and angle ids
+    @param main_job: a TMJob object from pytom_tm that contains all data for a search
+    @param volume_splits: tuple of len 3 with splits in x, y, and z
+    @param gpu_ids: list of gpu indices available for the job
+    @return: the volumes with the LCCmax and angle ids
     """
 
     n_pieces = reduce(lambda x, y: x * y, volume_splits)
@@ -66,7 +66,7 @@ def run_job_parallel(
         with mp.Pool(len(gpu_ids)) as pool:  # TODO need to prevent new job starting on an already used GPU
             results = pool.starmap(start_single_job, zip(jobs, cycle(gpu_ids)))
 
-        # finally merge the jobs
+        # merge split jobs; pass the stats from the sub job to annotate them in main_job
         score_volume, angle_volume = main_job.merge_sub_jobs(stats=results)
 
     else:

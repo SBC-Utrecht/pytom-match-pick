@@ -6,7 +6,7 @@ import numpy.typing as npt
 import mrcfile
 import json
 from operator import attrgetter
-from typing import Optional
+from typing import Optional, Union
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import create_wedge
@@ -315,7 +315,12 @@ class TMJob:
                 ] = sub_angles
         return scores, angles
 
-    def start_job(self, gpu_id: int, return_volumes: bool = False):
+    def start_job(
+            self,
+            gpu_id: int,
+            return_volumes: bool = False
+    ) -> Union[tuple[npt.NDArray[float], npt.NDArray[float]], dict]:
+
         # load the (sub)volume
         search_volume = np.ascontiguousarray(mrcfile.read(self.tomogram).T)[
             self.search_origin[0]: self.search_origin[0] + self.search_size[0],
