@@ -8,7 +8,7 @@ import json
 from operator import attrgetter
 from typing import Optional, Union
 from functools import reduce
-from scipy.fft import next_fast_len
+from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import create_wedge
@@ -352,7 +352,7 @@ class TMJob:
                 resolution_bands=self.resolution_bands
             ).astype(np.float32)
 
-            search_volume = np.real(np.fft.irfftn(np.fft.rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
+            search_volume = np.real(irfftn(rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
 
             # get template wedge
             template_wedge = create_wedge(
