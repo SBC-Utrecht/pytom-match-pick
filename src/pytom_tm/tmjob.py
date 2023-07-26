@@ -220,7 +220,7 @@ class TMJob:
             size = tuple([end[j] - start[j] for j in range(len(start))])
 
             # for reassembling the result
-            whole_start = list(start[:])  # whole_start and sub_start should also be job attributes
+            whole_start = [0, ] * 3  # whole_start and sub_start should also be job attributes
             sub_start = [0, ] * 3
             sub_step = list(split_size)
             if start[0] != self.search_origin[0]:
@@ -255,7 +255,7 @@ class TMJob:
 
         return self.sub_jobs
 
-    def merge_sub_jobs(self) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    def merge_sub_jobs(self, stats: Optional[list[dict]] = None) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
         if len(self.sub_jobs) == 0:
             # read the volumes, remove them and return them
             score_file, angle_file = (
@@ -269,9 +269,13 @@ class TMJob:
             (score_file.unlink(), angle_file.unlink())
             return result
 
-        is_subvolume_split = np.all(np.array([x.start_slice for x in self.sub_jobs]) == 0)
+        if stats is not None:
+            search_space = reduce(lambda x, y: x * y, self.search_size) * self.n_rotations
+            variance = sum([s['variance'] for s in stats]) / len(stats)
+            std = np.sqrt(variance)
+            self.job_stats = {'search_space': search_space, 'variance': variance, 'std': std}
 
-        # print(f'Is job split into sub-volumes? : {is_subvolume_split}')
+        is_subvolume_split = np.all(np.array([x.start_slice for x in self.sub_jobs]) == 0)
 
         score_volumes, angle_volumes = [], []
         for x in self.sub_jobs:
@@ -290,7 +294,6 @@ class TMJob:
                 np.zeros(self.search_size, dtype=np.float32)
             )
             for job, s, a in zip(self.sub_jobs, score_volumes, angle_volumes):
-
                 sub_scores = s[
                              job.sub_start[0]: job.sub_start[0] + job.sub_step[0],
                              job.sub_start[1]: job.sub_start[1] + job.sub_step[1],
@@ -299,7 +302,6 @@ class TMJob:
                              job.sub_start[0]: job.sub_start[0] + job.sub_step[0],
                              job.sub_start[1]: job.sub_start[1] + job.sub_step[1],
                              job.sub_start[2]: job.sub_start[2] + job.sub_step[2]]
-
                 # Then the corrected sub part needs to be placed back into the full volume
                 scores[
                     job.whole_start[0]: job.whole_start[0] + sub_scores.shape[0],
@@ -340,19 +342,6 @@ class TMJob:
 
             search_volume = np.real(np.fft.irfftn(np.fft.rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
 
-            # mrcfile.write(
-            #     self.output_dir.joinpath(f'wedge_{self.job_key}.mrc'),
-            #     tomo_wedge.T,
-            #     voxel_size=self.voxel_size,
-            #     overwrite=True
-            # )
-            # mrcfile.write(
-            #     self.output_dir.joinpath(f'tomo_filt_{self.job_key}.mrc'),
-            #     search_volume.T.copy().astype(np.float32),
-            #     voxel_size=self.voxel_size,
-            #     overwrite=True
-            # )
-
             # get template wedge
             template_wedge = create_wedge(
                 self.template_shape,
@@ -361,16 +350,11 @@ class TMJob:
                 resolution_bands=self.resolution_bands
             ).astype(np.float32)
 
-            # mrcfile.write(
-            #     self.output_dir.joinpath(f'wedge_template_{self.job_key}.mrc'),
-            #     template_wedge.T,
-            #     voxel_size=self.voxel_size,
-            #     overwrite=True
-            # )
-
         # load rotation search
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
         angle_list = load_angle_list(self.rotation_file)[slice(self.start_slice, self.n_rotations, self.steps_slice)]
+
+        # TODO calculate fast FFT dimensions for the tomogram and place in larger box
 
         tm = TemplateMatchingGPU(
             job_id=self.job_key,
@@ -383,17 +367,15 @@ class TMJob:
             mask_is_spherical=self.mask_is_spherical,
             wedge=template_wedge
         )
-
         tm.run()
 
-        score_volume, angle_volume = tm.plan.scores.get(), tm.plan.angles.get()
-        self.job_stats = tm.stats
-        del tm
+        # get the results
+        score_volume, angle_volume, self.job_stats = tm.plan.scores.get(), tm.plan.angles.get(), tm.stats
+        del tm  # delete to free gpu memory
 
         if return_volumes:
             return score_volume, angle_volume
         else:  # otherwise write them out with job_key
-            # TODO files should be written with tomogram name in it
             mrcfile.write(
                 self.output_dir.joinpath(f'{self.tomo_id}_scores_{self.job_key}.mrc'),
                 score_volume.T,
@@ -406,3 +388,4 @@ class TMJob:
                 voxel_size=self.voxel_size,
                 overwrite=True
             )
+            return self.job_stats

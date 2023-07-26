@@ -12,7 +12,7 @@ except RuntimeError:
 
 def start_single_job(job: TMJob, gpu_id: int) -> None:  # function for starting each process
     print('{}: got assigned GPU {}'.format(mp.current_process().ident, gpu_id))
-    job.start_job(gpu_id, return_volumes=False)
+    return job.start_job(gpu_id, return_volumes=False)
 
 
 def run_job_parallel(
@@ -64,10 +64,10 @@ def run_job_parallel(
 
         # map the pool onto all the subjobs
         with mp.Pool(len(gpu_ids)) as pool:  # TODO need to prevent new job starting on an already used GPU
-            pool.starmap(start_single_job, zip(jobs, cycle(gpu_ids)))
+            results = pool.starmap(start_single_job, zip(jobs, cycle(gpu_ids)))
 
         # finally merge the jobs
-        score_volume, angle_volume = main_job.merge_sub_jobs()
+        score_volume, angle_volume = main_job.merge_sub_jobs(stats=results)
 
     else:
         ValueError('For some reason there are more gpu_ids than split job, this should never happen.')

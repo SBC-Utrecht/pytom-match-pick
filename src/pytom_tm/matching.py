@@ -68,7 +68,7 @@ class TemplateMatchingGPU:
         self.mask_is_spherical = mask_is_spherical  # whether mask is spherical
         self.angle_list = angle_list
         self.angle_ids = angle_ids
-        self.stats = {'search_space': 0, 'variance_sum': 0., 'std': 0.}
+        self.stats = {'search_space': 0, 'variance': 0., 'std': 0.}
 
         self.plan = TemplateMatchingPlan(volume, template, mask, device_id, wedge=wedge)
 
@@ -163,11 +163,11 @@ class TemplateMatchingGPU:
                 self.plan.angles
             )
 
-            self.stats['variance_sum'] += (square_sum_kernel(self.plan.ccc_map) / self.plan.volume.size)
+            self.stats['variance'] += (square_sum_kernel(self.plan.ccc_map) / self.plan.volume.size)
 
         self.stats['search_space'] = int(self.plan.volume.size * len(self.angle_ids))
-        self.stats['variance_sum'] = float(self.stats['variance_sum'])
-        self.stats['std'] = float(cp.sqrt(self.stats['variance_sum'] / len(self.angle_ids)))
+        self.stats['variance'] = float(self.stats['variance'] / len(self.angle_ids))
+        self.stats['std'] = float(cp.sqrt(self.stats['variance']))
 
 
 def std_under_mask_convolution(volume, padded_mask, mask_weight, volume_rft=None):

@@ -16,21 +16,28 @@ if __name__ == '__main__':
                         help='Template MRC file.')
     parser.add_argument('-m', '--mask', type=str, required=True,
                         help='Mask MRC file.')
+    parser.add_argument('-d', '--destination', type=str, required=False, default='./',
+                        help='Folder to store the files produced by template matching.')
     parser.add_argument('-w', '--wedge-angles', nargs=2, type=float, required=True,
-                        help='Missing wedge angles for a tilt series from +/- 60: --wedge-angles -60 60')
+                        help='Missing wedge angles for a tilt series collected from +/- 60: --wedge-angles -60 60')
     parser.add_argument('--angular-search', type=str, required=True,
                         help='Options are: [7.00, 35.76, 19.95, 90.00, 18.00, '
                              '12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00]')
     parser.add_argument('-s', '--volume-split', nargs=3, type=int, required=False, default=[1, 1, 1],
                         help='Split the volume into smaller parts for the search, can be relevant if the volume does '
-                             'not fit into GPU memory.')
-    parser.add_argument('-d', '--destination', type=str, required=False, default='./',
-                        help='Folder to store the files produced by template matching.')
+                             'not fit into GPU memory. Format is x y z, e.g. --volume-split 1 2 1')
+    parser.add_argument('--search-origin', nargs=3, type=int, required=False,
+                        help='Limit the search area of the tomogram, in combination with --search-size. '
+                             'Format is x y z, e.g. --search-origin 0 0 100 will skip first 100 voxels in z.')
+    parser.add_argument('--search-size', nargs=3, type=int, required=False,
+                        help='Limit the search area of the tomogram, in combination with --search-origin. '
+                             'Format is x y z, e.g. --search-size 0 0 100 will search only the first 100 voxels from '
+                             'the origin in z.')
     parser.add_argument('-v', '--voxel-spacing-angstrom', type=float, required=False,
                         help='Voxel spacing of tomogram/template in angstrom, if not provided will try to read from '
                              'the MRC files. Argument is important for bandpass filtering!')
     parser.add_argument('--bandpass', nargs=2, type=float, required=False,
-                        help='Apply ta bandpass to the weights of the tomogram and template. Option requires two '
+                        help='Apply a bandpass to the tomogram and template. Option requires two '
                              'arguments: one for the high pass and one for low pass. 0 indicates no cutoff, i.e. '
                              '--bandpass 0 40 will just apply a low pass filter to 40A resolution. Resolution is '
                              'determined from the voxel spacing, so set appropriately if your MRCs are not annotated!.')
@@ -63,6 +70,8 @@ if __name__ == '__main__':
         angle_increment=args.angular_search,
         mask_is_spherical=True,
         wedge_angles=tuple([90 - abs(w) for w in args.wedge_angles]),
+        search_origin=args.search_origin,
+        search_size=args.search_size,
         voxel_size=args.voxel_spacing_angstrom,
         bandpass=args.bandpass
     )

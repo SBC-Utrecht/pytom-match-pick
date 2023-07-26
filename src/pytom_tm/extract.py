@@ -73,7 +73,7 @@ def extract_particles(
             rotation[0],  # AngleRot
             rotation[1],  # AngleTilt
             rotation[2],  # AnglePsi
-            lcc_max,  # LCCmax
+            # lcc_max,  # LCCmax
             pixel_size,  # DetectorPixelSize
             tomogram_id,  # MicrographName
             10000.0,  # Magnification
@@ -95,7 +95,7 @@ def extract_particles(
         'rlnAngleRot',
         'rlnAngleTilt',
         'rlnAnglePsi',
-        'ptmLCCmax',
+        # 'ptmLCCmax',
         'rlnDetectorPixelSize',
         'rlnMicrographName',
         'rlnMagnification',
