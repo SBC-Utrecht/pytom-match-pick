@@ -7,10 +7,11 @@ import mrcfile
 import json
 from operator import attrgetter
 from typing import Optional, Union
+from functools import reduce
+from scipy.fft import next_fast_len
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import create_wedge
-from functools import reduce
 
 
 def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
@@ -321,8 +322,14 @@ class TMJob:
             return_volumes: bool = False
     ) -> Union[tuple[npt.NDArray[float], npt.NDArray[float]], dict]:
 
+        # next fast fft len
+        print('Next fast fft shape: ', tuple([next_fast_len(s, real=True) for s in self.search_size]))
+        search_volume = np.zeros(tuple([next_fast_len(s, real=True) for s in self.search_size]), dtype=np.float32)
+
         # load the (sub)volume
-        search_volume = np.ascontiguousarray(mrcfile.read(self.tomogram).T)[
+        search_volume[:self.search_size[0],
+                      :self.search_size[1],
+                      :self.search_size[2]] = np.ascontiguousarray(mrcfile.read(self.tomogram).T)[
             self.search_origin[0]: self.search_origin[0] + self.search_size[0],
             self.search_origin[1]: self.search_origin[1] + self.search_size[1],
             self.search_origin[2]: self.search_origin[2] + self.search_size[2]
@@ -359,8 +366,6 @@ class TMJob:
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
         angle_list = load_angle_list(self.rotation_file)[slice(self.start_slice, self.n_rotations, self.steps_slice)]
 
-        # TODO calculate fast FFT dimensions for the tomogram and place in larger box
-
         tm = TemplateMatchingGPU(
             job_id=self.job_key,
             device_id=gpu_id,
@@ -375,7 +380,9 @@ class TMJob:
         tm.run()
 
         # get the results
-        score_volume, angle_volume, self.job_stats = tm.plan.scores.get(), tm.plan.angles.get(), tm.stats
+        score_volume = tm.plan.scores[:self.search_size[0], :self.search_size[1], :self.search_size[2]].get()
+        angle_volume = tm.plan.angles[:self.search_size[0], :self.search_size[1], :self.search_size[2]].get()
+        self.job_stats = tm.stats
         del tm  # delete to free gpu memory
 
         if return_volumes:
