@@ -170,7 +170,7 @@ class TemplateMatchingGPU:
         self.stats['std'] = float(cp.sqrt(self.stats['variance']))
 
 
-def std_under_mask_convolution(volume, padded_mask, mask_weight, volume_rft=None):
+def std_under_mask_convolution(volume, padded_mask, mask_weight, volume_rft=None) -> cpt.NDArray[float]:
     """
     std convolution of volume and mask
     """
@@ -183,7 +183,7 @@ def std_under_mask_convolution(volume, padded_mask, mask_weight, volume_rft=None
     return cp.sqrt(std_v)
 
 
-def mean_under_mask_convolution(volume_rft, mask, mask_weight):
+def mean_under_mask_convolution(volume_rft -> cpt.NDArray[complex], mask, mask_weight) -> cpt.NDArray[float]:
     """
     mean convolution of volume and mask
     """
