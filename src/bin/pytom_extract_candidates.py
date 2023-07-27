@@ -9,7 +9,7 @@ from pytom_tm.extract import extract_particles
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Run template matching. -- Marten Chaillet (@McHaillet)')
+    parser = argparse.ArgumentParser(description='Run candidate extraction. -- Marten Chaillet (@McHaillet)')
     parser.add_argument('-j', '--job-file', type=str, required=True,
                         help='JSON file that contain all data on the template matching job, written out by '
                              'pytom_match_template.py in the destination path.')

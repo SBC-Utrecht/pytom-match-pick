@@ -1,14 +1,13 @@
 import numpy as np
 import numpy.typing as npt
 from typing import Optional
-# TODO create mask on CPU?
 
 
 def spherical_mask(
         box_size: int,
         radius: float,
         smooth: Optional[float] = None,
-        cutoff_sd: float = 3.,
+        cutoff_sd: int = 3,
         center: Optional[float] = None
 ) -> npt.NDArray[float]:
     return ellipsoidal_mask(box_size, radius, radius, radius, smooth, cutoff_sd=cutoff_sd, center=center)
@@ -20,7 +19,7 @@ def ellipsoidal_mask(
         minor1: float,
         minor2: float,
         smooth: Optional[float] = None,
-        cutoff_sd: float = 3.,
+        cutoff_sd: int = 3,
         center: Optional[float] = None
 ) -> npt.NDArray[float]:
     """
