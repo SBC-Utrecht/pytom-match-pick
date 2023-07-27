@@ -2,21 +2,23 @@
 
 import argparse
 import pathlib
-import sys
 import mrcfile
+from pytom_tm.io import LargerThanZero
 from pytom_tm.tmjob import TMJob
 from pytom_tm.parallel import run_job_parallel
+from pytom_tm.io import CheckFileExists, CheckDirExists
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Run template matching. -- Marten Chaillet (@McHaillet)')
-    parser.add_argument('-t', '--template', type=str, required=True,
+    parser.add_argument('-t', '--template', type=pathlib.Path, required=True, action=CheckFileExists,
                         help='Template; MRC file.')
-    parser.add_argument('-m', '--mask', type=str, required=True,
+    parser.add_argument('-m', '--mask', type=pathlib.Path, required=True,  action=CheckFileExists,
                         help='Mask with same box size as template; MRC file.')
-    parser.add_argument('-v', '--tomogram', type=str, required=True,
+    parser.add_argument('-v', '--tomogram', type=pathlib.Path, required=True,  action=CheckFileExists,
                         help='Tomographic volume; MRC file.')
-    parser.add_argument('-d', '--destination', type=str, required=False, default='./',
+    parser.add_argument('-d', '--destination', type=pathlib.Path, required=False, default='./',
+                        action=CheckDirExists,
                         help='Folder to store the files produced by template matching.')
     parser.add_argument('-w', '--wedge-angles', nargs=2, type=float, required=True,
                         help='Missing wedge angles for a tilt series collected from +/- 60: --wedge-angles -60 60')
@@ -33,56 +35,49 @@ if __name__ == '__main__':
                         help='Limit the search area of the tomogram, in combination with --search-origin. '
                              'Format is x y z, e.g. --search-size 0 0 100 will search only the first 100 voxels from '
                              'the origin in z.')
-    parser.add_argument('-v', '--voxel-spacing-angstrom', type=float, required=False,
+    parser.add_argument('-v', '--voxel-size-angstrom', type=float,
+                        required=False, action=LargerThanZero,
                         help='Voxel spacing of tomogram/template in angstrom, if not provided will try to read from '
                              'the MRC files. Argument is important for bandpass filtering!')
-    parser.add_argument('--bandpass', nargs=2, type=float, required=False,
-                        help='Apply a bandpass to the tomogram and template. Option requires two '
-                             'arguments: one for the high pass and one for low pass. 0 indicates no cutoff, i.e. '
-                             '--bandpass 0 40 will just apply a low pass filter to 40A resolution. Resolution is '
-                             'determined from the voxel spacing, so set appropriately if your MRCs are not annotated!.')
+    parser.add_argument('--lowpass', type=float, required=False, action=LargerThanZero,
+                        help='Apply a lowpass filter to the tomogram and template. Generally desired if the template '
+                             'was already filtered to a certain resolution. Value is the resolution in A.')
+    parser.add_argument('--highpass', type=float, required=False, action=LargerThanZero,
+                        help='Apply a highpass filter to the tomogram and template to reduce correlation with large '
+                             'low frequency variations. Value is a resolution in A, e.g. 500 could be appropriate as '
+                             'the CTF is often incorrectly modelled up to 50nm.')
     parser.add_argument('-g', '--gpu-ids', nargs='+', type=int, required=True,
                         help='GPU indices to run the program on.')
 
     args = parser.parse_args()
 
-    # check if all locations are valid
-    tomogram_path = pathlib.Path(args.tomogram)
-    template_path = pathlib.Path(args.template)
-    mask_path = pathlib.Path(args.mask)
-
-    if not (tomogram_path.exists() and template_path.exists() and mask_path.exists()):
-        print('One of provided files does not exist. Exiting...')
-        sys.exit(0)
-
-    destination = pathlib.Path(args.destination)
-
-    if not (destination.exists() and destination.is_dir()):
-        print('Output destination for file writing is invalid. Exiting...')
-        sys.exit(0)
-
     job = TMJob(
         job_key='0',
-        tomogram=tomogram_path,
-        template=template_path,
-        mask=mask_path,
-        output_dir=destination,
+        tomogram=args.tomogram,
+        template=args.template,
+        mask=args.mask,
+        output_dir=args.destination,
         angle_increment=args.angular_search,
         mask_is_spherical=True,
         wedge_angles=tuple([90 - abs(w) for w in args.wedge_angles]),
         search_origin=args.search_origin,
         search_size=args.search_size,
         voxel_size=args.voxel_spacing_angstrom,
-        bandpass=args.bandpass
+        lowpass=args.lowpass,
+        highpass=args.highpass
     )
 
     score_volume, angle_volume = run_job_parallel(job, tuple(args.volume_split), args.gpu_ids)
 
     # set the appropriate headers when writing!
-    mrcfile.write(destination.joinpath(f'{job.tomo_id}_scores.mrc'), score_volume.T, voxel_size=job.voxel_size,
+    mrcfile.write(args.destination.joinpath(f'{job.tomo_id}_scores.mrc'), score_volume.T, voxel_size=job.voxel_size,
                   overwrite=True)
-    mrcfile.write(destination.joinpath(f'{job.tomo_id}_angles.mrc'), angle_volume.T, voxel_size=job.voxel_size,
+    mrcfile.write(args.destination.joinpath(f'{job.tomo_id}_angles.mrc'), angle_volume.T, voxel_size=job.voxel_size,
                   overwrite=True)
 
     # write the job as well
-    job.write_to_json(destination.joinpath(f'{job.tomo_id}_job.json'))
+    job.write_to_json(args.destination.joinpath(f'{job.tomo_id}_job.json'))
+
+
+if __name__ == '__main__':
+    main()

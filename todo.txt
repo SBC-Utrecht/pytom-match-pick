@@ -7,7 +7,7 @@
 - update match template start indices of search in x y and z
 - estimate true positives and RUC script
 - merge multiple starfiles together to one large file
-- structured missing wedge from .tlt or .rawtlt file
 - update docstrings
 (- option to provide extraction mask)
 (- gold marker removal?)
+(- structured missing wedge from .tlt or .rawtlt file)

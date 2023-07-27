@@ -55,7 +55,8 @@ def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resol
 def create_gaussian_bandpass(
         shape: tuple[int, int, int],
         spacing: float,
-        resolution_bands: Optional[list[float, float]]
+        lowpass: Optional[float] = None,
+        highpass: Optional[float] = None
 ) -> npt.NDArray:
     """
     Resolution bands presents the resolution shells where information needs to be maintained. For example the bands
@@ -63,22 +64,23 @@ def create_gaussian_bandpass(
     quite some low spatial frequencies will be cut by it.
     @param shape: shape of output, will return fourier reduced shape
     @param spacing: voxel size of input shape in real space
-    @param resolution_bands: resolution bands to filter towards
+    @param lowpass:
+    @param highpass:
     @return: a volume with a gaussian bandapss
     """
-    if resolution_bands[0] <= 0 < resolution_bands[1]:
-        return create_gaussian_low_pass(shape, spacing, resolution_bands[1])
-    elif resolution_bands[0] > 0 >= resolution_bands[1]:
-        return create_gaussian_high_pass(shape, spacing, resolution_bands[0])
-    elif not resolution_bands[0] > resolution_bands[1]:
+    if (highpass is None and lowpass is None) or (lowpass >= highpass):
         raise ValueError('Second value of bandpass needs to be a high resolution shell.')
+    elif highpass is None:
+        return create_gaussian_low_pass(shape, spacing, lowpass)
+    elif lowpass is None:
+        return create_gaussian_high_pass(shape, spacing, highpass)
     else:
         q = radial_reduced_grid(shape)
 
         # 2 * spacing / resolution is cutoff in fourier space
         # then convert cutoff (hwhm) to sigma for gaussian function
-        sigma_high_pass = hwhm_to_sigma(2 * spacing / resolution_bands[0])
-        sigma_low_pass = hwhm_to_sigma(2 * spacing / resolution_bands[1])
+        sigma_high_pass = hwhm_to_sigma(2 * spacing / highpass)
+        sigma_low_pass = hwhm_to_sigma(2 * spacing / lowpass)
 
         return np.fft.ifftshift(
             (1 - np.exp(-q ** 2 / (2 * sigma_high_pass ** 2))) * np.exp(-q ** 2 / (2 * sigma_low_pass ** 2)),
@@ -92,7 +94,8 @@ def create_wedge(
         cut_off_radius: float,
         angles_in_degrees: bool = True,
         voxel_size: float = 1.,
-        resolution_bands: Optional[list[float, float]] = None
+        lowpass: Optional[float] = None,
+        highpass: Optional[float] = None
 ) -> npt.NDArray[float]:
     """
     This function returns a wedge volume that is either symmetric or asymmetric depending on wedge angle input.
@@ -101,7 +104,8 @@ def create_wedge(
     @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
     @param angles_in_degrees: whether angles are in degrees or radians units
     @param voxel_size:
-    @param resolution_bands:
+    @param lowpass:
+    @param highpass:
     @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
     if cut_off_radius > 1:
@@ -120,8 +124,8 @@ def create_wedge(
     else:
         wedge = _create_asymmetric_wedge(shape, wedge_angles_rad, cut_off_radius).astype(np.float32)
 
-    if resolution_bands is not None:
-        return wedge * create_gaussian_bandpass(shape, voxel_size, resolution_bands).astype(np.float32)
+    if not (lowpass is None and highpass is None):
+        return wedge * create_gaussian_bandpass(shape, voxel_size, lowpass, highpass).astype(np.float32)
     else:
         return wedge
 

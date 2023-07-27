@@ -5,24 +5,13 @@ import numpy as np
 import numpy.typing as npt
 import mrcfile
 import json
-from operator import attrgetter
 from typing import Optional, Union
 from functools import reduce
 from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import create_wedge
-
-
-def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
-    meta_data = {}
-    with mrcfile.mmap(file_name) as mrc:
-        meta_data['shape'] = tuple(map(int, attrgetter('nx', 'ny', 'nz')(mrc.header)))
-        if not all([mrc.voxel_size.x == s for s in attrgetter('x', 'y', 'z')(mrc.voxel_size)]):
-            raise ValueError('Input tomogram voxel spacing is not identical in each dimension!')
-        else:
-            meta_data['voxel_size'] = float(mrc.voxel_size.x)
-    return meta_data
+from pytom_tm.io import read_mrc_meta_data
 
 
 def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
@@ -40,7 +29,8 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         search_origin=data['search_origin'],
         search_size=data['search_size'],
         voxel_size=data['voxel_size'],
-        bandpass=data['resolution_bands']
+        lowpass=data['lowpass'],
+        highpass=data['highpass']
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
@@ -73,7 +63,8 @@ class TMJob:
             search_origin: Optional[tuple[int, int, int]] = None,
             search_size: Optional[tuple[int, int, int]] = None,
             voxel_size: Optional[float] = None,
-            bandpass: Optional[list[float, float]] = None
+            lowpass: Optional[float] = None,
+            highpass: Optional[float] = None
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -136,10 +127,8 @@ class TMJob:
         # missing wedge
         self.wedge_angles = wedge_angles
         # set the bandpass resolution shells
-        if bandpass is not None and bandpass[0] <= 0 and bandpass[1] <= 0:
-            self.resolution_bands = None
-        else:
-            self.resolution_bands = bandpass
+        self.lowpass = lowpass
+        self.highpass = highpass
 
         # Job details
         self.job_key = job_key
@@ -349,7 +338,8 @@ class TMJob:
                 search_volume.shape,
                 self.wedge_angles, 1.,
                 voxel_size=self.voxel_size,
-                resolution_bands=self.resolution_bands
+                lowpass=self.lowpass,
+                highpass=self.highpass
             ).astype(np.float32)
 
             search_volume = np.real(irfftn(rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
@@ -359,7 +349,8 @@ class TMJob:
                 self.template_shape,
                 self.wedge_angles, 1.,
                 voxel_size=self.voxel_size,
-                resolution_bands=self.resolution_bands
+                lowpass=self.lowpass,
+                highpass=self.highpass
             ).astype(np.float32)
 
         # load rotation search
