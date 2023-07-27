@@ -35,7 +35,7 @@ def main():
                         help='Limit the search area of the tomogram, in combination with --search-origin. '
                              'Format is x y z, e.g. --search-size 0 0 100 will search only the first 100 voxels from '
                              'the origin in z.')
-    parser.add_argument('-v', '--voxel-size-angstrom', type=float,
+    parser.add_argument('--voxel-size-angstrom', type=float,
                         required=False, action=LargerThanZero,
                         help='Voxel spacing of tomogram/template in angstrom, if not provided will try to read from '
                              'the MRC files. Argument is important for bandpass filtering!')
@@ -62,7 +62,7 @@ def main():
         wedge_angles=tuple([90 - abs(w) for w in args.wedge_angles]),
         search_origin=args.search_origin,
         search_size=args.search_size,
-        voxel_size=args.voxel_spacing_angstrom,
+        voxel_size=args.voxel_size_angstrom,
         lowpass=args.lowpass,
         highpass=args.highpass
     )

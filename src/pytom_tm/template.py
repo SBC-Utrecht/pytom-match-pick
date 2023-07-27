@@ -1,10 +1,12 @@
 import numpy.typing as npt
 import numpy as np
 import voltools as vt
-from scipy.ndimage import center_of_mass
+import logging
+import matplotlib.pyplot as plt
+from scipy.ndimage import center_of_mass, zoom
 from scipy.fft import rfftn, irfftn
 from typing import Optional
-from pytom_tm.weights import create_ctf, create_gaussian_low_pass
+from pytom_tm.weights import create_ctf, create_gaussian_low_pass, radial_average
 
 
 def generate_template_from_map(
@@ -25,26 +27,35 @@ def generate_template_from_map(
             mode='edge'
         )
 
-    if filter_to_resolution < (2 * output_spacing):
-        print(f'Invalid resolution specified, changing to {2 * output_spacing}A')
+    if filter_to_resolution is None or filter_to_resolution < (2 * output_spacing):
+        logging.warning(f'Invalid resolution specified, changing to {2 * output_spacing}A')
         filter_to_resolution = 2 * output_spacing
 
     # extend volume to the desired output size before applying convolutions!
     if output_box_size is not None:
+        logging.debug(f'size check {output_box_size} > {(input_map.shape[0] * input_spacing) // output_spacing}')
         if output_box_size > (input_map.shape[0] * input_spacing) // output_spacing:
             new_size = int(output_box_size * (output_spacing/input_spacing))
+            logging.debug(f'update size before downsampling should be {new_size}')
+            logging.debug(f'thus pad with this number of zeros: {[new_size - s for s in input_map.shape]}')
             input_map = np.pad(
                 input_map,
-                tuple([new_size - s for s in input_map.shape]),
+                (0, new_size - input_map.shape[0]),
                 mode='edge'
             )
         elif output_box_size < (input_map.shape[0] * input_spacing) // output_spacing:
-            print('Could not set specified box size as the map would need to be cut and this might result in '
-                  'loss of information of the structure. Please decrease the box size of the map by hand (e.g. '
-                  'chimera)')
+            logging.warning('Could not set specified box size as the map would need to be cut and this might '
+                            'result in loss of information of the structure. Please decrease the box size of the map '
+                            'by hand (e.g. chimera)')
 
-    # TODO center the volume with the center of mass
-    # vt.transform(translation=center_of_mass(input_map))
+    volume_center = np.divide(np.subtract(input_map.shape, 1), 2, dtype=np.float32)
+    input_center_of_mass = center_of_mass(input_map)
+    shift = np.subtract(volume_center, input_center_of_mass)
+    input_map = vt.transform(input_map, translation=shift, device='cpu')
+
+    logging.debug(f'center of mass, before was '
+                  f'{np.round(input_center_of_mass, 2)} '
+                  f'and after {np.round(center_of_mass(input_map), 2)}')
 
     # create ctf function and low pass gaussian if desired
     # for ctf the spacing of pixels/voxels needs to be in meters (not angstrom)
@@ -52,11 +63,15 @@ def generate_template_from_map(
     lpf = create_gaussian_low_pass(input_map.shape, input_spacing, filter_to_resolution)
 
     if display_filter:
-        raise NotImplementedError
+        q, average = radial_average(ctf * lpf)
+        fig, ax = plt.subplots()
+        ax.plot(q / len(q), average)
+        ax.set_xlabel('Fraction of Nyquist')
+        ax.set_ylabel('Contrast transfer')
+        plt.show()
 
-    return vt.transform(
+    logging.info('Convoluting volume with filter and then downsampling.')
+    return zoom(
         irfftn(rfftn(input_map) * ctf * lpf),
-        scale=output_spacing / input_spacing,
-        interpolation='filt_bspline',
-        device='cpu'
-    )
+        input_spacing / output_spacing,
+    ).astype(np.float32)

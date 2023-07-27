@@ -1,8 +1,49 @@
 import numpy as np
 import numpy.typing as npt
+import logging
 from typing import Optional
 from scipy.ndimage import zoom
 from pytom_tm._utils import hwhm_to_sigma
+
+
+constants = {
+    # Dictionary of physical constants required for calculation.
+    "c": 299792458,  # m/s
+    "el": 1.60217646e-19,  # C
+    "h": 6.62606896e-34,  # J*S
+    "h_ev": 4.13566733e-15,  # eV*s
+    "h_bar": 1.054571628e-34,  # J*s
+    "h_bar_ev": 6.58211899e-16,  # eV*s
+
+    "na": 6.02214179e23,  # mol-1
+    "re": 2.817940289458e-15,  # m
+    "rw": 2.976e-10,  # m
+
+    "me": 9.10938215e-31,  # kg
+    "me_ev": 0.510998910e6,  # ev/c^2
+    "kb": 1.3806503e-23,  # m^2 kgs^-2 K^-1
+
+    "eps0": 8.854187817620e-12  # F/m
+}
+
+
+def wavelength_ev2m(voltage: float) -> float:
+    """
+    Calculate wavelength of electrons from voltage.
+
+    @param voltage: voltage of wave in eV
+    @return: wavelength of electrons in m
+
+    @author: Marten Chaillet
+    """
+    h = constants["h"]
+    e = constants["el"]
+    m = constants["me"]
+    c = constants["c"]
+
+    _lambda = h / np.sqrt(e * voltage * m * (e / m * voltage / c ** 2 + 2))
+
+    return _lambda
 
 
 def radial_reduced_grid(shape: tuple[int, int, int]) -> npt.NDArray[float]:
@@ -68,12 +109,15 @@ def create_gaussian_bandpass(
     @param highpass:
     @return: a volume with a gaussian bandapss
     """
-    if (highpass is None and lowpass is None) or (lowpass >= highpass):
-        raise ValueError('Second value of bandpass needs to be a high resolution shell.')
-    elif highpass is None:
+    if highpass is None and lowpass is None:
+        raise ValueError('Either lowpass or highpass needs to be set for bandpass')
+
+    if highpass is None:
         return create_gaussian_low_pass(shape, spacing, lowpass)
     elif lowpass is None:
         return create_gaussian_high_pass(shape, spacing, highpass)
+    elif lowpass >= highpass:
+        raise ValueError('Second value of bandpass needs to be a high resolution shell.')
     else:
         q = radial_reduced_grid(shape)
 
@@ -140,7 +184,6 @@ def _create_symmetric_wedge(
     @param shape: real space shape of volume to which it needs to be applied
     @param wedge_angle: angle describing symmetric wedge in radians
     @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    @param smooth: smoothing around wedge object in number of pixels
     @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
     size = max(shape)
@@ -181,7 +224,6 @@ def _create_asymmetric_wedge(
     @param shape: real space shape of volume to which it needs to be applied
     @param wedge_angles: two angles describing asymmetric missing wedge in radians
     @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    @param smooth: smoothing around wedge object in number of pixels
     @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
     raise NotImplementedError('Asymmetric wedge needs to be fixed')
@@ -230,4 +272,87 @@ def create_ctf(
         cut_after_first_zero=False,
         flip_phase=False
 ) -> npt.NDArray[float]:
-    raise NotImplementedError()
+    """
+    Create a CTF in a 3D volume in reduced format.
+    @param shape: dimensions of volume to create ctf in
+    @param pixel_size: pixel size for ctf in m
+    @param defocus: defocus for ctf in m
+    @param amplitude_contrast: the fraction of amplitude contrast in the ctf
+    @param voltage: acceleration voltage of microscope in eV
+    @param spherical_aberration: spherical aberration in m
+    @param cut_after_first_zero: whether to cut ctf after first zero crossing
+    @param flip_phase: make ctf fully positive/negative to imitate ctf correction by phase flipping
+    @return: CTF in 3D
+    """
+    k = radial_reduced_grid(shape) / (2 * pixel_size)  # frequencies in fourier space
+
+    _lambda = wavelength_ev2m(voltage)
+
+    # phase contrast transfer
+    chi = np.pi * _lambda * defocus * k ** 2 - 0.5 * np.pi * spherical_aberration * _lambda ** 3 * k ** 4
+    # amplitude contrast term
+    tan_term = np.arctan(amplitude_contrast / np.sqrt(1 - amplitude_contrast ** 2))
+
+    # determine the ctf
+    ctf = - np.sin(chi + tan_term)
+
+    if cut_after_first_zero:  # find frequency to cut first zero
+        def chi_1d(q):
+            return np.pi * _lambda * defocus * q ** 2 - 0.5 * np.pi * spherical_aberration * _lambda ** 3 * q ** 4
+
+        def ctf_1d(q):
+            return - np.sin(chi_1d(q) + tan_term)
+
+        # sample 1d ctf and get indices of zero crossing
+        k_range = np.arange(max(k.shape)) / max(k.shape) / (2 * pixel_size)
+        values = ctf_1d(k_range)
+        zero_crossings = np.where(np.diff(np.sign(values)))[0]
+
+        # for overfocus the first crossing needs to be skipped, for example see: Yonekura et al. 2006 JSB
+        k_cutoff = k_range[zero_crossings[0]] if defocus > 0 else k_range[zero_crossings[1]]
+
+        # filter the ctf with the cutoff frequency
+        ctf[k > k_cutoff] = 0
+
+    if flip_phase:  # phase flip but consider whether contrast should be black/white
+        ctf = np.abs(ctf) * -1 if defocus > 0 else np.abs(ctf)
+
+    return np.fft.ifftshift(ctf, axes=(0, 1))
+
+
+def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    """
+    This calculates the radial average of an image. When used for ctf, dqe, and mtf type display, input should be in
+    Fourier space.
+
+    @param image: input to be radially averaged: in fourier reduced form and assumed to have origin in corner
+    @return: coordinates, values
+
+    @author: Marten Chaillet
+    """
+    if len(image.shape) not in [2, 3]:
+        raise ValueError('Radial average calculation only works for 2d/3d arrays')
+    if len(set(image.shape)) != 2:
+        raise ValueError('Radial average calculation only works for images with equal dimensions')
+
+    size = image.shape[0]
+    center = size // 2  # fourier space center
+    if len(image.shape) == 3:
+        xx, yy, zz = (
+            np.arange(size) - center,
+            np.arange(size) - center,
+            np.arange(size // 2 + 1))
+        r = np.sqrt(xx[:, np.newaxis, np.newaxis] ** 2 + yy[:, np.newaxis] ** 2 + zz ** 2)
+    else:
+        xx, yy = (
+            np.arange(size) - center,
+            np.arange(size // 2 + 1)
+        )
+        r = np.sqrt(xx[:, np.newaxis] ** 2 + yy ** 2)
+
+    logging.debug(f'shape of image for radial average {image.shape} and determined grid {r.shape}')
+
+    q = np.arange(size // 2)
+    mean = np.vectorize(lambda x: np.fft.fftshift(image, axes=(0, 1))[(r >= x - .5) & (r < x + .5)].mean())(q)
+
+    return q, mean

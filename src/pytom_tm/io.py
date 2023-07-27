@@ -1,12 +1,22 @@
 import pathlib
 import mrcfile
 import argparse
+import logging
 from operator import attrgetter
+
+
+class SetLogging(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if not values.upper() in ['INFO', 'DEBUG']:
+            parser.error("{0} log got an invalid option, set either to `info` or `debug` ".format(option_string))
+        else:
+            numeric_level = getattr(logging, values.upper(), None)
+            logging.basicConfig(level=numeric_level)
 
 
 class CheckDirExists(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        if not values.isdir():
+        if not values.is_dir():
             parser.error("{0} got a file path that does not exist ".format(option_string))
 
         setattr(namespace, self.dest, values)

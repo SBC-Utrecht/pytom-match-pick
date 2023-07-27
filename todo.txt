@@ -1,6 +1,6 @@
 (x) add create_mask script
 (x) extraction should have the option to set a manual cutoff
-- add create template script
+(x) add create template script
 - ensure correct mapping to gpu_ids
 - update typing of functions
 - write wrapper around mrcfile read/write to take care of tranposes

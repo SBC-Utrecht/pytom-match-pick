@@ -4,7 +4,8 @@ import argparse
 import mrcfile
 import pathlib
 import numpy as np
-from pytom_tm.io import read_mrc_meta_data, LargerThanZero, CheckFileExists
+import logging
+from pytom_tm.io import read_mrc_meta_data, LargerThanZero, CheckFileExists, SetLogging
 from pytom_tm.template import generate_template_from_map
 
 
@@ -59,6 +60,8 @@ def main():
                         help='Mirror the final template before writing to disk.')
     parser.add_argument('--display-filter', action='store_true', default=False, required=False,
                         help='Display the combined CTF and low pass filter to the user.')
+    parser.add_argument('--log', type=str, required=False, default='info', action=SetLogging,
+                        help='Can be set to `info` or `debug`')
     args = parser.parse_args()
 
     # set input voxel size and give user warning if it does not match with MRC annotation
@@ -66,7 +69,7 @@ def main():
     input_meta_data = read_mrc_meta_data(args.input_map)
     if args.input_voxel_size_angstrom is not None:
         if args.input_voxel_size_angstrom != input_meta_data['voxel_size']:
-            print('WARNING: Provided voxel size does not match voxel size annotated in input map.')
+            logging.warning('Provided voxel size does not match voxel size annotated in input map.')
         map_spacing_angstrom = args.input_voxel_size_angstrom
     else:
         map_spacing_angstrom = input_meta_data['voxel_size']
@@ -85,7 +88,7 @@ def main():
             'defocus': args.defocus * 1E-6,
             'amplitude_contrast': args.amplitude_contrast,
             'voltage': args.voltage * 1E3,
-            'spherical_aberration': args.Cs,
+            'spherical_aberration': args.Cs * 1E-3,
             'cut_after_first_zero': args.cut_after_first_zero,
             'flip_phase': args.flip_phase
         }
@@ -99,6 +102,8 @@ def main():
         output_box_size=args.box_size,
         display_filter=args.display_filter
     ) * (-1 if args.invert else 1)
+
+    logging.debug(f'shape of template after processing is: {template.shape}')
 
     mrcfile.write(
         output_path,
