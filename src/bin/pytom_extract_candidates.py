@@ -25,9 +25,11 @@ def main():
                              'higher than 1.')
     args = parser.parse_args()
 
+    # load job and extract particles from the volumes
     job = load_json_to_tmjob(args.job_file)
     df = extract_particles(job, args.radius_px, args.number_of_particles, cut_off=args.cut_off)
 
+    # write out as a RELION type starfile
     starfile.write(df, job.output_dir.joinpath(f'{job.tomo_id}_particles.star'), overwrite=True)
 
 

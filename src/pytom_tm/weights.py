@@ -220,5 +220,14 @@ def _create_asymmetric_wedge(
     return np.fft.ifftshift(wedge, axes=(0, 1))
 
 
-def ctf():
+def create_ctf(
+        shape,
+        pixel_size,
+        defocus,
+        amplitude_contrast,
+        voltage,
+        spherical_aberration,
+        cut_after_first_zero=False,
+        flip_phase=False
+) -> npt.NDArray[float]:
     raise NotImplementedError()

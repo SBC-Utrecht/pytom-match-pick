@@ -46,11 +46,11 @@ def main():
                         help='Set this flag to apply a phase flipped CTF. Only required if the CTF is modelled '
                              'beyond the first zero crossing and if the tomograms have been CTF corrected by phase '
                              'flipping.')
-    parser.add_argument('-l', '--lpf-resolution', type=float, required=False, action=LargerThanZero,
+    parser.add_argument('--lowpass', type=float, required=False, action=LargerThanZero,
                         help='Apply a low pass filter to this resolution, in Angstrom. By default a low pass filter '
                              'is applied to a resolution of (2 * output_spacing_angstrom) before downsampling the '
                              'input volume.')
-    parser.add_argument('-x', '--xyz', type=int, required=False, action=LargerThanZero,
+    parser.add_argument('-b', '--box-size', type=int, required=False, action=LargerThanZero,
                         help='Specify a desired size for the output box of the template. Only works if it is larger '
                              'than the downsampled box size of the input.')
     parser.add_argument('--invert', action='store_true', default=False, required=False,
@@ -78,13 +78,34 @@ def main():
     if map_spacing_angstrom > args.output_voxel_size_angstrom:
         raise NotImplementedError('It is assumed the input map has smaller voxel size than the output template.')
 
+    ctf_params = None
+    if args.ctf_correction:
+        ctf_params = {
+            'pixel_size': map_spacing_angstrom * 1E-10,
+            'defocus': args.defocus * 1E-6,
+            'amplitude_contrast': args.amplitude_contrast,
+            'voltage': args.voltage * 1E3,
+            'spherical_aberration': args.Cs,
+            'cut_after_first_zero': args.cut_after_first_zero,
+            'flip_phase': args.flip_phase
+        }
+
     template = generate_template_from_map(
         input_data,
         map_spacing_angstrom,
         args.output_voxel_size_angstrom,
-    )
+        ctf_params=ctf_params,
+        filter_to_resolution=args.lowpass,
+        output_box_size=args.box_size,
+        display_filter=args.display_filter
+    ) * (-1 if args.invert else 1)
 
-    mrcfile.write(output_path, template.T, voxel_size=args.output_voxel_size_angstrom, overwrite=True)
+    mrcfile.write(
+        output_path,
+        np.flip(template, axis=0).T if args.mirror else template.T,
+        voxel_size=args.output_voxel_size_angstrom,
+        overwrite=True
+    )
 
 
 if __name__ == '__main__':

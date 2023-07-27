@@ -8,6 +8,7 @@
 - estimate true positives and RUC script
 - merge multiple starfiles together to one large file
 - update docstrings
+- fix asymmetric wedge
 (- option to provide extraction mask)
 (- gold marker removal?)
 (- structured missing wedge from .tlt or .rawtlt file)
