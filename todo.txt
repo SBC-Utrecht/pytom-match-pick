@@ -1,10 +1,10 @@
 (x) add create_mask script
+(x) extraction should have the option to set a manual cutoff
 - add create template script
 - ensure correct mapping to gpu_ids
 - update typing of functions
 - write wrapper around mrcfile read/write to take care of tranposes
 - update match template start indices of search in x y and z
-- extraction should have the option to set a manual cutoff
 - estimate true positives and RUC script
 - merge multiple starfiles together to one large file
 - structured missing wedge from .tlt or .rawtlt file

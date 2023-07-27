@@ -18,7 +18,9 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--radius-px', type=int, required=True,
                         help='Particle radius in pixels in the tomogram. It is used during extraction to remove areas '
                              'around peaks preventing double extraction.')
-
+    parser.add_argument('-c', '--cut-off', type=float, required=False,
+                        help='Override automated extraction cutoff estimation and instead extract the '
+                             'number_of_particles up to this LCCmax value.')
     args = parser.parse_args()
 
     job_file = pathlib.Path(args.job_file)
@@ -27,6 +29,6 @@ if __name__ == '__main__':
         sys.exit(0)
 
     job = load_json_to_tmjob(job_file)
-    df = extract_particles(job, args.radius_px, args.number_of_particles)
+    df = extract_particles(job, args.radius_px, args.number_of_particles, cut_off=args.cut_off)
 
     starfile.write(df, job.output_dir.joinpath(f'{job.tomo_id}_particles.star'), overwrite=True)
