@@ -10,12 +10,12 @@ from pytom_tm.parallel import run_job_parallel
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run template matching. -- Marten Chaillet (@McHaillet)')
-    parser.add_argument('-t', '--tomogram', type=str, required=True,
-                        help='Tomogram MRC file.')
-    parser.add_argument('-r', '--template', type=str, required=True,
-                        help='Template MRC file.')
+    parser.add_argument('-t', '--template', type=str, required=True,
+                        help='Template; MRC file.')
     parser.add_argument('-m', '--mask', type=str, required=True,
-                        help='Mask MRC file.')
+                        help='Mask with same box size as template; MRC file.')
+    parser.add_argument('-v', '--tomogram', type=str, required=True,
+                        help='Tomographic volume; MRC file.')
     parser.add_argument('-d', '--destination', type=str, required=False, default='./',
                         help='Folder to store the files produced by template matching.')
     parser.add_argument('-w', '--wedge-angles', nargs=2, type=float, required=True,

@@ -11,8 +11,8 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--box-size', type=int, required=True,
                         help='Shape of square box for the mask.')
     parser.add_argument('-o', '--output-file', type=str, required=False,
-                        help='Provided a filename to write the output. Needs to end with .mrc . By default will write '
-                             'a file along this format: ./mask_b[box_size]px_r[radius]px.mrc ')
+                        help='Provide path to write output, needs to end in .mrc . If not provided file is written to '
+                             'current directory in the following format: ./mask_b[box_size]px_r[radius]px.mrc ')
     parser.add_argument('--voxel-size', type=float, required=False, default=1.,
                         help='Provide a voxel size to annotate the MRC (currently not used for any mask calculation).')
     parser.add_argument('-r', '--radius', type=float, required=True,
