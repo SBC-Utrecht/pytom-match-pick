@@ -72,7 +72,7 @@ class TemplateMatchingGPU:
 
         self.plan = TemplateMatchingPlan(volume, template, mask, device_id, wedge=wedge)
 
-    def run(self):
+    def run(self) -> None:
         print("Progress job_{} on device {:d}:".format(self.job_id, self.device_id))
 
         # Size x template (sxz) and center x template (cxt)
@@ -170,7 +170,12 @@ class TemplateMatchingGPU:
         self.stats['std'] = float(cp.sqrt(self.stats['variance']))
 
 
-def std_under_mask_convolution(volume, padded_mask, mask_weight, volume_rft=None) -> cpt.NDArray[float]:
+def std_under_mask_convolution(
+        volume: cpt.NDArray[float],
+        padded_mask: cpt.NDArray[float],
+        mask_weight: float,
+        volume_rft: Optional[cpt.NDArray[complex]] = None
+) -> cpt.NDArray[float]:
     """
     std convolution of volume and mask
     """
@@ -183,7 +188,11 @@ def std_under_mask_convolution(volume, padded_mask, mask_weight, volume_rft=None
     return cp.sqrt(std_v)
 
 
-def mean_under_mask_convolution(volume_rft -> cpt.NDArray[complex], mask, mask_weight) -> cpt.NDArray[float]:
+def mean_under_mask_convolution(
+        volume_rft: cpt.NDArray[complex],
+        mask: cpt.NDArray[float],
+        mask_weight: float
+) -> cpt.NDArray[float]:
     """
     mean convolution of volume and mask
     """
@@ -204,9 +213,9 @@ update_results_kernel = cp.ElementwiseKernel(
 square_sum_kernel = cp.ReductionKernel(
     'T x',  # input params
     'T y',  # output params
-    'x * x',  # map
-    'a + b',  # reduce
-    'y = a',  # post-reduction map
+    'x * x',  # pre-processing expression
+    'a + b',  # reduction operation
+    'y = a',  # post-reduction output processing
     '0',  # identity value
     'variance'  # kernel name
 )
