@@ -3,7 +3,6 @@ import numpy.typing as npt
 import logging
 from typing import Optional
 from scipy.ndimage import zoom
-from pytom_tm._utils import hwhm_to_sigma
 
 
 constants = {
@@ -25,6 +24,14 @@ constants = {
 
     "eps0": 8.854187817620e-12  # F/m
 }
+
+
+def hwhm_to_sigma(hwhm: float) -> float:
+    return hwhm / (np.sqrt(2 * np.log(2)))
+
+
+def sigma_to_hwhm(sigma: float) -> float:
+    return sigma * (np.sqrt(2 * np.log(2)))
 
 
 def wavelength_ev2m(voltage: float) -> float:

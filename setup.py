@@ -6,7 +6,7 @@ with open('README.md', 'r') as f:
 
 setuptools.setup(
     name='pytom-template-matching-gpu',
-    packages=['pytom_tm'],
+    packages=['pytom_tm', 'pytom_tm.angle_lists'],
     package_dir={'': 'src'},
     version='0.1',
     description='GPU template matching from PyTOM as a lightweight pip package',

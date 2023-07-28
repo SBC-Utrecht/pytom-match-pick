@@ -32,7 +32,6 @@ class CheckFileExists(argparse.Action):
 
 
 class LargerThanZero(argparse.Action):
-
     def __call__(self, parser, namespace, values, option_string=None):
         if values <= .0:
             parser.error("{0} must be larger than 0".format(option_string))
