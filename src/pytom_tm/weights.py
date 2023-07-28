@@ -59,7 +59,7 @@ def radial_reduced_grid(shape: tuple[int, int, int]) -> npt.NDArray[float]:
     return np.sqrt(x ** 2 + y ** 2 + z ** 2)
 
 
-def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray:
+def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
     """
     Create a 3D Gaussian low-pass filter with cutoff (or HWHM) that is reduced in fourier space.
     @param shape: shape tuple with x,y or x,y,z dimension
@@ -76,7 +76,7 @@ def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolu
     return np.fft.ifftshift(np.exp(-q ** 2 / (2 * sigma_fourier ** 2)), axes=(0, 1))
 
 
-def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray:
+def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
     """
     Create a 3D Gaussian high-pass filter with cutoff (or HWHM) that is reduced in fourier space.
     @param shape: shape tuple with x,y or x,y,z dimension
@@ -98,7 +98,7 @@ def create_gaussian_bandpass(
         spacing: float,
         lowpass: Optional[float] = None,
         highpass: Optional[float] = None
-) -> npt.NDArray:
+) -> npt.NDArray[float]:
     """
     Resolution bands presents the resolution shells where information needs to be maintained. For example the bands
     might be (150A, 40A). For a spacing of 15A (nyquist resolution is 30A) this is a mild low pass filter. However,
@@ -263,26 +263,40 @@ def _create_asymmetric_wedge(
 
 
 def create_ctf(
-        shape,
-        pixel_size,
-        defocus,
-        amplitude_contrast,
-        voltage,
-        spherical_aberration,
-        cut_after_first_zero=False,
-        flip_phase=False
+        shape: tuple[int, int, int],
+        pixel_size: float,
+        defocus: float,
+        amplitude_contrast: float,
+        voltage: float,
+        spherical_aberration: float,
+        cut_after_first_zero: bool = False,
+        flip_phase: bool = False
 ) -> npt.NDArray[float]:
-    """
-    Create a CTF in a 3D volume in reduced format.
-    @param shape: dimensions of volume to create ctf in
-    @param pixel_size: pixel size for ctf in m
-    @param defocus: defocus for ctf in m
-    @param amplitude_contrast: the fraction of amplitude contrast in the ctf
-    @param voltage: acceleration voltage of microscope in eV
-    @param spherical_aberration: spherical aberration in m
-    @param cut_after_first_zero: whether to cut ctf after first zero crossing
-    @param flip_phase: make ctf fully positive/negative to imitate ctf correction by phase flipping
-    @return: CTF in 3D
+    """Create a CTF in a 3D volume in reduced format.
+
+    Parameters
+    ----------
+    shape: tuple[int, int, int]
+        dimensions of volume to create ctf in
+    pixel_size: float
+        pixel size for ctf in m
+    defocus: float
+        defocus for ctf in m
+    amplitude_contrast: float
+        the fraction of amplitude contrast in the ctf
+    voltage: float
+        acceleration voltage of the microscope in eV
+    spherical_aberration: float
+        spherical aberration in m
+    cut_after_first_zero: bool
+        whether to cut ctf after first zero crossing
+    flip_phase: bool
+        make ctf fully positive/negative to imitate ctf correction by phase flipping
+
+    Returns
+    -------
+    ctf: npt.NDArray[float]
+        CTF in 3D
     """
     k = radial_reduced_grid(shape) / (2 * pixel_size)  # frequencies in fourier space
 
@@ -321,14 +335,17 @@ def create_ctf(
 
 
 def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
-    """
-    This calculates the radial average of an image. When used for ctf, dqe, and mtf type display, input should be in
-    Fourier space.
+    """ This calculates the radial average of an image.
 
-    @param image: input to be radially averaged: in fourier reduced form and assumed to have origin in corner
-    @return: coordinates, values
+    Parameters
+    ----------
+    image: npt.NDArray[float]
+        3D array to be radially averaged: in fourier reduced form and assumed to have origin in corner.
 
-    @author: Marten Chaillet
+    Returns
+    -------
+    (q, mean): tuple[npt.NDArray[float], npt.NDArray[float]]
+        A tuple of two 1d numpy arrays. Their length equals half of largest input image dimension.
     """
     if len(image.shape) not in [2, 3]:
         raise ValueError('Radial average calculation only works for 2d/3d arrays')

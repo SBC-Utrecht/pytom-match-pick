@@ -3,6 +3,8 @@
 (x) add create template script
 (x) ensure correct mapping to gpu_ids
 - update typing of functions
+    (x) tmjob.py
+    (x) weights.py
 - write wrapper around mrcfile read/write to take care of tranposes
 - update match template start indices of search in x y and z
 - add more tests

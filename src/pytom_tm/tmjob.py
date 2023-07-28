@@ -143,10 +143,10 @@ class TMJob:
 
         self.log_level = log_level
 
-    def copy(self):
+    def copy(self) -> TMJob:
         return copy.deepcopy(self)
 
-    def write_to_json(self, file_name):
+    def write_to_json(self, file_name: pathlib.Path) -> None:
         d = self.__dict__.copy()
         d.pop('sub_jobs')
         for key, value in d.items():
@@ -155,10 +155,7 @@ class TMJob:
         with open(file_name, 'w') as fstream:
             json.dump(d, fstream, indent=4)
 
-    def load_from_json(self):
-        pass
-
-    def split_rotation_search(self, n: int):
+    def split_rotation_search(self, n: int) -> list[TMJob, ...]:
         if len(self.sub_jobs) > 0:
             raise TMJobError('Could not further split this job as it already has subjobs assigned!')
 
@@ -175,7 +172,7 @@ class TMJob:
 
         return self.sub_jobs
 
-    def split_volume_search(self, split: tuple[int, int, int]):
+    def split_volume_search(self, split: tuple[int, int, int]) -> list[TMJob, ...]:
         if len(self.sub_jobs) > 0:
             raise TMJobError('Could not further split this job as it already has subjobs assigned!')
 
@@ -250,7 +247,7 @@ class TMJob:
 
         return self.sub_jobs
 
-    def merge_sub_jobs(self, stats: Optional[list[dict]] = None) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    def merge_sub_jobs(self, stats: Optional[list[dict, ...]] = None) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
         if len(self.sub_jobs) == 0:
             # read the volumes, remove them and return them
             score_file, angle_file = (
