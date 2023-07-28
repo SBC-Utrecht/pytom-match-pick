@@ -60,7 +60,7 @@ def run_job_parallel(
 
             for j in main_job.split_volume_search(volume_splits):
 
-                jobs.append(j.split_rotation_search(rotation_split_factor))
+                jobs += j.split_rotation_search(rotation_split_factor)
 
         else:  # only split the subvolume search
 
