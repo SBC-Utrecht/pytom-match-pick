@@ -2,11 +2,16 @@ import numpy.typing as npt
 import numpy as np
 import voltools as vt
 import logging
-import matplotlib.pyplot as plt
 from scipy.ndimage import center_of_mass, zoom
 from scipy.fft import rfftn, irfftn
 from typing import Optional
 from pytom_tm.weights import create_ctf, create_gaussian_low_pass, radial_average
+
+plotting_available = True
+try:
+    import matplotlib.pyplot as plt
+except ModuleNotFoundError:
+    plotting_available = False
 
 
 def generate_template_from_map(
@@ -62,13 +67,15 @@ def generate_template_from_map(
     ctf = 1 if ctf_params is None else create_ctf(input_map.shape, **ctf_params)
     lpf = create_gaussian_low_pass(input_map.shape, input_spacing, filter_to_resolution)
 
-    if display_filter:
+    if display_filter and plotting_available:
         q, average = radial_average(ctf * lpf)
         fig, ax = plt.subplots()
         ax.plot(q / len(q), average)
         ax.set_xlabel('Fraction of Nyquist')
         ax.set_ylabel('Contrast transfer')
         plt.show()
+    elif display_filter and not plotting_available:
+        logging.info('Plotting not possible as matplotlib is not installed')
 
     logging.info('Convoluting volume with filter and then downsampling.')
     return zoom(

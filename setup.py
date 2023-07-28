@@ -24,7 +24,7 @@ setuptools.setup(
         'tqdm',
         'mrcfile',
         'starfile',
-        'importlib_resources',
+        'importlib_resources'
     ],
     package_data={
         'pytom_tm.angle_lists': ['*.txt'],
