@@ -45,6 +45,12 @@ class TemplateMatchingPlan:
         # wait for stream to complete the work
         cp.cuda.stream.get_current_stream().synchronize()
 
+    def clean(self) -> None:
+        gpu_memory_pool = cp.get_default_memory_pool()
+        del self.volume, self.volume_rft, self.mask, self.mask_texture, self.mask_padded, self.template, (
+            self.template_texture), self.template_padded, self.wedge, self.ccc_map, self.scores, self.angles
+        gpu_memory_pool.free_all_blocks()
+
 
 class TemplateMatchingGPU:
     def __init__(
@@ -173,8 +179,9 @@ class TemplateMatchingGPU:
         results = (self.plan.scores.get(), self.plan.angles.get(), self.stats)
 
         # clear all the used gpu memory
+        self.plan.clean()
         gpu_memory_pool = cp.get_default_memory_pool()
-        del self.plan, std_volume
+        del std_volume
         gpu_memory_pool.free_all_blocks()
 
         return results
