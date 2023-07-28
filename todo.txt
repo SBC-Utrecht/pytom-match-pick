@@ -2,13 +2,17 @@
 (x) extraction should have the option to set a manual cutoff
 (x) add create template script
 (x) ensure correct mapping to gpu_ids
-- update typing of functions
+(x) update typing of functions
     (x) tmjob.py
     (x) weights.py
     (x) template.py
     (x) parallel.py
     (x) matching.py
     (x) mask.py
+    (x) io.py
+    (x) extract.py
+    (x) correlation.py
+    (x) angles.py
 - write wrapper around mrcfile read/write to take care of tranposes
 - update match template start indices of search in x y and z
 - add more tests

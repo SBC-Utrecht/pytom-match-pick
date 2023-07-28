@@ -1,3 +1,4 @@
+import pathlib
 from importlib_resources import files
 from scipy.spatial.transform import Rotation
 
@@ -21,12 +22,18 @@ for v in AVAILABLE_ROTATIONAL_SAMPLING.values():
     v[0] = ANGLE_LIST_DIR.joinpath(v[0])
 
 
-def load_angle_list(file_name):
+def load_angle_list(file_name: pathlib.Path) -> list[tuple[float, float, float]]:
     with open(str(file_name)) as fstream:
         lines = fstream.readlines()
     return [tuple(map(float, x.strip().split(' '))) for x in lines]
 
 
-def convert_euler(angles, order_in='ZXZ', order_out='ZXZ', degrees_in=True, degrees_out=True):
+def convert_euler(
+        angles: tuple[float, float, float],
+        order_in: str = 'ZXZ',
+        order_out: str = 'ZXZ',
+        degrees_in: bool = True,
+        degrees_out: bool = True
+) -> tuple[float, float, float]:
     r = Rotation.from_euler(order_in, angles, degrees=degrees_in)
-    return r.as_euler(order_out, degrees=degrees_out)
+    return tuple(r.as_euler(order_out, degrees=degrees_out))

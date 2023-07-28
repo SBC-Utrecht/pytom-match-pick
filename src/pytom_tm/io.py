@@ -2,17 +2,13 @@ import pathlib
 import mrcfile
 import argparse
 import logging
+import numpy.typing as npt
 from operator import attrgetter
+from typing import Optional
 
 
 class SetLogging(argparse.Action):
-    def __call__(
-            self,
-            parser: argparse.ArgumentParser,
-            namespace,
-            values: str,
-            option_string: str = None
-    ):
+    def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
         if not values.upper() in ['INFO', 'DEBUG']:
             parser.error("{0} log got an invalid option, set either to `info` or `debug` ".format(option_string))
         else:
@@ -22,7 +18,7 @@ class SetLogging(argparse.Action):
 
 
 class CheckDirExists(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values: pathlib.Path, option_string: Optional[str] = None):
         if not values.is_dir():
             parser.error("{0} got a file path that does not exist ".format(option_string))
 
@@ -30,7 +26,7 @@ class CheckDirExists(argparse.Action):
 
 
 class CheckFileExists(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values: pathlib.Path, option_string: Optional[str] = None):
         if not values.exists():
             parser.error("{0} got a file path that does not exist ".format(option_string))
 
@@ -38,14 +34,14 @@ class CheckFileExists(argparse.Action):
 
 
 class LargerThanZero(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values: float, option_string: Optional[str] = None):
         if values <= .0:
             parser.error("{0} must be larger than 0".format(option_string))
 
         setattr(namespace, self.dest, values)
 
 
-def write_angle_list(data, file_name, order=(0, 2, 1)):
+def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: tuple[int, int, int] = (0, 2, 1)):
     with open(file_name, 'w') as fstream:
         for i in range(data.shape[1]):
             fstream.write(' '.join([str(x) for x in [data[j, i] for j in order]]) + '\n')
