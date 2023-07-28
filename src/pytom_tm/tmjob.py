@@ -5,6 +5,7 @@ import numpy as np
 import numpy.typing as npt
 import mrcfile
 import json
+import logging
 from typing import Optional, Union
 from functools import reduce
 from scipy.fft import next_fast_len, rfftn, irfftn
@@ -24,6 +25,7 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         pathlib.Path(data['template']),
         pathlib.Path(data['mask']),
         pathlib.Path(data['output_dir']),
+        data['log_level'],
         mask_is_spherical=data['mask_is_spherical'],
         wedge_angles=data['wedge_angles'],
         search_origin=data['search_origin'],
@@ -57,6 +59,7 @@ class TMJob:
             template: pathlib.Path,
             mask: pathlib.Path,
             output_dir: pathlib.Path,
+            log_level: int,
             angle_increment: str = '7.00',
             mask_is_spherical: bool = True,
             wedge_angles: Optional[tuple[float, float]] = None,
@@ -137,6 +140,8 @@ class TMJob:
 
         # dict to keep track of job statistics
         self.job_stats = None
+
+        self.log_level = log_level
 
     def copy(self):
         return copy.deepcopy(self)
@@ -312,7 +317,7 @@ class TMJob:
     ) -> Union[tuple[npt.NDArray[float], npt.NDArray[float]], dict]:
 
         # next fast fft len
-        print('Next fast fft shape: ', tuple([next_fast_len(s, real=True) for s in self.search_size]))
+        logging.debug(f'Next fast fft shape: {tuple([next_fast_len(s, real=True) for s in self.search_size])}')
         search_volume = np.zeros(tuple([next_fast_len(s, real=True) for s in self.search_size]), dtype=np.float32)
 
         # load the (sub)volume

@@ -12,6 +12,7 @@ class SetLogging(argparse.Action):
         else:
             numeric_level = getattr(logging, values.upper(), None)
             logging.basicConfig(level=numeric_level)
+            setattr(namespace, self.dest, numeric_level)
 
 
 class CheckDirExists(argparse.Action):

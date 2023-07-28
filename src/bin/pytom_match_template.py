@@ -6,7 +6,7 @@ import mrcfile
 from pytom_tm.io import LargerThanZero
 from pytom_tm.tmjob import TMJob
 from pytom_tm.parallel import run_job_parallel
-from pytom_tm.io import CheckFileExists, CheckDirExists
+from pytom_tm.io import CheckFileExists, CheckDirExists, SetLogging
 
 
 def main():
@@ -48,15 +48,18 @@ def main():
                              'the CTF is often incorrectly modelled up to 50nm.')
     parser.add_argument('-g', '--gpu-ids', nargs='+', type=int, required=True,
                         help='GPU indices to run the program on.')
+    parser.add_argument('--log', type=str, required=False, default='info', action=SetLogging,
+                        help='Can be set to `info` or `debug`')
 
     args = parser.parse_args()
 
     job = TMJob(
-        job_key='0',
-        tomogram=args.tomogram,
-        template=args.template,
-        mask=args.mask,
-        output_dir=args.destination,
+        '0',
+        args.tomogram,
+        args.template,
+        args.mask,
+        args.destination,
+        args.log,
         angle_increment=args.angular_search,
         mask_is_spherical=True,
         wedge_angles=tuple([90 - abs(w) for w in args.wedge_angles]),

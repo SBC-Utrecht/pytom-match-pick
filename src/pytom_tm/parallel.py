@@ -1,18 +1,32 @@
 import numpy.typing as npt
 import multiprocessing as mp
+import logging
+from multiprocessing.managers import BaseProxy
+from contextlib import closing
 from functools import reduce
 from pytom_tm.tmjob import TMJob
-from itertools import cycle
 
-try:
+try:  # new processes need to be spawned in order to set cupy to use the correct GPU
     mp.set_start_method('spawn')
 except RuntimeError:
     pass
 
 
-def start_single_job(job: TMJob, gpu_id: int) -> dict:  # function for starting each process
-    print('{}: got assigned GPU {}'.format(mp.current_process().ident, gpu_id))
-    return job.start_job(gpu_id, return_volumes=False)
+def start_single_job(job: TMJob, gpu_queue: BaseProxy) -> dict:  # function for starting each process
+    gpu_id = gpu_queue.get()  # get gpu_id from the queue to run the job on
+
+    # logging needs to be reset for spawned child processes
+    logging.basicConfig(level=job.log_level)
+    logging.debug('{}: got assigned GPU {}'.format(mp.current_process().ident, gpu_id))
+    # print('{}: got assigned GPU {}'.format(mp.current_process().ident, gpu_id))
+
+    # run the template matching, result contains search statistics (variance, std, search space)
+    result = job.start_job(gpu_id, return_volumes=False)
+
+    # the gpu is free to use again so place it back on the queue
+    gpu_queue.put(gpu_id)
+
+    return result
 
 
 def run_job_parallel(
@@ -58,19 +72,22 @@ def run_job_parallel(
     # ================== Execution of jobs =========================
     if len(jobs) == 1:
 
-        score_volume, angle_volume = main_job.start_job(gpu_ids[0], return_volumes=True)
+        return main_job.start_job(gpu_ids[0], return_volumes=True)
 
     elif len(jobs) >= len(gpu_ids):
 
-        # map the pool onto all the subjobs
-        with mp.Pool(len(gpu_ids)) as pool:  # TODO need to prevent new job starting on an already used GPU
-            results = pool.starmap(start_single_job, zip(jobs, cycle(gpu_ids)))
+        with mp.Manager() as manager:
+            # create the shared queue
+            queue = manager.Queue()
+            # add gpu_ids to the queue
+            [queue.put(g) for g in gpu_ids]
 
-        # merge split jobs; pass the stats from the sub job to annotate them in main_job
-        score_volume, angle_volume = main_job.merge_sub_jobs(stats=results)
+            # map the pool onto all the subjobs; use closing to correctly close the Pool at the end
+            with closing(mp.Pool(len(gpu_ids))) as pool:
+                results = pool.starmap(start_single_job, zip(jobs, [queue, ] * len(jobs)))
+
+        # merge split jobs; pass along the list of stats to annotate them in main_job
+        return main_job.merge_sub_jobs(stats=results)
 
     else:
         ValueError('For some reason there are more gpu_ids than split job, this should never happen.')
-
-    return score_volume, angle_volume
-
