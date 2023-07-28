@@ -54,7 +54,7 @@ def run_job_parallel(
 
     elif n_pieces > 1:
 
-        rotation_split_factor = len(gpu_ids) % n_pieces
+        rotation_split_factor = len(gpu_ids) // n_pieces
 
         if rotation_split_factor >= 2:  # we can split the rotation search for the subvolumes
 

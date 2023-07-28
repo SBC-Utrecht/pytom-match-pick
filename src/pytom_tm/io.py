@@ -6,7 +6,13 @@ from operator import attrgetter
 
 
 class SetLogging(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+            self,
+            parser: argparse.ArgumentParser,
+            namespace,
+            values: str,
+            option_string: str = None
+    ):
         if not values.upper() in ['INFO', 'DEBUG']:
             parser.error("{0} log got an invalid option, set either to `info` or `debug` ".format(option_string))
         else:
