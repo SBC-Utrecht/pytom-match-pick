@@ -370,13 +370,12 @@ class TMJob:
             mask_is_spherical=self.mask_is_spherical,
             wedge=template_wedge
         )
-        tm.run()
+        results = tm.run()
+        score_volume = results[0][:self.search_size[0], :self.search_size[1], :self.search_size[2]]
+        angle_volume = results[1][:self.search_size[0], :self.search_size[1], :self.search_size[2]]
+        self.job_stats = results[2]
 
-        # get the results
-        score_volume = tm.plan.scores[:self.search_size[0], :self.search_size[1], :self.search_size[2]].get()
-        angle_volume = tm.plan.angles[:self.search_size[0], :self.search_size[1], :self.search_size[2]].get()
-        self.job_stats = tm.stats
-        del tm  # delete to free gpu memory
+        del tm  # delete the template matching plan
 
         if return_volumes:
             return score_volume, angle_volume

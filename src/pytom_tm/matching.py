@@ -72,7 +72,7 @@ class TemplateMatchingGPU:
 
         self.plan = TemplateMatchingPlan(volume, template, mask, device_id, wedge=wedge)
 
-    def run(self) -> None:
+    def run(self) -> tuple[npt.NDArray[float], npt.NDArray[float], dict]:
         print("Progress job_{} on device {:d}:".format(self.job_id, self.device_id))
 
         # Size x template (sxz) and center x template (cxt)
@@ -168,6 +168,16 @@ class TemplateMatchingGPU:
         self.stats['search_space'] = int(self.plan.volume.size * len(self.angle_ids))
         self.stats['variance'] = float(self.stats['variance'] / len(self.angle_ids))
         self.stats['std'] = float(cp.sqrt(self.stats['variance']))
+
+        # package results back to the CPU
+        results = (self.plan.scores.get(), self.plan.angles.get(), self.stats)
+
+        # clear all the used gpu memory
+        gpu_memory_pool = cp.get_default_memory_pool()
+        del self.plan, std_volume
+        gpu_memory_pool.free_all_blocks()
+
+        return results
 
 
 def std_under_mask_convolution(
