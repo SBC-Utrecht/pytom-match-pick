@@ -2,6 +2,7 @@ import cupy as cp
 import cupy.typing as cpt
 import numpy.typing as npt
 import voltools as vt
+import gc
 from typing import Optional
 from cupyx.scipy.fft import rfftn, irfftn, fftshift
 from tqdm import tqdm
@@ -22,6 +23,9 @@ class TemplateMatchingPlan:
         self.volume_rft = rfftn(self.volume)
         # Explicit fft plan is no longer necessary as cupy generates a plan behind the scene which leads to
         # comparable timings
+
+        # Array for storing local standard deviations
+        self.std_volume = cp.zeros_like(volume, dtype=cp.float32)
 
         # Data for the mask
         self.mask = cp.asarray(mask, dtype=cp.float32, order='C')
@@ -48,7 +52,9 @@ class TemplateMatchingPlan:
     def clean(self) -> None:
         gpu_memory_pool = cp.get_default_memory_pool()
         del self.volume, self.volume_rft, self.mask, self.mask_texture, self.mask_padded, self.template, (
-            self.template_texture), self.template_padded, self.wedge, self.ccc_map, self.scores, self.angles
+            self.template_texture), self.template_padded, self.wedge, self.ccc_map, self.scores, self.angles, (
+            self.std_volume)
+        gc.collect()
         gpu_memory_pool.free_all_blocks()
 
 
@@ -94,14 +100,12 @@ class TemplateMatchingGPU:
             self.plan.mask_padded[cxv - cxt:cxv + cxt + mx,
                                   cyv - cyt:cyv + cyt + my,
                                   czv - czt:czv + czt + mz] = self.plan.mask
-            std_volume = std_under_mask_convolution(
+            self.plan.std_volume = std_under_mask_convolution(
                 self.plan.volume,
                 self.plan.mask_padded,
                 self.plan.mask_weight,
                 volume_rft=self.plan.volume_rft
             )
-        else:
-            std_volume = None  # but will be calculated during iterations
 
         # Track iterations with a tqdm progress bar
         for i in tqdm(range(len(self.angle_ids))):
@@ -120,7 +124,7 @@ class TemplateMatchingGPU:
                                       cyv - cyt:cyv + cyt + my,
                                       czv - czt:czv + czt + mz] = self.plan.mask
                 # Std volume needs to be recalculated for every rotation of the mask, expensive step
-                std_volume = std_under_mask_convolution(
+                self.plan.std_volume = std_under_mask_convolution(
                     self.plan.volume,
                     self.plan.mask_padded,
                     self.plan.mask_weight,
@@ -157,7 +161,7 @@ class TemplateMatchingGPU:
             self.plan.ccc_map = fftshift(
                 irfftn(self.plan.volume_rft * rfftn(self.plan.template_padded).conj(),
                        s=self.plan.template_padded.shape).real
-                / (self.plan.mask_weight * std_volume)
+                / (self.plan.mask_weight * self.plan.std_volume)
             )
 
             # Update the scores and angle_lists
@@ -180,9 +184,6 @@ class TemplateMatchingGPU:
 
         # clear all the used gpu memory
         self.plan.clean()
-        gpu_memory_pool = cp.get_default_memory_pool()
-        del std_volume
-        gpu_memory_pool.free_all_blocks()
 
         return results
 
