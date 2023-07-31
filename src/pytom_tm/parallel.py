@@ -91,8 +91,9 @@ def run_job_parallel(
                     logging.debug('Got all results from the child processes')
                     break
 
-                if not all([p.is_alive() for p in procs]):  # check if processes did not error to prevent deadlock
-                    raise RuntimeError('One of the processes stopped unexpectedly.')
+                for p in procs:  # if one of the processes is no longer alive and has a failed exit we should error
+                    if not p.is_alive() and p.exitcode == 1:  # to prevent a deadlock
+                        raise RuntimeError('One of the processes stopped unexpectedly.')
 
                 time.sleep(1)
 
