@@ -26,10 +26,9 @@ setuptools.setup(
         'starfile',
         'importlib_resources'
     ],
-    # package_data={
-    #     'pytom_tm.angle_lists': ['*.txt'],
-    # },
-    include_package_data=True,
+    package_data={
+        'pytom_tm.angle_lists': ['*.txt'],
+    },
     test_suite='tests',
     scripts=[
         'src/bin/pytom_create_mask.py',
