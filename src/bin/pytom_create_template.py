@@ -60,7 +60,7 @@ def main():
                         help='Mirror the final template before writing to disk.')
     parser.add_argument('--display-filter', action='store_true', default=False, required=False,
                         help='Display the combined CTF and low pass filter to the user.')
-    parser.add_argument('--log', type=str, required=False, default='info', action=SetLogging,
+    parser.add_argument('--log', type=str, required=False, default=20, action=SetLogging,
                         help='Can be set to `info` or `debug`')
     args = parser.parse_args()
 

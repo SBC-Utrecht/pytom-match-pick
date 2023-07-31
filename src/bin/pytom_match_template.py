@@ -17,8 +17,8 @@ def main():
                         help='Mask with same box size as template; MRC file.')
     parser.add_argument('-v', '--tomogram', type=pathlib.Path, required=True,  action=CheckFileExists,
                         help='Tomographic volume; MRC file.')
-    parser.add_argument('-d', '--destination', type=pathlib.Path, required=False, default='./',
-                        action=CheckDirExists,
+    parser.add_argument('-d', '--destination', type=pathlib.Path, required=False,
+                        default='./', action=CheckDirExists,
                         help='Folder to store the files produced by template matching.')
     parser.add_argument('-w', '--wedge-angles', nargs=2, type=float, required=True,
                         help='Missing wedge angles for a tilt series collected from +/- 60: --wedge-angles -60 60')
@@ -48,7 +48,7 @@ def main():
                              'the CTF is often incorrectly modelled up to 50nm.')
     parser.add_argument('-g', '--gpu-ids', nargs='+', type=int, required=True,
                         help='GPU indices to run the program on.')
-    parser.add_argument('--log', type=str, required=False, default='info', action=SetLogging,
+    parser.add_argument('--log', type=str, required=False, default=20, action=SetLogging,
                         help='Can be set to `info` or `debug`')
 
     args = parser.parse_args()
