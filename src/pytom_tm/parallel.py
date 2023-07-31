@@ -1,8 +1,9 @@
 import numpy.typing as npt
 import multiprocessing as mp
 import logging
+import queue
+import time
 from multiprocessing.managers import BaseProxy
-from contextlib import closing
 from functools import reduce
 from pytom_tm.tmjob import TMJob
 
@@ -12,21 +13,14 @@ except RuntimeError:
     pass
 
 
-def start_single_job(job: TMJob, gpu_queue: BaseProxy) -> dict:  # function for starting each process
-    gpu_id = gpu_queue.get()  # get gpu_id from the queue to run the job on
-
-    # logging needs to be reset for spawned child processes
-    logging.basicConfig(level=job.log_level)
-    logging.debug('{}: got assigned GPU {}'.format(mp.current_process().ident, gpu_id))
-    # print('{}: got assigned GPU {}'.format(mp.current_process().ident, gpu_id))
-
-    # run the template matching, result contains search statistics (variance, std, search space)
-    result = job.start_job(gpu_id, return_volumes=False)
-
-    # the gpu is free to use again so place it back on the queue
-    gpu_queue.put(gpu_id)
-
-    return result
+def gpu_runner(gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int) -> None:
+    logging.basicConfig(level=log_level)
+    while True:
+        try:
+            job = task_queue.get_nowait()
+            result_queue.put_nowait(job.start_job(gpu_id, return_volumes=False))
+        except queue.Empty:
+            break
 
 
 def run_job_parallel(
@@ -76,15 +70,34 @@ def run_job_parallel(
 
     elif len(jobs) >= len(gpu_ids):
 
-        with mp.Manager() as manager:
-            # create the shared queue
-            queue = manager.Queue()
-            # add gpu_ids to the queue
-            [queue.put(g) for g in gpu_ids]
+        results = []
 
-            # map the pool onto all the subjobs; use closing to correctly close the Pool at the end
-            with closing(mp.Pool(len(gpu_ids))) as pool:
-                results = pool.starmap(start_single_job, zip(jobs, [queue, ] * len(jobs)))
+        with mp.Manager() as manager:
+            task_queue = manager.Queue()  # the list of tasks where processes can get there next task from
+            result_queue = manager.Queue()  # this will accumulate results from the processes
+
+            [task_queue.put_nowait(j) for j in jobs]  # put all tasks
+
+            # set the processes and start them!
+            procs = [mp.Process(target=gpu_runner, args=(
+                g, task_queue, result_queue, main_job.log_level)) for g in gpu_ids]
+            [p.start() for p in procs]
+
+            while True:
+                while not result_queue.empty():
+                    results.append(result_queue.get_nowait())
+
+                if len(results) == len(jobs):  # its done if all the results from the spawn were send back
+                    logging.debug('Got all results from the child processes')
+                    break
+
+                if not all([p.is_alive() for p in procs]):  # check if processes did not error to prevent deadlock
+                    raise RuntimeError('One of the processes stopped unexpectedly.')
+
+                time.sleep(1)
+
+            [p.join() for p in procs]
+            logging.debug('Terminated the processes')
 
         # merge split jobs; pass along the list of stats to annotate them in main_job
         return main_job.merge_sub_jobs(stats=results)

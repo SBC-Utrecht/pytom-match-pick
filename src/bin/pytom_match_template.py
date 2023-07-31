@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import argparse
-import pathlib
 import mrcfile
+import pathlib
 from pytom_tm.io import LargerThanZero
 from pytom_tm.tmjob import TMJob
 from pytom_tm.parallel import run_job_parallel
