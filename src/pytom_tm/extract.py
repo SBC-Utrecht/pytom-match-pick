@@ -13,7 +13,8 @@ def extract_particles(
         job: TMJob,
         particle_radius_px: int,
         n_particles: int,
-        cut_off: Optional[float] = None
+        cut_off: Optional[float] = None,
+        n_false_positives: int = 1
 ) -> pd.DataFrame:
 
     score_volume = mrcfile.read(job.output_dir.joinpath(f'{job.tomo_id}_scores.mrc')).T.copy()
@@ -29,8 +30,9 @@ def extract_particles(
     score_volume[:, :, -particle_radius_px:] = -1
 
     if cut_off is None:
+        # formular rickgauer (2017) should be: 10**-13 = erfc( theta / ( sigma * sqrt(2) ) ) / 2
         sigma, search_space = job.job_stats['std'], job.job_stats['search_space']
-        cut_off = erfcinv(2 / search_space) * np.sqrt(2) * sigma
+        cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
         print('Estimated extraction cut off: ', cut_off)
 
     # histogram, bin_edges = np.histogram(score_volume[score_volume > cut_off], bins=20)
