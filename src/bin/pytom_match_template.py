@@ -3,6 +3,7 @@
 import argparse
 import mrcfile
 import pathlib
+import logging
 from pytom_tm.io import LargerThanZero
 from pytom_tm.tmjob import TMJob
 from pytom_tm.parallel import run_job_parallel
@@ -50,8 +51,8 @@ def main():
                         help='GPU indices to run the program on.')
     parser.add_argument('--log', type=str, required=False, default=20, action=SetLogging,
                         help='Can be set to `info` or `debug`')
-
     args = parser.parse_args()
+    logging.basicConfig(level=args.log)
 
     job = TMJob(
         '0',

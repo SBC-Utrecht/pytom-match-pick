@@ -63,6 +63,7 @@ def main():
     parser.add_argument('--log', type=str, required=False, default=20, action=SetLogging,
                         help='Can be set to `info` or `debug`')
     args = parser.parse_args()
+    logging.basicConfig(level=args.log)
 
     # set input voxel size and give user warning if it does not match with MRC annotation
     input_data = np.ascontiguousarray(mrcfile.read(args.input_map).T)

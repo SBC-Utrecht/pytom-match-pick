@@ -13,7 +13,6 @@ class SetLogging(argparse.Action):
             parser.error("{0} log got an invalid option, set either to `info` or `debug` ".format(option_string))
         else:
             numeric_level = getattr(logging, values.upper(), None)
-            logging.basicConfig(level=numeric_level)
             setattr(namespace, self.dest, numeric_level)
 
 
