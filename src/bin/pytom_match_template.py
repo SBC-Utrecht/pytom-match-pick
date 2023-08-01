@@ -7,7 +7,7 @@ import logging
 from pytom_tm.io import LargerThanZero
 from pytom_tm.tmjob import TMJob
 from pytom_tm.parallel import run_job_parallel
-from pytom_tm.io import CheckFileExists, CheckDirExists, SetLogging
+from pytom_tm.io import CheckFileExists, CheckDirExists, SetLogging, ParseSearch
 
 
 def main():
@@ -36,6 +36,12 @@ def main():
                         help='Limit the search area of the tomogram, in combination with --search-origin. '
                              'Format is x y z, e.g. --search-size 0 0 100 will search only the first 100 voxels from '
                              'the origin in z.')
+    parser.add_argument('--search-x', nargs=2, type=int, required=False, action=ParseSearch,
+                        help='Start and end indices of the search along the x-axis, e.g. --search-x 10 490 ')
+    parser.add_argument('--search-y', nargs=2, type=int, required=False,
+                        help='Start and end indices of the search along the y-axis, e.g. --search-x 10 490 ')
+    parser.add_argument('--search-z', nargs=2, type=int, required=False,
+                        help='Start and end indices of the search along the z-axis, e.g. --search-x 30 230 ')
     parser.add_argument('--voxel-size-angstrom', type=float,
                         required=False, action=LargerThanZero,
                         help='Voxel spacing of tomogram/template in angstrom, if not provided will try to read from '
@@ -64,8 +70,9 @@ def main():
         angle_increment=args.angular_search,
         mask_is_spherical=True,
         wedge_angles=tuple([90 - abs(w) for w in args.wedge_angles]),
-        search_origin=args.search_origin,
-        search_size=args.search_size,
+        search_x=args.search_x,
+        search_y=args.search_y,
+        search_z=args.search_z,
         voxel_size=args.voxel_size_angstrom,
         lowpass=args.lowpass,
         highpass=args.highpass

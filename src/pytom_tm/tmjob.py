@@ -28,8 +28,9 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         data['log_level'],
         mask_is_spherical=data['mask_is_spherical'],
         wedge_angles=data['wedge_angles'],
-        search_origin=data['search_origin'],
-        search_size=data['search_size'],
+        search_x=data['search_x'],
+        search_y=data['search_y'],
+        search_z=data['search_z'],
         voxel_size=data['voxel_size'],
         lowpass=data['lowpass'],
         highpass=data['highpass']
@@ -63,8 +64,9 @@ class TMJob:
             angle_increment: str = '7.00',
             mask_is_spherical: bool = True,
             wedge_angles: Optional[tuple[float, float]] = None,
-            search_origin: Optional[tuple[int, int, int]] = None,
-            search_size: Optional[tuple[int, int, int]] = None,
+            search_x: Optional[list[int, int]] = None,
+            search_y: Optional[list[int, int]] = None,
+            search_z: Optional[list[int, int]] = None,
             voxel_size: Optional[float] = None,
             lowpass: Optional[float] = None,
             highpass: Optional[float] = None
@@ -101,21 +103,25 @@ class TMJob:
             raise ValueError('Voxel size could not be assigned, either a mismatch between tomogram and template or'
                              ' annotated as 0.')
 
+        search_origin = [x[0] if x is not None else 0 for x in (search_x, search_y, search_z)]
         # Check if tomogram origin is valid
-        if search_origin is None:
-            self.search_origin = (0, 0, 0)
-        elif all([0 <= x < y for x, y in zip(search_origin, self.tomo_shape)]):
+        if all([x < y for x, y in zip(search_origin, self.tomo_shape)]):
             self.search_origin = search_origin
         else:
             raise ValueError('Invalid input provided for search origin of tomogram.')
 
-        # Check if search size is valid
-        if search_size is None:
-            self.search_size = tuple([x - y for x, y in zip(self.tomo_shape, self.search_origin)])
-        elif all([(x + y <= z) and (x > 0) for x, y, z in zip(search_size, self.search_origin, self.tomo_shape)]):
-            self.search_size = search_size
-        else:
-            raise ValueError('Invalid input provided for search size in the tomogram.')
+        # if end not valid raise and error
+        search_end = []
+        for x, s in zip([search_x, search_y, search_z], self.tomo_shape):
+            if x is not None:
+                if not x[1] <= s:
+                    raise ValueError('One of search end indices is larger than the tomogram dimension.')
+                search_end.append(x[1])
+            else:
+                search_end.append(s)
+        self.search_size = [end - start for end, start in zip(search_end, self.search_origin)]
+
+        logging.debug(f'origin, size = {self.search_origin}, {self.search_size}')
 
         self.whole_start = None
         self.sub_start, self.sub_step = None, None
@@ -152,6 +158,11 @@ class TMJob:
     def write_to_json(self, file_name: pathlib.Path) -> None:
         d = self.__dict__.copy()
         d.pop('sub_jobs')
+        d.pop('search_origin')
+        d.pop('search_size')
+        d['search_x'] = [self.search_origin[0], self.search_origin[0] + self.search_size[0]]
+        d['search_y'] = [self.search_origin[1], self.search_origin[1] + self.search_size[1]]
+        d['search_z'] = [self.search_origin[2], self.search_origin[2] + self.search_size[2]]
         for key, value in d.items():
             if isinstance(value, pathlib.PosixPath):
                 d[key] = str(value)

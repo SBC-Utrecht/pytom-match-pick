@@ -13,13 +13,14 @@
     (x) extract.py
     (x) correlation.py
     (x) angles.py
-- write wrapper around mrcfile read/write to take care of tranposes
 - update match template start indices of search in x y and z
+- write wrapper around mrcfile read/write to take care of tranposes
 - more unittests!!
 - estimate true positives and RUC script
 - merge multiple starfiles together to one large file
 - update docstrings
 - fix asymmetric wedge
 (- option to provide extraction mask)
+(- cryohub usage?)
 (- gold marker removal?)
 (- structured missing wedge from .tlt or .rawtlt file)

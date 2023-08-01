@@ -40,6 +40,15 @@ class LargerThanZero(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
+class ParseSearch(argparse.Action):
+    def __call__(self, parser, namespace, values: float, option_string: Optional[str] = None):
+        if not (0 <= values[0] < values[1] > 0):
+            parser.error("{0} start and end indices must be larger than 0 and end must be larger than start".format(
+                option_string))
+
+        setattr(namespace, self.dest, values)
+
+
 def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: tuple[int, int, int] = (0, 2, 1)):
     with open(file_name, 'w') as fstream:
         for i in range(data.shape[1]):
