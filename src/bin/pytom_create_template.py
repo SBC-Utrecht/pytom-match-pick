@@ -98,6 +98,7 @@ def main():
         input_data,
         map_spacing_angstrom,
         args.output_voxel_size_angstrom,
+        center=args.center,
         ctf_params=ctf_params,
         filter_to_resolution=args.lowpass,
         output_box_size=args.box_size,

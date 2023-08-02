@@ -19,6 +19,7 @@ def generate_template_from_map(
         input_spacing: float,
         output_spacing: float,
         ctf_params: dict,
+        center: bool = False,
         filter_to_resolution: Optional[float] = None,
         output_box_size: Optional[int] = None,
         display_filter: bool = False
@@ -26,9 +27,10 @@ def generate_template_from_map(
 
     # make the map a box with equal dimensions
     if len(set(input_map.shape)) != 1:
+        diff = [max(input_map.shape) - s for s in input_map.shape]
         input_map = np.pad(
             input_map,
-            tuple([max(input_map.shape) - s for s in input_map.shape]),
+            tuple([(d // 2, d // 2 + d % 2) for d in diff]),
             mode='edge'
         )
 
@@ -40,12 +42,11 @@ def generate_template_from_map(
     if output_box_size is not None:
         logging.debug(f'size check {output_box_size} > {(input_map.shape[0] * input_spacing) // output_spacing}')
         if output_box_size > (input_map.shape[0] * input_spacing) // output_spacing:
-            new_size = int(output_box_size * (output_spacing/input_spacing))
-            logging.debug(f'update size before downsampling should be {new_size}')
-            logging.debug(f'thus pad with this number of zeros: {[new_size - s for s in input_map.shape]}')
+            pad = int(output_box_size * (output_spacing / input_spacing)) - input_map.shape[0]
+            logging.debug(f'pad with this number of zeros: {pad}')
             input_map = np.pad(
                 input_map,
-                (0, new_size - input_map.shape[0]),
+                (pad // 2, pad // 2 + pad % 2),
                 mode='edge'
             )
         elif output_box_size < (input_map.shape[0] * input_spacing) // output_spacing:
@@ -53,19 +54,20 @@ def generate_template_from_map(
                             'result in loss of information of the structure. Please decrease the box size of the map '
                             'by hand (e.g. chimera)')
 
-    volume_center = np.divide(np.subtract(input_map.shape, 1), 2, dtype=np.float32)
-    input_center_of_mass = center_of_mass(input_map)
-    shift = np.subtract(volume_center, input_center_of_mass)
-    input_map = vt.transform(input_map, translation=shift, device='cpu')
+    if center:
+        volume_center = np.divide(np.subtract(input_map.shape, 1), 2, dtype=np.float32)
+        input_center_of_mass = center_of_mass(input_map)
+        shift = np.subtract(volume_center, input_center_of_mass)
+        input_map = vt.transform(input_map, translation=shift, device='cpu')
 
-    logging.debug(f'center of mass, before was '
-                  f'{np.round(input_center_of_mass, 2)} '
-                  f'and after {np.round(center_of_mass(input_map), 2)}')
+        logging.debug(f'center of mass, before was '
+                      f'{np.round(input_center_of_mass, 2)} '
+                      f'and after {np.round(center_of_mass(input_map), 2)}')
 
     # create ctf function and low pass gaussian if desired
     # for ctf the spacing of pixels/voxels needs to be in meters (not angstrom)
-    ctf = 1 if ctf_params is None else create_ctf(input_map.shape, **ctf_params)
-    lpf = create_gaussian_low_pass(input_map.shape, input_spacing, filter_to_resolution)
+    ctf = 1 if ctf_params is None else create_ctf(input_map.shape, **ctf_params).astype(np.float32)
+    lpf = create_gaussian_low_pass(input_map.shape, input_spacing, filter_to_resolution).astype(np.float32)
 
     if display_filter and plotting_available:
         q, average = radial_average(ctf * lpf)
@@ -80,5 +82,5 @@ def generate_template_from_map(
     logging.info('Convoluting volume with filter and then downsampling.')
     return zoom(
         irfftn(rfftn(input_map) * ctf * lpf),
-        input_spacing / output_spacing,
-    ).astype(np.float32)
+        input_spacing / output_spacing
+    )
