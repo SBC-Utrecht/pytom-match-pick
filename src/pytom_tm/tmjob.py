@@ -334,11 +334,11 @@ class TMJob:
         # load the (sub)volume
         search_volume[:self.search_size[0],
                       :self.search_size[1],
-                      :self.search_size[2]] = np.ascontiguousarray(mrcfile.read(self.tomogram).T)[
-            self.search_origin[0]: self.search_origin[0] + self.search_size[0],
-            self.search_origin[1]: self.search_origin[1] + self.search_size[1],
-            self.search_origin[2]: self.search_origin[2] + self.search_size[2]
-        ]
+                      :self.search_size[2]] = np.ascontiguousarray(
+            mrcfile.read(self.tomogram).T[self.search_origin[0]: self.search_origin[0] + self.search_size[0],
+                                          self.search_origin[1]: self.search_origin[1] + self.search_size[1],
+                                          self.search_origin[2]: self.search_origin[2] + self.search_size[2]]
+        )
 
         # load template and mask
         template, mask = (

@@ -29,13 +29,6 @@ def main():
     parser.add_argument('-s', '--volume-split', nargs=3, type=int, required=False, default=[1, 1, 1],
                         help='Split the volume into smaller parts for the search, can be relevant if the volume does '
                              'not fit into GPU memory. Format is x y z, e.g. --volume-split 1 2 1')
-    parser.add_argument('--search-origin', nargs=3, type=int, required=False,
-                        help='Limit the search area of the tomogram, in combination with --search-size. '
-                             'Format is x y z, e.g. --search-origin 0 0 100 will skip first 100 voxels in z.')
-    parser.add_argument('--search-size', nargs=3, type=int, required=False,
-                        help='Limit the search area of the tomogram, in combination with --search-origin. '
-                             'Format is x y z, e.g. --search-size 0 0 100 will search only the first 100 voxels from '
-                             'the origin in z.')
     parser.add_argument('--search-x', nargs=2, type=int, required=False, action=ParseSearch,
                         help='Start and end indices of the search along the x-axis, e.g. --search-x 10 490 ')
     parser.add_argument('--search-y', nargs=2, type=int, required=False,
