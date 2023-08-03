@@ -1,12 +1,14 @@
 import pandas as pd
 import numpy as np
 import mrcfile
+import logging
 from typing import Optional
 from pytom_tm.tmjob import TMJob
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list, convert_euler
 from scipy.special import erfcinv
 from tqdm import tqdm
+from functools import reduce
 
 
 def extract_particles(
@@ -31,12 +33,14 @@ def extract_particles(
 
     if cut_off is None:
         # formular rickgauer (2017) should be: 10**-13 = erfc( theta / ( sigma * sqrt(2) ) ) / 2
-        sigma, search_space = job.job_stats['std'], job.job_stats['search_space']
+        # search_space = job.job_stats['search_space']
+        sigma = job.job_stats['std']
+        search_space = (
+                reduce(lambda x, y: x * y, [s - 2 * particle_radius_px for s in score_volume.shape]) *
+                job.n_rotations
+        )
         cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
-        print('Estimated extraction cut off: ', cut_off)
-
-    # histogram, bin_edges = np.histogram(score_volume[score_volume > cut_off], bins=20)
-    # search_space / (bin_width * sigma * np.sqrt(2 * np.pi))
+        logging.info(f'cut off for particle extraction: {cut_off}')
 
     # mask for iteratively selecting peaks
     cut_box = int(particle_radius_px) * 2 + 1

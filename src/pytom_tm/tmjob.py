@@ -27,7 +27,8 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         pathlib.Path(data['output_dir']),
         data['log_level'],
         mask_is_spherical=data['mask_is_spherical'],
-        wedge_angles=data['wedge_angles'],
+        tilt_angles=data['tilt_angles'],
+        tilt_weighting=data['tilt_weighting'],
         search_x=data['search_x'],
         search_y=data['search_y'],
         search_z=data['search_z'],
@@ -63,7 +64,8 @@ class TMJob:
             log_level: int,
             angle_increment: str = '7.00',
             mask_is_spherical: bool = True,
-            wedge_angles: Optional[tuple[float, float]] = None,
+            tilt_angles: Optional[list[float, ...]] = None,
+            tilt_weighting: bool = False,
             search_x: Optional[list[int, int]] = None,
             search_y: Optional[list[int, int]] = None,
             search_z: Optional[list[int, int]] = None,
@@ -137,7 +139,8 @@ class TMJob:
         self.steps_slice = 1
 
         # missing wedge
-        self.wedge_angles = wedge_angles
+        self.tilt_angles = tilt_angles
+        self.tilt_weighting = tilt_weighting
         # set the bandpass resolution shells
         self.lowpass = lowpass
         self.highpass = highpass
@@ -348,14 +351,17 @@ class TMJob:
 
         # create weighting, include missing wedge and bandpass filters
         template_wedge = None
-        if self.wedge_angles is not None:
+        if self.tilt_angles is not None:
             # convolute tomo with wedge
             tomo_wedge = create_wedge(
                 search_volume.shape,
-                self.wedge_angles, 1.,
+                self.tilt_angles,
+                1.,
+                angles_in_degrees=True,
                 voxel_size=self.voxel_size,
                 lowpass=self.lowpass,
-                highpass=self.highpass
+                highpass=self.highpass,
+                tilt_weighting=self.tilt_weighting
             ).astype(np.float32)
 
             search_volume = np.real(irfftn(rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
@@ -363,10 +369,13 @@ class TMJob:
             # get template wedge
             template_wedge = create_wedge(
                 self.template_shape,
-                self.wedge_angles, 1.,
+                self.tilt_angles,
+                1.,
+                angles_in_degrees=True,
                 voxel_size=self.voxel_size,
                 lowpass=self.lowpass,
-                highpass=self.highpass
+                highpass=self.highpass,
+                tilt_weighting=self.tilt_weighting
             ).astype(np.float32)
 
         # load rotation search

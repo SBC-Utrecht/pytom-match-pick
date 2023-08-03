@@ -4,7 +4,7 @@ import argparse
 import logging
 import numpy.typing as npt
 from operator import attrgetter
-from typing import Optional
+from typing import Optional, Union
 
 
 class SetLogging(argparse.Action):
@@ -49,6 +49,24 @@ class ParseSearch(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
+class ParseTiltAngles(argparse.Action):
+    def __call__(self, parser, namespace, values: Union[list[str, str], str], option_string: Optional[str] = None):
+        if len(values) == 2:  # two wedge angles provided the min and max
+            try:
+                values = sorted(list(map(float, values)))  # make them floats
+                setattr(namespace, self.dest, values)
+            except ValueError:
+                parser.error("{0} the two arguments provided could not be parsed to floats".format(option_string))
+        elif len(values) == 1:
+            values = pathlib.Path(values[0])
+            if not values.exists() or values.suffix not in ['.tlt', '.rawtlt']:
+                parser.error("{0} provided tilt angle file does not exist or does not have the right format".format(
+                    option_string))
+            setattr(namespace, self.dest, read_tlt_file(values))
+        else:
+            parser.error("{0} can only take one or two arguments".format(option_string))
+
+
 def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: tuple[int, int, int] = (0, 2, 1)):
     with open(file_name, 'w') as fstream:
         for i in range(data.shape[1]):
@@ -64,3 +82,10 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
         else:
             meta_data['voxel_size'] = float(mrc.voxel_size.x)
     return meta_data
+
+
+def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
+    with open(file_name, 'r') as fstream:
+        lines = fstream.readlines()
+        return sorted(list(map(float, [x.strip() for x in lines])))
+

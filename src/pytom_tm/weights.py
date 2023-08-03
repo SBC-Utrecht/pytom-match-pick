@@ -141,24 +141,39 @@ def create_gaussian_bandpass(
 
 def create_wedge(
         shape: tuple[int, int, int],
-        wedge_angles: tuple[float, float],
+        tilt_angles: list[float, ...],
         cut_off_radius: float,
         angles_in_degrees: bool = True,
         voxel_size: float = 1.,
         lowpass: Optional[float] = None,
-        highpass: Optional[float] = None
+        highpass: Optional[float] = None,
+        tilt_weighting: bool = False
 ) -> npt.NDArray[float]:
+    """This function returns a wedge volume that is either symmetric or asymmetric depending on wedge angle input.
+
+    Parameters
+    ----------
+    shape
+        real space shape of volume to which it needs to be applied
+    tilt_angles
+        tilt angles used for reconstructing the tomogram
+    cut_off_radius
+        cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
+    angles_in_degrees
+        whether angles are in degrees or radians units
+    voxel_size
+    lowpass
+    highpass
+    tilt_weighting
+
+    Returns
+    -------
+    wedge: npt.NDArray[float]
+        wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
-    This function returns a wedge volume that is either symmetric or asymmetric depending on wedge angle input.
-    @param shape: real space shape of volume to which it needs to be applied
-    @param wedge_angles: two angles describing asymmetric missing wedge in degrees
-    @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    @param angles_in_degrees: whether angles are in degrees or radians units
-    @param voxel_size:
-    @param lowpass:
-    @param highpass:
-    @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
-    """
+    if len(tilt_angles) < 2:
+        raise ValueError('Wedge generation needs at least two tilt angles.')
+
     if cut_off_radius > 1:
         print('Warning: wedge cutoff needs to be defined as a fraction of nyquist 0 < c <= 1. Setting value to 1.0.')
         cut_off_radius = 1.0
@@ -166,14 +181,30 @@ def create_wedge(
         raise ValueError('Invalid wedge cutoff: needs to be larger than 0')
 
     if angles_in_degrees:
-        wedge_angles_rad = [np.deg2rad(w) for w in wedge_angles]
+        tilt_angles_rad = [np.deg2rad(w) for w in tilt_angles]
     else:
-        wedge_angles_rad = wedge_angles
+        tilt_angles_rad = tilt_angles
 
-    if wedge_angles_rad[0] == wedge_angles_rad[1]:
-        wedge = _create_symmetric_wedge(shape, wedge_angles_rad[0], cut_off_radius,).astype(np.float32)
+    if tilt_weighting:
+        wedge = _create_structured_wedge(
+            shape,
+            tilt_angles_rad,
+            cut_off_radius
+        ).astype(np.float32)
     else:
-        wedge = _create_asymmetric_wedge(shape, wedge_angles_rad, cut_off_radius).astype(np.float32)
+        wedge_angles = (np.pi / 2 - np.abs(tilt_angles_rad[0]), np.pi / 2 - np.abs(tilt_angles_rad[-1]))
+        if wedge_angles[0] == wedge_angles[1]:
+            wedge = _create_symmetric_wedge(
+                shape,
+                wedge_angles[0],
+                cut_off_radius
+            ).astype(np.float32)
+        else:
+            wedge = _create_asymmetric_wedge(
+                shape,
+                (wedge_angles[0], wedge_angles[1]),
+                cut_off_radius
+            ).astype(np.float32)
 
     if not (lowpass is None and highpass is None):
         return wedge * create_gaussian_bandpass(shape, voxel_size, lowpass, highpass).astype(np.float32)
@@ -264,7 +295,7 @@ def _create_asymmetric_wedge(
     return np.fft.ifftshift(wedge, axes=(0, 1))
 
 
-def create_structured_wedge(
+def _create_structured_wedge(
         shape: tuple[int, int, int],
         tilt_angles: list[float, ...],
         cut_off_radius: float
@@ -285,7 +316,7 @@ def create_structured_wedge(
     wedge: npt.NDArray[float]
         structured wedge mask in fourier reduced form, i.e. output shape is (shape[0], shape[1], shape[2] // 2 + 1)
     """
-    logging.debug(f'tilt anges: {tilt_angles}')
+    logging.debug(f'tilt angles (radians) for structured wedge: {[round(t, 2) for t in tilt_angles]}')
 
     x, z = np.meshgrid(
         np.abs(np.arange(

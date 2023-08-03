@@ -7,7 +7,7 @@ import logging
 from pytom_tm.io import LargerThanZero
 from pytom_tm.tmjob import TMJob
 from pytom_tm.parallel import run_job_parallel
-from pytom_tm.io import CheckFileExists, CheckDirExists, SetLogging, ParseSearch
+from pytom_tm.io import CheckFileExists, CheckDirExists, SetLogging, ParseSearch, ParseTiltAngles
 
 
 def main():
@@ -21,8 +21,15 @@ def main():
     parser.add_argument('-d', '--destination', type=pathlib.Path, required=False,
                         default='./', action=CheckDirExists,
                         help='Folder to store the files produced by template matching.')
-    parser.add_argument('-w', '--wedge-angles', nargs=2, type=float, required=True,
-                        help='Missing wedge angles for a tilt series collected from +/- 60: --wedge-angles -60 60')
+    parser.add_argument('-a', '--tilt-angles', nargs='+', type=str, required=True, action=ParseTiltAngles,
+                        help='Tilt angles of the tilt-series, either the minimum and maximum values of the tilts (e.g. '
+                             '--tilt-angles -59.1 60.1) or a .rawtlt/.tlt file with all the angles (e.g. '
+                             '--tilt-angles tomo101.rawtlt). In case all the tilt angles are provided a more '
+                             'elaborate Fourier space constraint can be used')
+    parser.add_argument('--per-tilt-weighting', action='store_true', default=False, required=False,
+                        help='Flag to set per tilt weighting, only makes sense if a file with all tilt angles has '
+                             'been provided. In case not set when a tilt angle file is provided, the minimum and '
+                             'maximum tilt angle are used to create a binary wedge.')
     parser.add_argument('--angular-search', type=str, required=True,
                         help='Options are: [7.00, 35.76, 19.95, 90.00, 18.00, '
                              '12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00]')
@@ -62,7 +69,8 @@ def main():
         args.log,
         angle_increment=args.angular_search,
         mask_is_spherical=True,
-        wedge_angles=tuple([90 - abs(w) for w in args.wedge_angles]),
+        tilt_angles=args.tilt_angles,
+        tilt_weighting=args.per_tilt_weighting,
         search_x=args.search_x,
         search_y=args.search_y,
         search_z=args.search_z,
