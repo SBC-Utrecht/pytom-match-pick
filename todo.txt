@@ -17,10 +17,11 @@
 (x) structured missing wedge from .tlt or .rawtlt file
 (x) write wrapper around mrcfile read/write to take care of tranposes
 (x) unittests for weights library, for angle lists, and exception checks for TMJob
+(x) fix asymmetric wedge
 - estimate true positives and RUC script
 - merge multiple starfiles together to one large file
+- test if particle can be correctly reconstructed in Warp and averaged in RELION
 - update docstrings
-- fix asymmetric wedge
 (- option to provide extraction mask)
-(- cryohub usage?)
 (- gold marker removal?)
+(- cryohub usage?)
