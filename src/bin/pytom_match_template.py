@@ -37,9 +37,9 @@ def main():
                              'not fit into GPU memory. Format is x y z, e.g. --volume-split 1 2 1')
     parser.add_argument('--search-x', nargs=2, type=int, required=False, action=ParseSearch,
                         help='Start and end indices of the search along the x-axis, e.g. --search-x 10 490 ')
-    parser.add_argument('--search-y', nargs=2, type=int, required=False,
+    parser.add_argument('--search-y', nargs=2, type=int, required=False, action=ParseSearch,
                         help='Start and end indices of the search along the y-axis, e.g. --search-x 10 490 ')
-    parser.add_argument('--search-z', nargs=2, type=int, required=False,
+    parser.add_argument('--search-z', nargs=2, type=int, required=False, action=ParseSearch,
                         help='Start and end indices of the search along the z-axis, e.g. --search-x 30 230 ')
     parser.add_argument('--voxel-size-angstrom', type=float,
                         required=False, action=LargerThanZero,

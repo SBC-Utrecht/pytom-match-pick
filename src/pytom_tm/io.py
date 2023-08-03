@@ -42,8 +42,8 @@ class LargerThanZero(argparse.Action):
 
 
 class ParseSearch(argparse.Action):
-    def __call__(self, parser, namespace, values: float, option_string: Optional[str] = None):
-        if not (0 <= values[0] < values[1] > 0):
+    def __call__(self, parser, namespace, values: list[int, int], option_string: Optional[str] = None):
+        if not (0 <= values[0] < values[1]):
             parser.error("{0} start and end indices must be larger than 0 and end must be larger than start".format(
                 option_string))
 

@@ -106,7 +106,7 @@ class TMJob:
 
         search_origin = [x[0] if x is not None else 0 for x in (search_x, search_y, search_z)]
         # Check if tomogram origin is valid
-        if all([x < y for x, y in zip(search_origin, self.tomo_shape)]):
+        if all([0 <= x < y for x, y in zip(search_origin, self.tomo_shape)]):
             self.search_origin = search_origin
         else:
             raise ValueError('Invalid input provided for search origin of tomogram.')

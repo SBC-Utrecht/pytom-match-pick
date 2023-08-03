@@ -6,7 +6,7 @@ from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list
 from pytom_tm.parallel import run_job_parallel
-from pytom_tm.tmjob import TMJob
+from pytom_tm.tmjob import TMJob, TMJobError
 from pytom_tm.io import read_mrc, write_mrc
 
 
@@ -49,7 +49,7 @@ class TestTMJob(unittest.TestCase):
 
         TEST_DATA_DIR.mkdir(exist_ok=True)
         write_mrc(TEST_MASK, mask, 1.)
-        write_mrc(TEST_TEMPLATE, template, 1.)
+        write_mrc(TEST_TEMPLATE, template, 1.5)
         write_mrc(TEST_TOMOGRAM, volume, 1.)
 
         # do a run without splitting to compare against
@@ -60,7 +60,8 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            angle_increment='38.53'
+            angle_increment='38.53',
+            voxel_size=1.
         )
         score, angle = job.start_job(0, return_volumes=True)
         write_mrc(
@@ -85,7 +86,28 @@ class TestTMJob(unittest.TestCase):
 
     def setUp(self):
         self.job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
-                         angle_increment='38.53')
+                         angle_increment='38.53', voxel_size=1.)
+
+    def test_tm_job_errors(self):
+        with self.assertRaises(ValueError, msg='Different voxel size in tomogram and template and no voxel size '
+                                               'provided should raise a ValueError'):
+            TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR)
+
+        # test searches raise correct errors
+        for param in ['search_x', 'search_y', 'search_z']:
+            with self.assertRaises(ValueError, msg='Invalid start index in search should raise ValueError'):
+                TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, voxel_size=1.,
+                      **{param: [-10, 100]})
+                TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, voxel_size=1.,
+                      **{param: [110, 130]})
+            with self.assertRaises(ValueError, msg='Invalid end index in search should raise ValueError'):
+                TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, voxel_size=1.,
+                      **{param: [0, 120]})
+
+        with self.assertRaises(TMJobError, msg='Angular increment for which no default list is available should raise '
+                                               'a TMJobError'):
+            TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, voxel_size=1.,
+                  angle_increment='5.41')
 
     def test_tm_job_copy(self):
         copy = self.job.copy()
