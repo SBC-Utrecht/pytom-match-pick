@@ -4,7 +4,7 @@ import argparse
 import pathlib
 import numpy as np
 import logging
-from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, LargerThanZero, CheckFileExists, SetLogging
+from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, LargerThanZero, CheckFileExists, ParseLogging
 from pytom_tm.template import generate_template_from_map
 
 
@@ -59,7 +59,7 @@ def main():
                         help='Mirror the final template before writing to disk.')
     parser.add_argument('--display-filter', action='store_true', default=False, required=False,
                         help='Display the combined CTF and low pass filter to the user.')
-    parser.add_argument('--log', type=str, required=False, default=20, action=SetLogging,
+    parser.add_argument('--log', type=str, required=False, default=20, action=ParseLogging,
                         help='Can be set to `info` or `debug`')
     args = parser.parse_args()
     logging.basicConfig(level=args.log)

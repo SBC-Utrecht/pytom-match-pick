@@ -6,7 +6,7 @@ import starfile
 import logging
 from pytom_tm.tmjob import load_json_to_tmjob
 from pytom_tm.extract import extract_particles
-from pytom_tm.io import CheckFileExists, LargerThanZero, SetLogging
+from pytom_tm.io import CheckFileExists, LargerThanZero, ParseLogging
 
 
 def main():
@@ -29,14 +29,14 @@ def main():
                              'number_of_particles down to this LCCmax value. Set to -1 to guarantee extracting '
                              'number_of_particles. Values larger than 1 make no sense as the correlation cannot be '
                              'higher than 1.')
-    parser.add_argument('--log', type=str, required=False, default=20, action=SetLogging,
+    parser.add_argument('--log', type=str, required=False, default=20, action=ParseLogging,
                         help='Can be set to `info` or `debug`')
     args = parser.parse_args()
     logging.basicConfig(level=args.log)
 
     # load job and extract particles from the volumes
     job = load_json_to_tmjob(args.job_file)
-    df = extract_particles(
+    df, _ = extract_particles(
         job,
         args.radius_px,
         args.number_of_particles,

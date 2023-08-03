@@ -6,7 +6,7 @@ import logging
 from pytom_tm.io import LargerThanZero
 from pytom_tm.tmjob import TMJob
 from pytom_tm.parallel import run_job_parallel
-from pytom_tm.io import CheckFileExists, CheckDirExists, SetLogging, ParseSearch, ParseTiltAngles, write_mrc
+from pytom_tm.io import CheckFileExists, CheckDirExists, ParseLogging, ParseSearch, ParseTiltAngles, write_mrc
 
 
 def main():
@@ -54,7 +54,7 @@ def main():
                              'the CTF is often incorrectly modelled up to 50nm.')
     parser.add_argument('-g', '--gpu-ids', nargs='+', type=int, required=True,
                         help='GPU indices to run the program on.')
-    parser.add_argument('--log', type=str, required=False, default=20, action=SetLogging,
+    parser.add_argument('--log', type=str, required=False, default=20, action=ParseLogging,
                         help='Can be set to `info` or `debug`')
     args = parser.parse_args()
     logging.basicConfig(level=args.log)

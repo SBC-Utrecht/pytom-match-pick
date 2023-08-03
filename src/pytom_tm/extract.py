@@ -17,7 +17,7 @@ def extract_particles(
         n_particles: int,
         cut_off: Optional[float] = None,
         n_false_positives: int = 1
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, list[float, ...]]:
 
     score_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_scores.mrc'))
     angle_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_angles.mrc'))
@@ -51,6 +51,7 @@ def extract_particles(
     tomogram_id = job.tomo_id + '.mrc'
 
     data = []
+    scores = []
 
     for _ in tqdm(range(n_particles)):
 
@@ -60,6 +61,8 @@ def extract_particles(
 
         if lcc_max < cut_off:
             break
+
+        scores.append(lcc_max)
 
         # assumed that here also need to multiply with -1
         rotation = [-1 * a for a in convert_euler(
@@ -106,4 +109,4 @@ def extract_particles(
         'rlnMicrographName',
         'rlnMagnification',
         'rlnGroupNumber'
-    ])
+    ]), scores

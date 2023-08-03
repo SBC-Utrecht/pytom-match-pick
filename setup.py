@@ -34,7 +34,8 @@ setuptools.setup(
         'src/bin/pytom_create_mask.py',
         'src/bin/pytom_create_template.py',
         'src/bin/pytom_match_template.py',
-        'src/bin/pytom_extract_candidates.py'
+        'src/bin/pytom_extract_candidates.py',
+        'src/bin/pytom_estimate_roc.py',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

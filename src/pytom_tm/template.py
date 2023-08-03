@@ -10,6 +10,8 @@ from pytom_tm.weights import create_ctf, create_gaussian_low_pass, radial_averag
 plotting_available = True
 try:
     import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set(context='talk', style='ticks')
 except ModuleNotFoundError:
     plotting_available = False
 
