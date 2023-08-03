@@ -193,24 +193,22 @@ def _create_symmetric_wedge(
     @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
     @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
-    size = max(shape)
-    x = np.abs(np.arange(-size // 2 + size % 2, size // 2 + size % 2, 1.))[:, np.newaxis]
-    z = np.arange(0, size // 2 + 1, 1.)
+    x = (np.abs(np.arange(
+        -shape[0] // 2 + shape[0] % 2,
+        shape[0] // 2 + shape[0] % 2, 1.
+    )) / (shape[0] // 2))[:, np.newaxis]
+    z = np.arange(0, shape[2] // 2 + 1, 1.) / (shape[2] // 2)
 
     # calculate the wedge mask with smooth edges
     wedge_2d = x - np.tan(wedge_angle) * z
-    limit = (wedge_2d.max() - wedge_2d.min()) / (2 * size // 2)
+    limit = (wedge_2d.max() - wedge_2d.min()) / (2 * min(shape[0], shape[2]) // 2)
     wedge_2d[wedge_2d > limit] = limit
     wedge_2d[wedge_2d < -limit] = -limit
     wedge_2d = (wedge_2d - wedge_2d.min()) / (wedge_2d.max() - wedge_2d.min())
-
-    # scale to right dimensions
-    scaled_wedge_2d = np.zeros((shape[0], shape[2] // 2 + 1))
-    zoom(wedge_2d, [shape[0] / size, (shape[2] // 2 + 1) / (size // 2 + 1)], output=scaled_wedge_2d)
-    scaled_wedge_2d[shape[0] // 2 + 1, 0] = 1  # ensure that the zero frequency point equals 1
+    wedge_2d[shape[0] // 2 + 1, 0] = 1  # ensure that the zero frequency point equals 1
 
     # duplicate in x
-    wedge = np.tile(scaled_wedge_2d[:, np.newaxis, :], (1, shape[1], 1))
+    wedge = np.tile(wedge_2d[:, np.newaxis, :], (1, shape[1], 1))
 
     wedge[radial_reduced_grid(shape) > cut_off_radius] = 0
 
@@ -230,39 +228,39 @@ def _create_asymmetric_wedge(
     @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
     @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
-    raise NotImplementedError('Asymmetric wedge needs to be fixed')
+    x = (np.abs(np.arange(
+        -shape[0] // 2 + shape[0] % 2,
+        shape[0] // 2 + shape[0] % 2, 1.
+    )) / (shape[0] // 2))[:, np.newaxis]
+    z = np.arange(0, shape[2] // 2 + 1, 1.) / (shape[2] // 2)
 
-    size_x, size_y, size_z = shape
-    angle1, angle2 = wedge_angles
-    wedge = np.zeros((size_x, size_y, size_z // 2 + 1))
+    # calculate wedge for first angle
+    wedge_section = x - np.tan(wedge_angles[0]) * z
+    limit = (wedge_section.max() - wedge_section.min()) / (2 * min(shape[0], shape[2]) // 2)
+    wedge_section[wedge_section > limit] = limit
+    wedge_section[wedge_section < -limit] = -limit
+    wedge_section = (wedge_section - wedge_section.min()) / (wedge_section.max() - wedge_section.min())
 
-    # see comment above with symmetric wedge function about meshgrid
-    z, y, x = np.meshgrid(np.arange(-size_y // 2 + size_y % 2, size_y // 2 + size_y % 2),
-                          np.arange(-size_x // 2 + size_x % 2, size_x // 2 + size_x % 2),
-                          np.arange(0, size_z // 2 + 1))
+    # set top of the wedge
+    wedge_2d = wedge_section.copy()
 
-    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    # calculate wedge for second angle
+    wedge_section = x - np.tan(wedge_angles[1]) * z
+    limit = (wedge_section.max() - wedge_section.min()) / (2 * min(shape[0], shape[2]) // 2)
+    wedge_section[wedge_section > limit] = limit
+    wedge_section[wedge_section < -limit] = -limit
+    wedge_section = (wedge_section - wedge_section.min()) / (wedge_section.max() - wedge_section.min())
 
-    with np.errstate(all='ignore'):
-        wedge[np.tan(angle1) < y / z] = 1
-        wedge[np.tan(-angle2) > y / z] = 1
-    wedge[size_x // 2, :, 0] = 1  # put 1 in the zero frequency
+    # set bottom of wedge and put 0 frequency to 1
+    wedge_2d[shape[0] // 2 + 1:] = wedge_section[shape[0] // 2 + 1:]
+    wedge_2d[shape[0] // 2 + 1, 0] = 1
 
-    smooth = None
-    if smooth is not None:
-        range_angle1_smooth = smooth / np.sin(angle1)
-        range_angle2_smooth = smooth / np.sin(angle2)
+    # duplicate in x
+    wedge = np.tile(wedge_2d[:, np.newaxis, :], (1, shape[1], 1))
 
-        area = np.abs(x - (y / np.tan(angle1))) <= range_angle1_smooth
-        strip = 1 - (np.abs(x - (y / np.tan(angle1))) * np.sin(angle1) / smooth)
-        wedge += (strip * area * (1 - wedge) * (y > 0))
+    wedge[radial_reduced_grid(shape) > cut_off_radius] = 0
 
-        area2 = np.abs(x + (y / np.tan(angle2))) <= range_angle2_smooth
-        strip2 = 1 - (np.abs(x + (y / np.tan(angle2))) * np.sin(angle2) / smooth)
-        wedge += (strip2 * area2 * (1 - wedge) * (y <= 0))
-
-    wedge[r > cut_off_radius] = 0
-
+    # fourier shift to origin
     return np.fft.ifftshift(wedge, axes=(0, 1))
 
 
@@ -275,73 +273,50 @@ def create_structured_wedge(
 
     Parameters
     ----------
-    shape
-    tilt_angles
+    shape: tuple[int, int, int]
+        shape of volume to model the wedge for
+    tilt_angles: list[float, ...]
         tilt angles is a list of angle in radian units
-    cut_off_radius
+    cut_off_radius: float
+        cut off for the mask as a fraction of nyquist, value between 0 and 1
 
     Returns
     -------
-
+    wedge: npt.NDArray[float]
+        structured wedge mask in fourier reduced form, i.e. output shape is (shape[0], shape[1], shape[2] // 2 + 1)
     """
     logging.debug(f'tilt anges: {tilt_angles}')
 
-    # c = 1  # needed?
-    # size_x, size_y, size_z = shape
-    # # z, y, x = np.meshgrid(np.arange(-size_y // 2 + size_y % 2, size_y // 2 + size_y % 2),
-    # #                       np.arange(-size_x // 2 + size_x % 2, size_x // 2 + size_x % 2),
-    # #                       np.arange(0, size_z // 2 + 1))
-    # x, y, z = np.meshgrid(np.arange(-size_x // 2 + size_x % 2, size_x // 2 + size_x % 2),
-    #                       np.arange(-size_y // 2 + size_y % 2, size_y // 2 + size_y % 2),
-    #                       np.arange(0, size_z // 2 + 1), indexing='ij')
-    #
-    # r = np.sqrt((z*size_x/size_z) ** 2 + y ** 2 + (x*size_x/size_y) ** 2)
-    #
-    # tot = np.zeros_like(x)
-    #
-    # for i in tilt_angles:
-    #     alpha = (i+90)*np.pi/180
-    #     if abs(i) < 0.001:
-    #         tot += 1*(abs(z) < c)
-    #     else:
-    #         tot += (abs(np.sin(alpha)*(z-x/np.tan(alpha))) <= c)*1
-
-    # size = max(shape)
-    # x, z = np.meshgrid(
-    #     np.abs(np.arange(-size // 2 + size % 2, size // 2 + size % 2, 1.)),
-    #     np.arange(0, size // 2 + 1, 1.),
-    #     indexing='ij'
-    # )
-
     x, z = np.meshgrid(
-        np.abs(np.arange(-shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1.)) / (shape[0] // 2),
+        np.abs(np.arange(
+            -shape[0] // 2 + shape[0] % 2,
+            shape[0] // 2 + shape[0] % 2, 1.
+        )) / (shape[0] // 2),
         np.arange(0, shape[2] // 2 + 1, 1.) / (shape[2] // 2),
         indexing='ij'
     )
 
-    tilt_sum = np.zeros_like(x)
+    tilt_sum_negative = np.zeros_like(x)
+    tilt_sum_positive = np.zeros_like(x)
 
     for alpha in tilt_angles:
-        if abs(alpha) < 0.001:
-            tilt_sum += 1 * (abs(z) < 1)
+        w = x - np.tan(np.pi / 2 - np.abs(alpha)) * z
+        limit = (w.max() - w.min()) / (2 * min(shape[0], shape[2]) // 2)
+        w = np.abs(w)
+        w[w > limit] = limit
+        if alpha < 0:  # add to negative or positive section
+            tilt_sum_negative += - w / limit + 1
         else:
-            w = x - np.tan(alpha) * z
-            limit = (w.max() - w.min()) / (2 * min(shape[0], shape[2]) // 2)
-            w = np.abs(w)
-            w[w > limit] = limit
-            tilt_sum += (- w / limit + 1)
+            tilt_sum_positive += - w / limit + 1
 
+    tilt_sum = tilt_sum_negative.copy()
+    tilt_sum[:, 0] += tilt_sum_positive[:, 0]  # add together in 0 frequency to correct tilt overlap
+    tilt_sum[shape[0] // 2 + 1:, 1:] = tilt_sum_positive[shape[0] // 2 + 1:, 1:]
     tilt_sum[tilt_sum > 1] = 1
-
-    # scale to right dimensions
-    # scaled_wedge_2d = np.zeros((shape[0], shape[2] // 2 + 1))
-    # tilt_sum /= max([shape[0] / size, (shape[2] // 2 + 1) / (size // 2 + 1)])
-    # zoom(tilt_sum, [shape[0] / size, (shape[2] // 2 + 1) / (size // 2 + 1)], output=scaled_wedge_2d)
-    scaled_wedge_2d = tilt_sum.copy()
-    scaled_wedge_2d[shape[0] // 2 + 1, 0] = 1  # ensure that the zero frequency point equals 1
+    tilt_sum[shape[0] // 2 + 1, 0] = 1  # ensure that the zero frequency point equals 1
 
     # duplicate in x
-    wedge = np.tile(scaled_wedge_2d[:, np.newaxis, :], (1, shape[1], 1))
+    wedge = np.tile(tilt_sum[:, np.newaxis, :], (1, shape[1], 1))
 
     wedge[radial_reduced_grid(shape) > cut_off_radius] = 0
 
