@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
-import mrcfile
 import pathlib
 import logging
 from pytom_tm.io import LargerThanZero
 from pytom_tm.tmjob import TMJob
 from pytom_tm.parallel import run_job_parallel
-from pytom_tm.io import CheckFileExists, CheckDirExists, SetLogging, ParseSearch, ParseTiltAngles
+from pytom_tm.io import CheckFileExists, CheckDirExists, SetLogging, ParseSearch, ParseTiltAngles, write_mrc
 
 
 def main():
@@ -45,12 +44,12 @@ def main():
     parser.add_argument('--voxel-size-angstrom', type=float,
                         required=False, action=LargerThanZero,
                         help='Voxel spacing of tomogram/template in angstrom, if not provided will try to read from '
-                             'the MRC files. Argument is important for bandpass filtering!')
-    parser.add_argument('--lowpass', type=float, required=False, action=LargerThanZero,
-                        help='Apply a lowpass filter to the tomogram and template. Generally desired if the template '
+                             'the MRC files. Argument is important for band-pass filtering!')
+    parser.add_argument('--low-pass', type=float, required=False, action=LargerThanZero,
+                        help='Apply a low-pass filter to the tomogram and template. Generally desired if the template '
                              'was already filtered to a certain resolution. Value is the resolution in A.')
-    parser.add_argument('--highpass', type=float, required=False, action=LargerThanZero,
-                        help='Apply a highpass filter to the tomogram and template to reduce correlation with large '
+    parser.add_argument('--high-pass', type=float, required=False, action=LargerThanZero,
+                        help='Apply a high-pass filter to the tomogram and template to reduce correlation with large '
                              'low frequency variations. Value is a resolution in A, e.g. 500 could be appropriate as '
                              'the CTF is often incorrectly modelled up to 50nm.')
     parser.add_argument('-g', '--gpu-ids', nargs='+', type=int, required=True,
@@ -62,11 +61,11 @@ def main():
 
     job = TMJob(
         '0',
+        args.log,
         args.tomogram,
         args.template,
         args.mask,
         args.destination,
-        args.log,
         angle_increment=args.angular_search,
         mask_is_spherical=True,
         tilt_angles=args.tilt_angles,
@@ -75,17 +74,15 @@ def main():
         search_y=args.search_y,
         search_z=args.search_z,
         voxel_size=args.voxel_size_angstrom,
-        lowpass=args.lowpass,
-        highpass=args.highpass
+        low_pass=args.low_pass,
+        high_pass=args.high_pass
     )
 
     score_volume, angle_volume = run_job_parallel(job, tuple(args.volume_split), args.gpu_ids)
 
     # set the appropriate headers when writing!
-    mrcfile.write(args.destination.joinpath(f'{job.tomo_id}_scores.mrc'), score_volume.T, voxel_size=job.voxel_size,
-                  overwrite=True)
-    mrcfile.write(args.destination.joinpath(f'{job.tomo_id}_angles.mrc'), angle_volume.T, voxel_size=job.voxel_size,
-                  overwrite=True)
+    write_mrc(args.destination.joinpath(f'{job.tomo_id}_scores.mrc'), score_volume, job.voxel_size)
+    write_mrc(args.destination.joinpath(f'{job.tomo_id}_angles.mrc'), angle_volume, job.voxel_size)
 
     # write the job as well
     job.write_to_json(args.destination.joinpath(f'{job.tomo_id}_job.json'))

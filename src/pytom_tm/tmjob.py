@@ -3,7 +3,6 @@ import pathlib
 import copy
 import numpy as np
 import numpy.typing as npt
-import mrcfile
 import json
 import logging
 from typing import Optional, Union
@@ -12,7 +11,7 @@ from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import create_wedge
-from pytom_tm.io import read_mrc_meta_data
+from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc
 
 
 def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
@@ -21,11 +20,11 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
 
     job = TMJob(
         data['job_key'],
+        data['log_level'],
         pathlib.Path(data['tomogram']),
         pathlib.Path(data['template']),
         pathlib.Path(data['mask']),
         pathlib.Path(data['output_dir']),
-        data['log_level'],
         mask_is_spherical=data['mask_is_spherical'],
         tilt_angles=data['tilt_angles'],
         tilt_weighting=data['tilt_weighting'],
@@ -33,8 +32,8 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         search_y=data['search_y'],
         search_z=data['search_z'],
         voxel_size=data['voxel_size'],
-        lowpass=data['lowpass'],
-        highpass=data['highpass']
+        low_pass=data['low_pass'],
+        high_pass=data['high_pass']
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
@@ -57,11 +56,11 @@ class TMJob:
     def __init__(
             self,
             job_key: str,
+            log_level: int,
             tomogram: pathlib.Path,
             template: pathlib.Path,
             mask: pathlib.Path,
             output_dir: pathlib.Path,
-            log_level: int,
             angle_increment: str = '7.00',
             mask_is_spherical: bool = True,
             tilt_angles: Optional[list[float, ...]] = None,
@@ -70,8 +69,8 @@ class TMJob:
             search_y: Optional[list[int, int]] = None,
             search_z: Optional[list[int, int]] = None,
             voxel_size: Optional[float] = None,
-            lowpass: Optional[float] = None,
-            highpass: Optional[float] = None
+            low_pass: Optional[float] = None,
+            high_pass: Optional[float] = None
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -141,9 +140,9 @@ class TMJob:
         # missing wedge
         self.tilt_angles = tilt_angles
         self.tilt_weighting = tilt_weighting
-        # set the bandpass resolution shells
-        self.lowpass = lowpass
-        self.highpass = highpass
+        # set the band-pass resolution shells
+        self.low_pass = low_pass
+        self.high_pass = high_pass
 
         # Job details
         self.job_key = job_key
@@ -272,8 +271,8 @@ class TMJob:
                 self.output_dir.joinpath(f'{self.tomo_id}_angles_{self.job_key}.mrc')
             )
             result = (
-                np.ascontiguousarray(mrcfile.read(score_file).T),
-                np.ascontiguousarray(mrcfile.read(angle_file).T)
+                read_mrc(score_file),
+                read_mrc(angle_file)
             )
             (score_file.unlink(), angle_file.unlink())
             return result
@@ -338,18 +337,18 @@ class TMJob:
         search_volume[:self.search_size[0],
                       :self.search_size[1],
                       :self.search_size[2]] = np.ascontiguousarray(
-            mrcfile.read(self.tomogram).T[self.search_origin[0]: self.search_origin[0] + self.search_size[0],
-                                          self.search_origin[1]: self.search_origin[1] + self.search_size[1],
-                                          self.search_origin[2]: self.search_origin[2] + self.search_size[2]]
+            read_mrc(self.tomogram)[self.search_origin[0]: self.search_origin[0] + self.search_size[0],
+                                    self.search_origin[1]: self.search_origin[1] + self.search_size[1],
+                                    self.search_origin[2]: self.search_origin[2] + self.search_size[2]]
         )
 
         # load template and mask
         template, mask = (
-            np.ascontiguousarray(mrcfile.read(self.template).T),
-            np.ascontiguousarray(mrcfile.read(self.mask).T)
+            read_mrc(self.template),
+            read_mrc(self.mask)
         )
 
-        # create weighting, include missing wedge and bandpass filters
+        # create weighting, include missing wedge and band-pass filters
         template_wedge = None
         if self.tilt_angles is not None:
             # convolute tomo with wedge
@@ -359,8 +358,8 @@ class TMJob:
                 1.,
                 angles_in_degrees=True,
                 voxel_size=self.voxel_size,
-                lowpass=self.lowpass,
-                highpass=self.highpass,
+                low_pass=self.low_pass,
+                high_pass=self.high_pass,
                 tilt_weighting=self.tilt_weighting
             ).astype(np.float32)
 
@@ -373,8 +372,8 @@ class TMJob:
                 1.,
                 angles_in_degrees=True,
                 voxel_size=self.voxel_size,
-                lowpass=self.lowpass,
-                highpass=self.highpass,
+                low_pass=self.low_pass,
+                high_pass=self.high_pass,
                 tilt_weighting=self.tilt_weighting
             ).astype(np.float32)
 
@@ -403,16 +402,14 @@ class TMJob:
         if return_volumes:
             return score_volume, angle_volume
         else:  # otherwise write them out with job_key
-            mrcfile.write(
+            write_mrc(
                 self.output_dir.joinpath(f'{self.tomo_id}_scores_{self.job_key}.mrc'),
-                score_volume.T,
-                voxel_size=self.voxel_size,
-                overwrite=True
+                score_volume,
+                self.voxel_size
             )
-            mrcfile.write(
+            write_mrc(
                 self.output_dir.joinpath(f'{self.tomo_id}_angles_{self.job_key}.mrc'),
-                angle_volume.T,
-                voxel_size=self.voxel_size,
-                overwrite=True
+                angle_volume,
+                self.voxel_size
             )
             return self.job_stats

@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
-import mrcfile
 import logging
 from typing import Optional
 from pytom_tm.tmjob import TMJob
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list, convert_euler
+from pytom_tm.io import read_mrc
 from scipy.special import erfcinv
 from tqdm import tqdm
 from functools import reduce
@@ -19,8 +19,8 @@ def extract_particles(
         n_false_positives: int = 1
 ) -> pd.DataFrame:
 
-    score_volume = mrcfile.read(job.output_dir.joinpath(f'{job.tomo_id}_scores.mrc')).T.copy()
-    angle_volume = mrcfile.read(job.output_dir.joinpath(f'{job.tomo_id}_angles.mrc')).T.copy()
+    score_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_scores.mrc'))
+    angle_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_angles.mrc'))
     angle_list = load_angle_list(job.rotation_file)
 
     # mask edges of score volume
@@ -65,7 +65,7 @@ def extract_particles(
         rotation = [-1 * a for a in convert_euler(
             angle_list[int(angle_volume[ind])],
             order_in='ZXZ',
-            order_out='ZXZ',
+            order_out='ZYZ',
             degrees_in=False,
             degrees_out=True
         )]

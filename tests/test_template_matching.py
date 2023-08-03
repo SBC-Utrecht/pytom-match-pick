@@ -6,9 +6,6 @@ from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list
 
-# visuals
-# import napari
-
 
 class TestTM(unittest.TestCase):
     def setUp(self):
@@ -21,11 +18,6 @@ class TestTM(unittest.TestCase):
         self.angles = load_angle_list(files('pytom_tm.angle_lists').joinpath('angles_38.53_256.txt'))
 
     def test_search(self):
-        # Instantiate monitor with a 1-second delay between updates
-        # monitor = Monitor(1)
-        # time.sleep(1)
-
-        # intrinsic rotation R.from_euler('ZXZ', self.angles[100], degrees=False)
         angle_id = 100
         rotation = self.angles[angle_id]
         loc = (77, 26, 40)
@@ -41,22 +33,15 @@ class TestTM(unittest.TestCase):
 
         tm = TemplateMatchingGPU(0, 0, self.volume, self.template, self.mask, self.angles, list(range(len(
             self.angles))))
-        tm.run()
-        score_volume, angle_volume = tm.plan.scores.get(), tm.plan.angles.get()
-        del tm
+        score_volume, angle_volume, stats = tm.run()
 
         ind = np.unravel_index(score_volume.argmax(), self.volume.shape)
         self.assertTrue(score_volume.max() > 0.99, msg='lcc max value lower than expected')
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)
-
-        # Close monitor
-        # monitor.stop()
-
-        # viewer = napari.Viewer()
-        # viewer.add_image(score_volume)
-        # viewer.add_image(self.volume)
-        # napari.run()
+        self.assertEqual(stats['search_space'], 256000000, msg='Search space should exactly equal this value')
+        self.assertAlmostEqual(stats['std'], 0.005175, places=6,
+                               msg='Standard deviation of the search should be almost equal')
 
 
 if __name__ == '__main__':

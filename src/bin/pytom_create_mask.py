@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 import argparse
-import mrcfile
 import pathlib
 from pytom_tm.mask import spherical_mask, ellipsoidal_mask
-from pytom_tm.io import LargerThanZero
+from pytom_tm.io import LargerThanZero, write_mrc
 
 
 def main():
@@ -48,7 +47,7 @@ def main():
     # write to disk
     output_path = args.output_file if args.output_file is not None else (
         pathlib.Path(f'mask_b{args.box_size}px_r{args.radius}px.mrc'))
-    mrcfile.write(output_path, mask.T, voxel_size=args.voxel_size, overwrite=True)
+    write_mrc(output_path, mask, args.voxel_size)
 
 
 if __name__ == '__main__':

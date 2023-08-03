@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 import argparse
-import mrcfile
 import pathlib
 import numpy as np
 import logging
-from pytom_tm.io import read_mrc_meta_data, LargerThanZero, CheckFileExists, SetLogging
+from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, LargerThanZero, CheckFileExists, SetLogging
 from pytom_tm.template import generate_template_from_map
 
 
@@ -47,7 +46,7 @@ def main():
                         help='Set this flag to apply a phase flipped CTF. Only required if the CTF is modelled '
                              'beyond the first zero crossing and if the tomograms have been CTF corrected by phase '
                              'flipping.')
-    parser.add_argument('--lowpass', type=float, required=False, action=LargerThanZero,
+    parser.add_argument('--low-pass', type=float, required=False, action=LargerThanZero,
                         help='Apply a low pass filter to this resolution, in Angstrom. By default a low pass filter '
                              'is applied to a resolution of (2 * output_spacing_angstrom) before downsampling the '
                              'input volume.')
@@ -66,7 +65,7 @@ def main():
     logging.basicConfig(level=args.log)
 
     # set input voxel size and give user warning if it does not match with MRC annotation
-    input_data = np.ascontiguousarray(mrcfile.read(args.input_map).T)
+    input_data = read_mrc(args.input_map)
     input_meta_data = read_mrc_meta_data(args.input_map)
     if args.input_voxel_size_angstrom is not None:
         if args.input_voxel_size_angstrom != input_meta_data['voxel_size']:
@@ -100,18 +99,17 @@ def main():
         args.output_voxel_size_angstrom,
         center=args.center,
         ctf_params=ctf_params,
-        filter_to_resolution=args.lowpass,
+        filter_to_resolution=args.low_pass,
         output_box_size=args.box_size,
         display_filter=args.display_filter
     ) * (-1 if args.invert else 1)
 
     logging.debug(f'shape of template after processing is: {template.shape}')
 
-    mrcfile.write(
+    write_mrc(
         output_path,
-        np.flip(template, axis=0).T if args.mirror else template.T,
-        voxel_size=args.output_voxel_size_angstrom,
-        overwrite=True
+        np.flip(template, axis=0) if args.mirror else template,
+        args.output_voxel_size_angstrom
     )
 
 

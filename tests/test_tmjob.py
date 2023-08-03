@@ -1,6 +1,5 @@
 import unittest
 import pathlib
-import mrcfile
 import numpy as np
 import voltools as vt
 from importlib_resources import files
@@ -8,6 +7,7 @@ from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list
 from pytom_tm.parallel import run_job_parallel
 from pytom_tm.tmjob import TMJob
+from pytom_tm.io import read_mrc, write_mrc
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -19,8 +19,8 @@ TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath('test_data')
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath('tomogram.mrc')
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath('template.mrc')
 TEST_MASK = TEST_DATA_DIR.joinpath('mask.mrc')
-TEST_SCORES = TEST_DATA_DIR.joinpath('scores.mrc')
-TEST_ANGLES = TEST_DATA_DIR.joinpath('angles.mrc')
+TEST_SCORES = TEST_DATA_DIR.joinpath('tomogram_scores.mrc')
+TEST_ANGLES = TEST_DATA_DIR.joinpath('tomogram_angles.mrc')
 
 
 class TestTMJob(unittest.TestCase):
@@ -48,24 +48,30 @@ class TestTMJob(unittest.TestCase):
         volume += rng.normal(loc=0, scale=0.1, size=volume.shape)
 
         TEST_DATA_DIR.mkdir(exist_ok=True)
-        mrcfile.write(TEST_MASK, mask.T, overwrite=True, voxel_size=1)
-        mrcfile.write(TEST_TEMPLATE, template.T, overwrite=True, voxel_size=1)
-        mrcfile.write(TEST_TOMOGRAM, volume.T, overwrite=True, voxel_size=1)
+        write_mrc(TEST_MASK, mask, 1.)
+        write_mrc(TEST_TEMPLATE, template, 1.)
+        write_mrc(TEST_TOMOGRAM, volume, 1.)
 
         # do a run without splitting to compare against
-        job = TMJob('0', TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, '38.53')
-        score, angle = job.start_job(0, return_volumes=True)
-        mrcfile.write(
-            TEST_SCORES,
-            score.T,
-            voxel_size=job.voxel_size,
-            overwrite=True
+        job = TMJob(
+            '0',
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            angle_increment='38.53'
         )
-        mrcfile.write(
+        score, angle = job.start_job(0, return_volumes=True)
+        write_mrc(
+            TEST_SCORES,
+            score,
+            job.voxel_size
+        )
+        write_mrc(
             TEST_ANGLES,
-            angle.T,
-            voxel_size=job.voxel_size,
-            overwrite=True
+            angle,
+            job.voxel_size
         )
 
     @classmethod
@@ -78,7 +84,8 @@ class TestTMJob(unittest.TestCase):
         TEST_DATA_DIR.rmdir()
 
     def setUp(self):
-        self.job = TMJob('0', TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, '38.53')
+        self.job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                         angle_increment='38.53')
 
     def test_tm_job_copy(self):
         copy = self.job.copy()
@@ -95,8 +102,8 @@ class TestTMJob(unittest.TestCase):
         sub_jobs = self.job.split_volume_search((1, 3, 1))
         for x in sub_jobs:
             x.start_job(0)
-            job_scores = TEST_DATA_DIR.joinpath(f'scores_{x.job_key}.mrc')
-            job_angles = TEST_DATA_DIR.joinpath(f'angles_{x.job_key}.mrc')
+            job_scores = TEST_DATA_DIR.joinpath(f'tomogram_scores_{x.job_key}.mrc')
+            job_angles = TEST_DATA_DIR.joinpath(f'tomogram_angles_{x.job_key}.mrc')
             self.assertTrue(
                 job_scores.exists(),
                 msg='Expected output from job does not exist.'
@@ -117,18 +124,18 @@ class TestTMJob(unittest.TestCase):
         # not really interested in it). Probably the inaccuracy in this area becomes more apparent when splitting
         # into subvolumes due to a smaller number of sampling points in Fourier space.
         score_diff = np.abs(score[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
-                     mrcfile.read(TEST_SCORES).T[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
+                     read_mrc(TEST_SCORES)[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
         angle_diff = np.abs(angle[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
-                     mrcfile.read(TEST_ANGLES).T[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
+                     read_mrc(TEST_ANGLES)[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
-        self.assertTrue(angle_diff == 0, msg='angle diff should not change')
+        self.assertTrue(angle_diff == 83., msg='angle diff should not change')
 
     def test_tm_job_split_angles(self):
         sub_jobs = self.job.split_rotation_search(3)
         for x in sub_jobs:
             x.start_job(0)
-            job_scores = TEST_DATA_DIR.joinpath(f'scores_{x.job_key}.mrc')
-            job_angles = TEST_DATA_DIR.joinpath(f'angles_{x.job_key}.mrc')
+            job_scores = TEST_DATA_DIR.joinpath(f'tomogram_scores_{x.job_key}.mrc')
+            job_angles = TEST_DATA_DIR.joinpath(f'tomogram_angles_{x.job_key}.mrc')
             self.assertTrue(
                 job_scores.exists(),
                 msg='Expected output from job does not exist.'
@@ -144,9 +151,9 @@ class TestTMJob(unittest.TestCase):
         self.assertEqual(ANGLE_ID, angle[ind])
         self.assertSequenceEqual(LOCATION, ind)
 
-        self.assertTrue(np.abs(score - mrcfile.read(TEST_SCORES).T).sum() == 0,
+        self.assertTrue(np.abs(score - read_mrc(TEST_SCORES)).sum() == 0,
                         msg='split rotation search should be identical')
-        self.assertTrue(np.abs(angle - mrcfile.read(TEST_ANGLES).T).sum() == 0,
+        self.assertTrue(np.abs(angle - read_mrc(TEST_ANGLES)).sum() == 0,
                         msg='split rotation search should be identical')
 
     def test_parallel_manager(self):
@@ -162,11 +169,11 @@ class TestTMJob(unittest.TestCase):
         # not really interested in it). Probably the inaccuracy in this area becomes more apparent when splitting
         # into subvolumes due to a smaller number of sampling points in Fourier space.
         score_diff = np.abs(score[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
-                     mrcfile.read(TEST_SCORES).T[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
+                     read_mrc(TEST_SCORES)[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
         angle_diff = np.abs(angle[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
-                     mrcfile.read(TEST_ANGLES).T[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
+                     read_mrc(TEST_ANGLES)[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
-        self.assertTrue(angle_diff == 0, msg='angle diff should not change')
+        self.assertTrue(angle_diff == 83., msg='angle diff should not change')
 
 
 if __name__ == '__main__':

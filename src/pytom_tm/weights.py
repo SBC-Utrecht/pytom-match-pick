@@ -2,7 +2,6 @@ import numpy as np
 import numpy.typing as npt
 import logging
 from typing import Optional
-from scipy.ndimage import zoom
 
 
 constants = {
@@ -100,11 +99,11 @@ def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resol
     return np.fft.ifftshift(1 - np.exp(-q ** 2 / (2 * sigma_fourier ** 2)), axes=(0, 1))
 
 
-def create_gaussian_bandpass(
+def create_gaussian_band_pass(
         shape: tuple[int, int, int],
         spacing: float,
-        lowpass: Optional[float] = None,
-        highpass: Optional[float] = None
+        low_pass: Optional[float] = None,
+        high_pass: Optional[float] = None
 ) -> npt.NDArray[float]:
     """
     Resolution bands presents the resolution shells where information needs to be maintained. For example the bands
@@ -112,26 +111,26 @@ def create_gaussian_bandpass(
     quite some low spatial frequencies will be cut by it.
     @param shape: shape of output, will return fourier reduced shape
     @param spacing: voxel size of input shape in real space
-    @param lowpass:
-    @param highpass:
+    @param low_pass:
+    @param high_pass:
     @return: a volume with a gaussian bandapss
     """
-    if highpass is None and lowpass is None:
-        raise ValueError('Either lowpass or highpass needs to be set for bandpass')
+    if high_pass is None and low_pass is None:
+        raise ValueError('Either low-pass or high-pass needs to be set for band-pass')
 
-    if highpass is None:
-        return create_gaussian_low_pass(shape, spacing, lowpass)
-    elif lowpass is None:
-        return create_gaussian_high_pass(shape, spacing, highpass)
-    elif lowpass >= highpass:
-        raise ValueError('Second value of bandpass needs to be a high resolution shell.')
+    if high_pass is None:
+        return create_gaussian_low_pass(shape, spacing, low_pass)
+    elif low_pass is None:
+        return create_gaussian_high_pass(shape, spacing, high_pass)
+    elif low_pass >= high_pass:
+        raise ValueError('Second value of band-pass needs to be a high resolution shell.')
     else:
         q = radial_reduced_grid(shape)
 
         # 2 * spacing / resolution is cutoff in fourier space
         # then convert cutoff (hwhm) to sigma for gaussian function
-        sigma_high_pass = hwhm_to_sigma(2 * spacing / highpass)
-        sigma_low_pass = hwhm_to_sigma(2 * spacing / lowpass)
+        sigma_high_pass = hwhm_to_sigma(2 * spacing / high_pass)
+        sigma_low_pass = hwhm_to_sigma(2 * spacing / low_pass)
 
         return np.fft.ifftshift(
             (1 - np.exp(-q ** 2 / (2 * sigma_high_pass ** 2))) * np.exp(-q ** 2 / (2 * sigma_low_pass ** 2)),
@@ -145,8 +144,8 @@ def create_wedge(
         cut_off_radius: float,
         angles_in_degrees: bool = True,
         voxel_size: float = 1.,
-        lowpass: Optional[float] = None,
-        highpass: Optional[float] = None,
+        low_pass: Optional[float] = None,
+        high_pass: Optional[float] = None,
         tilt_weighting: bool = False
 ) -> npt.NDArray[float]:
     """This function returns a wedge volume that is either symmetric or asymmetric depending on wedge angle input.
@@ -162,8 +161,8 @@ def create_wedge(
     angles_in_degrees
         whether angles are in degrees or radians units
     voxel_size
-    lowpass
-    highpass
+    low_pass
+    high_pass
     tilt_weighting
 
     Returns
@@ -171,8 +170,8 @@ def create_wedge(
     wedge: npt.NDArray[float]
         wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
-    if len(tilt_angles) < 2:
-        raise ValueError('Wedge generation needs at least two tilt angles.')
+    if not isinstance(tilt_angles, list) or len(tilt_angles) < 2:
+        raise ValueError('Wedge generation needs at least a list of two tilt angles.')
 
     if cut_off_radius > 1:
         print('Warning: wedge cutoff needs to be defined as a fraction of nyquist 0 < c <= 1. Setting value to 1.0.')
@@ -193,7 +192,7 @@ def create_wedge(
         ).astype(np.float32)
     else:
         wedge_angles = (np.pi / 2 - np.abs(tilt_angles_rad[0]), np.pi / 2 - np.abs(tilt_angles_rad[-1]))
-        if wedge_angles[0] == wedge_angles[1]:
+        if np.round(wedge_angles[0], 2) == np.round(wedge_angles[1], 2):
             wedge = _create_symmetric_wedge(
                 shape,
                 wedge_angles[0],
@@ -206,8 +205,8 @@ def create_wedge(
                 cut_off_radius
             ).astype(np.float32)
 
-    if not (lowpass is None and highpass is None):
-        return wedge * create_gaussian_bandpass(shape, voxel_size, lowpass, highpass).astype(np.float32)
+    if not (low_pass is None and high_pass is None):
+        return wedge * create_gaussian_band_pass(shape, voxel_size, low_pass, high_pass).astype(np.float32)
     else:
         return wedge
 

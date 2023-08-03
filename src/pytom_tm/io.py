@@ -3,6 +3,7 @@ import mrcfile
 import argparse
 import logging
 import numpy.typing as npt
+import numpy as np
 from operator import attrgetter
 from typing import Optional, Union
 
@@ -84,8 +85,31 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
     return meta_data
 
 
+def write_mrc(
+        file_name: pathlib.Path,
+        data: npt.NDArray[float],
+        voxel_size: float,
+        overwrite: bool = True,
+        transpose: bool = True
+) -> None:
+    if data.dtype != np.float32:
+        logging.warning(f'data for mrc writing is not np.float32 will convert to np.float32')
+        data = data.astype(np.float32)
+    mrcfile.write(file_name, data.T if transpose else data, voxel_size=voxel_size, overwrite=overwrite)
+
+
+def read_mrc(
+        file_name: pathlib.Path,
+        permissive: bool = True,
+        transpose: bool = True
+) -> npt.NDArray[float]:
+    with mrcfile.open(file_name, permissive=permissive) as mrc:
+        data = np.ascontiguousarray(mrc.data.T) if transpose else mrc.data
+    return data
+
+
 def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
     with open(file_name, 'r') as fstream:
         lines = fstream.readlines()
-        return sorted(list(map(float, [x.strip() for x in lines])))
+    return sorted(list(map(float, [x.strip() for x in lines])))
 

@@ -1,3 +1,6 @@
+"""
+Functions in this file are cpu/gpu agnostic.
+"""
 import numpy.typing as npt
 import cupy.typing as cpt
 from typing import Optional, Union
