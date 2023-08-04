@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
+import numpy.typing as npt
 import logging
+import scipy.ndimage as ndimage
 from typing import Optional
 from pytom_tm.tmjob import TMJob
 from pytom_tm.mask import spherical_mask
@@ -9,6 +11,18 @@ from pytom_tm.io import read_mrc
 from scipy.special import erfcinv
 from tqdm import tqdm
 from functools import reduce
+
+
+def detect_blobs(
+        volume: npt.NDArray[float],
+        voxel_size: float,
+        blob_size: float,
+        threshold: float = 1.
+) -> npt.NDArray[int]:
+    blob_radius = (blob_size / voxel_size) / 2
+    sigma = blob_radius / np.sqrt(3)
+    filtered = ndimage.gaussian_laplace((volume - volume.mean()) / volume.std(), sigma)
+    return ((filtered > threshold) * 1).astype(int)
 
 
 def extract_particles(

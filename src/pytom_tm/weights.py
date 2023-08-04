@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 import logging
+import scipy.ndimage as ndimage
 from typing import Optional
 
 
@@ -317,33 +318,21 @@ def _create_structured_wedge(
     """
     logging.debug(f'tilt angles (radians) for structured wedge: {[round(t, 2) for t in tilt_angles]}')
 
-    x, z = np.meshgrid(
-        np.abs(np.arange(
-            -shape[0] // 2 + shape[0] % 2,
-            shape[0] // 2 + shape[0] % 2, 1.
-        )) / (shape[0] // 2),
-        np.arange(0, shape[2] // 2 + 1, 1.) / (shape[2] // 2),
-        indexing='ij'
-    )
+    image_size = max(shape[0], shape[2])
+    tilt = np.zeros((image_size, ) * 2)
+    tilt[:, image_size // 2] = 1
 
-    tilt_sum_negative = np.zeros_like(x)
-    tilt_sum_positive = np.zeros_like(x)
-
+    tilt_sum = np.zeros((shape[0], shape[2] // 2 + 1))
     for alpha in tilt_angles:
-        w = x - np.tan(np.pi / 2 - np.abs(alpha)) * z
-        limit = (w.max() - w.min()) / (2 * min(shape[0], shape[2]) // 2)
-        w = np.abs(w)
-        w[w > limit] = limit
-        if alpha < 0:  # add to negative or positive section
-            tilt_sum_negative += - w / limit + 1
-        else:
-            tilt_sum_positive += - w / limit + 1
+        rotated = ndimage.zoom(  # zooming is not good for the result
+            np.flip(ndimage.rotate(tilt, np.rad2deg(alpha), reshape=False, order=1)[:, : image_size // 2 + 1]),
+            [shape[0] / image_size, (shape[2] // 2 + 1) / (image_size // 2 + 1)],
+            order=1
+        )
+        tilt_sum += (rotated - rotated.min()) / (rotated.max() - rotated.min())
 
-    tilt_sum = tilt_sum_negative.copy()
-    tilt_sum[:, 0] += tilt_sum_positive[:, 0]  # add together in 0 frequency to correct tilt overlap
-    tilt_sum[shape[0] // 2 + 1:, 1:] = tilt_sum_positive[shape[0] // 2 + 1:, 1:]
+    # scale to max 1
     tilt_sum[tilt_sum > 1] = 1
-    tilt_sum[shape[0] // 2 + 1, 0] = 1  # ensure that the zero frequency point equals 1
 
     # duplicate in x
     wedge = np.tile(tilt_sum[:, np.newaxis, :], (1, shape[1], 1))
