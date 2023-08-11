@@ -79,13 +79,13 @@ def extract_particles(
         scores.append(lcc_max)
 
         # assumed that here also need to multiply with -1
-        rotation = [-1 * a for a in convert_euler(
-            angle_list[int(angle_volume[ind])],
+        rotation = convert_euler(
+            [-1 * a for a in angle_list[int(angle_volume[ind])]],
             order_in='ZXZ',
             order_out='ZYZ',
             degrees_in=False,
             degrees_out=True
-        )]
+        )
 
         location = [i + o for i, o in zip(job.search_origin, ind)]
 
