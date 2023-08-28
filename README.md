@@ -22,7 +22,7 @@ Create a new conda environment:
 conda create -n pytom_tm python=3
 ```
 
-The clone the repository and install it with pip: 
+Then clone the repository and install it with pip: 
 
 ```commandline
 git clone https://github.com/SBC-Utrecht/pytom-template-matching-gpu.git
