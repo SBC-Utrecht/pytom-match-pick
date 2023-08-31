@@ -3,27 +3,6 @@ PyTOM's GPU template matching as a single pip plugin that can only be run from t
 
 The full PyTOM repository can be found at: https://github.com/SBC-Utrecht/PyTom
 
-## Citation
-
-For a reference on GPU accelerated template matching in tomograms please see the [IJMS publication](https://www.mdpi.com/1422-0067/24/17/13375).
-
-
-```
-@Article{ijms241713375,
-    AUTHOR = {Chaillet, Marten L. and van der Schot, Gijs and Gubins, Ilja and Roet, Sander and Veltkamp, Remco C. and Förster, Friedrich},
-    TITLE = {Extensive Angular Sampling Enables the Sensitive Localization of Macromolecules in Electron Tomograms},
-    JOURNAL = {International Journal of Molecular Sciences},
-    VOLUME = {24},
-    YEAR = {2023},
-    NUMBER = {17},
-    ARTICLE-NUMBER = {13375},
-    URL = {https://www.mdpi.com/1422-0067/24/17/13375},
-    ISSN = {1422-0067},
-    DOI = {10.3390/ijms241713375}
-}
-```
-
-
 ## Requires
 
 ```
@@ -82,3 +61,23 @@ The following scripts are available to run with `--help` to see parameters:
 ## Contributing
 
 Contributions to the project are very welcome. Feel free to make a pull request to address a specific issue.
+
+## Citation
+
+For a reference on GPU accelerated template matching in tomograms please see the [IJMS publication](https://www.mdpi.com/1422-0067/24/17/13375).
+
+
+```
+@Article{ijms241713375,
+    AUTHOR = {Chaillet, Marten L. and van der Schot, Gijs and Gubins, Ilja and Roet, Sander and Veltkamp, Remco C. and Förster, Friedrich},
+    TITLE = {Extensive Angular Sampling Enables the Sensitive Localization of Macromolecules in Electron Tomograms},
+    JOURNAL = {International Journal of Molecular Sciences},
+    VOLUME = {24},
+    YEAR = {2023},
+    NUMBER = {17},
+    ARTICLE-NUMBER = {13375},
+    URL = {https://www.mdpi.com/1422-0067/24/17/13375},
+    ISSN = {1422-0067},
+    DOI = {10.3390/ijms241713375}
+}
+```
