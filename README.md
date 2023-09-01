@@ -23,6 +23,12 @@ Then clone the repository and install it with pip:
 ```commandline
 git clone https://github.com/SBC-Utrecht/pytom-template-matching-gpu.git
 cd pytom-template-matching-gpu
+pip install .[plotting]
+```
+
+The installation above also adds the optional dependencies [matplotlib, seaborn] which are required to run pytom_estimate_roc.py. They are not essential to the core template matching fucntionality, so for some systems (such as certain cluster environments) it might be desirable to skip them. In that case remove '[plotting]' from the pip install command:
+
+```commandline
 pip install .
 ```
 

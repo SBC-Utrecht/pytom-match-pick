@@ -26,6 +26,9 @@ setuptools.setup(
         'starfile',
         'importlib_resources'
     ],
+    extras_require={
+        'plotting': ['matplotlib', 'seaborn']
+    },
     package_data={
         'pytom_tm.angle_lists': ['*.txt'],
     },
