@@ -2,12 +2,13 @@ import unittest
 import pathlib
 import numpy as np
 import voltools as vt
+import mrcfile
 from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list
 from pytom_tm.parallel import run_job_parallel
 from pytom_tm.tmjob import TMJob, TMJobError
-from pytom_tm.io import read_mrc, write_mrc
+from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -18,6 +19,7 @@ ANGULAR_SEARCH = 'angles_38.53_256.txt'
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath('test_data')
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath('tomogram.mrc')
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath('template.mrc')
+TEST_TEMPLATE_UNEQUAL_SPACING = TEST_DATA_DIR.joinpath('template_unequal_spacing.mrc')
 TEST_MASK = TEST_DATA_DIR.joinpath('mask.mrc')
 TEST_SCORES = TEST_DATA_DIR.joinpath('tomogram_scores.mrc')
 TEST_ANGLES = TEST_DATA_DIR.joinpath('tomogram_angles.mrc')
@@ -50,6 +52,7 @@ class TestTMJob(unittest.TestCase):
         TEST_DATA_DIR.mkdir(exist_ok=True)
         write_mrc(TEST_MASK, mask, 1.)
         write_mrc(TEST_TEMPLATE, template, 1.5)
+        mrcfile.write(TEST_TEMPLATE_UNEQUAL_SPACING, template, voxel_size=(1.5, 1., 2.), overwrite=True)
         write_mrc(TEST_TOMOGRAM, volume, 1.)
 
         # do a run without splitting to compare against
@@ -79,6 +82,7 @@ class TestTMJob(unittest.TestCase):
     def tearDownClass(cls) -> None:
         TEST_MASK.unlink()
         TEST_TEMPLATE.unlink()
+        TEST_TEMPLATE_UNEQUAL_SPACING.unlink()
         TEST_TOMOGRAM.unlink()
         TEST_SCORES.unlink()
         TEST_ANGLES.unlink()
@@ -92,6 +96,10 @@ class TestTMJob(unittest.TestCase):
         with self.assertRaises(ValueError, msg='Different voxel size in tomogram and template and no voxel size '
                                                'provided should raise a ValueError'):
             TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR)
+
+        with self.assertRaises(UnequalSpacingError,
+                               msg='Unequal spacing should raise specific Error'):
+            TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE_UNEQUAL_SPACING, TEST_MASK, TEST_DATA_DIR)
 
         # test searches raise correct errors
         for param in ['search_x', 'search_y', 'search_z']:
