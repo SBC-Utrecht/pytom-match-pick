@@ -15,6 +15,9 @@ def main():
                         help='Template; MRC file.')
     parser.add_argument('-m', '--mask', type=pathlib.Path, required=True,  action=CheckFileExists,
                         help='Mask with same box size as template; MRC file.')
+    parser.add_argument('--non-spherical-mask', action='store_true', required=False,
+                        help='Flag to set when the mask is not spherical. It adds the required computations for '
+                             'non-spherical masks and roughly doubles computation time.')
     parser.add_argument('-v', '--tomogram', type=pathlib.Path, required=True,  action=CheckFileExists,
                         help='Tomographic volume; MRC file.')
     parser.add_argument('-d', '--destination', type=pathlib.Path, required=False,
@@ -67,7 +70,7 @@ def main():
         args.mask,
         args.destination,
         angle_increment=args.angular_search,
-        mask_is_spherical=True,
+        mask_is_spherical=True if args.non_spherical_mask is None else args.non_spherical_mask,
         tilt_angles=args.tilt_angles,
         tilt_weighting=args.per_tilt_weighting,
         search_x=args.search_x,
