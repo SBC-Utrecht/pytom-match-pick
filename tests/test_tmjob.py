@@ -18,6 +18,7 @@ ANGULAR_SEARCH = 'angles_38.53_256.txt'
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath('test_data')
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath('tomogram.mrc')
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath('template.mrc')
+TEST_TEMPLATE_WRONG_VOXEL_SIZE = TEST_DATA_DIR.joinpath('template_voxel_error_test.mrc')
 TEST_MASK = TEST_DATA_DIR.joinpath('mask.mrc')
 TEST_SCORES = TEST_DATA_DIR.joinpath('tomogram_scores.mrc')
 TEST_ANGLES = TEST_DATA_DIR.joinpath('tomogram_angles.mrc')
@@ -49,7 +50,8 @@ class TestTMJob(unittest.TestCase):
 
         TEST_DATA_DIR.mkdir(exist_ok=True)
         write_mrc(TEST_MASK, mask, 1.)
-        write_mrc(TEST_TEMPLATE, template, 1.5)
+        write_mrc(TEST_TEMPLATE, template, 1.)
+        write_mrc(TEST_TEMPLATE_WRONG_VOXEL_SIZE, template, 1.5)
         write_mrc(TEST_TOMOGRAM, volume, 1.)
 
         # do a run without splitting to compare against
@@ -79,6 +81,7 @@ class TestTMJob(unittest.TestCase):
     def tearDownClass(cls) -> None:
         TEST_MASK.unlink()
         TEST_TEMPLATE.unlink()
+        TEST_TEMPLATE_WRONG_VOXEL_SIZE.unlink()
         TEST_TOMOGRAM.unlink()
         TEST_SCORES.unlink()
         TEST_ANGLES.unlink()
@@ -91,7 +94,7 @@ class TestTMJob(unittest.TestCase):
     def test_tm_job_errors(self):
         with self.assertRaises(ValueError, msg='Different voxel size in tomogram and template and no voxel size '
                                                'provided should raise a ValueError'):
-            TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR)
+            TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE_WRONG_VOXEL_SIZE, TEST_MASK, TEST_DATA_DIR)
 
         # test searches raise correct errors
         for param in ['search_x', 'search_y', 'search_z']:
