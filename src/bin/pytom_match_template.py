@@ -70,7 +70,7 @@ def main():
         args.mask,
         args.destination,
         angle_increment=args.angular_search,
-        mask_is_spherical=True if args.non_spherical_mask is None else args.non_spherical_mask,
+        mask_is_spherical=True if args.non_spherical_mask is None else (not args.non_spherical_mask),
         tilt_angles=args.tilt_angles,
         tilt_weighting=args.per_tilt_weighting,
         search_x=args.search_x,
