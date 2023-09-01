@@ -11,7 +11,7 @@ from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import create_wedge
-from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc
+from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
 
 
 def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
@@ -80,8 +80,15 @@ class TMJob:
         self.template = template
         self.tomo_id = self.tomogram.stem
 
-        meta_data_tomo = read_mrc_meta_data(self.tomogram)
-        meta_data_template = read_mrc_meta_data(self.template)
+        try:
+            meta_data_tomo = read_mrc_meta_data(self.tomogram)
+        except UnequalSpacingError:  # add information that the problem is the tomogram
+            raise UnequalSpacingError('Input tomogram voxel spacing is not equal in each dimension!')
+
+        try:
+            meta_data_template = read_mrc_meta_data(self.template)
+        except UnequalSpacingError:  # add information that the problem is the template
+            raise UnequalSpacingError('Input template voxel spacing is not equal in each dimension!')
 
         self.tomo_shape = meta_data_tomo['shape']
         self.template_shape = meta_data_template['shape']

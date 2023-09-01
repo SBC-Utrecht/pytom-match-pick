@@ -68,6 +68,10 @@ class ParseTiltAngles(argparse.Action):
             parser.error("{0} can only take one or two arguments".format(option_string))
 
 
+class UnequalSpacingError(Exception):
+    pass
+
+
 def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: tuple[int, int, int] = (0, 2, 1)):
     with open(file_name, 'w') as fstream:
         for i in range(data.shape[1]):
@@ -79,7 +83,7 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
     with mrcfile.mmap(file_name) as mrc:
         meta_data['shape'] = tuple(map(int, attrgetter('nx', 'ny', 'nz')(mrc.header)))
         if not all([mrc.voxel_size.x == s for s in attrgetter('x', 'y', 'z')(mrc.voxel_size)]):
-            raise ValueError('Input tomogram voxel spacing is not identical in each dimension!')
+            raise UnequalSpacingError('Input volume voxel spacing is not identical in each dimension!')
         else:
             meta_data['voxel_size'] = float(mrc.voxel_size.x)
     return meta_data
