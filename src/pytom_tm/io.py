@@ -69,9 +69,7 @@ class ParseTiltAngles(argparse.Action):
 
 
 class UnequalSpacingError(Exception):
-    def __init__(self, message):
-        # Call the base class constructor with the parameters it needs
-        super().__init__(message)
+    pass
 
 
 def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: tuple[int, int, int] = (0, 2, 1)):
