@@ -33,6 +33,7 @@ class TestTMJob(unittest.TestCase):
         volume = np.zeros(TOMO_SHAPE, dtype=np.float32)
         template = np.zeros((TEMPLATE_SIZE,) * 3, dtype=np.float32)
         template[3:8, 4:8, 3:7] = 1.
+        template[7, 8, 5:7] = 1.
         mask = spherical_mask(TEMPLATE_SIZE, 5, 0.5)
         rotation = load_angle_list(files('pytom_tm.angle_lists').joinpath(ANGULAR_SEARCH))[ANGLE_ID]
 
@@ -161,7 +162,7 @@ class TestTMJob(unittest.TestCase):
         angle_diff = np.abs(angle[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
                      read_mrc(TEST_ANGLES)[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
-        self.assertTrue(angle_diff == 83., msg='angle diff should not change')
+        self.assertAlmostEqual(angle_diff, 0, places=1, msg='angle diff should not change')
 
     def test_tm_job_split_angles(self):
         sub_jobs = self.job.split_rotation_search(3)
@@ -206,7 +207,7 @@ class TestTMJob(unittest.TestCase):
         angle_diff = np.abs(angle[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
                      read_mrc(TEST_ANGLES)[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
-        self.assertTrue(angle_diff == 83., msg='angle diff should not change')
+        self.assertAlmostEqual(angle_diff, 0, places=1, msg='angle diff should not change')
 
 
 if __name__ == '__main__':
