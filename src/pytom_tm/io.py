@@ -78,9 +78,9 @@ def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: t
             fstream.write(' '.join([str(x) for x in [data[j, i] for j in order]]) + '\n')
 
 
-def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
+def read_mrc_meta_data(file_name: pathlib.Path, permissive: bool = True) -> dict:
     meta_data = {}
-    with mrcfile.mmap(file_name) as mrc:
+    with mrcfile.mmap(file_name, permissive=permissive) as mrc:
         meta_data['shape'] = tuple(map(int, attrgetter('nx', 'ny', 'nz')(mrc.header)))
         if not all([mrc.voxel_size.x == s for s in attrgetter('x', 'y', 'z')(mrc.voxel_size)]):
             raise UnequalSpacingError('Input volume voxel spacing is not identical in each dimension!')
