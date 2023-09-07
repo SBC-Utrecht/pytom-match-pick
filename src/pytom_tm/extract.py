@@ -73,7 +73,7 @@ def extract_particles(
 
     # data for star file
     pixel_size = job.voxel_size
-    tomogram_id = job.tomo_id + '.mrc'
+    tomogram_id = job.tomo_id
 
     data = []
     scores = []
