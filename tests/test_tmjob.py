@@ -9,6 +9,7 @@ from pytom_tm.angles import load_angle_list
 from pytom_tm.parallel import run_job_parallel
 from pytom_tm.tmjob import TMJob, TMJobError
 from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
+from pytom_tm.extract import extract_particles
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -18,6 +19,7 @@ ANGLE_ID = 100
 ANGULAR_SEARCH = 'angles_38.53_256.txt'
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath('test_data')
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath('tomogram.mrc')
+TEST_EXTRACTION_MASK = TEST_DATA_DIR.joinpath('extraction_mask.mrc')
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath('template.mrc')
 TEST_TEMPLATE_UNEQUAL_SPACING = TEST_DATA_DIR.joinpath('template_unequal_spacing.mrc')
 TEST_TEMPLATE_WRONG_VOXEL_SIZE = TEST_DATA_DIR.joinpath('template_voxel_error_test.mrc')
@@ -51,7 +53,12 @@ class TestTMJob(unittest.TestCase):
         rng = np.random.default_rng(0)
         volume += rng.normal(loc=0, scale=0.1, size=volume.shape)
 
+        # extraction mask
+        extraction_mask = np.zeros(TOMO_SHAPE, dtype=np.float32)
+        extraction_mask[20:40, 60:80, 10:30] = 1
+
         TEST_DATA_DIR.mkdir(exist_ok=True)
+        write_mrc(TEST_EXTRACTION_MASK, extraction_mask, 1.)
         write_mrc(TEST_MASK, mask, 1.)
         write_mrc(TEST_TEMPLATE, template, 1.)
         write_mrc(TEST_TEMPLATE_WRONG_VOXEL_SIZE, template, 1.5)
@@ -84,6 +91,7 @@ class TestTMJob(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         TEST_MASK.unlink()
+        TEST_EXTRACTION_MASK.unlink()
         TEST_TEMPLATE.unlink()
         TEST_TEMPLATE_UNEQUAL_SPACING.unlink()
         TEST_TEMPLATE_WRONG_VOXEL_SIZE.unlink()
@@ -208,6 +216,19 @@ class TestTMJob(unittest.TestCase):
                      read_mrc(TEST_ANGLES)[:, TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
         self.assertAlmostEqual(angle_diff, 0, places=1, msg='angle diff should not change')
+
+    def test_extraction(self):
+        _ = self.job.start_job(0, return_volumes=True)
+
+        # extract particles after running the job
+        df, scores = extract_particles(self.job, 5, 100)
+        self.assertEqual(len(scores), 2, msg='Length of returned list should be 2, one TP, one FP.')
+
+        # add extraction mask
+        df, scores = extract_particles(self.job, 5, 100,
+                                       tomogram_mask_path=TEST_EXTRACTION_MASK)
+        self.assertEqual(len(scores), 0, msg='Length of returned list should be 0 after applying mask where the '
+                                             'object is not in the region of interest.')
 
 
 if __name__ == '__main__':
