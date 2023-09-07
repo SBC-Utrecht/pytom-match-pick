@@ -83,7 +83,10 @@ def read_mrc_meta_data(file_name: pathlib.Path, permissive: bool = True) -> dict
     with mrcfile.mmap(file_name, permissive=permissive) as mrc:
         meta_data['shape'] = tuple(map(int, attrgetter('nx', 'ny', 'nz')(mrc.header)))
         # allow small numerical inconsistencies in voxel size of MRC headers, sometimes seen in Warp
-        if not all([round(mrc.voxel_size.x, 3) == round(s, 3) for s in attrgetter('x', 'y', 'z')(mrc.voxel_size)]):
+        if not all(
+                [np.round(mrc.voxel_size.x, 3) == np.round(s, 3)
+                 for s in attrgetter('x', 'y', 'z')(mrc.voxel_size)]
+        ):
             raise UnequalSpacingError('Input volume voxel spacing is not identical in each dimension!')
         else:
             if not all([mrc.voxel_size.x == s for s in attrgetter('x', 'y', 'z')(mrc.voxel_size)]):
