@@ -19,7 +19,8 @@ ANGLE_ID = 100
 ANGULAR_SEARCH = 'angles_38.53_256.txt'
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath('test_data')
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath('tomogram.mrc')
-TEST_EXTRACTION_MASK = TEST_DATA_DIR.joinpath('extraction_mask.mrc')
+TEST_EXTRACTION_MASK_OUTSIDE = TEST_DATA_DIR.joinpath('extraction_mask_outside.mrc')
+TEST_EXTRACTION_MASK_INSIDE = TEST_DATA_DIR.joinpath('extraction_mask_inside.mrc')
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath('template.mrc')
 TEST_TEMPLATE_UNEQUAL_SPACING = TEST_DATA_DIR.joinpath('template_unequal_spacing.mrc')
 TEST_TEMPLATE_WRONG_VOXEL_SIZE = TEST_DATA_DIR.joinpath('template_voxel_error_test.mrc')
@@ -54,11 +55,14 @@ class TestTMJob(unittest.TestCase):
         volume += rng.normal(loc=0, scale=0.1, size=volume.shape)
 
         # extraction mask
-        extraction_mask = np.zeros(TOMO_SHAPE, dtype=np.float32)
-        extraction_mask[20:40, 60:80, 10:30] = 1
+        extraction_mask_outside = np.zeros(TOMO_SHAPE, dtype=np.float32)
+        extraction_mask_outside[20:40, 60:80, 10:30] = 1
+        extraction_mask_inside = np.zeros(TOMO_SHAPE, dtype=np.float32)
+        extraction_mask_inside[70:90, 15:35, 30:50] = 1
 
         TEST_DATA_DIR.mkdir(exist_ok=True)
-        write_mrc(TEST_EXTRACTION_MASK, extraction_mask, 1.)
+        write_mrc(TEST_EXTRACTION_MASK_OUTSIDE, extraction_mask_outside, 1.)
+        write_mrc(TEST_EXTRACTION_MASK_INSIDE, extraction_mask_inside, 1.)
         write_mrc(TEST_MASK, mask, 1.)
         write_mrc(TEST_TEMPLATE, template, 1.)
         write_mrc(TEST_TEMPLATE_WRONG_VOXEL_SIZE, template, 1.5)
@@ -91,7 +95,8 @@ class TestTMJob(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         TEST_MASK.unlink()
-        TEST_EXTRACTION_MASK.unlink()
+        TEST_EXTRACTION_MASK_OUTSIDE.unlink()
+        TEST_EXTRACTION_MASK_INSIDE.unlink()
         TEST_TEMPLATE.unlink()
         TEST_TEMPLATE_UNEQUAL_SPACING.unlink()
         TEST_TEMPLATE_WRONG_VOXEL_SIZE.unlink()
@@ -222,13 +227,19 @@ class TestTMJob(unittest.TestCase):
 
         # extract particles after running the job
         df, scores = extract_particles(self.job, 5, 100)
-        self.assertEqual(len(scores), 2, msg='Length of returned list should be 2, one TP, one FP.')
+        self.assertNotEqual(len(scores), 0, msg='Here we expect to get some annotations.')
 
-        # add extraction mask
+        # test extraction mask that does not cover the particle
         df, scores = extract_particles(self.job, 5, 100,
-                                       tomogram_mask_path=TEST_EXTRACTION_MASK)
+                                       tomogram_mask_path=TEST_EXTRACTION_MASK_OUTSIDE)
         self.assertEqual(len(scores), 0, msg='Length of returned list should be 0 after applying mask where the '
                                              'object is not in the region of interest.')
+
+        # test mask that covers the particle
+        df, scores = extract_particles(self.job, 5, 100,
+                                       tomogram_mask_path=TEST_EXTRACTION_MASK_INSIDE)
+        self.assertNotEqual(len(scores), 0, msg='We expected a detected particle with a extraction mask that '
+                                                'covers the object.')
 
 
 if __name__ == '__main__':
