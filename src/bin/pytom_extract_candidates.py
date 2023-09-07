@@ -14,6 +14,11 @@ def main():
     parser.add_argument('-j', '--job-file', type=pathlib.Path, required=True, action=CheckFileExists,
                         help='JSON file that contain all data on the template matching job, written out by '
                              'pytom_match_template.py in the destination path.')
+    parser.add_argument('--tomogram-mask', type=pathlib.Path, required=False, action=CheckFileExists,
+                        help='Here you can provide a mask for the extraction with dimensions equal to the '
+                             'tomogram. All values in the mask that are smaller or equal to 0 will be removed, '
+                             'all values larger than 0 are considered regions of interest. It can be used to extract '
+                             'annotations only within a specific cellular region.')
     parser.add_argument('-n', '--number-of-particles', type=int, required=True, action=LargerThanZero,
                         help='Maximum number of particles to extract from tomogram.')
     parser.add_argument('--number-of-false-positives', type=int, required=False, action=LargerThanZero,
@@ -41,7 +46,8 @@ def main():
         args.radius_px,
         args.number_of_particles,
         cut_off=args.cut_off,
-        n_false_positives=args.number_of_false_positives
+        n_false_positives=args.number_of_false_positives,
+        tomogram_mask_path=args.tomogram_mask
     )
 
     # write out as a RELION type starfile
