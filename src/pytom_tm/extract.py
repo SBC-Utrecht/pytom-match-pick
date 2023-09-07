@@ -11,7 +11,6 @@ from pytom_tm.angles import load_angle_list, convert_euler
 from pytom_tm.io import read_mrc
 from scipy.special import erfcinv
 from tqdm import tqdm
-# from functools import reduce
 
 
 def detect_blobs(
