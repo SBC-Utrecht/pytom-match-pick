@@ -85,6 +85,10 @@ def read_mrc_meta_data(file_name: pathlib.Path, permissive: bool = True) -> dict
         if not all([round(mrc.voxel_size.x, 2) == round(s, 2) for s in attrgetter('x', 'y', 'z')(mrc.voxel_size)]):
             raise UnequalSpacingError('Input volume voxel spacing is not identical in each dimension!')
         else:
+            if not all([mrc.voxel_size.x == s for s in attrgetter('x', 'y', 'z')(mrc.voxel_size)]):
+                logging.warning(f'Voxel size annotation in MRC is slightly different between dimensions, '
+                                f'namely {mrc.voxel_size}. It might be a tiny numerical inaccuracy, but '
+                                f'please ensure this is not problematic.')
             meta_data['voxel_size'] = float(mrc.voxel_size.x)
     return meta_data
 
