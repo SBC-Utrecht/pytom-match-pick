@@ -97,16 +97,16 @@ class TMJob:
             if voxel_size <= 0:
                 raise ValueError('Invalid voxel size provided, smaller or equal to zero.')
             self.voxel_size = voxel_size
-            if (
-                    round(self.voxel_size, 2) != round(meta_data_tomo['voxel_size'], 2) or
-                    round(self.voxel_size, 2) != round(meta_data_template['voxel_size'], 2)
+            if (  # allow tiny numerical differences that are not relevant for template matching
+                    round(self.voxel_size, 3) != round(meta_data_tomo['voxel_size'], 3) or
+                    round(self.voxel_size, 3) != round(meta_data_template['voxel_size'], 3)
             ):
                 logging.debug(f"provided {self.voxel_size} tomogram {meta_data_tomo['voxel_size']} "
                               f"template {meta_data_template['voxel_size']}")
                 print('WARNING: Provided voxel size does not match voxel size annotated in tomogram/template mrc.')
-        elif (round(meta_data_tomo['voxel_size'], 2) == round(meta_data_template['voxel_size'], 2) and
+        elif (round(meta_data_tomo['voxel_size'], 3) == round(meta_data_template['voxel_size'], 3) and
               meta_data_tomo['voxel_size'] > 0):
-            self.voxel_size = round(meta_data_tomo['voxel_size'], 2)
+            self.voxel_size = round(meta_data_tomo['voxel_size'], 3)
         else:
             raise ValueError('Voxel size could not be assigned, either a mismatch between tomogram and template or'
                              ' annotated as 0.')
