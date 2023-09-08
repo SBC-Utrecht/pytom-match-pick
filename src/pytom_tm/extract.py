@@ -132,7 +132,7 @@ def extract_particles(
         'ptmAnglePsi',
         'ptmLCCmax',
         'ptmCutOff',
-        'ptmSearchStd'
+        'ptmSearchStd',
         'ptmDetectorPixelSize',
         'ptmMicrographName',
         # 'ptmMagnification',
