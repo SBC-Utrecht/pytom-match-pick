@@ -55,9 +55,9 @@ def extract_particles(
         ]
         score_volume[tomogram_mask <= 0] = -1
 
+    sigma = job.job_stats['std']
     if cut_off is None:
         # formula rickgauer (2017) should be: 10**-13 = erfc( theta / ( sigma * sqrt(2) ) ) / 2
-        sigma = job.job_stats['std']
         search_space = (
             # wherever the score volume has not been explicitly set to -1 is the size of the search region
             (score_volume > -1).sum() *
@@ -106,11 +106,13 @@ def extract_particles(
             rotation[0],  # AngleRot
             rotation[1],  # AngleTilt
             rotation[2],  # AnglePsi
-            # lcc_max,  # LCCmax
+            lcc_max,  # LCCmax
+            cut_off,  # Extraction cut off
+            sigma,  # Add sigma of template matching search, LCCmax can be divided by sigma to obtain SNR
             pixel_size,  # DetectorPixelSize
             tomogram_id,  # MicrographName
-            10000.0,  # Magnification
-            0  # GroupNumber
+            # 10000.0,  # Magnification  #TODO check if these are needed for reading in RELION/Warp
+            # 0  # GroupNumber
         ))
 
         # box out the particle
@@ -122,15 +124,17 @@ def extract_particles(
         ] *= cut_mask
 
     return pd.DataFrame(data, columns=[
-        'rlnCoordinateX',
-        'rlnCoordinateY',
-        'rlnCoordinateZ',
-        'rlnAngleRot',
-        'rlnAngleTilt',
-        'rlnAnglePsi',
-        # 'ptmLCCmax',
-        'rlnDetectorPixelSize',
-        'rlnMicrographName',
-        'rlnMagnification',
-        'rlnGroupNumber'
+        'ptmCoordinateX',
+        'ptmCoordinateY',
+        'ptmCoordinateZ',
+        'ptmAngleRot',
+        'ptmAngleTilt',
+        'ptmAnglePsi',
+        'ptmLCCmax',
+        'ptmCutOff',
+        'ptmSearchStd'
+        'ptmDetectorPixelSize',
+        'ptmMicrographName',
+        # 'ptmMagnification',
+        # 'ptmGroupNumber'
     ]), scores
