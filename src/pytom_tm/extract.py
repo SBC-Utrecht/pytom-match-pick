@@ -111,8 +111,6 @@ def extract_particles(
             sigma,  # Add sigma of template matching search, LCCmax can be divided by sigma to obtain SNR
             pixel_size,  # DetectorPixelSize
             tomogram_id,  # MicrographName
-            # 10000.0,  # Magnification  #TODO check if these are needed for reading in RELION/Warp
-            # 0  # GroupNumber
         ))
 
         # box out the particle
@@ -135,6 +133,4 @@ def extract_particles(
         'ptmSearchStd',
         'ptmDetectorPixelSize',
         'ptmMicrographName',
-        # 'ptmMagnification',
-        # 'ptmGroupNumber'
     ]), scores
