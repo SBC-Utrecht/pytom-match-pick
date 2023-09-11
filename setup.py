@@ -8,11 +8,11 @@ setuptools.setup(
     name='pytom-template-matching-gpu',
     packages=['pytom_tm', 'pytom_tm.angle_lists'],
     package_dir={'': 'src'},
-    version='0.1',
+    version='0.2',
     description='GPU template matching from PyTOM as a lightweight pip package',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    license='GPLv3',
+    license='GPLv2',
     author='McHaillet (Marten Chaillet)',
     url='https://github.com/McHaillet/pytom-template-matching-gpu',
     platforms=['any'],
@@ -42,10 +42,9 @@ setuptools.setup(
         'src/bin/pytom_merge_stars.py',
     ],
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering',
-        'License :: OSI Approved :: GPLv3 License',
+        'License :: OSI Approved :: GPLv2 License',
         'Programming Language :: Python :: 3 :: Only',
     ]
 )
