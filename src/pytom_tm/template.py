@@ -37,7 +37,8 @@ def generate_template_from_map(
         )
 
     if filter_to_resolution is None or filter_to_resolution < (2 * output_spacing):
-        logging.warning(f'Resolution is either not specified or incorrectly specified, changing to {2 * output_spacing}A')
+        logging.warning(f'Resolution is either not specified (in which case you can ignore this warning) '
+                        f'or incorrectly specified, changing to {2 * output_spacing}A')
         filter_to_resolution = 2 * output_spacing
 
     # extend volume to the desired output size before applying convolutions!
