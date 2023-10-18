@@ -68,7 +68,7 @@ def main():
     input_data = read_mrc(args.input_map)
     input_meta_data = read_mrc_meta_data(args.input_map)
     if args.input_voxel_size_angstrom is not None:
-        if args.input_voxel_size_angstrom != input_meta_data['voxel_size']:
+        if args.input_voxel_size_angstrom != round(input_meta_data['voxel_size'], 3):
             logging.warning('Provided voxel size does not match voxel size annotated in input map.')
         map_spacing_angstrom = args.input_voxel_size_angstrom
     else:
