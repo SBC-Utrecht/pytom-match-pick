@@ -206,7 +206,7 @@ def create_wedge(
             voxel_size
         ).astype(np.float32)
     else:
-        wedge_angles = (np.pi / 2 - np.abs(tilt_angles_rad[0]), np.pi / 2 - np.abs(tilt_angles_rad[-1]))
+        wedge_angles = (np.pi / 2 - np.abs(min(tilt_angles_rad)), np.pi / 2 - np.abs(max(tilt_angles_rad)))
         if np.round(wedge_angles[0], 2) == np.round(wedge_angles[1], 2):
             wedge = _create_symmetric_wedge(
                 shape,

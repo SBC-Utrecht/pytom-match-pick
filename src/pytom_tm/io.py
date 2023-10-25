@@ -123,5 +123,5 @@ def read_mrc(
 def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
     with open(file_name, 'r') as fstream:
         lines = fstream.readlines()
-    return sorted(list(map(float, [x.strip() for x in lines])))
+    return list(map(float, [x.strip() for x in lines]))
 
