@@ -367,9 +367,10 @@ class TMJob:
                 voxel_size=self.voxel_size,
                 low_pass=self.low_pass,
                 high_pass=self.high_pass,
-                tilt_weighting=self.tilt_weighting
+                tilt_weighting=False
             ).astype(np.float32)
 
+            # we always apply a binary wedge (with optional band pass) to the volume to remove empty regions
             search_volume = np.real(irfftn(rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
 
             # get template wedge

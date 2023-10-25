@@ -2,7 +2,8 @@ import numpy as np
 import numpy.typing as npt
 import logging
 import scipy.ndimage as ndimage
-from typing import Optional
+from typing import Optional, Union
+from pytom_tm.io import UnequalSpacingError
 
 
 constants = {
@@ -53,17 +54,25 @@ def wavelength_ev2m(voltage: float) -> float:
     return _lambda
 
 
-def radial_reduced_grid(shape: tuple[int, int, int]) -> npt.NDArray[float]:
-    x = (np.abs(np.arange(
-        -shape[0] // 2 + shape[0] % 2,
-        shape[0] // 2 + shape[0] % 2, 1.
-    )) / (shape[0] // 2))[:, np.newaxis, np.newaxis]
-    y = (np.abs(np.arange(
-        -shape[1] // 2 + shape[1] % 2,
-        shape[1] // 2 + shape[1] % 2, 1.
-    )) / (shape[1] // 2))[:, np.newaxis]
-    z = np.arange(0, shape[2] // 2 + 1, 1.) / (shape[2] // 2)
-    return np.sqrt(x ** 2 + y ** 2 + z ** 2)
+def radial_reduced_grid(shape: Union[tuple[int, int, int], tuple[int, int]]) -> npt.NDArray[float]:
+    if len(shape) == 3:
+        x = (np.abs(np.arange(
+            -shape[0] // 2 + shape[0] % 2,
+            shape[0] // 2 + shape[0] % 2, 1.
+        )) / (shape[0] // 2))[:, np.newaxis, np.newaxis]
+        y = (np.abs(np.arange(
+            -shape[1] // 2 + shape[1] % 2,
+            shape[1] // 2 + shape[1] % 2, 1.
+        )) / (shape[1] // 2))[:, np.newaxis]
+        z = np.arange(0, shape[2] // 2 + 1, 1.) / (shape[2] // 2)
+        return np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    elif len(shape) == 2:
+        x = (np.abs(np.arange(
+            -shape[0] // 2 + shape[0] % 2,
+            shape[0] // 2 + shape[0] % 2, 1.
+        )) / (shape[0] // 2))[:, np.newaxis]
+        y = np.arange(0, shape[1] // 2 + 1, 1.) / (shape[1] // 2)
+        return np.sqrt(x ** 2 + y ** 2)
 
 
 def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
@@ -186,7 +195,7 @@ def create_wedge(
         tilt_angles_rad = tilt_angles
 
     if tilt_weighting:
-        wedge = _create_structured_wedge(
+        wedge = _create_tilt_weighted_wedge(
             shape,
             tilt_angles_rad,
             cut_off_radius
@@ -295,12 +304,24 @@ def _create_asymmetric_wedge(
     return np.fft.ifftshift(wedge, axes=(0, 1))
 
 
-def _create_structured_wedge(
+def _create_tilt_weighted_wedge(
         shape: tuple[int, int, int],
         tilt_angles: list[float, ...],
-        cut_off_radius: float
+        cut_off_radius: float,
+        accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
+        pixel_size_angstrom: Optional[float] = None
 ) -> npt.NDArray[float]:
     """
+    The following B-factor heuristic is used (as mentioned in the M paper, and introduced in RELION 1.4):
+        "The B factor is increased by 4Å2 per 1e− Å−2 of exposure, and each tilt is weighted as cos θ."
+
+    Relation between B-factor and the sigma of a gaussian:
+
+        B = 8 * pi ** 2 * sigma_motion ** 2
+
+    i.e. sigma_motion = sqrt( B / (8 * pi ** 2)). Belonging to a Gaussian blur:
+
+        exp( -2 * pi ** 2 * sigma_motion ** 2 * q ** 2 )
 
     Parameters
     ----------
@@ -310,32 +331,66 @@ def _create_structured_wedge(
         tilt angles is a list of angle in radian units
     cut_off_radius: float
         cut off for the mask as a fraction of nyquist, value between 0 and 1
+    accumulated_dose_per_tilt: list[float, ...]
+        the accumulated dose in e− Å−2
+    pixel_size_angstrom: float
+        the pixel size as a value in Å
 
     Returns
     -------
     wedge: npt.NDArray[float]
         structured wedge mask in fourier reduced form, i.e. output shape is (shape[0], shape[1], shape[2] // 2 + 1)
     """
-    logging.debug(f'tilt angles (radians) for structured wedge: {[round(t, 2) for t in tilt_angles]}')
+    if (accumulated_dose_per_tilt is None) ^ (pixel_size_angstrom is None):
+        logging.debug('For dose weighting both a pixel size and an accumulated dose per tilt need to be passed to '
+                      '_create_weighted_wedge.')
 
-    image_size = max(shape[0], shape[2])
+    if not all([shape[0] == s for s in shape[1:]]):
+        raise UnequalSpacingError('Input shape for structured wedge needs to be a square box. '
+                                  'Otherwise the frequencies in fourier space are not equal across dimensions.')
+
+    image_size = shape[0]
     tilt = np.zeros((image_size, ) * 2)
     tilt[:, image_size // 2] = 1
-
     tilt_sum = np.zeros((shape[0], shape[2] // 2 + 1))
-    for alpha in tilt_angles:
-        rotated = ndimage.zoom(  # zooming is not good for the result
-            np.flip(ndimage.rotate(tilt, np.rad2deg(alpha), reshape=False, order=1)[:, : image_size // 2 + 1]),
-            [shape[0] / image_size, (shape[2] // 2 + 1) / (image_size // 2 + 1)],
-            order=1
-        )
-        tilt_sum += (rotated - rotated.min()) / (rotated.max() - rotated.min())
+
+    if accumulated_dose_per_tilt is not None and pixel_size_angstrom is not None:
+        q_squared = (radial_reduced_grid((image_size,) * 2) / (2 * pixel_size_angstrom)) ** 2
+        for alpha, dose in zip(tilt_angles, accumulated_dose_per_tilt):
+            rotated = np.flip(
+                ndimage.rotate(
+                    tilt,  # tilt-dependent weighting
+                    np.rad2deg(alpha),
+                    reshape=False,
+                    order=3
+                )[:, : image_size // 2 + 1]
+            )
+            sigma_motion = np.sqrt(dose * 4 / (8 * np.pi ** 2))
+            tilt_sum += (
+                    rotated *
+                    np.cos(alpha) *  # apply tilt-dependent weighting
+                    np.exp(-2 * np.pi ** 2 * sigma_motion ** 2 * q_squared)  # apply dose-weighting
+            )
+    else:
+        for alpha in tilt_angles:
+            rotated = np.flip(
+                ndimage.rotate(
+                    tilt,  # tilt-dependent weighting
+                    np.rad2deg(alpha),
+                    reshape=False,
+                    order=3
+                )[:, : image_size // 2 + 1]
+            )
+            tilt_sum += (
+                    rotated *
+                    np.cos(alpha)  # apply tilt-dependent weighting
+            )
 
     # scale to max 1
     tilt_sum[tilt_sum > 1] = 1
 
     # duplicate in x
-    wedge = np.tile(tilt_sum[:, np.newaxis, :], (1, shape[1], 1))
+    wedge = np.tile(tilt_sum[:, np.newaxis, :], (1, image_size, 1))
 
     wedge[radial_reduced_grid(shape) > cut_off_radius] = 0
 
