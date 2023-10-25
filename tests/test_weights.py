@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from pytom_tm.weights import (create_wedge, create_ctf, create_gaussian_band_pass)
+from pytom_tm.weights import (create_wedge, create_ctf, create_gaussian_band_pass, radial_reduced_grid)
 
 
 class TestWeights(unittest.TestCase):
@@ -12,6 +12,12 @@ class TestWeights(unittest.TestCase):
         self.high_pass = 50
 
         self.expected_output_shape = (10, 10, 6)
+
+    def test_radial_reduced_grid(self):
+        self.assertEqual(radial_reduced_grid(self.volume_shape).shape, (10, 10, 6),
+                         msg='3D radial reduced grid does not have the correct shape')
+        self.assertEqual(radial_reduced_grid(self.volume_shape[:2]).shape, (10, 6),
+                         msg='2D radial reduced grid does not have the correct shape')
 
     def test_band_pass(self):
         with self.assertRaises(ValueError, msg='Bandpass should raise ValueError if both low and high pass are None'):
