@@ -362,9 +362,9 @@ class TMJob:
             tomo_wedge = create_wedge(
                 search_volume.shape,
                 self.tilt_angles,
-                1.,
+                self.voxel_size,
+                cut_off_radius=1.,
                 angles_in_degrees=True,
-                voxel_size=self.voxel_size,
                 low_pass=self.low_pass,
                 high_pass=self.high_pass,
                 tilt_weighting=False
@@ -377,9 +377,9 @@ class TMJob:
             template_wedge = create_wedge(
                 self.template_shape,
                 self.tilt_angles,
-                1.,
+                self.voxel_size,
+                cut_off_radius=1.,
                 angles_in_degrees=True,
-                voxel_size=self.voxel_size,
                 low_pass=self.low_pass,
                 high_pass=self.high_pass,
                 tilt_weighting=self.tilt_weighting

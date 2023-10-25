@@ -74,12 +74,20 @@ class TestWeights(unittest.TestCase):
                 1.,
                 1.
             )
-        with self.assertRaises(ValueError, msg='Create wedge should raise ValueError if cut off radius is smaller or '
+        with self.assertRaises(ValueError, msg='Create wedge should raise ValueError if voxel_size is smaller or '
                                                'equal to 0'):
             create_wedge(
                 self.volume_shape,
                 self.tilt_angles,
                 0.
+            )
+        with self.assertRaises(ValueError, msg='Create wedge should raise ValueError if cut_off_radius is smaller or '
+                                               'equal to 0'):
+            create_wedge(
+                self.volume_shape,
+                self.tilt_angles,
+                1.,
+                cut_off_radius=0.
             )
 
         # create test wedges
@@ -107,8 +115,8 @@ class TestWeights(unittest.TestCase):
         self.assertTrue(np.sum((symmetric_wedge != asymmetric_wedge) * 1) != 0,
                         msg='Symmetric and asymmetric wedge should be different!')
 
-        structured_wedge = create_wedge(self.volume_shape, self.tilt_angles, 1., tilt_weighting=True,
-                                        voxel_size=self.voxel_size, low_pass=self.low_pass, high_pass=self.high_pass)
+        structured_wedge = create_wedge(self.volume_shape, self.tilt_angles, self.voxel_size, tilt_weighting=True,
+                                        cut_off_radius=1., low_pass=self.low_pass, high_pass=self.high_pass)
         self.assertEqual(structured_wedge.shape, self.expected_output_shape,
                          msg='Wedge with band-pass does not have expected output shape')
         self.assertEqual(structured_wedge.dtype, np.float32,

@@ -151,9 +151,9 @@ def create_gaussian_band_pass(
 def create_wedge(
         shape: tuple[int, int, int],
         tilt_angles: list[float, ...],
-        cut_off_radius: float,
+        voxel_size: float,
+        cut_off_radius: float = 1.,
         angles_in_degrees: bool = True,
-        voxel_size: float = 1.,
         low_pass: Optional[float] = None,
         high_pass: Optional[float] = None,
         tilt_weighting: bool = False
@@ -166,11 +166,12 @@ def create_wedge(
         real space shape of volume to which it needs to be applied
     tilt_angles
         tilt angles used for reconstructing the tomogram
+    voxel_size
+        voxel size is needed for the calculation of various filters
     cut_off_radius
         cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
     angles_in_degrees
         whether angles are in degrees or radians units
-    voxel_size
     low_pass
     high_pass
     tilt_weighting
@@ -182,6 +183,9 @@ def create_wedge(
     """
     if not isinstance(tilt_angles, list) or len(tilt_angles) < 2:
         raise ValueError('Wedge generation needs at least a list of two tilt angles.')
+
+    if voxel_size <= 0.:
+        raise ValueError('Voxel size in create wedge is smaller or equal to 0, which is an invalid voxel spacing.')
 
     if cut_off_radius > 1:
         print('Warning: wedge cutoff needs to be defined as a fraction of nyquist 0 < c <= 1. Setting value to 1.0.')
@@ -198,7 +202,8 @@ def create_wedge(
         wedge = _create_tilt_weighted_wedge(
             shape,
             tilt_angles_rad,
-            cut_off_radius
+            cut_off_radius,
+            voxel_size
         ).astype(np.float32)
     else:
         wedge_angles = (np.pi / 2 - np.abs(tilt_angles_rad[0]), np.pi / 2 - np.abs(tilt_angles_rad[-1]))
@@ -308,8 +313,8 @@ def _create_tilt_weighted_wedge(
         shape: tuple[int, int, int],
         tilt_angles: list[float, ...],
         cut_off_radius: float,
-        accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
-        pixel_size_angstrom: Optional[float] = None
+        pixel_size_angstrom: float,
+        accumulated_dose_per_tilt: Optional[list[float, ...]] = None
 ) -> npt.NDArray[float]:
     """
     The following B-factor heuristic is used (as mentioned in the M paper, and introduced in RELION 1.4):
@@ -331,10 +336,10 @@ def _create_tilt_weighted_wedge(
         tilt angles is a list of angle in radian units
     cut_off_radius: float
         cut off for the mask as a fraction of nyquist, value between 0 and 1
-    accumulated_dose_per_tilt: list[float, ...]
-        the accumulated dose in e− Å−2
     pixel_size_angstrom: float
         the pixel size as a value in Å
+    accumulated_dose_per_tilt: list[float, ...]
+        the accumulated dose in e− Å−2
 
     Returns
     -------
@@ -343,7 +348,7 @@ def _create_tilt_weighted_wedge(
     """
     if (accumulated_dose_per_tilt is None) ^ (pixel_size_angstrom is None):
         logging.debug('For dose weighting both a pixel size and an accumulated dose per tilt need to be passed to '
-                      '_create_weighted_wedge.')
+                      '_create_tilt_weighted_wedge.')
 
     if not all([shape[0] == s for s in shape[1:]]):
         raise UnequalSpacingError('Input shape for structured wedge needs to be a square box. '
