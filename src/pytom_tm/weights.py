@@ -173,8 +173,11 @@ def create_wedge(
     angles_in_degrees
         whether angles are in degrees or radians units
     low_pass
+        low pass filter resolution in A
     high_pass
+        high pass filter resolution in A
     tilt_weighting
+        apply tilt weighting
 
     Returns
     -------
@@ -314,7 +317,9 @@ def _create_tilt_weighted_wedge(
         tilt_angles: list[float, ...],
         cut_off_radius: float,
         pixel_size_angstrom: float,
-        accumulated_dose_per_tilt: Optional[list[float, ...]] = None
+        accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
+        ctf_params_per_tilt: Optional[list[dict]] = None,
+        ctf_phase_flip: bool = False
 ) -> npt.NDArray[float]:
     """
     The following B-factor heuristic is used (as mentioned in the M paper, and introduced in RELION 1.4):
@@ -340,66 +345,84 @@ def _create_tilt_weighted_wedge(
         the pixel size as a value in Å
     accumulated_dose_per_tilt: list[float, ...]
         the accumulated dose in e− Å−2
+    ctf_params_per_tilt: list[dict, ...]
+        the ctf parameters per tilt angle, list of dicts where each dict has the following keys:
+        - 'defocus'; in um
+        - 'amplitude'; fraction of amplitude contrast between 0 and 1
+        - 'voltage'; in keV
+        - 'cs'; spherical abberation in mm
+    ctf_phase_flip: bool
+        whether the CTFs need to be phase-flipped (made fully positive), needed for template matching in tomograms that
+        were CTF-corrected through phase-flipping
 
     Returns
     -------
     wedge: npt.NDArray[float]
         structured wedge mask in fourier reduced form, i.e. output shape is (shape[0], shape[1], shape[2] // 2 + 1)
     """
-    if (accumulated_dose_per_tilt is None) ^ (pixel_size_angstrom is None):
-        logging.debug('For dose weighting both a pixel size and an accumulated dose per tilt need to be passed to '
-                      '_create_tilt_weighted_wedge.')
-
+    if accumulated_dose_per_tilt is not None and len(accumulated_dose_per_tilt) != len(tilt_angles):
+        raise ValueError('in _create_tilt_weighted_wedge the list of accumulated dose per tilt does not have the same '
+                         'length as the tilt angle list!')
+    if ctf_params_per_tilt is not None and len(ctf_params_per_tilt) != len(tilt_angles):
+        raise ValueError('in _create_tilt_weighted_wedge the list of CTF parameters per tilt does not have the same '
+                         'length as the tilt angle list!')
     if not all([shape[0] == s for s in shape[1:]]):
         raise UnequalSpacingError('Input shape for structured wedge needs to be a square box. '
                                   'Otherwise the frequencies in fourier space are not equal across dimensions.')
 
     image_size = shape[0]
-    tilt = np.zeros((image_size, ) * 2)
-    tilt[:, image_size // 2] = 1
-    tilt_sum = np.zeros((shape[0], shape[2] // 2 + 1))
+    tilt = np.zeros(shape)
+    tilt_sum = np.zeros((shape[0], shape[1], shape[2] // 2 + 1))
 
-    if accumulated_dose_per_tilt is not None and pixel_size_angstrom is not None:
-        q_squared = (radial_reduced_grid((image_size,) * 2) / (2 * pixel_size_angstrom)) ** 2
-        for alpha, dose in zip(tilt_angles, accumulated_dose_per_tilt):
-            rotated = np.flip(
-                ndimage.rotate(
-                    tilt,  # tilt-dependent weighting
-                    np.rad2deg(alpha),
-                    reshape=False,
-                    order=3
-                )[:, : image_size // 2 + 1]
+    for i, alpha in enumerate(tilt_angles):
+        if ctf_params_per_tilt is not None:
+            ctf = np.fft.fftshift(
+                create_ctf(
+                    (image_size, image_size),
+                    pixel_size_angstrom * 1e-10,
+                    ctf_params_per_tilt[i]['defocus'] * 1e-6,
+                    ctf_params_per_tilt[i]['amplitude'],
+                    ctf_params_per_tilt[i]['voltage'] * 1e3,
+                    ctf_params_per_tilt[i]['cs'] * 1e-3,
+                    flip_phase=ctf_phase_flip
+                ), axes=0,
             )
-            sigma_motion = np.sqrt(dose * 4 / (8 * np.pi ** 2))
+            tilt[:, :, image_size // 2] = np.concatenate((np.flip(ctf[:, 1:], axis=1), ctf), axis=1)
+        else:
+            tilt[:, :, image_size // 2] = 1
+
+        # rotate the image weights to the tilt angle
+        rotated = np.flip(
+            ndimage.rotate(
+                tilt,
+                np.rad2deg(alpha),
+                reshape=False,
+                order=3
+            )[:, :, : image_size // 2 + 1]
+        )
+
+        # weight with exposure and tilt dampening
+        if accumulated_dose_per_tilt is not None:
+            q_squared = (radial_reduced_grid((image_size,) * 3) / (2 * pixel_size_angstrom)) ** 2
+            sigma_motion = np.sqrt(accumulated_dose_per_tilt[i] * 4 / (8 * np.pi ** 2))
             tilt_sum += (
                     rotated *
                     np.cos(alpha) *  # apply tilt-dependent weighting
                     np.exp(-2 * np.pi ** 2 * sigma_motion ** 2 * q_squared)  # apply dose-weighting
             )
-    else:
-        for alpha in tilt_angles:
-            rotated = np.flip(
-                ndimage.rotate(
-                    tilt,  # tilt-dependent weighting
-                    np.rad2deg(alpha),
-                    reshape=False,
-                    order=3
-                )[:, : image_size // 2 + 1]
-            )
+        else:
             tilt_sum += (
                     rotated *
                     np.cos(alpha)  # apply tilt-dependent weighting
             )
 
-    # scale to max 1
+    # weights can only be between 0 and 1
     tilt_sum[tilt_sum > 1] = 1
+    tilt_sum[tilt_sum < 0] = 0
 
-    # duplicate in x
-    wedge = np.tile(tilt_sum[:, np.newaxis, :], (1, image_size, 1))
+    tilt_sum[radial_reduced_grid(shape) > cut_off_radius] = 0
 
-    wedge[radial_reduced_grid(shape) > cut_off_radius] = 0
-
-    return np.fft.fftshift(wedge, axes=(0, 1))
+    return np.fft.fftshift(tilt_sum, axes=(0, 1))
 
 
 def create_ctf(
@@ -471,7 +494,7 @@ def create_ctf(
     if flip_phase:  # phase flip but consider whether contrast should be black/white
         ctf = np.abs(ctf) * -1 if defocus > 0 else np.abs(ctf)
 
-    return np.fft.ifftshift(ctf, axes=(0, 1))
+    return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
 
 
 def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
