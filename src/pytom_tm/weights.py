@@ -498,7 +498,7 @@ def create_ctf(
 
     if flip_phase:  # phase flip but consider whether contrast should be black/white
         # ctf = np.abs(ctf) * -1 if defocus > 0 else np.abs(ctf)
-        ctf = np.abs(ctf)
+        ctf = np.abs(ctf)  # TODO update template creation with this change!
 
     return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
 

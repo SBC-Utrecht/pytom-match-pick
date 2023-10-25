@@ -210,7 +210,7 @@ class TestWeights(unittest.TestCase):
                          msg='Wedge with band-pass does not have expected dtype')
 
     def test_3d_ctf(self):
-        weights = create_wedge((80,) * 3, self.tilt_angles, self.voxel_size * 3, tilt_weighting=True,
+        weights = create_wedge((80,) * 3, self.tilt_angles, self.voxel_size * 3, tilt_weighting=True, low_pass=40,
                                accumulated_dose_per_tilt=ACCUMULATED_DOSE,
                                ctf_params_per_tilt=CTF_PARAMS)
         write_mrc('3D_CTF.mrc', weights, voxel_size=self.voxel_size * 3)
