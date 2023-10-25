@@ -370,7 +370,6 @@ def _create_tilt_weighted_wedge(
         raise UnequalSpacingError('Input shape for structured wedge needs to be a square box. '
                                   'Otherwise the frequencies in fourier space are not equal across dimensions.')
 
-    image_size = shape[0]
     tilt = np.zeros(shape)
     tilt_sum = np.zeros((shape[0], shape[1], shape[2] // 2 + 1))
 
@@ -378,7 +377,7 @@ def _create_tilt_weighted_wedge(
         if ctf_params_per_tilt is not None:
             ctf = np.fft.fftshift(
                 create_ctf(
-                    (image_size, image_size),
+                    (shape[0], shape[1]),
                     pixel_size_angstrom * 1e-10,
                     ctf_params_per_tilt[i]['defocus'] * 1e-6,
                     ctf_params_per_tilt[i]['amplitude'],
@@ -387,9 +386,10 @@ def _create_tilt_weighted_wedge(
                     flip_phase=ctf_phase_flip
                 ), axes=0,
             )
-            tilt[:, :, image_size // 2] = np.concatenate((np.flip(ctf[:, 1:], axis=1), ctf), axis=1)
+            # make ctf non-reduced for easy of writing code
+            tilt[:, :, shape[2] // 2] = np.concatenate((np.flip(ctf[:, 1:], axis=1), ctf), axis=1)
         else:
-            tilt[:, :, image_size // 2] = 1
+            tilt[:, :, shape[2] // 2] = 1
 
         # rotate the image weights to the tilt angle
         rotated = np.flip(
@@ -398,12 +398,12 @@ def _create_tilt_weighted_wedge(
                 np.rad2deg(alpha),
                 reshape=False,
                 order=3
-            )[:, :, : image_size // 2 + 1]
+            )[:, :, : shape[2] // 2 + 1]
         )
 
         # weight with exposure and tilt dampening
         if accumulated_dose_per_tilt is not None:
-            q_squared = (radial_reduced_grid((image_size,) * 3) / (2 * pixel_size_angstrom)) ** 2
+            q_squared = (radial_reduced_grid(shape) / (2 * pixel_size_angstrom)) ** 2
             sigma_motion = np.sqrt(accumulated_dose_per_tilt[i] * 4 / (8 * np.pi ** 2))
             tilt_sum += (
                     rotated *
