@@ -158,8 +158,7 @@ def create_wedge(
         high_pass: Optional[float] = None,
         tilt_weighting: bool = False,
         accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
-        ctf_params_per_tilt: Optional[list[dict]] = None,
-        ctf_phase_flip: bool = False
+        ctf_params_per_tilt: Optional[list[dict]] = None
 ) -> npt.NDArray[float]:
     """This function returns a wedge volume that is either symmetric or asymmetric depending on wedge angle input.
 
@@ -185,8 +184,6 @@ def create_wedge(
         accumulated dose for each tilt for dose weighting
     ctf_params_per_tilt
         ctf parameters for each tilt
-    ctf_phase_flip: bool
-        whether to phase flip
 
     Returns
     -------
@@ -217,8 +214,7 @@ def create_wedge(
             cut_off_radius,
             voxel_size,
             accumulated_dose_per_tilt=accumulated_dose_per_tilt,
-            ctf_params_per_tilt=ctf_params_per_tilt,
-            ctf_phase_flip=ctf_phase_flip
+            ctf_params_per_tilt=ctf_params_per_tilt
         ).astype(np.float32)
     else:
         wedge_angles = (np.pi / 2 - np.abs(min(tilt_angles_rad)), np.pi / 2 - np.abs(max(tilt_angles_rad)))
@@ -330,8 +326,7 @@ def _create_tilt_weighted_wedge(
         cut_off_radius: float,
         pixel_size_angstrom: float,
         accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
-        ctf_params_per_tilt: Optional[list[dict]] = None,
-        ctf_phase_flip: bool = False
+        ctf_params_per_tilt: Optional[list[dict]] = None
 ) -> npt.NDArray[float]:
     """
     The following B-factor heuristic is used (as mentioned in the M paper, and introduced in RELION 1.4):
@@ -363,9 +358,9 @@ def _create_tilt_weighted_wedge(
         - 'amplitude'; fraction of amplitude contrast between 0 and 1
         - 'voltage'; in keV
         - 'cs'; spherical abberation in mm
-    ctf_phase_flip: bool
-        whether the CTFs need to be phase-flipped (made fully positive), needed for template matching in tomograms that
-        were CTF-corrected through phase-flipping
+        ctf_phase_flip: bool
+            whether the CTFs need to be phase-flipped (made fully positive), needed for template matching in tomograms that
+            were CTF-corrected through phase-flipping
 
     Returns
     -------
@@ -395,7 +390,7 @@ def _create_tilt_weighted_wedge(
                     ctf_params_per_tilt[i]['amplitude'],
                     ctf_params_per_tilt[i]['voltage'] * 1e3,
                     ctf_params_per_tilt[i]['cs'] * 1e-3,
-                    flip_phase=ctf_phase_flip
+                    flip_phase=True  # creating a per tilt ctf is hard if the phase is not flipped
                 ), axes=0,
             )
             # make ctf non-reduced for easy of writing code
@@ -410,7 +405,7 @@ def _create_tilt_weighted_wedge(
                 np.rad2deg(alpha),
                 axes=(0, 2),
                 reshape=False,
-                order=1
+                order=3
             )[:, :, : shape[2] // 2 + 1]
         )
 
@@ -418,20 +413,17 @@ def _create_tilt_weighted_wedge(
         if accumulated_dose_per_tilt is not None:
             q_squared = (radial_reduced_grid(shape) / (2 * pixel_size_angstrom)) ** 2
             sigma_motion = np.sqrt(accumulated_dose_per_tilt[i] * 4 / (8 * np.pi ** 2))
-            tilt_sum += (  # TODO should probably not be summed, low frequencies are not correct
+            weighted_tilt = (
                     rotated *
                     np.cos(alpha) *  # apply tilt-dependent weighting
                     np.exp(-2 * np.pi ** 2 * sigma_motion ** 2 * q_squared)  # apply dose-weighting
             )
         else:
-            tilt_sum += (
+            weighted_tilt = (
                     rotated *
                     np.cos(alpha)  # apply tilt-dependent weighting
             )
-
-    # weights can only be between 0 and 1
-    tilt_sum[tilt_sum > 1] = 1
-    tilt_sum[tilt_sum < 0] = 0
+        tilt_sum[weighted_tilt > tilt_sum] = weighted_tilt[weighted_tilt > tilt_sum]
 
     tilt_sum[radial_reduced_grid(shape) > cut_off_radius] = 0
 
