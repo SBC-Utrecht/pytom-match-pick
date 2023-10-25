@@ -156,7 +156,10 @@ def create_wedge(
         angles_in_degrees: bool = True,
         low_pass: Optional[float] = None,
         high_pass: Optional[float] = None,
-        tilt_weighting: bool = False
+        tilt_weighting: bool = False,
+        accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
+        ctf_params_per_tilt: Optional[list[dict]] = None,
+        ctf_phase_flip: bool = False
 ) -> npt.NDArray[float]:
     """This function returns a wedge volume that is either symmetric or asymmetric depending on wedge angle input.
 
@@ -178,6 +181,12 @@ def create_wedge(
         high pass filter resolution in A
     tilt_weighting
         apply tilt weighting
+    accumulated_dose_per_tilt
+        accumulated dose for each tilt for dose weighting
+    ctf_params_per_tilt
+        ctf parameters for each tilt
+    ctf_phase_flip: bool
+        whether to phase flip
 
     Returns
     -------
@@ -206,7 +215,10 @@ def create_wedge(
             shape,
             tilt_angles_rad,
             cut_off_radius,
-            voxel_size
+            voxel_size,
+            accumulated_dose_per_tilt=accumulated_dose_per_tilt,
+            ctf_params_per_tilt=ctf_params_per_tilt,
+            ctf_phase_flip=ctf_phase_flip
         ).astype(np.float32)
     else:
         wedge_angles = (np.pi / 2 - np.abs(min(tilt_angles_rad)), np.pi / 2 - np.abs(max(tilt_angles_rad)))
@@ -387,7 +399,7 @@ def _create_tilt_weighted_wedge(
                 ), axes=0,
             )
             # make ctf non-reduced for easy of writing code
-            tilt[:, :, shape[2] // 2] = np.concatenate((np.flip(ctf[:, 1:], axis=1), ctf), axis=1)
+            tilt[:, :, shape[2] // 2] = np.concatenate((np.flip(ctf[:, 2 - shape[0] % 2:], axis=1), ctf), axis=1)
         else:
             tilt[:, :, shape[2] // 2] = 1
 
@@ -396,8 +408,9 @@ def _create_tilt_weighted_wedge(
             ndimage.rotate(
                 tilt,
                 np.rad2deg(alpha),
+                axes=(0, 2),
                 reshape=False,
-                order=3
+                order=1
             )[:, :, : shape[2] // 2 + 1]
         )
 
@@ -405,7 +418,7 @@ def _create_tilt_weighted_wedge(
         if accumulated_dose_per_tilt is not None:
             q_squared = (radial_reduced_grid(shape) / (2 * pixel_size_angstrom)) ** 2
             sigma_motion = np.sqrt(accumulated_dose_per_tilt[i] * 4 / (8 * np.pi ** 2))
-            tilt_sum += (
+            tilt_sum += (  # TODO should probably not be summed, low frequencies are not correct
                     rotated *
                     np.cos(alpha) *  # apply tilt-dependent weighting
                     np.exp(-2 * np.pi ** 2 * sigma_motion ** 2 * q_squared)  # apply dose-weighting
@@ -426,7 +439,7 @@ def _create_tilt_weighted_wedge(
 
 
 def create_ctf(
-        shape: tuple[int, int, int],
+        shape: Union[tuple[int, int, int], tuple[int, int]],
         pixel_size: float,
         defocus: float,
         amplitude_contrast: float,
@@ -492,7 +505,8 @@ def create_ctf(
         ctf[k > k_cutoff] = 0
 
     if flip_phase:  # phase flip but consider whether contrast should be black/white
-        ctf = np.abs(ctf) * -1 if defocus > 0 else np.abs(ctf)
+        # ctf = np.abs(ctf) * -1 if defocus > 0 else np.abs(ctf)
+        ctf = np.abs(ctf)
 
     return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
 

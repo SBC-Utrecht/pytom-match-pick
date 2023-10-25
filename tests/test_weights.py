@@ -1,6 +1,7 @@
 import numpy as np
 import unittest
 from pytom_tm.weights import (create_wedge, create_ctf, create_gaussian_band_pass, radial_reduced_grid)
+from pytom_tm.io import write_mrc
 
 CS = 2.7
 AMP = 0.08
@@ -41,6 +42,15 @@ IMOD_CTF = '''1	1	-50.99	-50.99	  3083   2
 34	34	48.00	48.00	  3274
 35	35	51.00	51.00	  3354
 '''
+CTF_PARAMS = []
+for d in [float(x.split()[4]) * 1e-3 for x in IMOD_CTF.split('\n') if x != '']:
+    CTF_PARAMS.append({
+        'defocus': d,
+        'amplitude': AMP,
+        'voltage': VOL,
+        'cs': CS
+    })
+
 DOSE_FILE = '''60.165 
 58.255 
 56.345 
@@ -77,6 +87,7 @@ DOSE_FILE = '''60.165
 63.985 
 65.895 
 '''
+ACCUMULATED_DOSE = [float(x.strip()) for x in DOSE_FILE.split('\n') if x != '']
 
 
 class TestWeights(unittest.TestCase):
@@ -197,6 +208,13 @@ class TestWeights(unittest.TestCase):
                          msg='Wedge with band-pass does not have expected output shape')
         self.assertEqual(structured_wedge.dtype, np.float32,
                          msg='Wedge with band-pass does not have expected dtype')
+
+    def test_3d_ctf(self):
+        weights = create_wedge((80,) * 3, self.tilt_angles, self.voxel_size * 2, tilt_weighting=True,
+                               accumulated_dose_per_tilt=ACCUMULATED_DOSE,
+                               ctf_params_per_tilt=CTF_PARAMS,
+                               ctf_phase_flip=True)
+        write_mrc('3D_CTF.mrc', weights, voxel_size=self.voxel_size * 2)
 
     def test_ctf(self):
         ctf_raw = create_ctf(
