@@ -397,8 +397,13 @@ class TMJob:
 
             if logging.root.level == logging.DEBUG:
                 write_mrc(
-                    self.output_dir.joinpath('test.mrc'),
+                    self.output_dir.joinpath('debug_template_convoluted.mrc'),
                     np.fft.irfftn(np.fft.rfftn(template) * template_wedge).astype(np.float32),
+                    voxel_size=self.voxel_size
+                )
+                write_mrc(
+                    self.output_dir.joinpath('debug_3d_ctf.mrc'),
+                    template_wedge,
                     voxel_size=self.voxel_size
                 )
 
