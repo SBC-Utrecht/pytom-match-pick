@@ -371,6 +371,7 @@ class TMJob:
         if self.tilt_angles is not None:
             if self.whiten_spectrum:
                 weights = 1 / np.sqrt(power_spectrum_profile(search_volume))
+                weights /= weights.max()  # scale to 1
 
             # convolute tomo with wedge
             tomo_wedge = (create_wedge(
