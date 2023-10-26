@@ -373,7 +373,7 @@ class TMJob:
                 weights = 1 / np.sqrt(power_spectrum_profile(search_volume))
 
             # convolute tomo with wedge
-            tomo_wedge = create_wedge(
+            tomo_wedge = (create_wedge(
                 search_volume.shape,
                 self.tilt_angles,
                 self.voxel_size,
@@ -382,13 +382,13 @@ class TMJob:
                 low_pass=self.low_pass,
                 high_pass=self.high_pass,
                 tilt_weighting=False
-            ).astype(np.float32) * (profile_to_weighting(weights, search_volume.shape) if self.whiten_spectrum else 1)
+            ) * (profile_to_weighting(weights, search_volume.shape) if self.whiten_spectrum else 1)).astype(np.float32)
 
             # we always apply a binary wedge (with optional band pass) to the volume to remove empty regions
             search_volume = np.real(irfftn(rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
 
             # get template wedge
-            template_wedge = create_wedge(
+            template_wedge = (create_wedge(
                 self.template_shape,
                 self.tilt_angles,
                 self.voxel_size,
@@ -399,7 +399,7 @@ class TMJob:
                 tilt_weighting=self.tilt_weighting,
                 accumulated_dose_per_tilt=self.dose_accumulation,
                 ctf_params_per_tilt=self.ctf_data
-            ).astype(np.float32) * (profile_to_weighting(weights, self.template_shape) if self.whiten_spectrum else 1)
+            ) * (profile_to_weighting(weights, self.template_shape) if self.whiten_spectrum else 1)).astype(np.float32)
 
             if logging.root.level == logging.DEBUG:
                 write_mrc(
