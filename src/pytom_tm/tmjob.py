@@ -403,6 +403,11 @@ class TMJob:
 
             if logging.root.level == logging.DEBUG:
                 write_mrc(
+                    self.output_dir.joinpath('debug_search_volume.mrc'),
+                    search_volume,
+                    voxel_size=self.voxel_size
+                )
+                write_mrc(
                     self.output_dir.joinpath('debug_template_convoluted.mrc'),
                     np.fft.irfftn(np.fft.rfftn(template) * template_wedge, s=template.shape).astype(np.float32),
                     voxel_size=self.voxel_size
