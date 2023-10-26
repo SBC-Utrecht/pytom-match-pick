@@ -518,7 +518,7 @@ def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.N
     """
     if len(image.shape) not in [2, 3]:
         raise ValueError('Radial average calculation only works for 2d/3d arrays')
-    if len(set(image.shape)) != 2:
+    if len(set(image.shape)) != 1:
         raise ValueError('Radial average calculation only works for images with equal dimensions')
 
     size = image.shape[0]
