@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from pytom_tm.weights import (create_wedge, create_ctf, create_gaussian_band_pass, radial_reduced_grid)
+from pytom_tm.weights import (create_wedge, create_ctf, create_gaussian_band_pass, radial_reduced_grid, radial_average)
 from pytom_tm.io import write_mrc
 
 
@@ -245,6 +245,17 @@ class TestWeights(unittest.TestCase):
                          msg='CTF does not have expected output shape')
         self.assertTrue(np.sum((ctf_raw != ctf_cut) * 1) != 0,
                         msg='CTF should be different when cutting it off after the first zero crossing')
+
+    def test_radial_average(self):
+        with self.assertRaises(ValueError, msg='Radial average should raise error if something other than 2d/3d '
+                                               'array is provided.'):
+            radial_average(
+                np.zeros(100)
+            )
+        with self.assertRaises(ValueError, msg='Radial average should raise error if dimensions are not equal.'):
+            radial_average(
+                np.zeros((100, 50))
+            )
 
 
 if __name__ == '__main__':
