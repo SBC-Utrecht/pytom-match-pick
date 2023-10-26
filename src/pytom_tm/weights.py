@@ -542,3 +542,69 @@ def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.N
     mean = np.vectorize(lambda x: np.fft.fftshift(image, axes=(0, 1))[(r >= x - .5) & (r < x + .5)].mean())(q)
 
     return q, mean
+
+
+def power_spectrum_profile(image: npt.NDArray[float]) -> npt.NDArray[float]:
+    """ Calculate the power spectrum for a real space array and then find the profile (radial average).
+
+    Parameters
+    ----------
+    image: npt.NDArray[float]
+        2D/3D array in real space for which the power spectrum profile needs to be calculated
+
+    Returns
+    -------
+    profile: npt.NDArray[float]
+        A 1D numpy array
+    """
+    if len(image.shape) not in [2, 3]:
+        raise ValueError('Power spectrum profile calculation only works for 2d/3d arrays.')
+
+    q_grid = radial_reduced_grid(image.shape)
+    power = np.abs(np.fft.rfftn(image)) ** 2
+
+    q = np.arange(max(image.shape) // 2 + 1) / (max(image.shape) // 2)
+    q_step = q[1]
+
+    power_profile = np.vectorize(
+        lambda x: np.fft.fftshift(power, axes=(0, 1))[
+            (q_grid >= x - .5 * q_step) & (q_grid < x + .5 * q_step)
+        ].mean())(q)
+
+    return power_profile
+
+
+def profile_to_weighting(
+        profile: npt.NDArray[float],
+        shape: Union[tuple[int, int], tuple[int, int, int]]
+) -> npt.NDArray[float]:
+    """ Calculate a radial weighing (filter) from a spectrum profile.
+
+    Parameters
+    ----------
+    profile: npt.NDArray[float]
+        power spectrum profile (or other 1d profile) to transform in a fourier space filter
+    shape: Union[tuple[int, int], tuple[int, int, int]]
+        2D/3D array shape in real space for which the fourier reduced weights are calculated
+
+    Returns
+    -------
+    weighting: npt.NDArray[float]
+        Reduced Fourier space weighting for shape
+    """
+    if len(profile.shape) != 1:
+        raise ValueError('Profile passed to profile_to_weighting is not 1-dimensional.')
+    if len(shape) not in [2, 3]:
+        raise ValueError('Shape passed to profile_to_weighting needs to be 2D/3D.')
+
+    q_grid = radial_reduced_grid(shape)
+
+    weights = ndimage.map_coordinates(
+        profile,
+        q_grid.flatten()[np.newaxis, :] * profile.shape[0],
+        order=1
+    ).reshape(q_grid.shape)
+
+    weights[q_grid > 1] = 0
+
+    return np.fft.ifftshift(weights, axes=(0, 1) if len(shape) == 3 else 0)

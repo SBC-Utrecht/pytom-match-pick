@@ -10,7 +10,7 @@ from functools import reduce
 from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
-from pytom_tm.weights import create_wedge
+from pytom_tm.weights import create_wedge, power_spectrum_profile, profile_to_weighting
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
 
 
@@ -36,6 +36,7 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         high_pass=data['high_pass'],
         dose_accumulation=data['dose_accumulation'],
         ctf_data=data['ctf_data'],
+        whiten_spectrum=data['whiten_spectrum'],
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
@@ -74,7 +75,8 @@ class TMJob:
             low_pass: Optional[float] = None,
             high_pass: Optional[float] = None,
             dose_accumulation: Optional[list[float, ...]] = None,
-            ctf_data: Optional[list[dict, ...]] = None
+            ctf_data: Optional[list[dict, ...]] = None,
+            whiten_spectrum: bool = False
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -158,6 +160,7 @@ class TMJob:
         # set dose and ctf
         self.dose_accumulation = dose_accumulation
         self.ctf_data = ctf_data
+        self.whiten_spectrum = whiten_spectrum
 
         # Job details
         self.job_key = job_key
@@ -366,6 +369,9 @@ class TMJob:
         # create weighting, include missing wedge and band-pass filters
         template_wedge = None
         if self.tilt_angles is not None:
+            if self.whiten_spectrum:
+                weights = 1 / np.sqrt(power_spectrum_profile(search_volume))
+
             # convolute tomo with wedge
             tomo_wedge = create_wedge(
                 search_volume.shape,
@@ -376,7 +382,7 @@ class TMJob:
                 low_pass=self.low_pass,
                 high_pass=self.high_pass,
                 tilt_weighting=False
-            ).astype(np.float32)
+            ).astype(np.float32) * (profile_to_weighting(weights, search_volume.shape) if self.whiten_spectrum else 1)
 
             # we always apply a binary wedge (with optional band pass) to the volume to remove empty regions
             search_volume = np.real(irfftn(rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
@@ -393,12 +399,12 @@ class TMJob:
                 tilt_weighting=self.tilt_weighting,
                 accumulated_dose_per_tilt=self.dose_accumulation,
                 ctf_params_per_tilt=self.ctf_data
-            ).astype(np.float32)
+            ).astype(np.float32) * (profile_to_weighting(weights, self.template_shape) if self.whiten_spectrum else 1)
 
             if logging.root.level == logging.DEBUG:
                 write_mrc(
                     self.output_dir.joinpath('debug_template_convoluted.mrc'),
-                    np.fft.irfftn(np.fft.rfftn(template) * template_wedge).astype(np.float32),
+                    np.fft.irfftn(np.fft.rfftn(template) * template_wedge, s=template.shape).astype(np.float32),
                     voxel_size=self.voxel_size
                 )
                 write_mrc(

@@ -72,6 +72,9 @@ def main():
                         help='Spherical abberation for CTF in mm.')
     parser.add_argument('--voltage', type=float, required=False, action=LargerThanZero,
                         help='Voltage for CTF in keV.')
+    parser.add_argument('--spectral-whitening', action='store_true', default=False, required=False,
+                        help='Whiten the power spectra of the template and the tomogram patch, effectively puts more '
+                             'weight on high resolution features.')
     parser.add_argument('-g', '--gpu-ids', nargs='+', type=int, required=True,
                         help='GPU indices to run the program on.')
     parser.add_argument('--log', type=str, required=False, default=20, action=ParseLogging,
@@ -110,7 +113,8 @@ def main():
         low_pass=args.low_pass,
         high_pass=args.high_pass,
         dose_accumulation=args.dose_accumulation,
-        ctf_data=ctf_params
+        ctf_data=ctf_params,
+        whiten_spectrum=args.spectral_whitening
     )
 
     score_volume, angle_volume = run_job_parallel(job, tuple(args.volume_split), args.gpu_ids)
