@@ -41,6 +41,14 @@ class LargerThanZero(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
+class BetweenZeroAndOne(argparse.Action):
+    def __call__(self, parser, namespace, values: float, option_string: Optional[str] = None):
+        if 1. <= values <= .0:
+            parser.error("{0} is a fraction and can only range between 0 and 1".format(option_string))
+
+        setattr(namespace, self.dest, values)
+
+
 class ParseSearch(argparse.Action):
     def __call__(self, parser, namespace, values: list[int, int], option_string: Optional[str] = None):
         if not (0 <= values[0] < values[1]):
@@ -66,6 +74,24 @@ class ParseTiltAngles(argparse.Action):
             setattr(namespace, self.dest, read_tlt_file(values))
         else:
             parser.error("{0} can only take one or two arguments".format(option_string))
+
+
+class ParseDoseFile(argparse.Action):
+    def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
+        file_path = pathlib.Path(values)
+        if not file_path.exists() or file_path.suffix not in ['.txt']:
+            parser.error("{0} provided dose accumulation file does not exist or does not have the right "
+                         "format".format(option_string))
+        setattr(namespace, self.dest, read_dose_file(file_path))
+
+
+class ParseDefocusFile(argparse.Action):
+    def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
+        file_path = pathlib.Path(values)
+        if not file_path.exists() or file_path.suffix not in ['.def']:
+            parser.error("{0} provided dose accumulation file does not exist or does not have the right "
+                         "format".format(option_string))
+        setattr(namespace, self.dest, read_defocus_file(file_path))
 
 
 class UnequalSpacingError(Exception):
@@ -125,3 +151,14 @@ def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
         lines = fstream.readlines()
     return list(map(float, [x.strip() for x in lines]))
 
+
+def read_dose_file(file_name: pathlib.Path) -> list[float, ...]:
+    with open(file_name, 'r') as fstream:
+        lines = fstream.readlines()
+    return [float(x.strip()) for x in lines]
+
+
+def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
+    with open(file_name, 'r') as fstream:
+        lines = fstream.readlines()
+    return [float(x.strip().split()[4]) * 1e-3 for x in lines]

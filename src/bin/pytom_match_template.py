@@ -6,7 +6,8 @@ import logging
 from pytom_tm.io import LargerThanZero
 from pytom_tm.tmjob import TMJob
 from pytom_tm.parallel import run_job_parallel
-from pytom_tm.io import CheckFileExists, CheckDirExists, ParseLogging, ParseSearch, ParseTiltAngles, write_mrc
+from pytom_tm.io import (CheckFileExists, CheckDirExists, ParseLogging, ParseSearch, ParseTiltAngles, write_mrc,
+                         ParseDoseFile, ParseDefocusFile, BetweenZeroAndOne)
 
 
 def main():
@@ -31,7 +32,8 @@ def main():
     parser.add_argument('--per-tilt-weighting', action='store_true', default=False, required=False,
                         help='Flag to set per tilt weighting, only makes sense if a file with all tilt angles has '
                              'been provided. In case not set when a tilt angle file is provided, the minimum and '
-                             'maximum tilt angle are used to create a binary wedge.')
+                             'maximum tilt angle are used to create a binary wedge. If dose accumulation and CTF '
+                             'params are provided these will all be incorporated in the tilt-weighting.')
     parser.add_argument('--angular-search', type=str, required=True,
                         help='Options are: [7.00, 35.76, 19.95, 90.00, 18.00, '
                              '12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00]')
@@ -55,12 +57,40 @@ def main():
                         help='Apply a high-pass filter to the tomogram and template to reduce correlation with large '
                              'low frequency variations. Value is a resolution in A, e.g. 500 could be appropriate as '
                              'the CTF is often incorrectly modelled up to 50nm.')
+    parser.add_argument('--dose-accumulation', type=str, required=False, action=ParseDoseFile,
+                        help='Here you can provide a file that contains the accumulated dose at each tilt angle, '
+                             'assuming the same ordering of tilts as the tilt angle file. Format should be a .txt '
+                             'file with on each line a dose value in e-/A2 .')
+    parser.add_argument('--defocus-file', type=str, required=False, action=ParseDefocusFile,
+                        help='Here you can provide an IMOD defocus file, with singular fitted defocus (no '
+                             'astigmatism). The values, together with the other ctf params (amplitude, voltage, '
+                             'spherical abberation, will be used to create a simplistic 3D CTF weighting function. '
+                             'Format should be a .def with the defocus in nm, same ordering as tilt angle list.')
+    parser.add_argument('--amplitude-contrast', type=float, required=False, action=BetweenZeroAndOne,
+                        help='Amplitude contrast fraction for CTF.')
+    parser.add_argument('--spherical-abberation', type=float, required=False, action=LargerThanZero,
+                        help='Spherical abberation for CTF in mm.')
+    parser.add_argument('--voltage', type=float, required=False, action=LargerThanZero,
+                        help='Voltage for CTF in keV.')
     parser.add_argument('-g', '--gpu-ids', nargs='+', type=int, required=True,
                         help='GPU indices to run the program on.')
     parser.add_argument('--log', type=str, required=False, default=20, action=ParseLogging,
                         help='Can be set to `info` or `debug`')
     args = parser.parse_args()
     logging.basicConfig(level=args.log)
+
+    # combine ctf values to ctf_params list of dicts
+    ctf_params = None
+    if isinstance(args.defocus_file, list):
+        if args.amplitude_contrast is None or args.spherical_abberation is None or args.voltage is None:
+            raise ValueError('Cannot create 3D CTF weighting because one or multiple of the required parameters ('
+                             'amplitude contrast, spherical abberation or voltage) is/are missing.')
+        ctf_params = [{
+                'defocus': defocus,
+                'amplitude': args.amplitude_contrast,
+                'voltage': args.voltage,
+                'cs': args.spherical_abberation
+        } for defocus in args.defocus_file]
 
     job = TMJob(
         '0',
@@ -78,7 +108,9 @@ def main():
         search_z=args.search_z,
         voxel_size=args.voxel_size_angstrom,
         low_pass=args.low_pass,
-        high_pass=args.high_pass
+        high_pass=args.high_pass,
+        dose_accumulation=args.dose_accumulation,
+        ctf_data=ctf_params
     )
 
     score_volume, angle_volume = run_job_parallel(job, tuple(args.volume_split), args.gpu_ids)

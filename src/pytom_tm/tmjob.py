@@ -33,7 +33,9 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         search_z=data['search_z'],
         voxel_size=data['voxel_size'],
         low_pass=data['low_pass'],
-        high_pass=data['high_pass']
+        high_pass=data['high_pass'],
+        dose_accumulation=data['dose_accumulation'],
+        ctf_data=data['ctf_data'],
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
@@ -70,7 +72,9 @@ class TMJob:
             search_z: Optional[list[int, int]] = None,
             voxel_size: Optional[float] = None,
             low_pass: Optional[float] = None,
-            high_pass: Optional[float] = None
+            high_pass: Optional[float] = None,
+            dose_accumulation: Optional[list[float, ...]] = None,
+            ctf_data: Optional[list[dict, ...]] = None
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -150,6 +154,10 @@ class TMJob:
         # set the band-pass resolution shells
         self.low_pass = low_pass
         self.high_pass = high_pass
+
+        # set dose and ctf
+        self.dose_accumulation = dose_accumulation
+        self.ctf_data = ctf_data
 
         # Job details
         self.job_key = job_key
@@ -382,8 +390,16 @@ class TMJob:
                 angles_in_degrees=True,
                 low_pass=self.low_pass,
                 high_pass=self.high_pass,
-                tilt_weighting=self.tilt_weighting
+                tilt_weighting=self.tilt_weighting,
+                accumulated_dose_per_tilt=self.dose_accumulation,
+                ctf_params_per_tilt=self.ctf_data
             ).astype(np.float32)
+
+            write_mrc(
+                self.output_dir.joinpath('test.mrc'),
+                np.fft.irfftn(np.fft.rfftn(template) * template_wedge).astype(np.float32),
+                voxel_size=self.voxel_size
+            )
 
         # load rotation search
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
