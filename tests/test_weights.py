@@ -3,6 +3,8 @@ import unittest
 from pytom_tm.weights import (create_wedge, create_ctf, create_gaussian_band_pass, radial_reduced_grid)
 from pytom_tm.io import write_mrc
 
+
+# Dose and ctf params for tomo_104
 CS = 2.7
 AMP = 0.08
 VOL = 200
@@ -210,10 +212,16 @@ class TestWeights(unittest.TestCase):
                          msg='Wedge with band-pass does not have expected dtype')
 
     def test_3d_ctf(self):
-        weights = create_wedge((80,) * 3, self.tilt_angles, self.voxel_size * 3, tilt_weighting=True, low_pass=40,
+        weights = create_wedge((40,) * 3, self.tilt_angles, self.voxel_size * 3, tilt_weighting=True, low_pass=40,
                                accumulated_dose_per_tilt=ACCUMULATED_DOSE,
                                ctf_params_per_tilt=CTF_PARAMS)
-        write_mrc('3D_CTF.mrc', weights, voxel_size=self.voxel_size * 3)
+        self.assertEqual(weights.shape, (40, 40, 21),
+                         msg='3D CTF does not have the correct reduced fourier shape.')
+        weights = create_wedge((41,) * 3, self.tilt_angles, self.voxel_size * 3, tilt_weighting=True, low_pass=40,
+                               accumulated_dose_per_tilt=ACCUMULATED_DOSE,
+                               ctf_params_per_tilt=CTF_PARAMS)
+        self.assertEqual(weights.shape, (41, 41, 21),
+                         msg='3D CTF does not have the correct reduced fourier shape.')
 
     def test_ctf(self):
         ctf_raw = create_ctf(
