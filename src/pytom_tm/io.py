@@ -88,8 +88,8 @@ class ParseDoseFile(argparse.Action):
 class ParseDefocusFile(argparse.Action):
     def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
         file_path = pathlib.Path(values)
-        if not file_path.exists() or file_path.suffix not in ['.def']:
-            parser.error("{0} provided dose accumulation file does not exist or does not have the right "
+        if not file_path.exists() or file_path.suffix not in ['.defocus']:
+            parser.error("{0} provided defocus file does not exist or does not have the right "
                          "format".format(option_string))
         setattr(namespace, self.dest, read_defocus_file(file_path))
 
