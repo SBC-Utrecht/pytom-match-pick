@@ -395,11 +395,12 @@ class TMJob:
                 ctf_params_per_tilt=self.ctf_data
             ).astype(np.float32)
 
-            write_mrc(
-                self.output_dir.joinpath('test.mrc'),
-                np.fft.irfftn(np.fft.rfftn(template) * template_wedge).astype(np.float32),
-                voxel_size=self.voxel_size
-            )
+            if logging.root.level == logging.DEBUG:
+                write_mrc(
+                    self.output_dir.joinpath('test.mrc'),
+                    np.fft.irfftn(np.fft.rfftn(template) * template_wedge).astype(np.float32),
+                    voxel_size=self.voxel_size
+                )
 
         # load rotation search
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
