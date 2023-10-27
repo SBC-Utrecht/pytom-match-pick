@@ -404,6 +404,11 @@ class TMJob:
 
             if logging.root.level == logging.DEBUG:
                 write_mrc(
+                    self.output_dir.joinpath('debug_tomo_wedge.mrc'),
+                    tomo_wedge,
+                    voxel_size=self.voxel_size
+                )
+                write_mrc(
                     self.output_dir.joinpath('debug_search_volume.mrc'),
                     search_volume,
                     voxel_size=self.voxel_size

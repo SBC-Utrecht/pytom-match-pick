@@ -427,7 +427,7 @@ def _create_tilt_weighted_wedge(
 
     tilt_sum[radial_reduced_grid(shape) > cut_off_radius] = 0
 
-    return np.fft.fftshift(tilt_sum, axes=(0, 1))
+    return np.fft.ifftshift(tilt_sum, axes=(0, 1))
 
 
 def create_ctf(
@@ -567,7 +567,7 @@ def power_spectrum_profile(image: npt.NDArray[float]) -> npt.NDArray[float]:
     q_step = q[1]
 
     power_profile = np.vectorize(
-        lambda x: np.fft.fftshift(power, axes=(0, 1))[
+        lambda x: np.fft.fftshift(power, axes=(0, 1) if len(image.shape) == 3 else 0)[
             (q_grid >= x - .5 * q_step) & (q_grid < x + .5 * q_step)
         ].mean())(q)
 
