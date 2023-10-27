@@ -88,7 +88,7 @@ class ParseDoseFile(argparse.Action):
 class ParseDefocusFile(argparse.Action):
     def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
         file_path = pathlib.Path(values)
-        if not file_path.exists() or file_path.suffix not in ['.defocus']:
+        if not file_path.exists() or file_path.suffix not in ['.defocus', '.txt']:
             parser.error("{0} provided defocus file does not exist or does not have the right "
                          "format".format(option_string))
         setattr(namespace, self.dest, read_defocus_file(file_path))
@@ -161,4 +161,16 @@ def read_dose_file(file_name: pathlib.Path) -> list[float, ...]:
 def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
     with open(file_name, 'r') as fstream:
         lines = fstream.readlines()
-    return [float(x.strip().split()[4]) * 1e-3 for x in lines]
+    if file_name.suffix == '.defocus':
+        imod_defocus_version = float(lines[0][5])
+        # imod defocus files have the values specified in nm: TODO is this the common way to specify it?
+        if imod_defocus_version == 2:  # file with one defocus value and starts on line 0
+            return [float(x.strip().split()[4]) * 1e-3 for x in lines]
+        elif imod_defocus_version == 3:  # file with astigmatism and first line empty
+            return [(float(x.strip().split()[4]) + float(x.strip().split()[5])) / 2 * 1e-3 for x in lines[1:]]
+        else:
+            raise ValueError('Invalid IMOD defocus file inversion, can only be 2 or 3.')
+    elif file_name.suffix == '.txt':
+        return [float(x.strip()) * 1e-3 for x in lines]
+    else:
+        raise ValueError('Defocus file needs to have format .defocus or .txt')
