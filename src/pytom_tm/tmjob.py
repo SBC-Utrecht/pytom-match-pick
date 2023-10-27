@@ -10,7 +10,7 @@ from functools import reduce
 from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
-from pytom_tm.weights import create_wedge, power_spectrum_profile, profile_to_weighting
+from pytom_tm.weights import create_wedge, power_spectrum_profile, profile_to_weighting, create_gaussian_band_pass
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
 
 
@@ -374,15 +374,11 @@ class TMJob:
                 weights /= weights.max()  # scale to 1
 
             # convolute tomo with wedge
-            tomo_wedge = (create_wedge(
+            tomo_wedge = (create_gaussian_band_pass(
                 search_volume.shape,
-                self.tilt_angles,
-                self.voxel_size,
-                cut_off_radius=1.,
-                angles_in_degrees=True,
-                low_pass=self.low_pass,
-                high_pass=self.high_pass,
-                tilt_weighting=False
+                self.voxel_size, 
+                self.low_pass,
+                self.high_pass
             ) * (profile_to_weighting(weights, search_volume.shape) if self.whiten_spectrum else 1)).astype(np.float32)
 
             # we always apply a binary wedge (with optional band pass) to the volume to remove empty regions
