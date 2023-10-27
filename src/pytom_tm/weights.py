@@ -496,9 +496,8 @@ def create_ctf(
         # filter the ctf with the cutoff frequency
         ctf[k > k_cutoff] = 0
 
-    if flip_phase:  # phase flip but consider whether contrast should be black/white
-        # ctf = np.abs(ctf) * -1 if defocus > 0 else np.abs(ctf)
-        ctf = np.abs(ctf)  # TODO update template creation with this change!
+    if flip_phase:  # phase flip
+        ctf = np.abs(ctf)
 
     return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
 
