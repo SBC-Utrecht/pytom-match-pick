@@ -162,7 +162,7 @@ def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
     with open(file_name, 'r') as fstream:
         lines = fstream.readlines()
     if file_name.suffix == '.defocus':
-        imod_defocus_version = float(lines[0][5])
+        imod_defocus_version = float(lines[0].strip().split()[5])
         # imod defocus files have the values specified in nm: TODO is this the common way to specify it?
         if imod_defocus_version == 2:  # file with one defocus value and starts on line 0
             return [float(x.strip().split()[4]) * 1e-3 for x in lines]
