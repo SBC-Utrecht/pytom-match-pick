@@ -401,7 +401,10 @@ class TMJob:
                 tilt_weighting=self.tilt_weighting,
                 accumulated_dose_per_tilt=self.dose_accumulation,
                 ctf_params_per_tilt=self.ctf_data
-            ) * (profile_to_weighting(weights, self.template_shape) if self.whiten_spectrum else 1)).astype(np.float32)
+            ) * (profile_to_weighting(
+                np.load(self.output_dir.joinpath('whitening_filter.npy')),
+                self.template_shape
+            ) if self.whiten_spectrum else 1)).astype(np.float32)
 
             if logging.root.level == logging.DEBUG:
                 write_mrc(
