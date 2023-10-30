@@ -162,6 +162,12 @@ class TMJob:
         self.ctf_data = ctf_data
         self.whiten_spectrum = whiten_spectrum
 
+        if self.whiten_spectrum:
+            logging.info('Estimating whitening filter...')
+            weights = 1 / np.sqrt(power_spectrum_profile(read_mrc(self.tomogram)))
+            weights /= weights.max()  # scale to 1
+            np.save(self.output_dir.joinpath('whitening_filter.npy'), weights)
+
         # Job details
         self.job_key = job_key
         self.leader = None  # the job that spawned this job
@@ -369,20 +375,19 @@ class TMJob:
         # create weighting, include missing wedge and band-pass filters
         template_wedge = None
         if self.tilt_angles is not None:
-            if self.whiten_spectrum:
-                weights = 1 / np.sqrt(power_spectrum_profile(search_volume))
-                weights /= weights.max()  # scale to 1
-
-            # convolute tomo with wedge
-            tomo_wedge = (create_gaussian_band_pass(
+            # convolute tomo with whitening filter and bandpass
+            tomo_filter = (create_gaussian_band_pass(
                 search_volume.shape,
                 self.voxel_size, 
                 self.low_pass,
                 self.high_pass
-            ) * (profile_to_weighting(weights, search_volume.shape) if self.whiten_spectrum else 1)).astype(np.float32)
+            ) * (profile_to_weighting(
+                np.load(self.output_dir.joinpath('whitening_filter.npy')),
+                search_volume.shape
+            ) if self.whiten_spectrum else 1)).astype(np.float32)
 
             # we always apply a binary wedge (with optional band pass) to the volume to remove empty regions
-            search_volume = np.real(irfftn(rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
+            search_volume = np.real(irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape))
 
             # get template wedge
             template_wedge = (create_wedge(
@@ -400,8 +405,8 @@ class TMJob:
 
             if logging.root.level == logging.DEBUG:
                 write_mrc(
-                    self.output_dir.joinpath('debug_tomo_wedge.mrc'),
-                    tomo_wedge,
+                    self.output_dir.joinpath('debug_tomo_filter.mrc'),
+                    tomo_filter,
                     voxel_size=self.voxel_size
                 )
                 write_mrc(
