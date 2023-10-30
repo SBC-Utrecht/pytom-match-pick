@@ -358,9 +358,6 @@ def _create_tilt_weighted_wedge(
         - 'amplitude'; fraction of amplitude contrast between 0 and 1
         - 'voltage'; in keV
         - 'cs'; spherical abberation in mm
-        ctf_phase_flip: bool
-            whether the CTFs need to be phase-flipped (made fully positive), needed for template matching in tomograms that
-            were CTF-corrected through phase-flipping
 
     Returns
     -------
