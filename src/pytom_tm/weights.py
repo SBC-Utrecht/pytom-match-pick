@@ -55,6 +55,8 @@ def wavelength_ev2m(voltage: float) -> float:
 
 
 def radial_reduced_grid(shape: Union[tuple[int, int, int], tuple[int, int]]) -> npt.NDArray[float]:
+    if not len(shape) in [2, 3]:
+        raise ValueError('radial_reduced_grid() only works for 2D or 3D shapes')
     if len(shape) == 3:
         x = (np.abs(np.arange(
             -shape[0] // 2 + shape[0] % 2,
@@ -374,14 +376,16 @@ def _create_tilt_weighted_wedge(
         raise UnequalSpacingError('Input shape for structured wedge needs to be a square box. '
                                   'Otherwise the frequencies in fourier space are not equal across dimensions.')
 
+    image_size = shape[0]  # assign to size variable as all dimensions are equal size
     tilt = np.zeros(shape)
-    tilt_sum = np.zeros((shape[0], shape[1], shape[2] // 2 + 1))
+    q_grid = radial_reduced_grid(shape)
+    tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
     for i, alpha in enumerate(tilt_angles):
         if ctf_params_per_tilt is not None:
             ctf = np.fft.fftshift(
                 create_ctf(
-                    (shape[0], shape[1]),
+                    (image_size, ) * 2,
                     pixel_size_angstrom * 1e-10,
                     ctf_params_per_tilt[i]['defocus'] * 1e-6,
                     ctf_params_per_tilt[i]['amplitude'],
@@ -390,10 +394,15 @@ def _create_tilt_weighted_wedge(
                     flip_phase=True  # creating a per tilt ctf is hard if the phase is not flipped
                 ), axes=0,
             )
-            # make ctf non-reduced for easy of writing code
-            tilt[:, :, shape[2] // 2] = np.concatenate((np.flip(ctf[:, 2 - shape[0] % 2:], axis=1), ctf), axis=1)
+            tilt[:, :, image_size // 2] = np.concatenate(
+                (  # duplicate and flip the CTF around the 0 frequency; then concatenate to make it non-reduced
+                    np.flip(ctf[:, 1: 1 + image_size - ctf.shape[1]], axis=1),
+                    ctf
+                ),
+                axis=1
+            )
         else:
-            tilt[:, :, shape[2] // 2] = 1
+            tilt[:, :, image_size // 2] = 1
 
         # rotate the image weights to the tilt angle
         rotated = np.flip(
@@ -403,12 +412,12 @@ def _create_tilt_weighted_wedge(
                 axes=(0, 2),
                 reshape=False,
                 order=3
-            )[:, :, : shape[2] // 2 + 1]
+            )[:, :, : image_size // 2 + 1]
         )
 
         # weight with exposure and tilt dampening
         if accumulated_dose_per_tilt is not None:
-            q_squared = (radial_reduced_grid(shape) / (2 * pixel_size_angstrom)) ** 2
+            q_squared = (q_grid / (2 * pixel_size_angstrom)) ** 2
             sigma_motion = np.sqrt(accumulated_dose_per_tilt[i] * 4 / (8 * np.pi ** 2))
             weighted_tilt = (
                     rotated *
@@ -420,11 +429,11 @@ def _create_tilt_weighted_wedge(
                     rotated *
                     np.cos(alpha)  # apply tilt-dependent weighting
             )
-        tilt_sum[weighted_tilt > tilt_sum] = weighted_tilt[weighted_tilt > tilt_sum]
+        tilt_weighted_wedge = np.maximum(tilt_weighted_wedge, weighted_tilt)
 
-    tilt_sum[radial_reduced_grid(shape) > cut_off_radius] = 0
+    tilt_weighted_wedge[q_grid > cut_off_radius] = 0
 
-    return np.fft.ifftshift(tilt_sum, axes=(0, 1))
+    return np.fft.ifftshift(tilt_weighted_wedge, axes=(0, 1))
 
 
 def create_ctf(
