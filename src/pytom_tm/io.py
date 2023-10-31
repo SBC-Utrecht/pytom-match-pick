@@ -79,18 +79,22 @@ class ParseTiltAngles(argparse.Action):
 class ParseDoseFile(argparse.Action):
     def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
         file_path = pathlib.Path(values)
-        if not file_path.exists() or file_path.suffix not in ['.txt']:
-            parser.error("{0} provided dose accumulation file does not exist or does not have the right "
-                         "format".format(option_string))
+        if not file_path.exists():
+            parser.error("{0} provided dose accumulation file does not exist".format(option_string))
+        allowed_suffixes = ['.txt']
+        if file_path.suffix not in allowed_suffixes:
+            parser.error("{0}  provided dose accumulation file does not have the right suffix, allowed are: {1}".format(option_string, ', '.join(allowed_suffixes)))
         setattr(namespace, self.dest, read_dose_file(file_path))
 
 
 class ParseDefocusFile(argparse.Action):
     def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
         file_path = pathlib.Path(values)
-        if not file_path.exists() or file_path.suffix not in ['.defocus', '.txt']:
-            parser.error("{0} provided defocus file does not exist or does not have the right "
-                         "format".format(option_string))
+        if not file_path.exists():
+            parser.error("{0} provided defocus file does not exist".format(option_string))
+        allowed_suffixes = ['.defocus', '.txt']
+        if file_path.suffix not in allowed_suffixes:
+            parser.error("{0} provided defocus file does not have the right suffix, allowed are: {1}".format(option_string, ', '.join(allowed_suffixes)))
         setattr(namespace, self.dest, read_defocus_file(file_path))
 
 
@@ -164,9 +168,9 @@ def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
     if file_name.suffix == '.defocus':
         imod_defocus_version = float(lines[0].strip().split()[5])
         # imod defocus files have the values specified in nm: TODO is this the common way to specify it?
-        if imod_defocus_version == 2:  # file with one defocus value and starts on line 0
+        if imod_defocus_version == 2:  # file with one defocus value; data starts on line 0
             return [float(x.strip().split()[4]) * 1e-3 for x in lines]
-        elif imod_defocus_version == 3:  # file with astigmatism and first line empty
+        elif imod_defocus_version == 3:  # file with astigmatism; line 0 contains metadata that we do not need
             return [(float(x.strip().split()[4]) + float(x.strip().split()[5])) / 2 * 1e-3 for x in lines[1:]]
         else:
             raise ValueError('Invalid IMOD defocus file inversion, can only be 2 or 3.')

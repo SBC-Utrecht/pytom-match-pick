@@ -33,10 +33,11 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         search_z=data['search_z'],
         voxel_size=data['voxel_size'],
         low_pass=data['low_pass'],
-        high_pass=data['high_pass'],
-        dose_accumulation=data['dose_accumulation'],
-        ctf_data=data['ctf_data'],
-        whiten_spectrum=data['whiten_spectrum'],
+        # Use 'get' for backwards compatibility
+        high_pass=data.get('high_pass', None),
+        dose_accumulation=data.get('dose_accumulation', None),
+        ctf_data=data.get('ctf_data', None),
+        whiten_spectrum=data.get('whiten_spectrum', False),
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']

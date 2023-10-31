@@ -84,10 +84,10 @@ def main():
 
     # combine ctf values to ctf_params list of dicts
     ctf_params = None
-    if isinstance(args.defocus_file, list):
+    if args.defocus_file is not None:
         if args.amplitude_contrast is None or args.spherical_abberation is None or args.voltage is None:
             raise ValueError('Cannot create 3D CTF weighting because one or multiple of the required parameters ('
-                             'amplitude contrast, spherical abberation or voltage) is/are missing.')
+                             'amplitude-contrast, spherical-abberation or voltage) is/are missing.')
         ctf_params = [{
                 'defocus': defocus,
                 'amplitude': args.amplitude_contrast,
