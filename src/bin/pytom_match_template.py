@@ -30,10 +30,11 @@ def main():
                              '--tilt-angles tomo101.rawtlt). In case all the tilt angles are provided a more '
                              'elaborate Fourier space constraint can be used')
     parser.add_argument('--per-tilt-weighting', action='store_true', default=False, required=False,
-                        help='Flag to set per tilt weighting, only makes sense if a file with all tilt angles has '
-                             'been provided. In case not set when a tilt angle file is provided, the minimum and '
-                             'maximum tilt angle are used to create a binary wedge. If dose accumulation and CTF '
-                             'params are provided these will all be incorporated in the tilt-weighting.')
+                        help='Flag to activate per-tilt-weighting, only makes sense if a file with all tilt angles has '
+                             'been provided. In case not set, while a tilt angle file is provided, the minimum and '
+                             'maximum tilt angle are used to create a binary wedge. The base functionality creates a '
+                             'fanned wedge where each tilt is weighted by cos(tilt_angle). If dose accumulation and '
+                             'CTF parameters are provided these will all be incorporated in the tilt-weighting.')
     parser.add_argument('--angular-search', type=str, required=True,
                         help='Options are: [7.00, 35.76, 19.95, 90.00, 18.00, '
                              '12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00]')
@@ -62,10 +63,12 @@ def main():
                              'assuming the same ordering of tilts as the tilt angle file. Format should be a .txt '
                              'file with on each line a dose value in e-/A2 .')
     parser.add_argument('--defocus-file', type=str, required=False, action=ParseDefocusFile,
-                        help='Here you can provide an IMOD defocus file, with singular fitted defocus (no '
-                             'astigmatism). The values, together with the other ctf params (amplitude, voltage, '
-                             'spherical abberation, will be used to create a simplistic 3D CTF weighting function. '
-                             'Format should be a .def with the defocus in nm, same ordering as tilt angle list.')
+                        help='Here you can provide an IMOD defocus file (version 2 or 3) or a text file with defocus. '
+                             'The values, together with the other ctf parameters (amplitude contrast, voltage, '
+                             'spherical abberation, will be used to create a 3D CTF weighting function. IMPORTANT: if '
+                             'you provide this, the input template should not be modulated with a CTF beforehand. '
+                             'Format should be .defocus (IMOD) or .txt, same ordering as tilt angle list. The .txt '
+                             'file should contain a single defocus value (in nm) per line.')
     parser.add_argument('--amplitude-contrast', type=float, required=False, action=BetweenZeroAndOne,
                         help='Amplitude contrast fraction for CTF.')
     parser.add_argument('--spherical-abberation', type=float, required=False, action=LargerThanZero,
@@ -73,8 +76,9 @@ def main():
     parser.add_argument('--voltage', type=float, required=False, action=LargerThanZero,
                         help='Voltage for CTF in keV.')
     parser.add_argument('--spectral-whitening', action='store_true', default=False, required=False,
-                        help='Whiten the power spectra of the template and the tomogram patch, effectively puts more '
-                             'weight on high resolution features.')
+                        help='Calculate a whitening filtering from the power spectrum of the tomogram; apply it to '
+                             'the tomogram patch and template. Effectively puts more weight on high resolution '
+                             'features and sharpens the correlation peaks.')
     parser.add_argument('-g', '--gpu-ids', nargs='+', type=int, required=True,
                         help='GPU indices to run the program on.')
     parser.add_argument('--log', type=str, required=False, default=20, action=ParseLogging,
