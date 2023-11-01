@@ -27,6 +27,7 @@ TEST_TEMPLATE_WRONG_VOXEL_SIZE = TEST_DATA_DIR.joinpath('template_voxel_error_te
 TEST_MASK = TEST_DATA_DIR.joinpath('mask.mrc')
 TEST_SCORES = TEST_DATA_DIR.joinpath('tomogram_scores.mrc')
 TEST_ANGLES = TEST_DATA_DIR.joinpath('tomogram_angles.mrc')
+TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath('custom_angular_search.txt')
 
 
 class TestTMJob(unittest.TestCase):
@@ -92,6 +93,8 @@ class TestTMJob(unittest.TestCase):
             job.voxel_size
         )
 
+        np.savetxt(TEST_CUSTOM_ANGULAR_SEARCH, np.random.rand(100, 3))
+
     @classmethod
     def tearDownClass(cls) -> None:
         TEST_MASK.unlink()
@@ -103,6 +106,7 @@ class TestTMJob(unittest.TestCase):
         TEST_TOMOGRAM.unlink()
         TEST_SCORES.unlink()
         TEST_ANGLES.unlink()
+        TEST_CUSTOM_ANGULAR_SEARCH.unlink()
         TEST_DATA_DIR.rmdir()
 
     def setUp(self):
@@ -144,6 +148,12 @@ class TestTMJob(unittest.TestCase):
             TOMO_SHAPE, copy.tomo_shape,
             msg='Tomogram shape not correct in job, perhaps transpose issue?'
         )
+
+    def test_custom_angular_search(self):
+        job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                    angle_increment=TEST_CUSTOM_ANGULAR_SEARCH, voxel_size=1.)
+        self.assertEqual(job.rotation_file, TEST_CUSTOM_ANGULAR_SEARCH, msg='Passing a custom angular search file to '
+                                                                            'TMJob failed.')
 
     def test_tm_job_split_volume(self):
         sub_jobs = self.job.split_volume_search((1, 3, 1))
