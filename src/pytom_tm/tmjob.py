@@ -154,7 +154,7 @@ class TMJob:
             possible_file_path = pathlib.Path(angle_increment)
             if possible_file_path.exists() and possible_file_path.suffix == '.txt':
                 logging.info('Custom file provided for the angular search. Checking if it can be read...')
-                # load_angle_list will throw an error if it does not encounter three euler angles per line
+                # load_angle_list will throw an error if it does not encounter three inputs per line
                 self.n_rotations = len(load_angle_list(possible_file_path))
                 self.rotation_file = possible_file_path
             else:
