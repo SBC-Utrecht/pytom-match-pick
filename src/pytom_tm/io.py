@@ -41,6 +41,14 @@ class LargerThanZero(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
+class BetweenZeroAndOne(argparse.Action):
+    def __call__(self, parser, namespace, values: float, option_string: Optional[str] = None):
+        if 1. <= values <= .0:
+            parser.error("{0} is a fraction and can only range between 0 and 1".format(option_string))
+
+        setattr(namespace, self.dest, values)
+
+
 class ParseSearch(argparse.Action):
     def __call__(self, parser, namespace, values: list[int, int], option_string: Optional[str] = None):
         if not (0 <= values[0] < values[1]):
@@ -66,6 +74,30 @@ class ParseTiltAngles(argparse.Action):
             setattr(namespace, self.dest, read_tlt_file(values))
         else:
             parser.error("{0} can only take one or two arguments".format(option_string))
+
+
+class ParseDoseFile(argparse.Action):
+    def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
+        file_path = pathlib.Path(values)
+        if not file_path.exists():
+            parser.error("{0} provided dose accumulation file does not exist".format(option_string))
+        allowed_suffixes = ['.txt']
+        if file_path.suffix not in allowed_suffixes:
+            parser.error("{0}  provided dose accumulation file does not have the right suffix, "
+                         "allowed are: {1}".format(option_string, ', '.join(allowed_suffixes)))
+        setattr(namespace, self.dest, read_dose_file(file_path))
+
+
+class ParseDefocusFile(argparse.Action):
+    def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
+        file_path = pathlib.Path(values)
+        if not file_path.exists():
+            parser.error("{0} provided defocus file does not exist".format(option_string))
+        allowed_suffixes = ['.defocus', '.txt']
+        if file_path.suffix not in allowed_suffixes:
+            parser.error("{0} provided defocus file does not have the right suffix, "
+                         "allowed are: {1}".format(option_string, ', '.join(allowed_suffixes)))
+        setattr(namespace, self.dest, read_defocus_file(file_path))
 
 
 class UnequalSpacingError(Exception):
@@ -120,8 +152,37 @@ def read_mrc(
     return data
 
 
-def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
+def read_txt_file(file_name: pathlib.Path) -> list[float, ...]:
     with open(file_name, 'r') as fstream:
         lines = fstream.readlines()
-    return sorted(list(map(float, [x.strip() for x in lines])))
+    return list(map(float, [x.strip() for x in lines if not x.isspace()]))
 
+
+def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
+    return read_txt_file(file_name)
+
+
+def read_dose_file(file_name: pathlib.Path) -> list[float, ...]:
+    return read_txt_file(file_name)
+
+
+def read_imod_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
+    with open(file_name, 'r') as fstream:
+        lines = fstream.readlines()
+    imod_defocus_version = float(lines[0].strip().split()[5])
+    # imod defocus files have the values specified in nm: TODO is this the common way to specify it?
+    if imod_defocus_version == 2:  # file with one defocus value; data starts on line 0
+        return [float(x.strip().split()[4]) * 1e-3 for x in lines]
+    elif imod_defocus_version == 3:  # file with astigmatism; line 0 contains metadata that we do not need
+        return [(float(x.strip().split()[4]) + float(x.strip().split()[5])) / 2 * 1e-3 for x in lines[1:]]
+    else:
+        raise ValueError('Invalid IMOD defocus file inversion, can only be 2 or 3.')
+
+
+def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
+    if file_name.suffix == '.defocus':
+        return read_imod_defocus_file(file_name)
+    elif file_name.suffix == '.txt':
+        return [x * 1e-3 for x in read_txt_file(file_name)]
+    else:
+        raise ValueError('Defocus file needs to have format .defocus or .txt')

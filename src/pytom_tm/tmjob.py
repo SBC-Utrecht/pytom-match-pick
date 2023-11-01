@@ -10,7 +10,7 @@ from functools import reduce
 from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
-from pytom_tm.weights import create_wedge
+from pytom_tm.weights import create_wedge, power_spectrum_profile, profile_to_weighting, create_gaussian_band_pass
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
 
 
@@ -33,7 +33,11 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         search_z=data['search_z'],
         voxel_size=data['voxel_size'],
         low_pass=data['low_pass'],
-        high_pass=data['high_pass']
+        # Use 'get' for backwards compatibility
+        high_pass=data.get('high_pass', None),
+        dose_accumulation=data.get('dose_accumulation', None),
+        ctf_data=data.get('ctf_data', None),
+        whiten_spectrum=data.get('whiten_spectrum', False),
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
@@ -70,7 +74,10 @@ class TMJob:
             search_z: Optional[list[int, int]] = None,
             voxel_size: Optional[float] = None,
             low_pass: Optional[float] = None,
-            high_pass: Optional[float] = None
+            high_pass: Optional[float] = None,
+            dose_accumulation: Optional[list[float, ...]] = None,
+            ctf_data: Optional[list[dict, ...]] = None,
+            whiten_spectrum: bool = False
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -150,6 +157,17 @@ class TMJob:
         # set the band-pass resolution shells
         self.low_pass = low_pass
         self.high_pass = high_pass
+
+        # set dose and ctf
+        self.dose_accumulation = dose_accumulation
+        self.ctf_data = ctf_data
+        self.whiten_spectrum = whiten_spectrum
+
+        if self.whiten_spectrum:
+            logging.info('Estimating whitening filter...')
+            weights = 1 / np.sqrt(power_spectrum_profile(read_mrc(self.tomogram)))
+            weights /= weights.max()  # scale to 1
+            np.save(self.output_dir.joinpath('whitening_filter.npy'), weights)
 
         # Job details
         self.job_key = job_key
@@ -358,31 +376,58 @@ class TMJob:
         # create weighting, include missing wedge and band-pass filters
         template_wedge = None
         if self.tilt_angles is not None:
-            # convolute tomo with wedge
-            tomo_wedge = create_wedge(
+            # convolute tomo with whitening filter and bandpass
+            tomo_filter = (create_gaussian_band_pass(
                 search_volume.shape,
-                self.tilt_angles,
-                1.,
-                angles_in_degrees=True,
-                voxel_size=self.voxel_size,
-                low_pass=self.low_pass,
-                high_pass=self.high_pass,
-                tilt_weighting=self.tilt_weighting
-            ).astype(np.float32)
+                self.voxel_size, 
+                self.low_pass,
+                self.high_pass
+            ) * (profile_to_weighting(
+                np.load(self.output_dir.joinpath('whitening_filter.npy')),
+                search_volume.shape
+            ) if self.whiten_spectrum else 1)).astype(np.float32)
 
-            search_volume = np.real(irfftn(rfftn(search_volume) * tomo_wedge, s=search_volume.shape))
+            # we always apply a binary wedge (with optional band pass) to the volume to remove empty regions
+            search_volume = np.real(irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape))
 
             # get template wedge
-            template_wedge = create_wedge(
+            template_wedge = (create_wedge(
                 self.template_shape,
                 self.tilt_angles,
-                1.,
+                self.voxel_size,
+                cut_off_radius=1.,
                 angles_in_degrees=True,
-                voxel_size=self.voxel_size,
                 low_pass=self.low_pass,
                 high_pass=self.high_pass,
-                tilt_weighting=self.tilt_weighting
-            ).astype(np.float32)
+                tilt_weighting=self.tilt_weighting,
+                accumulated_dose_per_tilt=self.dose_accumulation,
+                ctf_params_per_tilt=self.ctf_data
+            ) * (profile_to_weighting(
+                np.load(self.output_dir.joinpath('whitening_filter.npy')),
+                self.template_shape
+            ) if self.whiten_spectrum else 1)).astype(np.float32)
+
+            if logging.root.level == logging.DEBUG:
+                write_mrc(
+                    self.output_dir.joinpath('debug_tomo_filter.mrc'),
+                    tomo_filter,
+                    voxel_size=self.voxel_size
+                )
+                write_mrc(
+                    self.output_dir.joinpath('debug_search_volume.mrc'),
+                    search_volume,
+                    voxel_size=self.voxel_size
+                )
+                write_mrc(
+                    self.output_dir.joinpath('debug_template_convoluted.mrc'),
+                    np.fft.irfftn(np.fft.rfftn(template) * template_wedge, s=template.shape).astype(np.float32),
+                    voxel_size=self.voxel_size
+                )
+                write_mrc(
+                    self.output_dir.joinpath('debug_3d_ctf.mrc'),
+                    template_wedge,
+                    voxel_size=self.voxel_size
+                )
 
         # load rotation search
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))

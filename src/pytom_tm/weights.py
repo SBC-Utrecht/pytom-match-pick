@@ -2,7 +2,8 @@ import numpy as np
 import numpy.typing as npt
 import logging
 import scipy.ndimage as ndimage
-from typing import Optional
+from typing import Optional, Union
+from pytom_tm.io import UnequalSpacingError
 
 
 constants = {
@@ -53,17 +54,27 @@ def wavelength_ev2m(voltage: float) -> float:
     return _lambda
 
 
-def radial_reduced_grid(shape: tuple[int, int, int]) -> npt.NDArray[float]:
-    x = (np.abs(np.arange(
-        -shape[0] // 2 + shape[0] % 2,
-        shape[0] // 2 + shape[0] % 2, 1.
-    )) / (shape[0] // 2))[:, np.newaxis, np.newaxis]
-    y = (np.abs(np.arange(
-        -shape[1] // 2 + shape[1] % 2,
-        shape[1] // 2 + shape[1] % 2, 1.
-    )) / (shape[1] // 2))[:, np.newaxis]
-    z = np.arange(0, shape[2] // 2 + 1, 1.) / (shape[2] // 2)
-    return np.sqrt(x ** 2 + y ** 2 + z ** 2)
+def radial_reduced_grid(shape: Union[tuple[int, int, int], tuple[int, int]]) -> npt.NDArray[float]:
+    if not len(shape) in [2, 3]:
+        raise ValueError('radial_reduced_grid() only works for 2D or 3D shapes')
+    if len(shape) == 3:
+        x = (np.abs(np.arange(
+            -shape[0] // 2 + shape[0] % 2,
+            shape[0] // 2 + shape[0] % 2, 1.
+        )) / (shape[0] // 2))[:, np.newaxis, np.newaxis]
+        y = (np.abs(np.arange(
+            -shape[1] // 2 + shape[1] % 2,
+            shape[1] // 2 + shape[1] % 2, 1.
+        )) / (shape[1] // 2))[:, np.newaxis]
+        z = np.arange(0, shape[2] // 2 + 1, 1.) / (shape[2] // 2)
+        return np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    elif len(shape) == 2:
+        x = (np.abs(np.arange(
+            -shape[0] // 2 + shape[0] % 2,
+            shape[0] // 2 + shape[0] % 2, 1.
+        )) / (shape[0] // 2))[:, np.newaxis]
+        y = np.arange(0, shape[1] // 2 + 1, 1.) / (shape[1] // 2)
+        return np.sqrt(x ** 2 + y ** 2)
 
 
 def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
@@ -142,12 +153,14 @@ def create_gaussian_band_pass(
 def create_wedge(
         shape: tuple[int, int, int],
         tilt_angles: list[float, ...],
-        cut_off_radius: float,
+        voxel_size: float,
+        cut_off_radius: float = 1.,
         angles_in_degrees: bool = True,
-        voxel_size: float = 1.,
         low_pass: Optional[float] = None,
         high_pass: Optional[float] = None,
-        tilt_weighting: bool = False
+        tilt_weighting: bool = False,
+        accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
+        ctf_params_per_tilt: Optional[list[dict]] = None
 ) -> npt.NDArray[float]:
     """This function returns a wedge volume that is either symmetric or asymmetric depending on wedge angle input.
 
@@ -157,14 +170,22 @@ def create_wedge(
         real space shape of volume to which it needs to be applied
     tilt_angles
         tilt angles used for reconstructing the tomogram
+    voxel_size
+        voxel size is needed for the calculation of various filters
     cut_off_radius
         cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
     angles_in_degrees
         whether angles are in degrees or radians units
-    voxel_size
     low_pass
+        low pass filter resolution in A
     high_pass
+        high pass filter resolution in A
     tilt_weighting
+        apply tilt weighting
+    accumulated_dose_per_tilt
+        accumulated dose for each tilt for dose weighting
+    ctf_params_per_tilt
+        ctf parameters for each tilt
 
     Returns
     -------
@@ -173,6 +194,9 @@ def create_wedge(
     """
     if not isinstance(tilt_angles, list) or len(tilt_angles) < 2:
         raise ValueError('Wedge generation needs at least a list of two tilt angles.')
+
+    if voxel_size <= 0.:
+        raise ValueError('Voxel size in create wedge is smaller or equal to 0, which is an invalid voxel spacing.')
 
     if cut_off_radius > 1:
         print('Warning: wedge cutoff needs to be defined as a fraction of nyquist 0 < c <= 1. Setting value to 1.0.')
@@ -186,13 +210,16 @@ def create_wedge(
         tilt_angles_rad = tilt_angles
 
     if tilt_weighting:
-        wedge = _create_structured_wedge(
+        wedge = _create_tilt_weighted_wedge(
             shape,
             tilt_angles_rad,
-            cut_off_radius
+            cut_off_radius,
+            voxel_size,
+            accumulated_dose_per_tilt=accumulated_dose_per_tilt,
+            ctf_params_per_tilt=ctf_params_per_tilt
         ).astype(np.float32)
     else:
-        wedge_angles = (np.pi / 2 - np.abs(tilt_angles_rad[0]), np.pi / 2 - np.abs(tilt_angles_rad[-1]))
+        wedge_angles = (np.pi / 2 - np.abs(min(tilt_angles_rad)), np.pi / 2 - np.abs(max(tilt_angles_rad)))
         if np.round(wedge_angles[0], 2) == np.round(wedge_angles[1], 2):
             wedge = _create_symmetric_wedge(
                 shape,
@@ -295,12 +322,25 @@ def _create_asymmetric_wedge(
     return np.fft.ifftshift(wedge, axes=(0, 1))
 
 
-def _create_structured_wedge(
+def _create_tilt_weighted_wedge(
         shape: tuple[int, int, int],
         tilt_angles: list[float, ...],
-        cut_off_radius: float
+        cut_off_radius: float,
+        pixel_size_angstrom: float,
+        accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
+        ctf_params_per_tilt: Optional[list[dict]] = None
 ) -> npt.NDArray[float]:
     """
+    The following B-factor heuristic is used (as mentioned in the M paper, and introduced in RELION 1.4):
+        "The B factor is increased by 4Å2 per 1e− Å−2 of exposure, and each tilt is weighted as cos θ."
+
+    Relation between B-factor and the sigma of a gaussian:
+
+        B = 8 * pi ** 2 * sigma_motion ** 2
+
+    i.e. sigma_motion = sqrt( B / (8 * pi ** 2)). Belonging to a Gaussian blur:
+
+        exp( -2 * pi ** 2 * sigma_motion ** 2 * q ** 2 )
 
     Parameters
     ----------
@@ -310,40 +350,94 @@ def _create_structured_wedge(
         tilt angles is a list of angle in radian units
     cut_off_radius: float
         cut off for the mask as a fraction of nyquist, value between 0 and 1
+    pixel_size_angstrom: float
+        the pixel size as a value in Å
+    accumulated_dose_per_tilt: list[float, ...]
+        the accumulated dose in e− Å−2
+    ctf_params_per_tilt: list[dict, ...]
+        the ctf parameters per tilt angle, list of dicts where each dict has the following keys:
+        - 'defocus'; in um
+        - 'amplitude'; fraction of amplitude contrast between 0 and 1
+        - 'voltage'; in keV
+        - 'cs'; spherical abberation in mm
 
     Returns
     -------
     wedge: npt.NDArray[float]
         structured wedge mask in fourier reduced form, i.e. output shape is (shape[0], shape[1], shape[2] // 2 + 1)
     """
-    logging.debug(f'tilt angles (radians) for structured wedge: {[round(t, 2) for t in tilt_angles]}')
+    if accumulated_dose_per_tilt is not None and len(accumulated_dose_per_tilt) != len(tilt_angles):
+        raise ValueError('in _create_tilt_weighted_wedge the list of accumulated dose per tilt does not have the same '
+                         'length as the tilt angle list!')
+    if ctf_params_per_tilt is not None and len(ctf_params_per_tilt) != len(tilt_angles):
+        raise ValueError('in _create_tilt_weighted_wedge the list of CTF parameters per tilt does not have the same '
+                         'length as the tilt angle list!')
+    if not all([shape[0] == s for s in shape[1:]]):
+        raise UnequalSpacingError('Input shape for structured wedge needs to be a square box. '
+                                  'Otherwise the frequencies in fourier space are not equal across dimensions.')
 
-    image_size = max(shape[0], shape[2])
-    tilt = np.zeros((image_size, ) * 2)
-    tilt[:, image_size // 2] = 1
+    image_size = shape[0]  # assign to size variable as all dimensions are equal size
+    tilt = np.zeros(shape)
+    q_grid = radial_reduced_grid(shape)
+    tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
-    tilt_sum = np.zeros((shape[0], shape[2] // 2 + 1))
-    for alpha in tilt_angles:
-        rotated = ndimage.zoom(  # zooming is not good for the result
-            np.flip(ndimage.rotate(tilt, np.rad2deg(alpha), reshape=False, order=1)[:, : image_size // 2 + 1]),
-            [shape[0] / image_size, (shape[2] // 2 + 1) / (image_size // 2 + 1)],
-            order=1
+    for i, alpha in enumerate(tilt_angles):
+        if ctf_params_per_tilt is not None:
+            ctf = np.fft.fftshift(
+                create_ctf(
+                    (image_size, ) * 2,
+                    pixel_size_angstrom * 1e-10,
+                    ctf_params_per_tilt[i]['defocus'] * 1e-6,
+                    ctf_params_per_tilt[i]['amplitude'],
+                    ctf_params_per_tilt[i]['voltage'] * 1e3,
+                    ctf_params_per_tilt[i]['cs'] * 1e-3,
+                    flip_phase=True  # creating a per tilt ctf is hard if the phase is not flipped
+                ), axes=0,
+            )
+            tilt[:, :, image_size // 2] = np.concatenate(
+                (  # duplicate and flip the CTF around the 0 frequency; then concatenate to make it non-reduced
+                    np.flip(ctf[:, 1: 1 + image_size - ctf.shape[1]], axis=1),
+                    ctf
+                ),
+                axis=1
+            )
+        else:
+            tilt[:, :, image_size // 2] = 1
+
+        # rotate the image weights to the tilt angle
+        rotated = np.flip(
+            ndimage.rotate(
+                tilt,
+                np.rad2deg(alpha),
+                axes=(0, 2),
+                reshape=False,
+                order=3
+            )[:, :, : image_size // 2 + 1]
         )
-        tilt_sum += (rotated - rotated.min()) / (rotated.max() - rotated.min())
 
-    # scale to max 1
-    tilt_sum[tilt_sum > 1] = 1
+        # weight with exposure and tilt dampening
+        if accumulated_dose_per_tilt is not None:
+            q_squared = (q_grid / (2 * pixel_size_angstrom)) ** 2
+            sigma_motion = np.sqrt(accumulated_dose_per_tilt[i] * 4 / (8 * np.pi ** 2))
+            weighted_tilt = (
+                    rotated *
+                    np.cos(alpha) *  # apply tilt-dependent weighting
+                    np.exp(-2 * np.pi ** 2 * sigma_motion ** 2 * q_squared)  # apply dose-weighting
+            )
+        else:
+            weighted_tilt = (
+                    rotated *
+                    np.cos(alpha)  # apply tilt-dependent weighting
+            )
+        tilt_weighted_wedge = np.maximum(tilt_weighted_wedge, weighted_tilt)
 
-    # duplicate in x
-    wedge = np.tile(tilt_sum[:, np.newaxis, :], (1, shape[1], 1))
+    tilt_weighted_wedge[q_grid > cut_off_radius] = 0
 
-    wedge[radial_reduced_grid(shape) > cut_off_radius] = 0
-
-    return np.fft.fftshift(wedge, axes=(0, 1))
+    return np.fft.ifftshift(tilt_weighted_wedge, axes=(0, 1))
 
 
 def create_ctf(
-        shape: tuple[int, int, int],
+        shape: Union[tuple[int, int, int], tuple[int, int]],
         pixel_size: float,
         defocus: float,
         amplitude_contrast: float,
@@ -408,10 +502,10 @@ def create_ctf(
         # filter the ctf with the cutoff frequency
         ctf[k > k_cutoff] = 0
 
-    if flip_phase:  # phase flip but consider whether contrast should be black/white
-        ctf = np.abs(ctf) * -1 if defocus > 0 else np.abs(ctf)
+    if flip_phase:  # phase flip
+        ctf = np.abs(ctf)
 
-    return np.fft.ifftshift(ctf, axes=(0, 1))
+    return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
 
 
 def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
@@ -429,7 +523,7 @@ def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.N
     """
     if len(image.shape) not in [2, 3]:
         raise ValueError('Radial average calculation only works for 2d/3d arrays')
-    if len(set(image.shape)) != 2:
+    if len(set(image.shape)) != 1:
         raise ValueError('Radial average calculation only works for images with equal dimensions')
 
     size = image.shape[0]
@@ -453,3 +547,69 @@ def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.N
     mean = np.vectorize(lambda x: np.fft.fftshift(image, axes=(0, 1))[(r >= x - .5) & (r < x + .5)].mean())(q)
 
     return q, mean
+
+
+def power_spectrum_profile(image: npt.NDArray[float]) -> npt.NDArray[float]:
+    """ Calculate the power spectrum for a real space array and then find the profile (radial average).
+
+    Parameters
+    ----------
+    image: npt.NDArray[float]
+        2D/3D array in real space for which the power spectrum profile needs to be calculated
+
+    Returns
+    -------
+    profile: npt.NDArray[float]
+        A 1D numpy array
+    """
+    if len(image.shape) not in [2, 3]:
+        raise ValueError('Power spectrum profile calculation only works for 2d/3d arrays.')
+
+    q_grid = radial_reduced_grid(image.shape)
+    power = np.abs(np.fft.rfftn(image)) ** 2
+
+    q = np.arange(max(image.shape) // 2 + 1) / (max(image.shape) // 2)
+    q_step = q[1]
+
+    power_profile = np.vectorize(
+        lambda x: np.fft.fftshift(power, axes=(0, 1) if len(image.shape) == 3 else 0)[
+            (q_grid >= x - .5 * q_step) & (q_grid < x + .5 * q_step)
+        ].mean())(q)
+
+    return power_profile
+
+
+def profile_to_weighting(
+        profile: npt.NDArray[float],
+        shape: Union[tuple[int, int], tuple[int, int, int]]
+) -> npt.NDArray[float]:
+    """ Calculate a radial weighing (filter) from a spectrum profile.
+
+    Parameters
+    ----------
+    profile: npt.NDArray[float]
+        power spectrum profile (or other 1d profile) to transform in a fourier space filter
+    shape: Union[tuple[int, int], tuple[int, int, int]]
+        2D/3D array shape in real space for which the fourier reduced weights are calculated
+
+    Returns
+    -------
+    weighting: npt.NDArray[float]
+        Reduced Fourier space weighting for shape
+    """
+    if len(profile.shape) != 1:
+        raise ValueError('Profile passed to profile_to_weighting is not 1-dimensional.')
+    if len(shape) not in [2, 3]:
+        raise ValueError('Shape passed to profile_to_weighting needs to be 2D/3D.')
+
+    q_grid = radial_reduced_grid(shape)
+
+    weights = ndimage.map_coordinates(
+        profile,
+        q_grid.flatten()[np.newaxis, :] * profile.shape[0],
+        order=1
+    ).reshape(q_grid.shape)
+
+    weights[q_grid > 1] = 0
+
+    return np.fft.ifftshift(weights, axes=(0, 1) if len(shape) == 3 else 0)
