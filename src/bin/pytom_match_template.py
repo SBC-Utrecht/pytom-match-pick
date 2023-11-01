@@ -37,7 +37,10 @@ def main():
                              'CTF parameters are provided these will all be incorporated in the tilt-weighting.')
     parser.add_argument('--angular-search', type=str, required=True,
                         help='Options are: [7.00, 35.76, 19.95, 90.00, 18.00, '
-                             '12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00]')
+                             '12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00].\n'
+                             'Alternatively, a .txt file can be provided with three Euler angles (in radians) per '
+                             'line that define the angular search. Angle format is ZXZ anti-clockwise (see: '
+                             'https://www.ccpem.ac.uk/user_help/rotation_conventions.php).')
     parser.add_argument('--rotational-symmetry', type=int, required=False, action=LargerThanZero, default=1,
                         help='Integer value indicating the rotational symmetry of the template. The length of the '
                              'rotation search will be shortened through division by this value.')

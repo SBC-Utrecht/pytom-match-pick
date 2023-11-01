@@ -151,7 +151,14 @@ class TMJob:
             self.rotation_file = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][0]
             self.n_rotations = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][1]
         except KeyError:
-            raise TMJobError('Provided angular search is not available in  the default lists.')
+            possible_file_path = pathlib.Path(angle_increment)
+            if possible_file_path.exists() and possible_file_path.suffix == '.txt':
+                logging.info('Custom file provided for the angular search. Checking if it can be read...')
+                # load_angle_list will throw an error if it does not encounter three euler angles per line
+                self.n_rotations = len(load_angle_list(possible_file_path))
+                self.rotation_file = possible_file_path
+            else:
+                raise TMJobError('Invalid angular search provided.')
 
         # missing wedge
         self.tilt_angles = tilt_angles
