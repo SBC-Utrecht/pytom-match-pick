@@ -38,6 +38,7 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         dose_accumulation=data.get('dose_accumulation', None),
         ctf_data=data.get('ctf_data', None),
         whiten_spectrum=data.get('whiten_spectrum', False),
+        rotational_symmetry=data.get('rotational_symmetry', 1),
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
@@ -77,7 +78,8 @@ class TMJob:
             high_pass: Optional[float] = None,
             dose_accumulation: Optional[list[float, ...]] = None,
             ctf_data: Optional[list[dict, ...]] = None,
-            whiten_spectrum: bool = False
+            whiten_spectrum: bool = False,
+            rotational_symmetry: int = 1
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -141,15 +143,15 @@ class TMJob:
         self.whole_start = None
         self.sub_start, self.sub_step = None, None
 
-        # Rotations to search
+        # Rotation parameters
+        self.start_slice = 0
+        self.steps_slice = 1
+        self.rotational_symmetry = rotational_symmetry
         try:
             self.rotation_file = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][0]
             self.n_rotations = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][1]
         except KeyError:
             raise TMJobError('Provided angular search is not available in  the default lists.')
-
-        self.start_slice = 0
-        self.steps_slice = 1
 
         # missing wedge
         self.tilt_angles = tilt_angles
@@ -303,7 +305,10 @@ class TMJob:
             return result
 
         if stats is not None:
-            search_space = reduce(lambda x, y: x * y, self.search_size) * self.n_rotations
+            search_space = reduce(
+                lambda x, y: x * y,
+                self.search_size
+            ) * int(np.ceil(self.n_rotations / self.rotational_symmetry))
             variance = sum([s['variance'] for s in stats]) / len(stats)
             std = np.sqrt(variance)
             self.job_stats = {'search_space': search_space, 'variance': variance, 'std': std}
@@ -430,8 +435,16 @@ class TMJob:
                 )
 
         # load rotation search
-        angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
-        angle_list = load_angle_list(self.rotation_file)[slice(self.start_slice, self.n_rotations, self.steps_slice)]
+        angle_ids = list(range(
+            self.start_slice,
+            int(np.ceil(self.n_rotations / self.rotational_symmetry)),
+            self.steps_slice
+        ))
+        angle_list = load_angle_list(self.rotation_file)[slice(
+            self.start_slice,
+            int(np.ceil(self.n_rotations / self.rotational_symmetry)),
+            self.steps_slice
+        )]
 
         tm = TemplateMatchingGPU(
             job_id=self.job_key,

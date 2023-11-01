@@ -38,6 +38,9 @@ def main():
     parser.add_argument('--angular-search', type=str, required=True,
                         help='Options are: [7.00, 35.76, 19.95, 90.00, 18.00, '
                              '12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00]')
+    parser.add_argument('--rotational-symmetry', type=int, required=False, action=LargerThanZero, default=1,
+                        help='Integer value indicating the rotational symmetry of the template. The length of the '
+                             'rotation search will be shortened through division by this value.')
     parser.add_argument('-s', '--volume-split', nargs=3, type=int, required=False, default=[1, 1, 1],
                         help='Split the volume into smaller parts for the search, can be relevant if the volume does '
                              'not fit into GPU memory. Format is x y z, e.g. --volume-split 1 2 1')
@@ -118,7 +121,8 @@ def main():
         high_pass=args.high_pass,
         dose_accumulation=args.dose_accumulation,
         ctf_data=ctf_params,
-        whiten_spectrum=args.spectral_whitening
+        whiten_spectrum=args.spectral_whitening,
+        rotational_symmetry=args.rotational_symmetry,
     )
 
     score_volume, angle_volume = run_job_parallel(job, tuple(args.volume_split), args.gpu_ids)
