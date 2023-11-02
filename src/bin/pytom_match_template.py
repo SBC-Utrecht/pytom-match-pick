@@ -126,7 +126,7 @@ def main():
         dose_accumulation=args.dose_accumulation,
         ctf_data=ctf_params,
         whiten_spectrum=args.spectral_whitening,
-        rotational_symmetry=args.rotational_symmetry,
+        rotational_symmetry=args.z_axis_rotational_symmetry,
     )
 
     score_volume, angle_volume = run_job_parallel(job, tuple(args.volume_split), args.gpu_ids)
