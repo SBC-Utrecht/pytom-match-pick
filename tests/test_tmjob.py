@@ -172,8 +172,6 @@ class TestTMJob(unittest.TestCase):
         score, angle = self.job.merge_sub_jobs()
         ind = np.unravel_index(score.argmax(), score.shape)
 
-        print(score.max())
-
         self.assertTrue(score.max() > 0.931, msg='lcc max value lower than expected')
         self.assertEqual(ANGLE_ID, angle[ind])
         self.assertSequenceEqual(LOCATION, ind)
