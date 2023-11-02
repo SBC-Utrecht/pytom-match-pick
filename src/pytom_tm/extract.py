@@ -61,7 +61,7 @@ def extract_particles(
         search_space = (
             # wherever the score volume has not been explicitly set to -1 is the size of the search region
             (score_volume > -1).sum() *
-            job.n_rotations
+            int(np.ceil(job.n_rotations / job.rotational_symmetry))
         )
         cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
         logging.info(f'cut off for particle extraction: {cut_off}')
