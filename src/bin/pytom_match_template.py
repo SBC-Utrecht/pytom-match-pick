@@ -41,9 +41,10 @@ def main():
                              'Alternatively, a .txt file can be provided with three Euler angles (in radians) per '
                              'line that define the angular search. Angle format is ZXZ anti-clockwise (see: '
                              'https://www.ccpem.ac.uk/user_help/rotation_conventions.php).')
-    parser.add_argument('--rotational-symmetry', type=int, required=False, action=LargerThanZero, default=1,
-                        help='Integer value indicating the rotational symmetry of the template. The length of the '
-                             'rotation search will be shortened through division by this value.')
+    parser.add_argument('--z-axis-rotational-symmetry', type=int, required=False, action=LargerThanZero, default=1,
+                        help='Integer value indicating the rotational symmetry of the template around the z-axis. The '
+                             'length of the rotation search will be shortened through division by this value. Only '
+                             'works for template symmetry around the z-axis.')
     parser.add_argument('-s', '--volume-split', nargs=3, type=int, required=False, default=[1, 1, 1],
                         help='Split the volume into smaller parts for the search, can be relevant if the volume does '
                              'not fit into GPU memory. Format is x y z, e.g. --volume-split 1 2 1')
