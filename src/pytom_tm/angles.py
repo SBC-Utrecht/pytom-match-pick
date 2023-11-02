@@ -26,10 +26,10 @@ def load_angle_list(file_name: pathlib.Path) -> list[tuple[float, float, float]]
     with open(str(file_name)) as fstream:
         lines = fstream.readlines()
     angle_list = [tuple(map(float, x.strip().split(' '))) for x in lines]
-    angle_list.sort(key=lambda x: x[0])  # angle list needs to be sorted otherwise symmetry reduction cannot be used!
     if not all([len(a) == 3 for a in angle_list]):
         raise ValueError('Invalid angle file provided, each line should have 3 ZXZ Euler angles!')
     else:
+        angle_list.sort()  # angle list needs to be sorted otherwise symmetry reduction cannot be used!
         return angle_list
 
 
