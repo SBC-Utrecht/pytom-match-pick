@@ -3,9 +3,6 @@ PyTOM's GPU template matching as a single pip plugin that can only be run from t
 
 The full PyTOM repository can be found at: https://github.com/SBC-Utrecht/PyTom
 
-**NOTE:** Extracting particles from score/angle maps in versions >= 0.3.1 is incompatible with 
-results calculated in versions < 0.3.1 due to the rotational symmetry update. 
-
 ## Requires
 
 ```
