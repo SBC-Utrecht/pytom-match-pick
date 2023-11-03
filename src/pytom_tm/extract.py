@@ -36,7 +36,10 @@ def extract_particles(
 
     score_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_scores.mrc'))
     angle_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_angles.mrc'))
-    angle_list = load_angle_list(job.rotation_file)
+    angle_list = load_angle_list(
+        job.rotation_file,
+        sort_angles=version.parse(job.pytom_tm_version_number) > version.parse('0.3.0')
+    )
 
     # mask edges of score volume
     score_volume[0: particle_radius_px, :, :] = -1
