@@ -1,5 +1,5 @@
 from __future__ import annotations
-from pytom_tm import __version__
+from importlib import metadata
 from packaging import version
 import pathlib
 import copy
@@ -84,7 +84,7 @@ class TMJob:
             ctf_data: Optional[list[dict, ...]] = None,
             whiten_spectrum: bool = False,
             rotational_symmetry: int = 1,
-            pytom_tm_version_number: str = __version__
+            pytom_tm_version_number: str = metadata.version('pytom-template-matching-gpu')
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical

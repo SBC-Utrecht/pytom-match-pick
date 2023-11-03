@@ -1,4 +1,5 @@
-from ._version import __version__
+from importlib import metadata
+__version__ = metadata.version('pytom-template-matching-gpu')
 
 try:
     import cupy
