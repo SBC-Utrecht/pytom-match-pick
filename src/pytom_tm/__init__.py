@@ -1,3 +1,6 @@
+from importlib import metadata
+__version__ = metadata.version('pytom-template-matching-gpu')
+
 try:
     import cupy
 except (ModuleNotFoundError, ImportError):

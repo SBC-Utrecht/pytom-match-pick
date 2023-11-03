@@ -1,4 +1,6 @@
 from __future__ import annotations
+from importlib import metadata
+from packaging import version
 import pathlib
 import copy
 import numpy as np
@@ -39,6 +41,8 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         ctf_data=data.get('ctf_data', None),
         whiten_spectrum=data.get('whiten_spectrum', False),
         rotational_symmetry=data.get('rotational_symmetry', 1),
+        # if version number is not in the .json, it must be 0.3.0 or older
+        pytom_tm_version_number=data.get('pytom_tm_version_number', '0.3.0'),
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
@@ -79,7 +83,8 @@ class TMJob:
             dose_accumulation: Optional[list[float, ...]] = None,
             ctf_data: Optional[list[dict, ...]] = None,
             whiten_spectrum: bool = False,
-            rotational_symmetry: int = 1
+            rotational_symmetry: int = 1,
+            pytom_tm_version_number: str = metadata.version('pytom-template-matching-gpu')
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -171,12 +176,12 @@ class TMJob:
         self.dose_accumulation = dose_accumulation
         self.ctf_data = ctf_data
         self.whiten_spectrum = whiten_spectrum
-
-        if self.whiten_spectrum:
+        self.whitening_filter = self.output_dir.joinpath(f'{self.tomo_id}_whitening_filter.npy')
+        if self.whiten_spectrum and not self.whitening_filter.exists():
             logging.info('Estimating whitening filter...')
             weights = 1 / np.sqrt(power_spectrum_profile(read_mrc(self.tomogram)))
             weights /= weights.max()  # scale to 1
-            np.save(self.output_dir.joinpath('whitening_filter.npy'), weights)
+            np.save(self.whitening_filter, weights)
 
         # Job details
         self.job_key = job_key
@@ -187,6 +192,9 @@ class TMJob:
         self.job_stats = None
 
         self.log_level = log_level
+
+        # version number of the job
+        self.pytom_tm_version_number = pytom_tm_version_number
 
     def copy(self) -> TMJob:
         return copy.deepcopy(self)
@@ -395,7 +403,7 @@ class TMJob:
                 self.low_pass,
                 self.high_pass
             ) * (profile_to_weighting(
-                np.load(self.output_dir.joinpath('whitening_filter.npy')),
+                np.load(self.whitening_filter),
                 search_volume.shape
             ) if self.whiten_spectrum else 1)).astype(np.float32)
 
@@ -415,7 +423,7 @@ class TMJob:
                 accumulated_dose_per_tilt=self.dose_accumulation,
                 ctf_params_per_tilt=self.ctf_data
             ) * (profile_to_weighting(
-                np.load(self.output_dir.joinpath('whitening_filter.npy')),
+                np.load(self.whitening_filter),
                 self.template_shape
             ) if self.whiten_spectrum else 1)).astype(np.float32)
 
@@ -447,7 +455,10 @@ class TMJob:
             int(np.ceil(self.n_rotations / self.rotational_symmetry)),
             self.steps_slice
         ))
-        angle_list = load_angle_list(self.rotation_file)[slice(
+        angle_list = load_angle_list(
+            self.rotation_file,
+            sort_angles=version.parse(self.pytom_tm_version_number) > version.parse('0.3.0')
+        )[slice(
             self.start_slice,
             int(np.ceil(self.n_rotations / self.rotational_symmetry)),
             self.steps_slice

@@ -22,14 +22,15 @@ for v in AVAILABLE_ROTATIONAL_SAMPLING.values():
     v[0] = ANGLE_LIST_DIR.joinpath(v[0])
 
 
-def load_angle_list(file_name: pathlib.Path) -> list[tuple[float, float, float]]:
+def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[tuple[float, float, float]]:
     with open(str(file_name)) as fstream:
         lines = fstream.readlines()
     angle_list = [tuple(map(float, x.strip().split(' '))) for x in lines]
     if not all([len(a) == 3 for a in angle_list]):
         raise ValueError('Invalid angle file provided, each line should have 3 ZXZ Euler angles!')
-    else:
-        return angle_list
+    if sort_angles:
+        angle_list.sort()  # angle list needs to be sorted otherwise symmetry reduction cannot be used!
+    return angle_list
 
 
 def convert_euler(

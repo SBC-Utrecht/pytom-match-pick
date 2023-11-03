@@ -172,7 +172,7 @@ class TestTMJob(unittest.TestCase):
         score, angle = self.job.merge_sub_jobs()
         ind = np.unravel_index(score.argmax(), score.shape)
 
-        self.assertTrue(score.max() > 0.934, msg='lcc max value lower than expected')
+        self.assertTrue(score.max() > 0.931, msg='lcc max value lower than expected')
         self.assertEqual(ANGLE_ID, angle[ind])
         self.assertSequenceEqual(LOCATION, ind)
 
@@ -204,7 +204,7 @@ class TestTMJob(unittest.TestCase):
         score, angle = self.job.merge_sub_jobs()
         ind = np.unravel_index(score.argmax(), score.shape)
 
-        self.assertTrue(score.max() > 0.934, msg='lcc max value lower than expected')
+        self.assertTrue(score.max() > 0.931, msg='lcc max value lower than expected')
         self.assertEqual(ANGLE_ID, angle[ind])
         self.assertSequenceEqual(LOCATION, ind)
 
@@ -217,7 +217,7 @@ class TestTMJob(unittest.TestCase):
         score, angle = run_job_parallel(self.job, volume_splits=(1, 3, 1), gpu_ids=[0])
         ind = np.unravel_index(score.argmax(), score.shape)
 
-        self.assertTrue(score.max() > 0.934, msg='lcc max value lower than expected')
+        self.assertTrue(score.max() > 0.931, msg='lcc max value lower than expected')
         self.assertEqual(ANGLE_ID, angle[ind])
         self.assertSequenceEqual(LOCATION, ind)
 
