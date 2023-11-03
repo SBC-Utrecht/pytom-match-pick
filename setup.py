@@ -1,5 +1,8 @@
 import setuptools
 
+# get the version number
+exec(open('src/pytom_tm/_version.py').read())
+
 # readme fetch
 with open('README.md', 'r') as f:
     long_description = f.read()
@@ -8,7 +11,7 @@ setuptools.setup(
     name='pytom-template-matching-gpu',
     packages=['pytom_tm', 'pytom_tm.angle_lists'],
     package_dir={'': 'src'},
-    version='0.3.1',  # for versioning definition see https://semver.org/
+    version=__version__,  # for versioning definition see https://semver.org/
     description='GPU template matching from PyTOM as a lightweight pip package',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -24,7 +27,8 @@ setuptools.setup(
         'tqdm',
         'mrcfile',
         'starfile',
-        'importlib_resources'
+        'importlib_resources',
+        'packaging',
     ],
     extras_require={
         'plotting': ['matplotlib', 'seaborn']

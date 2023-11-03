@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pytom_tm import __version__
 import pathlib
 import copy
 import numpy as np
@@ -39,6 +40,8 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         ctf_data=data.get('ctf_data', None),
         whiten_spectrum=data.get('whiten_spectrum', False),
         rotational_symmetry=data.get('rotational_symmetry', 1),
+        # if version number is not in the .json, it must be 0.3.0 or older
+        pytom_tm_version_number=data.get('pytom_tm_version_number', '0.3.0'),
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
@@ -79,7 +82,8 @@ class TMJob:
             dose_accumulation: Optional[list[float, ...]] = None,
             ctf_data: Optional[list[dict, ...]] = None,
             whiten_spectrum: bool = False,
-            rotational_symmetry: int = 1
+            rotational_symmetry: int = 1,
+            pytom_tm_version_number: str = __version__
     ):
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -187,6 +191,9 @@ class TMJob:
         self.job_stats = None
 
         self.log_level = log_level
+
+        # version number of the job
+        self.pytom_tm_version_number = pytom_tm_version_number
 
     def copy(self) -> TMJob:
         return copy.deepcopy(self)

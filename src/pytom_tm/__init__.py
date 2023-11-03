@@ -1,3 +1,5 @@
+from ._version import __version__
+
 try:
     import cupy
 except (ModuleNotFoundError, ImportError):
