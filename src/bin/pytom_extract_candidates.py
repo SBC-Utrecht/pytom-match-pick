@@ -31,9 +31,9 @@ def main():
                              'around peaks preventing double extraction.')
     parser.add_argument('-c', '--cut-off', type=float, required=False,
                         help='Override automated extraction cutoff estimation and instead extract the '
-                             'number_of_particles down to this LCCmax value. Set to -1 to guarantee extracting '
-                             'number_of_particles. Values larger than 1 make no sense as the correlation cannot be '
-                             'higher than 1.')
+                             'number-of-particles down to this LCCmax value. Setting to 0 will keep extracting until '
+                             'number-of-particles, or until there are no positive values left in the score map. Values '
+                             'larger than 1 make no sense as the correlation cannot be higher than 1.')
     parser.add_argument('--log', type=str, required=False, default=20, action=ParseLogging,
                         help='Can be set to `info` or `debug`')
     args = parser.parse_args()
