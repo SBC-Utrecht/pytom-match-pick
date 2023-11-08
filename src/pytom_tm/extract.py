@@ -43,12 +43,12 @@ def extract_particles(
     )
 
     # mask edges of score volume
-    score_volume[0: particle_radius_px, :, :] = -1
-    score_volume[:, 0: particle_radius_px, :] = -1
-    score_volume[:, :, 0: particle_radius_px] = -1
-    score_volume[-particle_radius_px:, :, :] = -1
-    score_volume[:, -particle_radius_px:, :] = -1
-    score_volume[:, :, -particle_radius_px:] = -1
+    score_volume[0: particle_radius_px, :, :] = 0
+    score_volume[:, 0: particle_radius_px, :] = 0
+    score_volume[:, :, 0: particle_radius_px] = 0
+    score_volume[-particle_radius_px:, :, :] = 0
+    score_volume[:, -particle_radius_px:, :] = 0
+    score_volume[:, :, -particle_radius_px:] = 0
 
     # apply tomogram mask if provided
     if tomogram_mask_path is not None:
@@ -57,7 +57,7 @@ def extract_particles(
             job.search_origin[1]: job.search_origin[1] + job.search_size[1],
             job.search_origin[2]: job.search_origin[2] + job.search_size[2]
         ]
-        score_volume[tomogram_mask <= 0] = -1
+        score_volume[tomogram_mask <= 0] = 0
 
     sigma = job.job_stats['std']
     if cut_off is None:
@@ -69,6 +69,8 @@ def extract_particles(
         )
         cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
         logging.info(f'cut off for particle extraction: {cut_off}')
+    elif cut_off < 0:
+        cut_off = 0
 
     # mask for iteratively selecting peaks
     cut_box = int(particle_radius_px) * 2 + 1
@@ -87,7 +89,7 @@ def extract_particles(
 
         lcc_max = score_volume[ind]
 
-        if lcc_max < cut_off:
+        if lcc_max <= cut_off:
             break
 
         scores.append(lcc_max)
