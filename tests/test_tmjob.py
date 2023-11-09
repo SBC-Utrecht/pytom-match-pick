@@ -29,6 +29,7 @@ TEST_MASK = TEST_DATA_DIR.joinpath('mask.mrc')
 TEST_SCORES = TEST_DATA_DIR.joinpath('tomogram_scores.mrc')
 TEST_ANGLES = TEST_DATA_DIR.joinpath('tomogram_angles.mrc')
 TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath('custom_angular_search.txt')
+TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath('tomogram_whitening_filter.npy')
 
 
 class TestTMJob(unittest.TestCase):
@@ -108,6 +109,9 @@ class TestTMJob(unittest.TestCase):
         TEST_SCORES.unlink()
         TEST_ANGLES.unlink()
         TEST_CUSTOM_ANGULAR_SEARCH.unlink()
+        # the whitening filter might not exist if the job with spectrum whitening failed, so the unlinking needs to
+        # allow this (with missing_ok=True) to ensure clean up of the test directory
+        TEST_WHITENING_FILTER.unlink(missing_ok=True)
         TEST_DATA_DIR.rmdir()
 
     def setUp(self):
