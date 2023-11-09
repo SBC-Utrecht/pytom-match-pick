@@ -224,6 +224,7 @@ class TestWeights(unittest.TestCase):
         self.assertEqual(structured_wedge.dtype, np.float32,
                          msg='Wedge with band-pass does not have expected dtype')
 
+        # test shapes of wedges
         weights = create_wedge(self.volume_shape_even, self.tilt_angles, self.voxel_size * 3,
                                tilt_weighting=True, low_pass=40,
                                accumulated_dose_per_tilt=ACCUMULATED_DOSE,
@@ -236,6 +237,14 @@ class TestWeights(unittest.TestCase):
                                ctf_params_per_tilt=CTF_PARAMS)
         self.assertEqual(weights.shape, self.reduced_uneven_shape_3d,
                          msg='3D CTF does not have the correct reduced fourier shape.')
+
+        # test parameter flexibility of tilt_weighted wedge
+        weights = create_wedge(self.volume_shape_even, self.tilt_angles, self.voxel_size * 3,
+                               tilt_weighting=True, low_pass=self.low_pass,
+                               accumulated_dose_per_tilt=None,
+                               ctf_params_per_tilt=None)
+        self.assertEqual(weights.shape, self.reduced_even_shape_3d,
+                         msg='Tilt weighted wedge should also work without defocus and dose info.')
 
     def test_ctf(self):
         ctf_raw = create_ctf(
