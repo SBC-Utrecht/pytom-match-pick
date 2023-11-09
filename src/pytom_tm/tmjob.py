@@ -393,61 +393,59 @@ class TMJob:
             read_mrc(self.mask)
         )
 
-        # create weighting, include missing wedge and band-pass filters
-        template_wedge = None
-        if self.tilt_angles is not None:
-            # convolute tomo with whitening filter and bandpass
-            tomo_filter = (create_gaussian_band_pass(
-                search_volume.shape,
-                self.voxel_size, 
+        # init tomogram and template weighting
+        tomo_filter, template_wedge = 1, 1
+        # first generate bandpass filters
+        if not (self.low_pass is None and self.high_pass is None):
+            tomo_filter *= create_gaussian_band_pass(
+                    search_volume.shape,
+                    self.voxel_size,
+                    self.low_pass,
+                    self.high_pass
+            ).astype(np.float32)
+            template_wedge *= create_gaussian_band_pass(
+                self.template_shape,
+                self.voxel_size,
                 self.low_pass,
                 self.high_pass
-            ) * (profile_to_weighting(
+            ).astype(np.float32)
+
+        # then multiply with optional whitening filters
+        if self.whiten_spectrum:
+            tomo_filter *= profile_to_weighting(
                 np.load(self.whitening_filter),
                 search_volume.shape
-            ) if self.whiten_spectrum else 1)).astype(np.float32)
+            ).astype(np.float32)
+            template_wedge *= profile_to_weighting(
+                np.load(self.whitening_filter),
+                self.template_shape
+            ).astype(np.float32)
 
-            # we always apply a binary wedge (with optional band pass) to the volume to remove empty regions
-            search_volume = np.real(irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape))
-
-            # get template wedge
-            template_wedge = (create_wedge(
+        # if tilt angles are provided we can create wedge filters
+        if self.tilt_angles is not None:
+            # for the tomogram a binary wedge is generated to explicitly set the missing wedge region to 0
+            tomo_filter *= create_wedge(
+                search_volume.shape,
+                self.tilt_angles,
+                self.voxel_size,
+                cut_off_radius=1.,
+                angles_in_degrees=True,
+                tilt_weighting=False
+            )
+            # for the template a binary or per-tilt-weighted wedge is generated depending on the options
+            template_wedge *= create_wedge(
                 self.template_shape,
                 self.tilt_angles,
                 self.voxel_size,
                 cut_off_radius=1.,
                 angles_in_degrees=True,
-                low_pass=self.low_pass,
-                high_pass=self.high_pass,
                 tilt_weighting=self.tilt_weighting,
                 accumulated_dose_per_tilt=self.dose_accumulation,
                 ctf_params_per_tilt=self.ctf_data
-            ) * (profile_to_weighting(
-                np.load(self.whitening_filter),
-                self.template_shape
-            ) if self.whiten_spectrum else 1)).astype(np.float32)
+            ).astype(np.float32)
 
-            if logging.root.level == logging.DEBUG:
-                write_mrc(
-                    self.output_dir.joinpath('debug_tomo_filter.mrc'),
-                    tomo_filter,
-                    voxel_size=self.voxel_size
-                )
-                write_mrc(
-                    self.output_dir.joinpath('debug_search_volume.mrc'),
-                    search_volume,
-                    voxel_size=self.voxel_size
-                )
-                write_mrc(
-                    self.output_dir.joinpath('debug_template_convoluted.mrc'),
-                    np.fft.irfftn(np.fft.rfftn(template) * template_wedge, s=template.shape).astype(np.float32),
-                    voxel_size=self.voxel_size
-                )
-                write_mrc(
-                    self.output_dir.joinpath('debug_3d_ctf.mrc'),
-                    template_wedge,
-                    voxel_size=self.voxel_size
-                )
+        # apply the optional band pass and whitening filter to the search region
+        search_volume = np.real(irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape))
 
         # load rotation search
         angle_ids = list(range(
