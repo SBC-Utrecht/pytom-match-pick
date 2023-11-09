@@ -91,6 +91,7 @@ DOSE_FILE = '''60.165
 65.895 
 '''
 ACCUMULATED_DOSE = [float(x.strip()) for x in DOSE_FILE.split('\n') if x != '']
+TILT_ANGLES = list(range(-51, 54, 3))
 
 
 class TestWeights(unittest.TestCase):
@@ -98,7 +99,6 @@ class TestWeights(unittest.TestCase):
         self.volume_shape_even = (10, 10, 10)
         self.volume_shape_uneven = (11, 11, 11)
         self.volume_shape_irregular = (7, 12, 6)
-        self.tilt_angles = list(range(-51, 54, 3))
         self.voxel_size = 3.34
         self.low_pass = 10
         self.high_pass = 50
@@ -180,23 +180,23 @@ class TestWeights(unittest.TestCase):
                                                'equal to 0'):
             create_wedge(
                 self.volume_shape_even,
-                self.tilt_angles,
+                TILT_ANGLES,
                 0.
             )
         with self.assertRaises(ValueError, msg='Create wedge should raise ValueError if cut_off_radius is smaller or '
                                                'equal to 0'):
             create_wedge(
                 self.volume_shape_even,
-                self.tilt_angles,
+                TILT_ANGLES,
                 1.,
                 cut_off_radius=0.
             )
 
         # create test wedges
-        structured_wedge = create_wedge(self.volume_shape_even, self.tilt_angles, 1., tilt_weighting=True)
-        symmetric_wedge = create_wedge(self.volume_shape_even, [self.tilt_angles[0], self.tilt_angles[-1]],
+        structured_wedge = create_wedge(self.volume_shape_even, TILT_ANGLES, 1., tilt_weighting=True)
+        symmetric_wedge = create_wedge(self.volume_shape_even, [TILT_ANGLES[0], TILT_ANGLES[-1]],
                                        1., tilt_weighting=False)
-        asymmetric_wedge = create_wedge(self.volume_shape_even, [self.tilt_angles[0], self.tilt_angles[-2]],
+        asymmetric_wedge = create_wedge(self.volume_shape_even, [TILT_ANGLES[0], TILT_ANGLES[-2]],
                                         1., tilt_weighting=False)
 
         self.assertEqual(structured_wedge.shape, self.reduced_even_shape_3d,
@@ -217,7 +217,7 @@ class TestWeights(unittest.TestCase):
         self.assertTrue(np.sum((symmetric_wedge != asymmetric_wedge) * 1) != 0,
                         msg='Symmetric and asymmetric wedge should be different!')
 
-        structured_wedge = create_wedge(self.volume_shape_even, self.tilt_angles, self.voxel_size, tilt_weighting=True,
+        structured_wedge = create_wedge(self.volume_shape_even, TILT_ANGLES, self.voxel_size, tilt_weighting=True,
                                         cut_off_radius=1., low_pass=self.low_pass, high_pass=self.high_pass)
         self.assertEqual(structured_wedge.shape, self.reduced_even_shape_3d,
                          msg='Wedge with band-pass does not have expected output shape')
@@ -225,13 +225,13 @@ class TestWeights(unittest.TestCase):
                          msg='Wedge with band-pass does not have expected dtype')
 
         # test shapes of wedges
-        weights = create_wedge(self.volume_shape_even, self.tilt_angles, self.voxel_size * 3,
+        weights = create_wedge(self.volume_shape_even, TILT_ANGLES, self.voxel_size * 3,
                                tilt_weighting=True, low_pass=40,
                                accumulated_dose_per_tilt=ACCUMULATED_DOSE,
                                ctf_params_per_tilt=CTF_PARAMS)
         self.assertEqual(weights.shape, self.reduced_even_shape_3d,
                          msg='3D CTF does not have the correct reduced fourier shape.')
-        weights = create_wedge(self.volume_shape_uneven, self.tilt_angles, self.voxel_size * 3,
+        weights = create_wedge(self.volume_shape_uneven, TILT_ANGLES, self.voxel_size * 3,
                                tilt_weighting=True, low_pass=40,
                                accumulated_dose_per_tilt=ACCUMULATED_DOSE,
                                ctf_params_per_tilt=CTF_PARAMS)
@@ -239,7 +239,7 @@ class TestWeights(unittest.TestCase):
                          msg='3D CTF does not have the correct reduced fourier shape.')
 
         # test parameter flexibility of tilt_weighted wedge
-        weights = create_wedge(self.volume_shape_even, self.tilt_angles, self.voxel_size * 3,
+        weights = create_wedge(self.volume_shape_even, TILT_ANGLES, self.voxel_size * 3,
                                tilt_weighting=True, low_pass=self.low_pass,
                                accumulated_dose_per_tilt=None,
                                ctf_params_per_tilt=None)
