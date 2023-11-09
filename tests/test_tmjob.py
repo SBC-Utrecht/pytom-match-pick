@@ -179,6 +179,8 @@ class TestTMJob(unittest.TestCase):
         score, angle = job.start_job(0, return_volumes=True)
         self.assertEqual(score.shape, job.tomo_shape, msg='TMJob with only whitening filter failed')
 
+        # TMJob with none of these weighting options is tested in all other runs in this file.
+
     def test_custom_angular_search(self):
         job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
                     angle_increment=TEST_CUSTOM_ANGULAR_SEARCH, voxel_size=1.)
