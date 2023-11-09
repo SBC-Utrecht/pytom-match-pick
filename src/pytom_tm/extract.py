@@ -70,6 +70,8 @@ def extract_particles(
         cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
         logging.info(f'cut off for particle extraction: {cut_off}')
     elif cut_off < 0:
+        logging.warning('Provided extraction score cut-off is smaller than 0. Changing to 0 as that is smallest '
+                        'allowed value.')
         cut_off = 0
 
     # mask for iteratively selecting peaks
