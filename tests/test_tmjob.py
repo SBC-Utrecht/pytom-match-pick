@@ -10,6 +10,7 @@ from pytom_tm.parallel import run_job_parallel
 from pytom_tm.tmjob import TMJob, TMJobError
 from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm.extract import extract_particles
+from test_weights import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -28,6 +29,7 @@ TEST_MASK = TEST_DATA_DIR.joinpath('mask.mrc')
 TEST_SCORES = TEST_DATA_DIR.joinpath('tomogram_scores.mrc')
 TEST_ANGLES = TEST_DATA_DIR.joinpath('tomogram_angles.mrc')
 TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath('custom_angular_search.txt')
+TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath('tomogram_whitening_filter.npy')
 
 
 class TestTMJob(unittest.TestCase):
@@ -107,6 +109,9 @@ class TestTMJob(unittest.TestCase):
         TEST_SCORES.unlink()
         TEST_ANGLES.unlink()
         TEST_CUSTOM_ANGULAR_SEARCH.unlink()
+        # the whitening filter might not exist if the job with spectrum whitening failed, so the unlinking needs to
+        # allow this (with missing_ok=True) to ensure clean up of the test directory
+        TEST_WHITENING_FILTER.unlink(missing_ok=True)
         TEST_DATA_DIR.rmdir()
 
     def setUp(self):
@@ -148,6 +153,37 @@ class TestTMJob(unittest.TestCase):
             TOMO_SHAPE, copy.tomo_shape,
             msg='Tomogram shape not correct in job, perhaps transpose issue?'
         )
+
+    def test_tm_job_weighting_options(self):
+        # run with all options
+        job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                    angle_increment='90.00', voxel_size=1., low_pass=10, high_pass=100,
+                    dose_accumulation=ACCUMULATED_DOSE, ctf_data=CTF_PARAMS, tilt_angles=TILT_ANGLES,
+                    whiten_spectrum=True, tilt_weighting=True)
+        score, angle = job.start_job(0, return_volumes=True)
+        self.assertEqual(score.shape, job.tomo_shape, msg='TMJob with all options failed')
+
+        # run with only tilt weighting (in test_weights different options are tested for create_wedge)
+        job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                    angle_increment='90.00', voxel_size=1.,
+                    dose_accumulation=ACCUMULATED_DOSE, ctf_data=CTF_PARAMS, tilt_angles=TILT_ANGLES,
+                    tilt_weighting=True)
+        score, angle = job.start_job(0, return_volumes=True)
+        self.assertEqual(score.shape, job.tomo_shape, msg='TMJob with only wedge creation failed')
+
+        # run with only bandpass (in test_weights bandpass option are tested)
+        job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                    angle_increment='90.00', voxel_size=1., low_pass=10, high_pass=100)
+        score, angle = job.start_job(0, return_volumes=True)
+        self.assertEqual(score.shape, job.tomo_shape, msg='TMJob with only band-pass failed')
+
+        # run with only spectrum whitening (in test_weights the whitening filter is tested
+        job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                    angle_increment='90.00', voxel_size=1., whiten_spectrum=True)
+        score, angle = job.start_job(0, return_volumes=True)
+        self.assertEqual(score.shape, job.tomo_shape, msg='TMJob with only whitening filter failed')
+
+        # TMJob with none of these weighting options is tested in all other runs in this file.
 
     def test_custom_angular_search(self):
         job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
