@@ -575,7 +575,8 @@ def power_spectrum_profile(image: npt.NDArray[float]) -> npt.NDArray[float]:
         axes=(0, 1) if len(image.shape) == 3 else 0
     )
 
-    return ndimage.mean(power, labels=q_grid, index=q)
+    power_profile = ndimage.mean(power, labels=q_grid, index=q)
+    return power_profile
 
 
 def profile_to_weighting(
