@@ -431,7 +431,7 @@ class TMJob:
                 cut_off_radius=1.,
                 angles_in_degrees=True,
                 tilt_weighting=False
-            )
+            ).astype(np.float32)
             # for the template a binary or per-tilt-weighted wedge is generated depending on the options
             template_wedge *= create_wedge(
                 self.template_shape,
