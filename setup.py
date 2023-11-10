@@ -8,7 +8,7 @@ setuptools.setup(
     name='pytom-template-matching-gpu',
     packages=['pytom_tm', 'pytom_tm.angle_lists'],
     package_dir={'': 'src'},
-    version='0.3.1',  # for versioning definition see https://semver.org/
+    version='0.3.2',  # for versioning definition see https://semver.org/
     description='GPU template matching from PyTOM as a lightweight pip package',
     long_description=long_description,
     long_description_content_type='text/markdown',
