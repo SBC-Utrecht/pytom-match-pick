@@ -340,6 +340,8 @@ class TMJob:
             scores, angles = np.zeros_like(score_volumes[0]) - 1., np.zeros_like(angle_volumes[0]) - 1.
             for s, a in zip(score_volumes, angle_volumes):
                 angles = np.where(s > scores, a, angles)
+                # prevents race condition due to slicing
+                angles = np.where(s == scores, np.minimum(a, angles), angles)
                 scores = np.where(s > scores, s, scores)
         else:
             scores, angles = (
