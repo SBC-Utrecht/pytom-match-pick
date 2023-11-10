@@ -565,17 +565,17 @@ def power_spectrum_profile(image: npt.NDArray[float]) -> npt.NDArray[float]:
     if len(image.shape) not in [2, 3]:
         raise ValueError('Power spectrum profile calculation only works for 2d/3d arrays.')
 
-    q_grid = radial_reduced_grid(image.shape)
-    power = np.abs(np.fft.rfftn(image)) ** 2
+    q = np.arange(max(image.shape) // 2 + 1)
+    q_grid = np.floor(
+        # convert to radial indices in the fourier power spectrum, 0.5 is added to obtain the correct ring
+        radial_reduced_grid(image.shape) * (max(image.shape) // 2) + 0.5
+    ).astype(int)
+    power = np.fft.fftshift(
+        np.abs(np.fft.rfftn(image)) ** 2,
+        axes=(0, 1) if len(image.shape) == 3 else 0
+    )
 
-    q = np.arange(max(image.shape) // 2 + 1) / (max(image.shape) // 2)
-    q_step = q[1]
-
-    power_profile = np.vectorize(
-        lambda x: np.fft.fftshift(power, axes=(0, 1) if len(image.shape) == 3 else 0)[
-            (q_grid >= x - .5 * q_step) & (q_grid < x + .5 * q_step)
-        ].mean())(q)
-
+    power_profile = ndimage.mean(power, labels=q_grid, index=q)
     return power_profile
 
 
