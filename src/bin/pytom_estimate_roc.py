@@ -385,7 +385,7 @@ def main():
         template_matching_job,
         args.radius_px,
         args.number_of_particles,
-        cut_off=-1.
+        cut_off=0
     )
 
     score_volume = read_mrc(template_matching_job.output_dir.joinpath(f'{template_matching_job.tomo_id}_scores.mrc'))
