@@ -192,6 +192,10 @@ class TestTMJob(unittest.TestCase):
                                                                             'TMJob failed.')
 
     def test_tm_job_split_volume(self):
+        with self.assertRaises(RuntimeError, msg='Splitting the volume into smaller boxes than the template should '
+                                                 'raise an error.'):
+            self.job.split_volume_search((10, 3, 2))
+
         sub_jobs = self.job.split_volume_search((2, 3, 2))
         for x in sub_jobs:
             x.start_job(0)
