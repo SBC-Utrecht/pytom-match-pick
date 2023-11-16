@@ -192,7 +192,7 @@ class TestTMJob(unittest.TestCase):
                                                                             'TMJob failed.')
 
     def test_tm_job_split_volume(self):
-        sub_jobs = self.job.split_volume_search((1, 3, 1))
+        sub_jobs = self.job.split_volume_search((2, 3, 2))
         for x in sub_jobs:
             x.start_job(0)
             job_scores = TEST_DATA_DIR.joinpath(f'tomogram_scores_{x.job_key}.mrc')
