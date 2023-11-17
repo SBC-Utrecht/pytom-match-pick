@@ -548,13 +548,13 @@ def radial_average(weights: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt
     if len(weights.shape) not in [2, 3]:
         raise ValueError('Radial average calculation only works for 2d/3d arrays')
 
-    # get the number of sampling points from the largest fourier dimension
+    # get the number of sampling points from the largest fourier dimension,
     # unless the reduced dimensions is already the largest one
-    sampling_points = max(max(weights.shape[:-1]) // 2 + 1,
-                          weights.shape[-1]
-                          )
+    sampling_points = max(
+        max(weights.shape[:-1]) // 2 + 1,
+        weights.shape[-1]
+    )
                            
-
     q = np.arange(sampling_points)
     q_grid = np.floor(
         # convert to radial indices in the fourier power spectrum, 0.5 is added to obtain the correct ring
