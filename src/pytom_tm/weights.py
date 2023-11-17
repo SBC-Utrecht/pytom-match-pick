@@ -514,7 +514,7 @@ def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.N
     Parameters
     ----------
     image: npt.NDArray[float]
-        3D array to be radially averaged: in fourier reduced form and assumed to have origin in corner.
+        3D array to be radially averaged: in fourier reduced form and with the origin in the corner.
 
     Returns
     -------
@@ -523,28 +523,22 @@ def radial_average(image: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.N
     """
     if len(image.shape) not in [2, 3]:
         raise ValueError('Radial average calculation only works for 2d/3d arrays')
-    if len(set(image.shape)) != 1:
-        raise ValueError('Radial average calculation only works for images with equal dimensions')
 
-    size = image.shape[0]
-    center = size // 2  # fourier space center
-    if len(image.shape) == 3:
-        xx, yy, zz = (
-            np.arange(size) - center,
-            np.arange(size) - center,
-            np.arange(size // 2 + 1))
-        r = np.sqrt(xx[:, np.newaxis, np.newaxis] ** 2 + yy[:, np.newaxis] ** 2 + zz ** 2)
-    else:
-        xx, yy = (
-            np.arange(size) - center,
-            np.arange(size // 2 + 1)
-        )
-        r = np.sqrt(xx[:, np.newaxis] ** 2 + yy ** 2)
+    # get the number of sampling points from the largest fourier dimension
+    sampling_points = (max(image.shape) // 2 + 1 if
+                       max(image.shape) // 2 + 1 > image.shape[-1] else
+                       image.shape[-1])  # unless the reduced dimensions is already the largest one
 
-    logging.debug(f'shape of image for radial average {image.shape} and determined grid {r.shape}')
-
-    q = np.arange(size // 2)
-    mean = np.vectorize(lambda x: np.fft.fftshift(image, axes=(0, 1))[(r >= x - .5) & (r < x + .5)].mean())(q)
+    q = np.arange(sampling_points)
+    q_grid = np.floor(
+        # convert to radial indices in the fourier power spectrum, 0.5 is added to obtain the correct ring
+        radial_reduced_grid(image.shape) * (sampling_points - 1) + 0.5
+    ).astype(int)
+    mean = ndimage.mean(
+        np.fft.fftshift(image, axes=(0, 1) if len(shape) == 3 else 0),
+        labels=q_grid,
+        index=q
+    )
 
     return q, mean
 
@@ -565,17 +559,8 @@ def power_spectrum_profile(image: npt.NDArray[float]) -> npt.NDArray[float]:
     if len(image.shape) not in [2, 3]:
         raise ValueError('Power spectrum profile calculation only works for 2d/3d arrays.')
 
-    q = np.arange(max(image.shape) // 2 + 1)
-    q_grid = np.floor(
-        # convert to radial indices in the fourier power spectrum, 0.5 is added to obtain the correct ring
-        radial_reduced_grid(image.shape) * (max(image.shape) // 2) + 0.5
-    ).astype(int)
-    power = np.fft.fftshift(
-        np.abs(np.fft.rfftn(image)) ** 2,
-        axes=(0, 1) if len(image.shape) == 3 else 0
-    )
+    power_profile = radial_average(np.abs(np.fft.rfftn(image)) ** 2)
 
-    power_profile = ndimage.mean(power, labels=q_grid, index=q)
     return power_profile
 
 
