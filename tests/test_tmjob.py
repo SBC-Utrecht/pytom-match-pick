@@ -220,18 +220,15 @@ class TestTMJob(unittest.TestCase):
         # is not well defined in the boundary area, only a small part of the template is correlated here (and we are
         # not really interested in it). Probably the inaccuracy in this area becomes more apparent when splitting
         # into subvolumes due to a smaller number of sampling points in Fourier space.
-        score_diff = np.abs(score[TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
-                            read_mrc(TEST_SCORES)[TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
-        angle_diff = np.abs(angle[TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
-                            read_mrc(TEST_ANGLES)[TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
+        ok_region = slice(TEMPLATE_SIZE // 2, -TEMPLATE_SIZE // 2)
+        score_diff = np.abs( 
+            score[ok_region, ok_region, ok_region] -
+            read_mrc(TEST_SCORES)[ok_region, ok_region, ok_region]
+            ).sum() 
+        angle_diff = np.abs(
+            angle[ok_region, ok_region, ok_region] -
+            read_mrc(TEST_ANGLES)[ok_region, ok_region, ok_region]
+            ).sum()
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
         self.assertAlmostEqual(angle_diff, 0, places=1, msg='angle diff should not change')
 
@@ -273,18 +270,15 @@ class TestTMJob(unittest.TestCase):
         # is not well defined in the boundary area, only a small part of the template is correlated here (and we are
         # not really interested in it). Probably the inaccuracy in this area becomes more apparent when splitting
         # into subvolumes due to a smaller number of sampling points in Fourier space.
-        score_diff = np.abs(score[TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
-                            read_mrc(TEST_SCORES)[TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
-        angle_diff = np.abs(angle[TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2] -
-                            read_mrc(TEST_ANGLES)[TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2,
-                            TEMPLATE_SIZE // 2: -TEMPLATE_SIZE // 2]).sum()
+        ok_region = slice(TEMPLATE_SIZE // 2, -TEMPLATE_SIZE // 2)
+        score_diff = np.abs( 
+            score[ok_region, ok_region, ok_region] -
+            read_mrc(TEST_SCORES)[ok_region, ok_region, ok_region]
+            ).sum() 
+        angle_diff = np.abs(
+            angle[ok_region, ok_region, ok_region] -
+            read_mrc(TEST_ANGLES)[ok_region, ok_region, ok_region]
+            ).sum()
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
         self.assertAlmostEqual(angle_diff, 0, places=1, msg='angle diff should not change')
 
