@@ -270,15 +270,22 @@ class TestWeights(unittest.TestCase):
                         msg='CTF should be different when cutting it off after the first zero crossing')
 
     def test_radial_average(self):
+        x, y = 100, 50
         with self.assertRaises(ValueError, msg='Radial average should raise error if something other than 2d/3d '
                                                'array is provided.'):
             radial_average(
-                np.zeros(100)
+                np.zeros(x)
             )
-        with self.assertRaises(ValueError, msg='Radial average should raise error if dimensions are not equal.'):
-            radial_average(
-                np.zeros((100, 50))
-            )
+        q, m = radial_average(np.zeros((x, y)))
+        self.assertEqual(m.shape[0], x // 2 + 1, msg='Radial average shape should equal largest sampling dimension.')
+        q, m = radial_average(np.zeros((30, y)))
+        self.assertEqual(m.shape[0], y, msg='Radial average shape should equal largest sampling dimension, '
+                                            'considering Fourier reduced form.')
+        q, m = radial_average(np.zeros((20, x, y)))
+        self.assertEqual(m.shape[0], x // 2 + 1, msg='Radial average shape should equal largest sampling dimension.')
+        q, m = radial_average(np.zeros((20, 30, y)))
+        self.assertEqual(m.shape[0], y, msg='Radial average shape should equal largest sampling dimension, '
+                                            'considering Fourier reduced form.')
 
     def test_power_spectrum_profile(self):
         with self.assertRaises(ValueError, msg='Power spectrum profile should raise ValueError if input image is '
