@@ -15,7 +15,7 @@ nvidia-cuda-toolkit
 Create a new conda environment:
 
 ```commandline
-conda create -n pytom_tm python=3
+conda create -n pytom_tm -c conda-forge python=3 cupy cuda-version=11.8
 ```
 
 Then clone the repository and install it with pip: 
