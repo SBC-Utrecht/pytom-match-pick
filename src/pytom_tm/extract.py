@@ -59,6 +59,7 @@ def extract_particles(
             )
         )
         flt = layer1 * layer2
+        flt = (flt - flt.min()) / (flt.max() - flt.min())  # normalise
         tophat_cut_off = 0.1  # this is a user parameter
         flt[flt < tophat_cut_off] = 0  # threshold tophat
 
