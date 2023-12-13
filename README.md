@@ -12,7 +12,7 @@ nvidia-cuda-toolkit
 
 ## Installation
 
-Create a new conda environment:
+There are 2 options for creating a conda environment. (1 - recommended) Create a new environment with a prebuild cupy version and complete CUDA-toolkit. This is reliable but takes more disk space:
 
 ```commandline
 conda create -n pytom_tm -c conda-forge python=3 cupy cuda-version=11.8
