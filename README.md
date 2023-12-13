@@ -12,19 +12,25 @@ nvidia-cuda-toolkit
 
 ## Installation
 
-There are 2 options for creating a conda environment. (1 - recommended) Create a new environment with a prebuild cupy version and complete CUDA-toolkit. This is reliable but takes more disk space:
+There are 2 options for creating a conda environment:
 
-```commandline
-conda create -n pytom_tm -c conda-forge python=3 cupy cuda-version=11.8
-```
+1. **(recommended)** Create a new environment with a prebuild cupy version and complete CUDA-toolkit. This is reliable but takes more disk space.
 
-(2) Create an environment without cupy and let pip build against a system installed CUDA-toolkit:
+    ```commandline
+    conda create -n pytom_tm -c conda-forge python=3 cupy cuda-version=11.8
+    ```
 
-`conda create -n pytom_tm python=3` 
+2. Create a new environment without cupy and let pip build against a system installed CUDA-toolkit.
+
+    ```commandline
+    conda create -n pytom_tm python=3
+    ```
 
 Once the environment is created, activate it:
 
-`conda activate pytom_tm`
+```commandline
+conda activate pytom_tm
+```
 
 Then clone the repository and install it with pip: 
 
@@ -37,7 +43,7 @@ python -m pip install '.[plotting]'
 The installation above also adds the optional dependencies `[matplotlib, seaborn]` which are required to run `pytom_estimate_roc.py`. They are not essential to the core template matching fucntionality, so for some systems (such as certain cluster environments) it might be desirable to skip them. In that case remove `[plotting]` from the pip install command:
 
 ```commandline
-pip install .
+python -m pip install .
 ```
 
 ## Tests
