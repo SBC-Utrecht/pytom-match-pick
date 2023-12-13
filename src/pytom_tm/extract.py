@@ -32,7 +32,8 @@ def extract_particles(
         n_particles: int,
         cut_off: Optional[float] = None,
         n_false_positives: int = 1,
-        tomogram_mask_path: Optional[pathlib.Path] = None
+        tomogram_mask_path: Optional[pathlib.Path] = None,
+        tophat_filter: bool = False,
 ) -> tuple[pd.DataFrame, list[float, ...]]:
 
     score_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_scores.mrc'))
@@ -41,6 +42,25 @@ def extract_particles(
         job.rotation_file,
         sort_angles=version.parse(job.pytom_tm_version_number) > version.parse('0.3.0')
     )
+
+    if tophat_filter:  # constrain the extraction with a tophat filter
+        layer1 = ndimage.white_tophat(
+            score_volume,
+            structure=ndimage.generate_binary_structure(
+                rank=3,
+                connectivity=1
+            )
+        )
+        layer2 = ndimage.white_tophat(
+            score_volume,
+            structure=ndimage.generate_binary_structure(
+                rank=3,
+                connectivity=2
+            )
+        )
+        flt = layer1 * layer2
+        tophat_cut_off = 0.1  # this is a user parameter
+        flt[flt < tophat_cut_off] = 0  # threshold tophat
 
     # mask edges of score volume
     score_volume[0: particle_radius_px, :, :] = 0
