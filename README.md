@@ -18,6 +18,14 @@ Create a new conda environment:
 conda create -n pytom_tm -c conda-forge python=3 cupy cuda-version=11.8
 ```
 
+(2) Create an environment without cupy and let pip build against a system installed CUDA-toolkit:
+
+`conda create -n pytom_tm python=3` 
+
+Once the environment is created, activate it:
+
+`conda activate pytom_tm`
+
 Then clone the repository and install it with pip: 
 
 ```commandline
