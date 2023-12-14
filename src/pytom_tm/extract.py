@@ -91,7 +91,7 @@ def extract_particles(
 
     if gold_marker_diameter is not None:
         mask = predict_gold_marker_mask(
-            read_mrc(job.tomograms),  # the gold mark mask is created on the tomogram
+            read_mrc(job.tomogram),  # the gold mark mask is created on the tomogram
             job.voxel_size,
             gold_marker_diameter,
         )  # zero all elements where gold beads are predicted
