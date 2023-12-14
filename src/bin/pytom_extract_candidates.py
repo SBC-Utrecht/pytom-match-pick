@@ -34,6 +34,11 @@ def main():
                              'number-of-particles down to this LCCmax value. Setting to 0 will keep extracting until '
                              'number-of-particles, or until there are no positive values left in the score map. Values '
                              'larger than 1 make no sense as the correlation cannot be higher than 1.')
+    parser.add_argument('--tophat-cut-off', type=float, required=False, action=LargerThanZero,
+                        help='Specify a cut-off for the tophat filter. ~0.1 seems to be a good value. Smaller values '
+                             'will decrease specificity, higher values will increase specificity.')
+    parser.add_argument('--fiducial-diameter', type=float, required=False, action=LargerThanZero,
+                        help='Specify the fiducial (gold) diameter to attempt a masking step.')
     parser.add_argument('--log', type=str, required=False, default=20, action=ParseLogging,
                         help='Can be set to `info` or `debug`')
     args = parser.parse_args()
@@ -45,8 +50,10 @@ def main():
         job,
         args.radius_px,
         args.number_of_particles,
-        cut_off=args.cut_off,
         n_false_positives=args.number_of_false_positives,
+        cut_off=args.cut_off,
+        tophat_filter_cut_off=args.tophat_cut_off,
+        gold_marker_diameter=args.fiducial_diameter,
         tomogram_mask_path=args.tomogram_mask
     )
 
