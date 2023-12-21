@@ -11,7 +11,19 @@ from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list, convert_euler
 from pytom_tm.io import read_mrc
 from scipy.special import erfcinv
+from scipy.optimize import curve_fit
 from tqdm import tqdm
+
+
+plotting_available = False
+try:
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set(context='talk', style='ticks')
+    plotting_available = True
+except ModuleNotFoundError:
+    pass
 
 
 def predict_gold_marker_mask(
@@ -41,6 +53,56 @@ def predict_gold_marker_mask(
         iterations=iters + 2,
         structure=ndimage.generate_binary_structure(rank=3, connectivity=2),
     )
+
+
+def predict_tophat_mask(score_volume: npt.NDArray[float], discard_fraction: float = 0.0001):
+    tophat = ndimage.white_tophat(
+        score_volume,
+        structure=ndimage.generate_binary_structure(
+            rank=3,
+            connectivity=1
+        )
+    )
+    y, bins = np.histogram(tophat.flatten(), bins=50)
+    x_raw, y_raw = (bins[1:-1] + bins[2:]) / 2, y[1:]  # discard first bin because of over-representation of zeros
+
+    # take second derivative and discard inaccurate boundary value (hence the [2:])
+    second_derivative = np.gradient(np.gradient(np.log(y_raw)))[2:]
+    m1 = second_derivative[:-1] < 0
+    m2 = np.sign(second_derivative[1:] * second_derivative[:-1]) == -1
+    idx = int(
+            np.argwhere(np.all(np.vstack([m1, m2]), axis=0))[0]  # first switch from negative to positive in 2nd der.
+            + 2  # +2 for 2nd derivative discarded part
+            + 1  # +1 to include last value
+    )
+    x_fit, y_fit = x_raw[:idx], y_raw[:idx]
+
+    def gauss(x, amp, mu, sigma):
+        return amp * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
+
+    def log_gauss(x, amp, mu, sigma):
+        return np.log(amp * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2)))
+
+    guess = y.max(), 0, score_volume.std()
+    coeff, mat = curve_fit(gauss, x_fit, y_fit, p0=guess)
+    coeff_log, mat = curve_fit(log_gauss, x_fit, np.log(y_fit), p0=coeff)
+    search_space = coeff_log[0] / (coeff_log[2] * np.sqrt(2 * np.pi))
+    cut_off = erfcinv(2 / search_space) * np.sqrt(2) * coeff_log[2] + coeff_log[1]
+
+    if plotting_available:
+        fig, ax = plt.subplots()
+        ax.scatter(x_raw, y_raw, label='scores', marker='o')
+        ax.plot(x_raw, gauss(x_raw, *coeff_log), label='pred', color='tab:orange')
+        ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
+        ax.axvspan(x_fit[0], x_fit[-1], alpha=0.25, color='gray', label='fitted data')
+        ax.set_yscale('log')
+        ax.set_ylim(bottom=1)
+        ax.legend()
+        plt.show()
+
+    peak_mask = (tophat > cut_off) * 1
+
+    return peak_mask
 
 
 def extract_particles(
