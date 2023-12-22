@@ -70,7 +70,9 @@ def predict_tophat_mask(
     x_raw, y_raw = (bins[2:-1] + bins[3:]) / 2, y[2:]  # discard first two bin because of over-representation of zeros
 
     # take second derivative and discard inaccurate boundary value (hence the [2:])
-    second_derivative = np.gradient(np.gradient(np.log(y_raw)))[2:]
+    with np.errstate(divide='ignore'):
+        y_log = np.where(np.log(y_raw) == np.inf, 0, np.log(y_raw))
+    second_derivative = np.gradient(np.gradient(y_log))[2:]
     m1 = second_derivative[:-1] < 0  # where the derivative is negative
     m2 = np.sign(second_derivative[1:] * second_derivative[:-1]) == -1  # switches from neg. to pos. and vice versa
     idx = (
