@@ -55,7 +55,10 @@ def predict_gold_marker_mask(
     )
 
 
-def predict_tophat_mask(score_volume: npt.NDArray[float], discard_fraction: float = 0.0001):
+def predict_tophat_mask(
+        score_volume: npt.NDArray[float],
+        output_path: Optional[pathlib.Path] = None,
+) -> npt.NDArray[int]:
     tophat = ndimage.white_tophat(
         score_volume,
         structure=ndimage.generate_binary_structure(
@@ -64,43 +67,46 @@ def predict_tophat_mask(score_volume: npt.NDArray[float], discard_fraction: floa
         )
     )
     y, bins = np.histogram(tophat.flatten(), bins=50)
-    x_raw, y_raw = (bins[1:-1] + bins[2:]) / 2, y[1:]  # discard first bin because of over-representation of zeros
+    x_raw, y_raw = (bins[2:-1] + bins[3:]) / 2, y[2:]  # discard first two bin because of over-representation of zeros
 
     # take second derivative and discard inaccurate boundary value (hence the [2:])
     second_derivative = np.gradient(np.gradient(np.log(y_raw)))[2:]
-    m1 = second_derivative[:-1] < 0
-    m2 = np.sign(second_derivative[1:] * second_derivative[:-1]) == -1
-    idx = int(
-            np.argwhere(np.all(np.vstack([m1, m2]), axis=0))[0]  # first switch from negative to positive in 2nd der.
+    m1 = second_derivative[:-1] < 0  # where the derivative is negative
+    m2 = np.sign(second_derivative[1:] * second_derivative[:-1]) == -1  # switches from neg. to pos. and vice versa
+    idx = (
+            int(np.argwhere(np.all(np.vstack([m1, m2]), axis=0))[0])  # first switch from negative to positive
             + 2  # +2 for 2nd derivative discarded part
             + 1  # +1 to include last value
     )
     x_fit, y_fit = x_raw[:idx], y_raw[:idx]
 
-    def gauss(x, amp, mu, sigma):
+    def gauss(x, amp, mu, sigma):  # gaussian for fitting
         return amp * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
 
-    def log_gauss(x, amp, mu, sigma):
+    def log_gauss(x, amp, mu, sigma):  # log of gaussian for fitting
         return np.log(amp * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2)))
 
-    guess = y.max(), 0, score_volume.std()
-    coeff, mat = curve_fit(gauss, x_fit, y_fit, p0=guess)
-    coeff_log, mat = curve_fit(log_gauss, x_fit, np.log(y_fit), p0=coeff)
+    guess = np.array([y.max(), 0, score_volume.std()])  # rough initial guess for amp, mu and sigma
+    coeff = curve_fit(gauss, x_fit, y_fit, p0=guess)[0]  # first fit regular gauss to get better guesses
+    coeff_log = curve_fit(log_gauss, x_fit, np.log(y_fit), p0=coeff)[0]  # now go for accurate fit to log of gauss
     search_space = coeff_log[0] / (coeff_log[2] * np.sqrt(2 * np.pi))
     cut_off = erfcinv(2 / search_space) * np.sqrt(2) * coeff_log[2] + coeff_log[1]
 
-    if plotting_available:
+    if plotting_available and output_path is not None:
         fig, ax = plt.subplots()
         ax.scatter(x_raw, y_raw, label='scores', marker='o')
         ax.plot(x_raw, gauss(x_raw, *coeff_log), label='pred', color='tab:orange')
         ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
         ax.axvspan(x_fit[0], x_fit[-1], alpha=0.25, color='gray', label='fitted data')
         ax.set_yscale('log')
-        ax.set_ylim(bottom=1)
+        ax.set_ylim(bottom=.1)
+        ax.set_ylabel('Occurence')
+        ax.set_xlabel('Tophat scores')
         ax.legend()
-        plt.show()
+        plt.tight_layout()
+        plt.savefig(output_path, dpi=300, transparent=False, bbox_inches='tight')
 
-    peak_mask = (tophat > cut_off) * 1
+    peak_mask = (tophat > cut_off)
 
     return peak_mask
 
@@ -111,7 +117,7 @@ def extract_particles(
         n_particles: int,
         n_false_positives: int = 1,
         cut_off: Optional[float] = None,
-        tophat_filter_cut_off: Optional[float] = None,
+        tophat_filter: bool = False,
         gold_marker_diameter: Optional[float] = None,
         tomogram_mask_path: Optional[pathlib.Path] = None,
 ) -> tuple[pd.DataFrame, list[float, ...]]:
@@ -130,9 +136,8 @@ def extract_particles(
         it should roughly relate to the number of false positives (i.e. 500 expects 500 FPs)
     cut_off: Optional[float]
         manually override the automated score cut-off estimation, value between 0 and 1
-    tophat_filter_cut_off: Optional[float]
-        float between 0 and 1 to tune the specificity: default is 0.1; value of 1 removes everything, value of 0
-        includes everything
+    tophat_filter: bool
+        attempt to only select sharp peaks with the tophat filter
     gold_marker_diameter: Optional[float]
         average diameter of gold markers in angstrom
     tomogram_mask_path: Optional[pathlib.Path]
@@ -151,33 +156,20 @@ def extract_particles(
         sort_angles=version.parse(job.pytom_tm_version_number) > version.parse('0.3.0')
     )
 
+    if tophat_filter:  # constrain the extraction with a tophat filter
+        predicted_peaks = predict_tophat_mask(
+            score_volume,
+            output_path=job.output_dir.joinpath(f'{job.tomo_id}_tophat_filter.svg'),
+        )
+        score_volume *= predicted_peaks  # multiply with predicted peaks to keep only those
+
     if gold_marker_diameter is not None:
-        mask = predict_gold_marker_mask(
+        predicted_gold = predict_gold_marker_mask(
             read_mrc(job.tomogram),  # the gold mark mask is created on the tomogram
             job.voxel_size,
             gold_marker_diameter,
         )  # zero all elements where gold beads are predicted
-        score_volume[mask == 1] = 0
-
-    if tophat_filter_cut_off is not None:  # constrain the extraction with a tophat filter
-        layer1 = ndimage.white_tophat(
-            score_volume,
-            structure=ndimage.generate_binary_structure(
-                rank=3,
-                connectivity=1
-            )
-        )
-        layer2 = ndimage.white_tophat(
-            score_volume,
-            structure=ndimage.generate_binary_structure(
-                rank=3,
-                connectivity=2
-            )
-        )
-        tophat_filter = layer1 * layer2
-        tophat_filter = (tophat_filter - tophat_filter.min()) / (tophat_filter.max() - tophat_filter.min())
-        # zero places where the tophat filter has too small values
-        score_volume[tophat_filter < tophat_filter_cut_off] = 0  # threshold tophat
+        score_volume[predicted_gold] = 0
 
     # apply tomogram mask if provided
     if tomogram_mask_path is not None:
@@ -185,7 +177,7 @@ def extract_particles(
             job.search_origin[0]: job.search_origin[0] + job.search_size[0],
             job.search_origin[1]: job.search_origin[1] + job.search_size[1],
             job.search_origin[2]: job.search_origin[2] + job.search_size[2]
-        ]
+        ]  # mask should be larger than zero in regions of interest!
         score_volume[tomogram_mask <= 0] = 0
 
     # mask edges of score volume
