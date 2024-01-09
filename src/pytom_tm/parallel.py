@@ -3,6 +3,7 @@ import multiprocessing as mp
 import logging
 import queue
 import time
+import sys, os
 from multiprocessing.managers import BaseProxy
 from functools import reduce
 from pytom_tm.tmjob import TMJob
@@ -13,7 +14,13 @@ except RuntimeError:
     pass
 
 
-def gpu_runner(gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int) -> None:
+def gpu_runner(
+        gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int, mute: bool
+) -> None:
+    if mute:
+        devnull = open(os.devnull, 'w')
+        sys.stdout = devnull
+        sys.stderr = devnull
     logging.basicConfig(level=log_level)
     while True:
         try:
@@ -24,12 +31,13 @@ def gpu_runner(gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_
 
 
 def run_job_parallel(
-        main_job: TMJob, volume_splits: tuple[int, int, int], gpu_ids: list[int, ...]
+        main_job: TMJob, volume_splits: tuple[int, int, int], gpu_ids: list[int, ...], mute: bool = False,
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
     """
     @param main_job: a TMJob object from pytom_tm that contains all data for a search
     @param volume_splits: tuple of len 3 with splits in x, y, and z
     @param gpu_ids: list of gpu indices available for the job
+    @param mute: boolean to mute spawned process terminal output, only used for unittesting
     @return: the volumes with the LCCmax and angle ids
     """
 
@@ -80,7 +88,7 @@ def run_job_parallel(
 
             # set the processes and start them!
             procs = [mp.Process(target=gpu_runner, args=(
-                g, task_queue, result_queue, main_job.log_level)) for g in gpu_ids]
+                g, task_queue, result_queue, main_job.log_level, mute)) for g in gpu_ids]
             [p.start() for p in procs]
 
             while True:
@@ -93,8 +101,8 @@ def run_job_parallel(
 
                 for p in procs:  # if one of the processes is no longer alive and has a failed exit we should error
                     if not p.is_alive() and p.exitcode == 1:  # to prevent a deadlock
-                        [x.kill() for x in procs]  # terminate all others if one breaks
-                        raise RuntimeError('One of the processes stopped unexpectedly.')
+                        [x.terminate() for x in procs]  # kill all spawned processes if something broke
+                        raise RuntimeError('One or more of the processes stopped unexpectedly.')
 
                 time.sleep(1)
 

@@ -263,7 +263,7 @@ class TestTMJob(unittest.TestCase):
 
     def test_parallel_breaking(self):
         try:
-            _ = run_job_parallel(self.job, volume_splits=(1, 2, 1), gpu_ids=[0, -1])
+            _ = run_job_parallel(self.job, volume_splits=(1, 2, 1), gpu_ids=[0, -1], mute=True)
         except RuntimeError:
             self.assertEqual(len(multiprocessing.active_children()), 0,
                              msg='a process was still lingering after a parallel job with partially invalid resources '
