@@ -93,6 +93,7 @@ def run_job_parallel(
 
                 for p in procs:  # if one of the processes is no longer alive and has a failed exit we should error
                     if not p.is_alive() and p.exitcode == 1:  # to prevent a deadlock
+                        [x.terminate() for x in procs]  # terminate all others if one breaks
                         raise RuntimeError('One of the processes stopped unexpectedly.')
 
                 time.sleep(1)
