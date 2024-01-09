@@ -16,13 +16,13 @@ except RuntimeError:
 
 
 def gpu_runner(
-        gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int, mute: bool
+        gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int, unittest_mute: bool
 ) -> None:
-    if mute:
-        mute_context = mute_stdout_stderr()  # Make sure it is imported at this time
+    if unittest_mute:
+        mute_context = mute_stdout_stderr
     else:
-        mute_context = contextlib.nullcontext()
-    with mute_context:
+        mute_context = contextlib.nullcontext
+    with mute_context():
         logging.basicConfig(level=log_level)
         while True:
             try:
@@ -33,7 +33,7 @@ def gpu_runner(
 
 
 def run_job_parallel(
-        main_job: TMJob, volume_splits: tuple[int, int, int], gpu_ids: list[int, ...], mute: bool = False,
+        main_job: TMJob, volume_splits: tuple[int, int, int], gpu_ids: list[int, ...], unittest_mute: bool = False,
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
     """
     @param main_job: a TMJob object from pytom_tm that contains all data for a search
@@ -90,7 +90,7 @@ def run_job_parallel(
 
             # set the processes and start them!
             procs = [mp.Process(target=gpu_runner, args=(
-                g, task_queue, result_queue, main_job.log_level, mute)) for g in gpu_ids]
+                g, task_queue, result_queue, main_job.log_level, unittest_mute)) for g in gpu_ids]
             [p.start() for p in procs]
 
             while True:

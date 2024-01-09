@@ -1,10 +1,17 @@
-from contextlib import contextmanager, redirect_stderr, redirect_stdout
-from os import devnull
+import os
+import sys
 
 
-@contextmanager
-def mute_stdout_stderr():
-    """A context manager that redirects stdout and stderr to devnull"""
-    with open(devnull, 'w') as fnull:
-        with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
-            yield err, out
+class mute_stdout_stderr(object):
+    def __enter__(self):
+        self.outnull = open(os.devnull, 'w')
+        self.old_stdout = sys.stdout
+        self.old_stderr = sys.stderr
+        sys.stdout = self.outnull
+        sys.stderr = self.outnull
+        return self
+
+    def __exit__(self):
+        sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
+        self.outnull.close()

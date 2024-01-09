@@ -4,8 +4,6 @@ import numpy as np
 import voltools as vt
 import mrcfile
 import multiprocessing
-import sys
-import io
 from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list
@@ -263,7 +261,7 @@ class TestTMJob(unittest.TestCase):
 
     def test_parallel_breaking(self):
         try:
-            _ = run_job_parallel(self.job, volume_splits=(1, 2, 1), gpu_ids=[0, -1], mute=True)
+            _ = run_job_parallel(self.job, volume_splits=(1, 2, 1), gpu_ids=[0, -1], unittest_mute=True)
         except RuntimeError:
             self.assertEqual(len(multiprocessing.active_children()), 0,
                              msg='a process was still lingering after a parallel job with partially invalid resources '
