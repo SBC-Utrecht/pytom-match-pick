@@ -3,10 +3,11 @@ import multiprocessing as mp
 import logging
 import queue
 import time
-import sys, os
+import contextlib
 from multiprocessing.managers import BaseProxy
 from functools import reduce
 from pytom_tm.tmjob import TMJob
+from pytom_tm.utils import mute_stdout_stderr
 
 try:  # new processes need to be spawned in order to set cupy to use the correct GPU
     mp.set_start_method('spawn')
@@ -18,16 +19,17 @@ def gpu_runner(
         gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int, mute: bool
 ) -> None:
     if mute:
-        devnull = open(os.devnull, 'w')
-        sys.stdout = devnull
-        sys.stderr = devnull
-    logging.basicConfig(level=log_level)
-    while True:
-        try:
-            job = task_queue.get_nowait()
-            result_queue.put_nowait(job.start_job(gpu_id, return_volumes=False))
-        except queue.Empty:
-            break
+        mute_context = mute_stdout_stderr()  # Make sure it is imported at this time
+    else:
+        mute_context = contextlib.nullcontext()
+    with mute_context:
+        logging.basicConfig(level=log_level)
+        while True:
+            try:
+                job = task_queue.get_nowait()
+                result_queue.put_nowait(job.start_job(gpu_id, return_volumes=False))
+            except queue.Empty:
+                break
 
 
 def run_job_parallel(
