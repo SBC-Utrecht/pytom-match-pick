@@ -39,7 +39,7 @@ def run_job_parallel(
     @param main_job: a TMJob object from pytom_tm that contains all data for a search
     @param volume_splits: tuple of len 3 with splits in x, y, and z
     @param gpu_ids: list of gpu indices available for the job
-    @param mute: boolean to mute spawned process terminal output, only used for unittesting
+    @param unittest_mute: boolean to mute spawned process terminal output, only used for unittesting
     @return: the volumes with the LCCmax and angle ids
     """
 
