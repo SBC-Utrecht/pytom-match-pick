@@ -3,9 +3,11 @@ import multiprocessing as mp
 import logging
 import queue
 import time
+import contextlib
 from multiprocessing.managers import BaseProxy
 from functools import reduce
 from pytom_tm.tmjob import TMJob
+from pytom_tm.utils import mute_stdout_stderr
 
 try:  # new processes need to be spawned in order to set cupy to use the correct GPU
     mp.set_start_method('spawn')
@@ -13,23 +15,31 @@ except RuntimeError:
     pass
 
 
-def gpu_runner(gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int) -> None:
-    logging.basicConfig(level=log_level)
-    while True:
-        try:
-            job = task_queue.get_nowait()
-            result_queue.put_nowait(job.start_job(gpu_id, return_volumes=False))
-        except queue.Empty:
-            break
+def gpu_runner(
+        gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int, unittest_mute: bool
+) -> None:
+    if unittest_mute:
+        mute_context = mute_stdout_stderr
+    else:
+        mute_context = contextlib.nullcontext
+    with mute_context():
+        logging.basicConfig(level=log_level)
+        while True:
+            try:
+                job = task_queue.get_nowait()
+                result_queue.put_nowait(job.start_job(gpu_id, return_volumes=False))
+            except queue.Empty:
+                break
 
 
 def run_job_parallel(
-        main_job: TMJob, volume_splits: tuple[int, int, int], gpu_ids: list[int, ...]
+        main_job: TMJob, volume_splits: tuple[int, int, int], gpu_ids: list[int, ...], unittest_mute: bool = False,
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
     """
     @param main_job: a TMJob object from pytom_tm that contains all data for a search
     @param volume_splits: tuple of len 3 with splits in x, y, and z
     @param gpu_ids: list of gpu indices available for the job
+    @param unittest_mute: boolean to mute spawned process terminal output, only used for unittesting
     @return: the volumes with the LCCmax and angle ids
     """
 
@@ -80,7 +90,7 @@ def run_job_parallel(
 
             # set the processes and start them!
             procs = [mp.Process(target=gpu_runner, args=(
-                g, task_queue, result_queue, main_job.log_level)) for g in gpu_ids]
+                g, task_queue, result_queue, main_job.log_level, unittest_mute)) for g in gpu_ids]
             [p.start() for p in procs]
 
             while True:
@@ -93,7 +103,8 @@ def run_job_parallel(
 
                 for p in procs:  # if one of the processes is no longer alive and has a failed exit we should error
                     if not p.is_alive() and p.exitcode == 1:  # to prevent a deadlock
-                        raise RuntimeError('One of the processes stopped unexpectedly.')
+                        [x.terminate() for x in procs]  # kill all spawned processes if something broke
+                        raise RuntimeError('One or more of the processes stopped unexpectedly.')
 
                 time.sleep(1)
 
