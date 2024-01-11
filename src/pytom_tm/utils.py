@@ -30,7 +30,7 @@ def get_defocus_offsets(
     n_tilts = len(tilt_angles)
     x_centers = np.array([patch_center_x, ] * n_tilts)
     z_centers = np.array([patch_center_z, ] * n_tilts)
-    ta_array = -1 * np.array(tilt_angles)
+    ta_array = np.array(tilt_angles)
     # if upside_down:  # invert the tilt_angles if tomogram is reconstructed upside down? but then template should
     #   ta_array *= -1  # also be mirrored
     if angles_in_degrees:
