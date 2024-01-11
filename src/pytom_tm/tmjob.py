@@ -800,7 +800,7 @@ class TMJob:
             self.tilt_angles
         )
         for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
-            ctf['defocus'] = ctf['defocus'] + defocus_shift
+            ctf['defocus'] = ctf['defocus'] - defocus_shift
 
         # init tomogram and template weighting
         tomo_filter, template_wedge = 1, 1
