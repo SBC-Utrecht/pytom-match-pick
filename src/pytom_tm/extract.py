@@ -26,35 +26,6 @@ except ModuleNotFoundError:
     pass
 
 
-def predict_gold_marker_mask(
-        volume: npt.NDArray[float],
-        voxel_size: float,
-        blob_size: float,
-) -> npt.NDArray[int]:
-    # gold marker radius in number of voxels
-    blob_radius = (blob_size / voxel_size) / 2
-
-    # Laplacian of Gaussian (LoG) filter where sigma is gaussian width corresponding to object size
-    sigma = blob_radius / np.sqrt(3)
-    log = ndimage.gaussian_laplace(volume, sigma)
-
-    # fudge factor for the number of iterations for binary opening and dilation
-    iters = int(blob_radius / (5 / 3))  # 5/3 is a fudge ratio
-
-    mask = ndimage.binary_opening(  # binary opening keeps objects that consist of plenty connected components
-        (log > log.std() * 3) * 1,  # LoG is threshold with 3x the standard deviation
-        iterations=iters,  # iterations should be more for smaller voxel spacings
-        structure=ndimage.generate_binary_structure(
-            rank=3, connectivity=1
-        )
-    )  # dilate strongly to ensure gold is fully covered
-    return ndimage.binary_dilation(
-        mask,
-        iterations=iters + 2,
-        structure=ndimage.generate_binary_structure(rank=3, connectivity=2),
-    )
-
-
 def predict_tophat_mask(
         score_volume: npt.NDArray[float],
         output_path: Optional[pathlib.Path] = None,
@@ -120,7 +91,6 @@ def extract_particles(
         n_false_positives: int = 1,
         cut_off: Optional[float] = None,
         tophat_filter: bool = False,
-        gold_marker_diameter: Optional[float] = None,
         tomogram_mask_path: Optional[pathlib.Path] = None,
 ) -> tuple[pd.DataFrame, list[float, ...]]:
     """
@@ -140,8 +110,6 @@ def extract_particles(
         manually override the automated score cut-off estimation, value between 0 and 1
     tophat_filter: bool
         attempt to only select sharp peaks with the tophat filter
-    gold_marker_diameter: Optional[float]
-        average diameter of gold markers in angstrom
     tomogram_mask_path: Optional[pathlib.Path]
         path to a tomographic binary mask for extraction
 
@@ -164,14 +132,6 @@ def extract_particles(
             output_path=job.output_dir.joinpath(f'{job.tomo_id}_tophat_filter.svg'),
         )
         score_volume *= predicted_peaks  # multiply with predicted peaks to keep only those
-
-    if gold_marker_diameter is not None:
-        predicted_gold = predict_gold_marker_mask(
-            read_mrc(job.tomogram),  # the gold mark mask is created on the tomogram
-            job.voxel_size,
-            gold_marker_diameter,
-        )  # zero all elements where gold beads are predicted
-        score_volume[predicted_gold] = 0
 
     # apply tomogram mask if provided
     if tomogram_mask_path is not None:
