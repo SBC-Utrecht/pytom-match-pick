@@ -1,5 +1,5 @@
 """
-This file name explicitly starts with 00_ to ensure its run first during testing.
+This file name explicitly starts with test00_ to ensure its run first during testing.
 Other tests will run jobs on the GPU which keeps the main unittest process lingering on the GPU. When starting the
 parallel manager test on a GPU in exclusive process mode, the spawned process from the parallel manager will fail due
 the occupation from the other unittests. If the parallel manager is tested first, the spawned process is fully closed
