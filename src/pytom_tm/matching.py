@@ -198,12 +198,13 @@ def std_under_mask_convolution(
     std convolution of volume and mask
     """
     volume_rft = rfftn(volume) if volume_rft is None else volume_rft
-    std_v = (
+    std_v = cp.sqrt(
             mean_under_mask_convolution(rfftn(volume ** 2), padded_mask, mask_weight) -
             mean_under_mask_convolution(volume_rft, padded_mask, mask_weight) ** 2
     )
-    std_v[std_v <= cp.float32(1e-09)] = 1
-    return cp.sqrt(std_v)
+    # set extremely low values to 1 to prevent division by 0 and make sure that scores in those areas of the
+    std_v[std_v <= cp.float32(1e-18)] = 1  # tomogram are not inflated
+    return std_v
 
 
 def mean_under_mask_convolution(
