@@ -182,6 +182,18 @@ class TestTMJob(unittest.TestCase):
         score, angle = job.start_job(0, return_volumes=True)
         self.assertEqual(score.shape, job.tomo_shape, msg='TMJob with only whitening filter failed')
 
+        # load the whitening filter from previous job to compare against
+        whitening_filter = np.load(TEST_WHITENING_FILTER)
+        job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                    angle_increment='90.00', voxel_size=1., whiten_spectrum=True, search_y=[10, 90])
+        new_whitening_filter = np.load(TEST_WHITENING_FILTER)
+        self.assertNotEqual(whitening_filter.shape, new_whitening_filter.shape,
+                            msg='After reducing the search region along the largest dimension the whitening filter '
+                                'should have less sampling points')
+        self.assertEqual(new_whitening_filter.shape, (max(job.search_size) // 2 + 1, ),
+                         msg='The whitening filter does not have the expected size, it should be equal (x // 2) + 1, '
+                             'where x is the largest dimension of the search box.')
+
         # TMJob with none of these weighting options is tested in all other runs in this file.
 
     def test_custom_angular_search(self):
