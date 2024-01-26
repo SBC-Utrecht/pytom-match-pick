@@ -202,8 +202,8 @@ def std_under_mask_convolution(
             mean_under_mask_convolution(rfftn(volume ** 2), padded_mask, mask_weight) -
             mean_under_mask_convolution(volume_rft, padded_mask, mask_weight) ** 2
     )
-    std_v[std_v <= cp.float32(1e-18)] = 1  # replace potential zeros with lower limit to prevent divide by 0
-    std_v = cp.sqrt(std_v)  # also makes sure that the sqrt of a negative value is never taken
+    std_v[std_v <= cp.float32(1e-18)] = 1  # prevent potential sqrt of negative value and division by zero
+    std_v = cp.sqrt(std_v)
     return std_v
 
 
