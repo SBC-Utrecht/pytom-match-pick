@@ -177,7 +177,7 @@ class TMJob:
         self.ctf_data = ctf_data
         self.whiten_spectrum = whiten_spectrum
         self.whitening_filter = self.output_dir.joinpath(f'{self.tomo_id}_whitening_filter.npy')
-        if self.whiten_spectrum and not self.whitening_filter.exists():
+        if self.whiten_spectrum:
             logging.info('Estimating whitening filter...')
             weights = 1 / np.sqrt(
                 power_spectrum_profile(
