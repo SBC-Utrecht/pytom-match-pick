@@ -285,10 +285,10 @@ class TMJob:
                 whole_start[0] = start[0] + template_shape[0] // 2 - self.search_origin[0]
                 sub_start[0] = template_shape[0] // 2
             if start[1] != self.search_origin[1]:
-                whole_start[1] = start[1] + template_shape[1] // 2 - self.search_origin[0]
+                whole_start[1] = start[1] + template_shape[1] // 2 - self.search_origin[1]
                 sub_start[1] = template_shape[1] // 2
             if start[2] != self.search_origin[2]:
-                whole_start[2] = start[2] + template_shape[2] // 2 - self.search_origin[0]
+                whole_start[2] = start[2] + template_shape[2] // 2 - self.search_origin[2]
                 sub_start[2] = template_shape[2] // 2
             if end[0] == self.search_origin[0] + self.search_size[0]:
                 sub_step[0] = size[0] - sub_start[0]
