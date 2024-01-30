@@ -243,6 +243,20 @@ class TestTMJob(unittest.TestCase):
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
         self.assertAlmostEqual(angle_diff, 0, places=1, msg='angle diff should not change')
 
+        # check if subjobs have correct offsets for the main job, the last sub job will have the largest errors
+        job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                    angle_increment='38.53', voxel_size=1., search_x=[9, 90], search_y=[25, 102], search_z=[19, 54])
+        # split along each dimension and get only the last sub job
+        last_sub_job = job.split_volume_search((2, 3, 2))[-1]
+        final_size = [
+            i + j - TEMPLATE_SIZE // 2
+            for i, j
+            in zip(last_sub_job.whole_start, last_sub_job.search_size)
+        ]
+        self.assertEqual(final_size, job.search_size,
+                         msg='the last subjobs start position plus its size (minus template overhang) should equal '
+                             'the search size of the main job')
+
     def test_tm_job_split_angles(self):
         sub_jobs = self.job.split_rotation_search(3)
         for x in sub_jobs:
