@@ -29,6 +29,7 @@ except ModuleNotFoundError:
 def predict_tophat_mask(
         score_volume: npt.NDArray[float],
         output_path: Optional[pathlib.Path] = None,
+        n_false_positives: int = 1,
 ) -> npt.NDArray[int]:
     tophat = ndimage.white_tophat(
         score_volume,
@@ -63,7 +64,7 @@ def predict_tophat_mask(
     coeff = curve_fit(gauss, x_fit, y_fit, p0=guess)[0]  # first fit regular gauss to get better guesses
     coeff_log = curve_fit(log_gauss, x_fit, np.log(y_fit), p0=coeff)[0]  # now go for accurate fit to log of gauss
     search_space = coeff_log[0] / (coeff_log[2] * np.sqrt(2 * np.pi))
-    cut_off = erfcinv(2 / search_space) * np.sqrt(2) * coeff_log[2] + coeff_log[1]
+    cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * coeff_log[2] + coeff_log[1]
 
     if plotting_available and output_path is not None:
         fig, ax = plt.subplots()
@@ -130,6 +131,7 @@ def extract_particles(
         predicted_peaks = predict_tophat_mask(
             score_volume,
             output_path=job.output_dir.joinpath(f'{job.tomo_id}_tophat_filter.svg'),
+            n_false_positives=n_false_positives,
         )
         score_volume *= predicted_peaks  # multiply with predicted peaks to keep only those
 
