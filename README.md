@@ -68,6 +68,7 @@ specific build compatible with the installed cuda toolkit.
 ## Usage
 
 Detailed usage instructions are available on the wiki: https://github.com/SBC-Utrecht/pytom-template-matching-gpu/wiki
+
 Also, a tutorial can be found on the same wiki: https://github.com/SBC-Utrecht/pytom-template-matching-gpu/wiki/Tutorial
 The following scripts are available to run with `--help` to see parameters:
 
