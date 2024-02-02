@@ -26,7 +26,7 @@ setuptools.setup(
         'starfile',
         'importlib_resources',
         'packaging',
-        'scipy'
+        'scipy',
     ],
     extras_require={
         'plotting': ['matplotlib', 'seaborn']
