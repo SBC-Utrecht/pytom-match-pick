@@ -216,7 +216,7 @@ class TMJob:
         d['search_y'] = [self.search_origin[1], self.search_origin[1] + self.search_size[1]]
         d['search_z'] = [self.search_origin[2], self.search_origin[2] + self.search_size[2]]
         for key, value in d.items():
-            if isinstance(value, pathlib.PosixPath):
+            if isinstance(value, pathlib.Path):
                 d[key] = str(value)
         with open(file_name, 'w') as fstream:
             json.dump(d, fstream, indent=4)
