@@ -30,7 +30,7 @@ def predict_tophat_mask(
         score_volume: npt.NDArray[float],
         output_path: Optional[pathlib.Path] = None,
         n_false_positives: int = 1,
-) -> npt.NDArray[int]:
+) -> npt.NDArray[bool]:
     tophat = ndimage.white_tophat(
         score_volume,
         structure=ndimage.generate_binary_structure(
