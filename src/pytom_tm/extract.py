@@ -104,9 +104,8 @@ def extract_particles(
     n_particles: int
         maximum number of particles to extract
     n_false_positives: int
-        tune the number of false positives to be included for automated error function cut-off estimation: default is 1;
-        lowering the value up to zero reduces sensitivity; increasing the value above 1 increases sensitivity,
-        it should roughly relate to the number of false positives (i.e. 500 expects 500 FPs)
+        tune the number of false positives to be included for automated error function cut-off estimation:
+        should be an integer >= 1
     cut_off: Optional[float]
         manually override the automated score cut-off estimation, value between 0 and 1
     tophat_filter: bool
