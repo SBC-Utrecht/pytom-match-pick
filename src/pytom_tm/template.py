@@ -20,7 +20,7 @@ def generate_template_from_map(
         input_map: npt.NDArray[float],
         input_spacing: float,
         output_spacing: float,
-        ctf_params: dict,
+        ctf_params: Optional[dict] = None,
         center: bool = False,
         filter_to_resolution: Optional[float] = None,
         output_box_size: Optional[int] = None,
