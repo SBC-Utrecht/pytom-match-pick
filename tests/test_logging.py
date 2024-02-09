@@ -9,7 +9,7 @@ class TestLogging(unittest.TestCase):
         # Test missing filter resolution
         with self.assertLogs(level='WARNING') as cm:
             _ = generate_template_from_map(template, 1., 1.)
-        self.assertEqual(len(cm.output) == 1)
+        self.assertEqual(len(cm.output), 1)
         self.assertIn('Filter resolution', cm.output[0])
         self.assertIn(' not specified ',cm.output[0])
         self.assertNotIn(' too low ', cm.output[0])
@@ -17,7 +17,7 @@ class TestLogging(unittest.TestCase):
         # Test too low filter resolution
         with self.assertLogs(level='WARNING') as cm:
             _ = generate_template_from_map(template, 1., 1., filter_to_resolution=1.5)
-        self.assertEqual(len(cm.output) == 1)
+        self.assertEqual(len(cm.output), 1)
         self.assertIn('Filter resolution', cm.output[0])
         self.assertNotIn(' not specified ',cm.output[0])
         self.assertIn(' too low ', cm.output[0])
