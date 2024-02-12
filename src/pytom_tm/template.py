@@ -20,7 +20,7 @@ def generate_template_from_map(
         input_map: npt.NDArray[float],
         input_spacing: float,
         output_spacing: float,
-        ctf_params: dict,
+        ctf_params: Optional[dict] = None,
         center: bool = False,
         filter_to_resolution: Optional[float] = None,
         output_box_size: Optional[int] = None,
@@ -36,9 +36,13 @@ def generate_template_from_map(
             mode='edge'
         )
 
-    if filter_to_resolution is None or filter_to_resolution < (2 * output_spacing):
-        logging.warning(f'Filter resolution is either not specified (in which case you can ignore this warning) '
-                        f'or too low, changing to {2 * output_spacing}A (2 * output voxel size)')
+    if filter_to_resolution is None:
+        # Set to nyquist resolution
+        filter_to_resolution = 2 * output_spacing
+    elif filter_to_resolution < (2 * output_spacing):
+        warning_text = (f"Filter resolution is too low,"
+                        f" setting to {2 * output_spacing}A (2 * output voxel size)")
+        logging.warning(warning_text)
         filter_to_resolution = 2 * output_spacing
 
     # extend volume to the desired output size before applying convolutions!
