@@ -23,6 +23,20 @@ for v in AVAILABLE_ROTATIONAL_SAMPLING.values():
 
 
 def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[tuple[float, float, float]]:
+    """Load an angular search list from disk.
+
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        path to text file containing angular search, each line should contain 3 floats of anti-clockwise ZXZ
+    sort_angles: bool
+        sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+
+    Returns
+    -------
+    angle_list: list[tuple[float, float, float]]
+        a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in degrees
+    """
     with open(str(file_name)) as fstream:
         lines = fstream.readlines()
     angle_list = [tuple(map(float, x.strip().split(' '))) for x in lines]
@@ -40,5 +54,27 @@ def convert_euler(
         degrees_in: bool = True,
         degrees_out: bool = True
 ) -> tuple[float, float, float]:
+    """Convert a single set of Euler angles from one Euler notation to another. This function makes use of
+    scipy.spatial.transform.Rotation meaning that capital letters (i.e. ZXZ) specify intrinsic rotations (commonly
+    used in cryo-EM) and small letters (i.e. zxz) specific extrinsic rotations.
+
+    Parameters
+    ----------
+    angles: tuple[float, float, float]
+        tuple of three angles
+    order_in: str
+        Euler rotation axis of input angles
+    order_out: str
+        Euler rotation axis of output angles
+    degrees_in: bool
+        whether the input angles are in degrees
+    degrees_out
+        whether the output angles should be in degrees
+
+    Returns
+    -------
+    output: tuple[float, float, float]
+        tuple of three angles
+    """
     r = Rotation.from_euler(order_in, angles, degrees=degrees_in)
     return tuple(r.as_euler(order_out, degrees=degrees_out))
