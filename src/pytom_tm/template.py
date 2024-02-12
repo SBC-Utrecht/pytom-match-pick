@@ -37,7 +37,10 @@ def generate_template_from_map(
         )
 
     if filter_to_resolution is None or filter_to_resolution < (2 * output_spacing):
-        warning_text = (f"Filter resolution is {'not specified' if filter_to_resolution is None else 'too low'},"
+        # Set to nyquist resolution
+        filter_to_resolution = 2 * output_spacing
+    elif filter_to_resolution < (2 * output_spacing):
+        warning_text = (f"Filter resolution is too low,"
                         f" setting to {2 * output_spacing}A (2 * output voxel size)")
         logging.warning(warning_text)
         filter_to_resolution = 2 * output_spacing
