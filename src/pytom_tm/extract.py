@@ -45,7 +45,7 @@ def predict_tophat_mask(
     # take second derivative and discard inaccurate boundary value (hence the [2:])
     with np.errstate(divide='ignore'):
         y_log = np.log(y_raw)
-        y_log[y_log == np.inf] = 0
+        y_log[np.isinf(y_log)] = 0
     second_derivative = np.gradient(np.gradient(y_log))[2:]
     m1 = second_derivative[:-1] < 0  # where the derivative is negative
     sign = np.sign(second_derivative[1:] * second_derivative[:-1])
