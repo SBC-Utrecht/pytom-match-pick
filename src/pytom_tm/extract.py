@@ -31,6 +31,32 @@ def predict_tophat_mask(
         output_path: Optional[pathlib.Path] = None,
         n_false_positives: int = 1,
 ) -> npt.NDArray[bool]:
+    """This function gets as input a score map and returns a peak mask as determined with a tophat transform.
+
+    It does the following things:
+     - calculate a tophat transform using scipy.ndimage.white_tophat() and a kernel
+     ndimage.generate_binary_structure(rank=3, connectivity=1).
+     - calculate a histogram of the transformed score map and take its log to focus more on small values
+     - take second derivative of log(histogram) to find the region for fitting a Gaussian, where the second derivative
+     switches from negative to positive the background noise likely breaks
+     - use formula from excellent work of Rickgauer et al. (2017, eLife) which uses the error function to find the
+     likelihood of false positives on the background Gaussian distribution:
+            N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
+
+    Parameters
+    ----------
+    score_volume: npt.NDArray[float]
+        template matching score map
+    output_path: Optional[pathlib.Path]
+        if provided (and plotting is available), write a figure of the fit to the output folder
+    n_false_positives: int
+        number of false positive for error function cutoff calculation
+
+    Returns
+    -------
+    peak_mask: npt.NDArray[bool]
+        boolean mask with tophat filtered peak locations
+    """
     tophat = ndimage.white_tophat(
         score_volume,
         structure=ndimage.generate_binary_structure(
