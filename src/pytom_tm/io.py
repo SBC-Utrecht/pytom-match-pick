@@ -9,6 +9,7 @@ from typing import Optional, Union
 
 
 class ParseLogging(argparse.Action):
+    """argparse.Action subclass to parse logging parameter from input scripts. Users can set these to info/debug."""
     def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
         if not values.upper() in ['INFO', 'DEBUG']:
             parser.error("{0} log got an invalid option, set either to `info` or `debug` ".format(option_string))
@@ -18,6 +19,7 @@ class ParseLogging(argparse.Action):
 
 
 class CheckDirExists(argparse.Action):
+    """argparse.Action subclass to check if an expected input directory exists."""
     def __call__(self, parser, namespace, values: pathlib.Path, option_string: Optional[str] = None):
         if not values.is_dir():
             parser.error("{0} got a file path that does not exist ".format(option_string))
@@ -26,6 +28,7 @@ class CheckDirExists(argparse.Action):
 
 
 class CheckFileExists(argparse.Action):
+    """argparse.Action subclass to check if an expected input file exists."""
     def __call__(self, parser, namespace, values: pathlib.Path, option_string: Optional[str] = None):
         if not values.exists():
             parser.error("{0} got a file path that does not exist ".format(option_string))
@@ -34,6 +37,7 @@ class CheckFileExists(argparse.Action):
 
 
 class LargerThanZero(argparse.Action):
+    """argparse.Action subclass to constrain an input value to larger than zero only."""
     def __call__(self, parser, namespace, values: Union[int, float], option_string: Optional[str] = None):
         if values <= .0:
             parser.error("{0} must be larger than 0".format(option_string))
@@ -42,6 +46,7 @@ class LargerThanZero(argparse.Action):
 
 
 class BetweenZeroAndOne(argparse.Action):
+    """argparse.Action subclass to constrain an input value to a fraction, i.e. between 0 and 1."""
     def __call__(self, parser, namespace, values: float, option_string: Optional[str] = None):
         if 1. <= values <= .0:
             parser.error("{0} is a fraction and can only range between 0 and 1".format(option_string))
@@ -50,6 +55,8 @@ class BetweenZeroAndOne(argparse.Action):
 
 
 class ParseSearch(argparse.Action):
+    """argparse.Action subclass to restrict the search area of tomogram to these indices along an axis. Checks that
+    these value are larger than zero and that the second value is larger than the first."""
     def __call__(self, parser, namespace, values: list[int, int], option_string: Optional[str] = None):
         if not (0 <= values[0] < values[1]):
             parser.error("{0} start and end indices must be larger than 0 and end must be larger than start".format(
@@ -59,6 +66,9 @@ class ParseSearch(argparse.Action):
 
 
 class ParseTiltAngles(argparse.Action):
+    """argparse.Action subclass to parse tilt_angle info. The input can either be two floats that specify the tilt
+    range for a continous wedge model. Alternatively can be a .tlt/.rawtlt file that specifies all the the tilt
+    angles of the tilt-series to use for more refined wedge models."""
     def __call__(self, parser, namespace, values: Union[list[str, str], str], option_string: Optional[str] = None):
         if len(values) == 2:  # two wedge angles provided the min and max
             try:
@@ -77,6 +87,7 @@ class ParseTiltAngles(argparse.Action):
 
 
 class ParseDoseFile(argparse.Action):
+    """argparse.Action subclass to parse a txt file contain information on accumulated dose per tilt."""
     def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
         file_path = pathlib.Path(values)
         if not file_path.exists():
@@ -89,6 +100,8 @@ class ParseDoseFile(argparse.Action):
 
 
 class ParseDefocusFile(argparse.Action):
+    """argparse.Action subclass to read a defocus file, either from IMOD which adheres to there file format,
+    or a txt file contain per line the defocus of each tilt."""
     def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
         file_path = pathlib.Path(values)
         if not file_path.exists():
@@ -101,16 +114,41 @@ class ParseDefocusFile(argparse.Action):
 
 
 class UnequalSpacingError(Exception):
+    """Exception for an mrc file that has unequal spacing along the xyz dimensions annotated in its voxel size
+    metadata."""
     pass
 
 
 def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: tuple[int, int, int] = (0, 2, 1)):
+    """Helper function to write angular search list from old PyTom to current module. Order had to be changed as old
+    PyTom always stored it as Z1, Z2, X, and here its Z1, X, Z2.
+
+    @todo remove function
+    """
     with open(file_name, 'w') as fstream:
         for i in range(data.shape[1]):
             fstream.write(' '.join([str(x) for x in [data[j, i] for j in order]]) + '\n')
 
 
 def read_mrc_meta_data(file_name: pathlib.Path, permissive: bool = True) -> dict:
+    """Read the metadata of provided MRC file path (using mrcfile) and return as dict.
+
+    If the voxel size along the x,y,and z dimensions differs a lot (not within 3 decimals) the function will raise an
+    UnequalSpacingError as it could mean template matching on these volumes might not be consistent.
+
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        path to an MRC file
+    permissive: bool
+        True (default) reads file in permissive mode, setting to False will be more strict with bad MRC headers
+
+    Returns
+    -------
+    metadata: dict
+        a dictionary of the mrc metadata with key 'shape' containing the x,y,z dimensions of the file and key
+        'voxel_size' containing the voxel size along x,y,z and dimensions in A units
+    """
     meta_data = {}
     with mrcfile.mmap(file_name, permissive=permissive) as mrc:
         meta_data['shape'] = tuple(map(int, attrgetter('nx', 'ny', 'nz')(mrc.header)))
@@ -136,6 +174,25 @@ def write_mrc(
         overwrite: bool = True,
         transpose: bool = True
 ) -> None:
+    """Write data to an MRC file. Data is transposed before writing as pytom internally uses xyz ordering and MRCs
+    use zyx.
+
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        path on disk to write the file to
+    data: npt.NDArray[float]
+        numpy array to write as MRC
+    voxel_size: float
+        voxel size of array to annotate in MRC header
+    overwrite: bool
+        True (default) will overwrite current MRC on path, setting to False will error when writing to existing file
+    transpose: bool
+        True (default) transpose array before writing, setting to False prevents this
+
+    Returns
+    -------
+    """
     if data.dtype != np.float32:
         logging.warning(f'data for mrc writing is not np.float32 will convert to np.float32')
         data = data.astype(np.float32)
@@ -147,30 +204,97 @@ def read_mrc(
         permissive: bool = True,
         transpose: bool = True
 ) -> npt.NDArray[float]:
+    """Read an MRC file from disk. Data is transposed after reading as pytom internally uses xyz ordering and MRCs
+    use zyx.
+
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        path to file on disk
+    permissive: bool
+        True (default) reads file in permissive mode, setting to False will be more strict with bad headers
+    transpose:
+        True (default) transposes the volume after reading, setting to False prevents transpose but probably not a
+        good idea when using the functions from this module
+
+    Returns
+    -------
+    data: npt.NDArray[float]
+        returns the MRC data as a numpy array
+    """
     with mrcfile.open(file_name, permissive=permissive) as mrc:
         data = np.ascontiguousarray(mrc.data.T) if transpose else mrc.data
     return data
 
 
 def read_txt_file(file_name: pathlib.Path) -> list[float, ...]:
+    """Read a txt file from disk with on each line a single float value.
+
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        file on disk to read
+
+    Returns
+    -------
+    output: list[float, ...]
+        list of floats
+    """
     with open(file_name, 'r') as fstream:
         lines = fstream.readlines()
     return list(map(float, [x.strip() for x in lines if not x.isspace()]))
 
 
 def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
+    """Read a txt file from disk using read_txt_file(). File is expected to have tilt angles in degrees.
+
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        file on disk to read
+
+    Returns
+    -------
+    output: list[float, ...]
+        list of floats with tilt angles
+    """
     return read_txt_file(file_name)
 
 
 def read_dose_file(file_name: pathlib.Path) -> list[float, ...]:
+    """Read a txt file from disk using read_txt_file(). File is expected to have dose accumulation in e-/A2.
+
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        file on disk to read
+
+    Returns
+    -------
+    output: list[float, ...]
+        list of floats with accumulated dose
+    """
     return read_txt_file(file_name)
 
 
 def read_imod_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
+    """Read an IMOD style defocus file. This function can read version 2 and 3 defocus files. For format
+    specification see: https://bio3d.colorado.edu/imod/doc/man/ctfphaseflip.html (section: Defocus File Format).
+
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        file on disk to read
+
+    Returns
+    -------
+    output: list[float, ...]
+        list of floats with defocus (in um)
+    """
     with open(file_name, 'r') as fstream:
         lines = fstream.readlines()
     imod_defocus_version = float(lines[0].strip().split()[5])
-    # imod defocus files have the values specified in nm: TODO is this the common way to specify it?
+    # imod defocus files have the values specified in nm:
     if imod_defocus_version == 2:  # file with one defocus value; data starts on line 0
         return [float(x.strip().split()[4]) * 1e-3 for x in lines]
     elif imod_defocus_version == 3:  # file with astigmatism; line 0 contains metadata that we do not need
@@ -180,6 +304,22 @@ def read_imod_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
 
 
 def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
+    """Read a defocus file with values in nm. Output returns defocus in um.
+
+    Depending on file suffix the function calls:
+     - read_imod_defocus_file() for .defocus suffix
+     - read_txt_file for .txt suffix
+     
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        file on disk to read
+
+    Returns
+    -------
+    output: list[float, ...]
+        list of floats with defocus (in um)
+    """
     if file_name.suffix == '.defocus':
         return read_imod_defocus_file(file_name)
     elif file_name.suffix == '.txt':
