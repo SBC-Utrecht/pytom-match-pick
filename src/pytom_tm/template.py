@@ -36,7 +36,7 @@ def generate_template_from_map(
             mode='edge'
         )
 
-    if filter_to_resolution is None or filter_to_resolution < (2 * output_spacing):
+    if filter_to_resolution is None:
         # Set to nyquist resolution
         filter_to_resolution = 2 * output_spacing
     elif filter_to_resolution < (2 * output_spacing):
