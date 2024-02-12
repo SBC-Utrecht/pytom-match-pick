@@ -34,6 +34,8 @@ def main():
                              'number-of-particles down to this LCCmax value. Setting to 0 will keep extracting until '
                              'number-of-particles, or until there are no positive values left in the score map. Values '
                              'larger than 1 make no sense as the correlation cannot be higher than 1.')
+    parser.add_argument('--tophat-filter', action='store_true', default=False, required=False,
+                        help='Attempt to filter only sharp correlation peaks with a tophat transform')
     parser.add_argument('--log', type=str, required=False, default=20, action=ParseLogging,
                         help='Can be set to `info` or `debug`')
     args = parser.parse_args()
@@ -47,7 +49,8 @@ def main():
         args.number_of_particles,
         cut_off=args.cut_off,
         n_false_positives=args.number_of_false_positives,
-        tomogram_mask_path=args.tomogram_mask
+        tomogram_mask_path=args.tomogram_mask,
+        tophat_filter=args.tophat_filter,
     )
 
     # write out as a RELION type starfile
