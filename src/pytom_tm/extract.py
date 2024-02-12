@@ -98,10 +98,10 @@ def extract_particles(
         job: TMJob,
         particle_radius_px: int,
         n_particles: int,
-        n_false_positives: int = 1,
         cut_off: Optional[float] = None,
-        tophat_filter: bool = False,
+        n_false_positives: int = 1,
         tomogram_mask_path: Optional[pathlib.Path] = None,
+        tophat_filter: bool = False,
 ) -> tuple[pd.DataFrame, list[float, ...]]:
     """
     Parameters
@@ -112,15 +112,15 @@ def extract_particles(
         particle radius to remove peaks with after a score has been annotated
     n_particles: int
         maximum number of particles to extract
+    cut_off: Optional[float]
+        manually override the automated score cut-off estimation, value between 0 and 1
     n_false_positives: int
         tune the number of false positives to be included for automated error function cut-off estimation:
         should be an integer >= 1
-    cut_off: Optional[float]
-        manually override the automated score cut-off estimation, value between 0 and 1
-    tophat_filter: bool
-        attempt to only select sharp peaks with the tophat filter
     tomogram_mask_path: Optional[pathlib.Path]
         path to a tomographic binary mask for extraction
+    tophat_filter: bool
+        attempt to only select sharp peaks with the tophat filter
 
     Returns
     -------

@@ -47,10 +47,10 @@ def main():
         job,
         args.radius_px,
         args.number_of_particles,
-        n_false_positives=args.number_of_false_positives,
         cut_off=args.cut_off,
+        n_false_positives=args.number_of_false_positives,
+        tomogram_mask_path=args.tomogram_mask,
         tophat_filter=args.tophat_filter,
-        tomogram_mask_path=args.tomogram_mask
     )
 
     # write out as a RELION type starfile
