@@ -71,6 +71,8 @@ def predict_tophat_mask(
     coeff = curve_fit(gauss, x_fit, y_fit, p0=guess)[0]  # first fit regular gauss to get better guesses
     coeff_log = curve_fit(log_gauss, x_fit, np.log(y_fit), p0=coeff)[0]  # now go for accurate fit to log of gauss
     search_space = coeff_log[0] / (coeff_log[2] * np.sqrt(2 * np.pi))
+    # formula Rickgauer et al. (2017, eLife): N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
+    # we need to find theta (cut off)
     cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * coeff_log[2] + coeff_log[1]
 
     if plotting_available and output_path is not None:
@@ -160,7 +162,8 @@ def extract_particles(
 
     sigma = job.job_stats['std']
     if cut_off is None:
-        # formula rickgauer (2017) should be: 10**-13 = erfc( theta / ( sigma * sqrt(2) ) ) / 2
+        # formula Rickgauer et al. (2017, eLife): N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
+        # we need to find theta (cut off)
         search_space = (
             # wherever the score volume has not been explicitly set to -1 is the size of the search region
             (score_volume > -1).sum() *
