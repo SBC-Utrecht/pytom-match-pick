@@ -39,16 +39,23 @@ def predict_tophat_mask(
         )
     )
     y, bins = np.histogram(tophat.flatten(), bins=50)
-    x_raw, y_raw = (bins[2:-1] + bins[3:]) / 2, y[2:]  # discard first two bin because of over-representation of zeros
+    bin_centers = (bins[:-1] + bins[1:]) / 2
+    x_raw, y_raw = bin_centers[2:], y[2:]  # discard first two points because of over-representation of zeros
 
     # take second derivative and discard inaccurate boundary value (hence the [2:])
     with np.errstate(divide='ignore'):
-        y_log = np.where(np.log(y_raw) == np.inf, 0, np.log(y_raw))
+        y_log = np.log(y_raw)
+        y_log[y_log == np.inf] = 0
     second_derivative = np.gradient(np.gradient(y_log))[2:]
     m1 = second_derivative[:-1] < 0  # where the derivative is negative
-    m2 = np.sign(second_derivative[1:] * second_derivative[:-1]) == -1  # switches from neg. to pos. and vice versa
+    sign = np.sign(second_derivative[1:] * second_derivative[:-1])
+    # if there was a 0 in second derivative, there are now two 0s in sign
+    # replace the 0,0 with the next value and previous value instead
+    sign = np.where(sign == 0, np.roll(sign, -1), sign)
+    sign = np.where(sign == 0, np.roll(sign, 1), sign)
+    m2 = sign == -1  # switches from neg. to pos. and vice versa
     idx = (
-            int(np.argwhere(np.all(np.vstack([m1, m2]), axis=0))[0])  # first switch from negative to positive
+            int(np.argmax(m1 & m2))  # first switch from negative to positive
             + 2  # +2 for 2nd derivative discarded part
             + 1  # +1 to include last value
     )
@@ -58,7 +65,7 @@ def predict_tophat_mask(
         return amp * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
 
     def log_gauss(x, amp, mu, sigma):  # log of gaussian for fitting
-        return np.log(amp * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2)))
+        return np.log(gauss(x, amp, mu, sigma))
 
     guess = np.array([y.max(), 0, score_volume.std()])  # rough initial guess for amp, mu and sigma
     coeff = curve_fit(gauss, x_fit, y_fit, p0=guess)[0]  # first fit regular gauss to get better guesses
@@ -78,7 +85,7 @@ def predict_tophat_mask(
         ax.set_xlabel('Tophat scores')
         ax.legend()
         plt.tight_layout()
-        plt.savefig(output_path, dpi=300, transparent=False, bbox_inches='tight')
+        plt.savefig(output_path, dpi=600, transparent=False, bbox_inches='tight')
 
     peak_mask = (tophat > cut_off)
 
