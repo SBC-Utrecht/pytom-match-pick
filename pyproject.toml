@@ -32,11 +32,11 @@ dependencies = [
     "cupy",
     "voltools",
     "tqdm",
-    "mrcfile"
-    "starfile"
+    "mrcfile",
+    "starfile",
     "importlib_resources",
     "packaging",
-    "scipy"
+    "scipy",
 ]
 script-files=[ # This is discouraged and should be converted to project.scripts soon
     "src/bin/pytom_create_mask.py",
