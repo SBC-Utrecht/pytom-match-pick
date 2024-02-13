@@ -17,6 +17,18 @@ from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingE
 
 
 def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
+    """Load a previous job that was stored with TMJob.write_to_json().
+
+    Parameters
+    ----------
+    file_name: pathlib.Path
+        path to TMJob json file
+
+    Returns
+    -------
+    job: TMJob
+        initialized TMJob
+    """
     with open(file_name, 'r') as fstream:
         data = json.load(fstream)
 
@@ -56,6 +68,7 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
 
 
 class TMJobError(Exception):
+    """TMJob Exception with provided message."""
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
@@ -86,6 +99,55 @@ class TMJob:
             rotational_symmetry: int = 1,
             pytom_tm_version_number: str = metadata.version('pytom-template-matching-gpu')
     ):
+        """
+        Parameters
+        ----------
+        job_key: str
+            job identifier
+        log_level: int
+            log level for logging module
+        tomogram: pathlib.Path
+            path to tomogram MRC
+        template: pathlib.Path
+            path to template MRC
+        mask: pathlib.Path
+            path to mask MRC
+        output_dir: pathlib.Path
+            path to output directory
+        angle_increment: str
+            angular increment of template search
+        mask_is_spherical: bool
+            whether template mask is spherical, reduces computation complexity
+        tilt_angles: Optional[list[float, ...]]
+            tilt angles of tilt-series used to reconstruct tomogram, if only two floats will be used to generate a
+            continuous wedge model
+        tilt_weighting: bool
+            use advanced tilt weighting options, can be supplemented with CTF parameters and accumulated dose
+        search_x: Optional[list[int, int]]
+            restrict tomogram search region along the x-axis
+        search_y: Optional[list[int, int]]
+            restrict tomogram search region along the y-axis
+        search_z: Optional[list[int, int]]
+            restrict tomogram search region along the z-axis
+        voxel_size: Optional[float]
+            voxel of tomogram and template (in A) if not provided will be read from template/tomogram MRCs
+        low_pass: Optional[float]
+            optional low-pass filter (resolution in A) to apply to tomogram and template
+        high_pass: Optional[float]
+            optional high-pass filter (resolution in A) to apply to tomogram and template
+        dose_accumulation: Optional[list[float, ...]]
+            list wil dose accumulation per tilt image
+        ctf_data: Optional[list[dict, ...]]
+            list op dictionaries with CTF parameters per tilt image, see pytom_tm.weight.create_ctf() for parameter
+            definition
+        whiten_spectrum: bool
+            whether to apply spectrum whitening
+        rotational_symmetry: int
+            specify a rotationa symmetry around the z-axis, is only valid if the symmetry axis of the template is
+            aligned with the z-axis
+        pytom_tm_version_number: str
+            a string with the version number of pytom_tm for backward compatibility
+        """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
         self.output_dir = output_dir
@@ -205,9 +267,23 @@ class TMJob:
         self.pytom_tm_version_number = pytom_tm_version_number
 
     def copy(self) -> TMJob:
+        """Create a copy of the TMJob
+
+        Returns
+        -------
+        job: TMJob
+            copied TMJob instance
+        """
         return copy.deepcopy(self)
 
     def write_to_json(self, file_name: pathlib.Path) -> None:
+        """Write job to .json file.
+
+        Parameters
+        ----------
+        file_name: pathlib.Path
+            path to the output file
+        """
         d = self.__dict__.copy()
         d.pop('sub_jobs')
         d.pop('search_origin')
@@ -222,6 +298,19 @@ class TMJob:
             json.dump(d, fstream, indent=4)
 
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
+        """Split the search into sub_jobs by dividing the rotations. Sub jobs will obtain the key
+        self.job_key + str(i) when looping over range(n).
+
+        Parameters
+        ----------
+        n: int
+            number of times to split the angular search
+
+        Returns
+        -------
+        sub_jobs: list[TMJob, ...]
+            a list of TMJobs that were split from self, the jobs are also assigned as the TMJob.sub_jobs attribute
+        """
         if len(self.sub_jobs) > 0:
             raise TMJobError('Could not further split this job as it already has subjobs assigned!')
 
@@ -239,6 +328,29 @@ class TMJob:
         return self.sub_jobs
 
     def split_volume_search(self, split: tuple[int, int, int]) -> list[TMJob, ...]:
+        """Split the search into sub_jobs by dividing into subvolumes. Final number of subvolumes is obtained by
+        multiplying all the split together, e.g. (2, 2, 1) results in 4 subvolumes. Sub jobs will obtain the key
+        self.job_key + str(i) when looping over range(n).
+
+        The sub jobs search area of the full tomogram is defined by: new_job.search_origin and new_job.search_size.
+        They are used when loading the search volume from the full tomogram.
+
+        The attribute new_job.whole_start defines how the volume maps back to the score volume of the parent job (
+        which can be different size from the tomogram when the search is restricted along x, y or z).
+
+        Finally, new_job.sub_start and new_job.sub_step, extract the score and angle map without the template
+        overhang from the subvolume.
+
+        Parameters
+        ----------
+        split: tuple[int, int, int]
+            tuple that defines how many times the search volume should be split into subvolumes along each axis
+
+        Returns
+        -------
+        sub_jobs: list[TMJob, ...]
+            a list of TMJobs that were split from self, the jobs are also assigned as the TMJob.sub_jobs attribute
+        """
         if len(self.sub_jobs) > 0:
             raise TMJobError('Could not further split this job as it already has subjobs assigned!')
 
@@ -314,6 +426,18 @@ class TMJob:
         return self.sub_jobs
 
     def merge_sub_jobs(self, stats: Optional[list[dict, ...]] = None) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+        """Merge the sub jobs present in self.sub_jobs together to create the final output score and angle maps.
+
+        Parameters
+        ----------
+        stats: Optional[list[dict, ...]]
+            optional list of sub job statistics to merge together
+
+        Returns
+        -------
+        output: tuple[npt.NDArray[float], npt.NDArray[float]]
+            the merged score and angle maps from the subjobs
+        """
         if len(self.sub_jobs) == 0:
             # read the volumes, remove them and return them
             score_file, angle_file = (
@@ -383,7 +507,23 @@ class TMJob:
             gpu_id: int,
             return_volumes: bool = False
     ) -> Union[tuple[npt.NDArray[float], npt.NDArray[float]], dict]:
+        """Run this template matching job on the specified GPU. Search statistics of the job will always be assigned
+        to the self.job_stats.
 
+        Parameters
+        ----------
+        gpu_id: int
+            index of the GPU id to run the job on
+        return_volumes: bool
+            False (default) does not return volumes but instead writes them to disk, set to True to instead directly
+            return the score and angle volumes
+
+        Returns
+        -------
+        output: Union[tuple[npt.NDArray[float], npt.NDArray[float]], dict]
+            when volumes are returned the output consists of two numpy arrays (score and angle map), when no volumes
+            are returned the output consists of a dictionary with search statistics
+        """
         # next fast fft len
         logging.debug(f'Next fast fft shape: {tuple([next_fast_len(s, real=True) for s in self.search_size])}')
         search_volume = np.zeros(tuple([next_fast_len(s, real=True) for s in self.search_size]), dtype=np.float32)
