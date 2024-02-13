@@ -21,7 +21,7 @@ def mean_under_mask(
         input array
     mask: Union[npt.NDArray[float], cpt.NDArray[float]]
         input mask, same dimensions as data
-    mask_weight
+    mask_weight: Optional[float], default None
         optional weight of mask, if not provided mask.sum() is used to determine weight
 
     Returns

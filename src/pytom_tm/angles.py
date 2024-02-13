@@ -29,7 +29,7 @@ def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[t
     ----------
     file_name: pathlib.Path
         path to text file containing angular search, each line should contain 3 floats of anti-clockwise ZXZ
-    sort_angles: bool
+    sort_angles: bool, default True
         sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
 
     Returns
@@ -62,13 +62,13 @@ def convert_euler(
     ----------
     angles: tuple[float, float, float]
         tuple of three angles
-    order_in: str
+    order_in: str, default 'ZXZ'
         Euler rotation axis of input angles
-    order_out: str
+    order_out: str, default 'ZXZ'
         Euler rotation axis of output angles
     degrees_in: bool
         whether the input angles are in degrees
-    degrees_out
+    degrees_out: bool, default True
         whether the output angles should be in degrees
 
     Returns
