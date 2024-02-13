@@ -309,7 +309,7 @@ def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
     Depending on file suffix the function calls:
      - read_imod_defocus_file() for .defocus suffix
      - read_txt_file for .txt suffix
-     
+
     Parameters
     ----------
     file_name: pathlib.Path
