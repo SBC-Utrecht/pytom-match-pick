@@ -10,6 +10,26 @@ def spherical_mask(
         cutoff_sd: int = 3,
         center: Optional[float] = None
 ) -> npt.NDArray[float]:
+    """Wrapper around ellipsoidal_mask() to create a spherical mask with just a single radius.
+
+    Parameters
+    ----------
+    box_size: int
+        box size of the mask, equal in each dimension
+    radius: float
+        radius of sphere
+    smooth: Optional[float]
+        sigma (float relative to number of pixels) of gaussian falloff around mask
+    cutoff_sd: int
+        how many standard deviations of the Gaussian falloff to include, default of 3 is a good choice
+    center: Optional[float]
+        alternative center for the mask, default is (size - 1) / 2
+
+    Returns
+    -------
+    mask: npt.NDArray[float]
+        3D numpy array with mask at center
+    """
     return ellipsoidal_mask(box_size, radius, radius, radius, smooth, cutoff_sd=cutoff_sd, center=center)
 
 
@@ -22,16 +42,29 @@ def ellipsoidal_mask(
         cutoff_sd: int = 3,
         center: Optional[float] = None
 ) -> npt.NDArray[float]:
-    """
-    Center of the ellipsoid or sphere is (box_size - 1) / 2 => important for rotation center in template matching.
-    @param box_size: box size of the mask, equal in each dimension
-    @param major: radius of ellipsoid in x
-    @param minor1: radius of ellipsoid in y
-    @param minor2: radius of ellipsoid in z
-    @param smooth: sigma (float relative to number of pixels) of gaussian falloff of mask
-    @param cutoff_sd: how many standard deviations of the falloff to include, default of 3 is a good choice
-    @param center: alternative center for the mask, default is (size - 1) / 2
-    @return: volume with the mask
+    """Create an ellipsoidal mask in the specified square box. Ellipsoid is defined by 3 radius on x,y, and z axis.
+
+    Parameters
+    ----------
+    box_size: int
+        box size of the mask, equal in each dimension
+    major: float
+        radius of ellipsoid in x
+    minor1: float
+        radius of ellipsoid in y
+    minor2: float
+        radius of ellipsoid in z
+    smooth: Optional[float]
+        sigma (float relative to number of pixels) of gaussian falloff around mask
+    cutoff_sd: int
+        how many standard deviations of the Gaussian falloff to include, default of 3 is a good choice
+    center: Optional[float]
+        alternative center for the mask, default is (size - 1) / 2
+
+    Returns
+    -------
+    mask: npt.NDArray[float]
+        3D numpy array with mask at center
     """
     if not all([box_size > 0, major > 0, minor1 > 0, minor2 > 0]):
         raise ValueError('Invalid input for mask creation: box_size or radii are <= 0')
