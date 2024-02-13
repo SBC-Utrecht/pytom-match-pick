@@ -28,21 +28,49 @@ constants = {
 
 
 def hwhm_to_sigma(hwhm: float) -> float:
+    """Convert half with of half maximum of a Gaussian to sigma by dividing by sqrt(2 * ln(2)).
+
+    Parameters
+    ----------
+    hwhm: float
+        half with of half maximum of Gaussian
+
+    Returns
+    -------
+    sigma: float
+        sigma of Gaussian
+    """
     return hwhm / (np.sqrt(2 * np.log(2)))
 
 
 def sigma_to_hwhm(sigma: float) -> float:
+    """Convert sigma to half with of half maximum of a Gaussian by multiplying with sqrt(2 * ln(2)).
+
+    Parameters
+    ----------
+    sigma: float
+        sigma of Gaussian
+
+    Returns
+    -------
+    hwhm: float
+        half with of half maximum of Gaussian
+    """
     return sigma * (np.sqrt(2 * np.log(2)))
 
 
 def wavelength_ev2m(voltage: float) -> float:
-    """
-    Calculate wavelength of electrons from voltage.
+    """Calculate wavelength of electrons from voltage.
 
-    @param voltage: voltage of wave in eV
-    @return: wavelength of electrons in m
+    Parameters
+    ----------
+    voltage: float
+        voltage of wave in eV
 
-    @author: Marten Chaillet
+    Returns
+    -------
+    lambda: float
+        wavelength of electrons in m
     """
     h = constants["h"]
     e = constants["el"]
@@ -102,12 +130,21 @@ def radial_reduced_grid(
 
 
 def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
-    """
-    Create a 3D Gaussian low-pass filter with cutoff (or HWHM) that is reduced in fourier space.
-    @param shape: shape tuple with x,y or x,y,z dimension
-    @param spacing: voxel size in real space
-    @param resolution: resolution in real space to filter towards
-    @return: sphere in square volume
+    """Create a 3D Gaussian low-pass filter with cutoff (or HWHM) that is reduced in fourier space.
+
+    Parameters
+    ----------
+    shape: tuple[int, int, int]
+        shape tuple with x,y or x,y,z dimension
+    spacing: float
+        voxel size in real space
+    resolution: float
+        resolution in real space to filter towards
+
+    Returns
+    ----------
+    output: npt.NDArray[float]
+        array containing the filter
     """
     q = radial_reduced_grid(shape)
 
@@ -119,12 +156,21 @@ def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolu
 
 
 def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
-    """
-    Create a 3D Gaussian high-pass filter with cutoff (or HWHM) that is reduced in fourier space.
-    @param shape: shape tuple with x,y or x,y,z dimension
-    @param spacing: voxel size in real space
-    @param resolution: resolution in real space to filter towards
-    @return: sphere in square volume
+    """Create a 3D Gaussian high-pass filter with cutoff (or HWHM) that is reduced in fourier space.
+
+    Parameters
+    ----------
+    shape: tuple[int, int, int]
+        shape tuple with x,y or x,y,z dimension
+    spacing: float
+        voxel size in real space
+    resolution: float
+        resolution in real space to filter towards
+
+    Returns
+    ----------
+    output: npt.NDArray[float]
+        array containing the filter
     """
     q = radial_reduced_grid(shape)
 
@@ -141,15 +187,25 @@ def create_gaussian_band_pass(
         low_pass: Optional[float] = None,
         high_pass: Optional[float] = None
 ) -> npt.NDArray[float]:
-    """
-    Resolution bands presents the resolution shells where information needs to be maintained. For example the bands
+    """Resolution bands presents the resolution shells where information needs to be maintained. For example the bands
     might be (150A, 40A). For a spacing of 15A (nyquist resolution is 30A) this is a mild low pass filter. However,
     quite some low spatial frequencies will be cut by it.
-    @param shape: shape of output, will return fourier reduced shape
-    @param spacing: voxel size of input shape in real space
-    @param low_pass:
-    @param high_pass:
-    @return: a volume with a gaussian bandapss
+
+    Parameters
+    ----------
+    shape: tuple[int, int, int]
+        shape tuple with x,y or x,y,z dimension
+    spacing: float
+        voxel size in real space
+    low_pass: Optional[float]
+        resolution of low-pass filter
+    high_pass: Optional[float]
+        resolution of high-pass filter
+
+    Returns
+    ----------
+    output: npt.NDArray[float]
+        array containing the band-pass filter
     """
     if high_pass is None and low_pass is None:
         raise ValueError('Either low-pass or high-pass needs to be set for band-pass')
@@ -268,12 +324,22 @@ def _create_symmetric_wedge(
         wedge_angle: float,
         cut_off_radius: float
 ) -> npt.NDArray[float]:
-    """
-    This function returns a symmetric wedge object. Function should not be imported, user should call create_wedge().
-    @param shape: real space shape of volume to which it needs to be applied
-    @param wedge_angle: angle describing symmetric wedge in radians
-    @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
+    """This function returns a symmetric wedge object. Function should not be imported, user should call
+    create_wedge().
+
+    Parameters
+    ----------
+    shape: tuple[int, int, int]
+        real space shape of volume to which it needs to be applied
+    wedge_angle: float
+        angle describing symmetric wedge in radians
+    cut_off_radius: float
+        cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
+
+    Returns
+    ----------
+    wedge: npt.NDArray[float]
+        wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
     x = (np.abs(np.arange(
         -shape[0] // 2 + shape[0] % 2,
@@ -303,12 +369,21 @@ def _create_asymmetric_wedge(
         wedge_angles: tuple[float, float],
         cut_off_radius: float
 ) -> npt.NDArray[float]:
-    """
-    This function returns an asymmetric wedge object. Function should not be imported, user should call create_wedge().
-    @param shape: real space shape of volume to which it needs to be applied
-    @param wedge_angles: two angles describing asymmetric missing wedge in radians
-    @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
+    """This function returns an asymmetric wedge object. Function should not be imported, user should call create_wedge().
+
+    Parameters
+    ----------
+    shape: tuple[int, int, int]
+        real space shape of volume to which it needs to be applied
+    wedge_angles: tuple[float, float]
+        two angles describing asymmetric missing wedge in radians
+    cut_off_radius: float
+        cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
+
+    Returns
+    ----------
+    wedge: npt.NDArray[float]
+        wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
     x = (np.abs(np.arange(
         -shape[0] // 2 + shape[0] % 2,
