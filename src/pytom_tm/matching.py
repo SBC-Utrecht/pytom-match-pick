@@ -18,6 +18,22 @@ class TemplateMatchingPlan:
             device_id: int,
             wedge: Optional[npt.NDArray[float]] = None
     ):
+        """Initialize a template matching plan. All the necessary cupy arrays will be allocated on the GPU.
+
+        Parameters
+        ----------
+        volume: npt.NDArray[float]
+            3D numpy array representing the search tomogram
+        template: npt.NDArray[float]
+            3D numpy array representing the template for the search, a square box of size sx
+        mask: npt.NDArray[float]
+            3D numpy array representing the mask for the search, same dimensions as template
+        device_id: int
+            GPU device id to load arrays on
+        wedge: Optional[npt.NDArray[float]]
+            3D numpy array that contains the Fourier space weighting for the template, it should be in Fourier
+            reduced form, with dimensions (sx, sx, sx // 2 + 1)
+        """
         # Search volume + and fft transform plan for the volume
         self.volume = cp.asarray(volume, dtype=cp.float32, order='C')
         self.volume_rft = rfftn(self.volume)
@@ -50,6 +66,7 @@ class TemplateMatchingPlan:
         cp.cuda.stream.get_current_stream().synchronize()
 
     def clean(self) -> None:
+        """Remove all stored cupy arrays from the GPU's memory pool."""
         gpu_memory_pool = cp.get_default_memory_pool()
         del self.volume, self.volume_rft, self.mask, self.mask_texture, self.mask_padded, self.template, (
             self.template_texture), self.template_padded, self.wedge, self.ccc_map, self.scores, self.angles, (
@@ -71,6 +88,30 @@ class TemplateMatchingGPU:
             mask_is_spherical: bool = True,
             wedge: Optional[npt.NDArray[float]] = None
     ):
+        """Initialize a template matching run.
+
+        Parameters
+        ----------
+        job_id: str
+            string for job identification
+        device_id: int
+            GPU device id to run the job on
+        volume: npt.NDArray[float]
+            3D numpy array of tomogram
+        template: npt.NDArray[float]
+            3D numpy array of template, square box of size sx
+        mask: npt.NDArray[float]
+            3D numpy array with mask, same box size as template
+        angle_list: list[tuple[float, float, float]]
+            list of tuples with 3 floats representing Euler angle rotations
+        angle_ids: list[int]
+            list of indices for angle_list to actually search, this can be a subset of the full list
+        mask_is_spherical: bool
+            True (default) if mask is spherical, set to False for non-spherical mask which increases computation time
+        wedge: Optional[npt.NDArray[float]]
+            3D numpy array that contains the Fourier space weighting for the template, it should be in Fourier
+            reduced form, with dimensions (sx, sx, sx // 2 + 1)
+        """
         cp.cuda.Device(device_id).use()
 
         self.job_id = job_id
@@ -85,6 +126,18 @@ class TemplateMatchingGPU:
         self.plan = TemplateMatchingPlan(volume, template, mask, device_id, wedge=wedge)
 
     def run(self) -> tuple[npt.NDArray[float], npt.NDArray[float], dict]:
+        """Run the template matching job.
+
+        Returns
+        -------
+        results: tuple[npt.NDArray[float], npt.NDArray[float], dict]
+            results is a tuple with tree elements:
+                - score_map with the locally normalised maximum score over all the angles searched; a 3D numpy array
+                with same size as search volume
+                - angle_map with an index into the angle list corresponding to the maximum of the correlation scores;
+                a 3D numpy array with same size as search volume
+                - a dictionary with three floats of search statistics - 'search_space', 'variance', and 'std'
+        """
         print("Progress job_{} on device {:d}:".format(self.job_id, self.device_id))
 
         # Size x template (sxz) and center x template (cxt)
@@ -194,8 +247,24 @@ def std_under_mask_convolution(
         mask_weight: float,
         volume_rft: Optional[cpt.NDArray[complex]] = None
 ) -> cpt.NDArray[float]:
-    """
-    std convolution of volume and mask
+    """Calculate the local standard deviation under the mask for each position in the volume. Calculation is done in
+    Fourier space as this is a convolution between volume and mask.
+
+    Parameters
+    ----------
+    volume: cpt.NDArray[float]
+        cupy array to calculate local std in
+    padded_mask: cpt.NDArray[float]
+        template mask that has been padded to dimensions of volume
+    mask_weight: float
+        weight of the mask, usually calculated as mask.sum()
+    volume_rft: Optional[cpt.NDArray[float]]
+        optionally provide a precalculated reduced Fourier transform of volume to save computation
+
+    Returns
+    -------
+    std_v: cpt.NDArray[float]
+        array with local standard deviations in volume
     """
     volume_rft = rfftn(volume) if volume_rft is None else volume_rft
     std_v = (
@@ -212,14 +281,28 @@ def mean_under_mask_convolution(
         mask: cpt.NDArray[float],
         mask_weight: float
 ) -> cpt.NDArray[float]:
-    """
-    mean convolution of volume and mask
+    """Calculate local mean in volume under the masked region.
+
+    Parameters
+    ----------
+    volume_rft: cpt.NDArray[complex]
+        array containing the rfftn of the volume
+    mask: cpt.NDArray[float]
+        mask to calculate the mean under
+    mask_weight:
+        weight of the mask, usually calculated as mask.sum()
+
+    Returns
+    -------
+    mean: cpt.NDArray[float]
+        array with local means under the mask
     """
     return irfftn(
         volume_rft * rfftn(mask).conj(), s=mask.shape
     ).real / mask_weight
 
 
+"""Update scores and angles if a new maximum is found."""
 update_results_kernel = cp.ElementwiseKernel(
     'float32 scores, float32 ccc_map, float32 angle_id',
     'float32 out1, float32 out2',
@@ -228,7 +311,7 @@ update_results_kernel = cp.ElementwiseKernel(
 )
 
 
-# mean is assumed to be 0 which makes this operation a lot faster
+"""Calculate the sum of squares in a volume. Mean is assumed to be 0 which makes this operation a lot faster."""
 square_sum_kernel = cp.ReductionKernel(
     'T x',  # input params
     'T y',  # output params
