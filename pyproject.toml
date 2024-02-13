@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pytom-template-matching-gpu"
 packages = ["pytom_tm", "pytom_tm.angle_lists"]
 package-dir = {"" = "src"}
-package-data = {"pytom_tm.angle_lists": ["*.txt"]}
+package-data = {"pytom_tm.angle_lists" = ["*.txt"]}
 version = "0.3.4"
 description = "GPU template matching from PyTOM as a lightweight pip package"
 readme = "README.md"
