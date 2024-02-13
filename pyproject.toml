@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytom-template-matching-gpu"
+packages = ["pytom_tm", "pytom_tm.angle_lists"]
+package-dir = {"" = "src"}
+package-data = {"pytom_tm.angle_lists": ["*.txt"]}
+version = "0.3.4"
+description = "GPU template matching from PyTOM as a lightweight pip package"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Marten Chaillet"},
+    {name = "Sander Roet", email = "s.j.s.roet@uu.nl"}	
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: GPU :: NVIDIA CUDA",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed"
+]
+requires-python = ">= 3.9"
+dependencies = [
+    "numpy",
+    "cupy",
+    "voltools",
+    "tqdm",
+    "mrcfile"
+    "starfile"
+    "importlib_resources",
+    "packaging",
+    "scipy"
+]
+script-files=[ # This is discouraged and should be converted to project.scripts soon
+    "src/bin/pytom_create_mask.py",
+    "src/bin/pytom_create_template.py",
+    "src/bin/pytom_match_template.py",
+    "src/bin/pytom_extract_candidates.py",
+    "src/bin/pytom_estimate_roc.py",
+    "src/bin/pytom_merge_stars.py",
+]
+
+
+[project.optional-dependencies]
+plotting = ["matplotlib", "seaborn"]
+
+[project.urls]
+Repository = "https://github.com/SBC-Utrecht/pytom-template-matching-gpu"
+Issues = "https://github.com/SBC-Utrecht/pytom-template-matching-gpu/issues"
+
