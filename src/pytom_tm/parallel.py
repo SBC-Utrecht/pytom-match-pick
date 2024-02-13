@@ -18,6 +18,23 @@ except RuntimeError:
 def gpu_runner(
         gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int, unittest_mute: bool
 ) -> None:
+    """Start a GPU runner, each runner should be initialized to a multiprocessing.Proces() and manage running jobs
+    on a single GPU. Each runner will grab jobs from the task_queue and assign jobs to the result_queue once they
+    finish. When the task_queue is empty the gpu_runner will stop.
+
+    Parameters
+    ----------
+    gpu_id: int
+        a GPU index to assign to the runner
+    task_queue: mp.managers.BaseProxy
+        shared queue from multiprocessing with jobs to run
+    result_queue: mp.manager.BaseProxy
+        shared queue from multiprocessing for finished jobs
+    log_level: int
+        log level for logging
+    unittest_mute: Bool
+        optional muting of runner to prevent unittests flooding the terminal, only use for development
+    """
     if unittest_mute:
         mute_context = mute_stdout_stderr
     else:
@@ -35,12 +52,25 @@ def gpu_runner(
 def run_job_parallel(
         main_job: TMJob, volume_splits: tuple[int, int, int], gpu_ids: list[int, ...], unittest_mute: bool = False,
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
-    """
-    @param main_job: a TMJob object from pytom_tm that contains all data for a search
-    @param volume_splits: tuple of len 3 with splits in x, y, and z
-    @param gpu_ids: list of gpu indices available for the job
-    @param unittest_mute: boolean to mute spawned process terminal output, only used for unittesting
-    @return: the volumes with the LCCmax and angle ids
+    """Run a job in parallel over a single or multiple GPUs. If no volume_splits are given the search is parallelized
+    by splitting the angular search. If volume_splits are provided the job will first be split by volume,
+    if there are still more GPUs available, the subvolume jobs are still further split by angular search.
+
+    Parameters
+    ----------
+    main_job: pytom_tm.tmjob.TMJob
+        a TMJob object from pytom_tm that contains all data for a search
+    volume_splits: tuple[int, int, int]
+        tuple of len 3 with splits in x, y, and z
+    gpu_ids: list[int, ...]
+        list of gpu indices to spread jobs over
+    unittest_mute: bool
+        boolean to mute spawned process terminal output, only set to True for unittesting
+
+    Returns
+    -------
+    result: tuple[npt.NDArray[float], npt.NDArray[float]]
+        the volumes with the LCCmax and angle ids
     """
 
     n_pieces = reduce(lambda x, y: x * y, volume_splits)
