@@ -12,18 +12,17 @@ nvidia-cuda-toolkit
 
 ## Installation
 
-There are 2 options for creating a conda environment. We recommend option (1) which builds cupy against a system 
-installed cuda-toolkit. Compared to option (2) this can give an almost two-fold speedup.
+There are 2 options for creating a conda environment. We recommend option (1) which will later allow cupy to build 
+against a system installed cuda-toolkit. Compared to option (2) this can give an almost two-fold speedup:
 
-1. **(recommended)** Create a new environment without cupy and let the pip installation build cupy against a system 
-   installed CUDA-toolkit.
+1. **(recommended)** Create a new python 3 environment:
 
     ```commandline
     conda create -n pytom_tm python=3
     ```
 
-2.  Create a new environment with a prebuild cupy version and complete CUDA-toolkit. This is reliable but takes more 
-    disk space.
+2.  Create a new environment with a prebuild cupy version and complete CUDA-toolkit. This is reliable, but takes more 
+    disk space and has less optimal performance.
 
     ```commandline
     conda create -n pytom_tm -c conda-forge python=3 cupy cuda-version=11.8
@@ -36,7 +35,7 @@ Once the environment is created, activate it:
 conda activate pytom_tm
 ```
 
-Then clone the repository and install it with pip: 
+Then clone the repository and install it with pip (building cupy can take a while!): 
 
 ```commandline
 git clone https://github.com/SBC-Utrecht/pytom-template-matching-gpu.git
