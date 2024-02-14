@@ -100,8 +100,8 @@ class ParseDoseFile(argparse.Action):
 
 
 class ParseDefocusFile(argparse.Action):
-    """argparse.Action subclass to read a defocus file, either from IMOD which adheres to there file format,
-    or a txt file contain per line the defocus of each tilt."""
+    """argparse.Action subclass to read a defocus file, either from IMOD which adheres to their file format,
+    or a txt file containing per line the defocus of each tilt."""
     def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
         file_path = pathlib.Path(values)
         if not file_path.exists():
@@ -185,9 +185,9 @@ def write_mrc(
         numpy array to write as MRC
     voxel_size: float
         voxel size of array to annotate in MRC header
-    overwrite: bool
+    overwrite: bool, default True
         True (default) will overwrite current MRC on path, setting to False will error when writing to existing file
-    transpose: bool
+    transpose: bool, default True
         True (default) transpose array before writing, setting to False prevents this
 
     Returns
@@ -211,9 +211,9 @@ def read_mrc(
     ----------
     file_name: pathlib.Path
         path to file on disk
-    permissive: bool
+    permissive: bool, default True
         True (default) reads file in permissive mode, setting to False will be more strict with bad headers
-    transpose:
+    transpose: bool, default True
         True (default) transposes the volume after reading, setting to False prevents transpose but probably not a
         good idea when using the functions from this module
 
@@ -262,7 +262,7 @@ def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
 
 
 def read_dose_file(file_name: pathlib.Path) -> list[float, ...]:
-    """Read a txt file from disk using read_txt_file(). File is expected to have dose accumulation in e-/A2.
+    """Read a txt file from disk using read_txt_file(). File is expected to have dose accumulation in e-/(A^2).
 
     Parameters
     ----------
@@ -289,7 +289,7 @@ def read_imod_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
     Returns
     -------
     output: list[float, ...]
-        list of floats with defocus (in um)
+        list of floats with defocus (in μm)
     """
     with open(file_name, 'r') as fstream:
         lines = fstream.readlines()
@@ -304,7 +304,7 @@ def read_imod_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
 
 
 def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
-    """Read a defocus file with values in nm. Output returns defocus in um.
+    """Read a defocus file with values in nm. Output returns defocus in μm.
 
     Depending on file suffix the function calls:
      - read_imod_defocus_file() for .defocus suffix
@@ -318,7 +318,7 @@ def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
     Returns
     -------
     output: list[float, ...]
-        list of floats with defocus (in um)
+        list of floats with defocus (in μm)
     """
     if file_name.suffix == '.defocus':
         return read_imod_defocus_file(file_name)

@@ -52,7 +52,7 @@ def std_under_mask(
         input mask, same dimensions as data
     mean: float
         mean of array in masked region
-    mask_weight: Optional[f
+    mask_weight: Optional[float], default None
         optional weight of mask, if not provided mask.sum() is used to determine weight
 
     Returns
@@ -78,9 +78,9 @@ def normalise(
     ----------
     data: Union[npt.NDArray[float], cpt.NDArray[float]]
         input array to normalise
-    mask: Optional[Union[npt.NDArray[float], cpt.NDArray[float]]]
+    mask: Optional[Union[npt.NDArray[float], cpt.NDArray[float]]], default None
         optional mask to normalise with mean and std in masked region
-    mask_weight: Optional[float]
+    mask_weight: Optional[float], default None
         optional float specifying mask weight, if not provided mask.sum() is used
 
     Returns
@@ -112,7 +112,7 @@ def normalised_cross_correlation(
         first array for correlation
     data2: Union[npt.NDArray[float], cpt.NDArray[float]]
         second array for correlation
-    mask: Optional[Union[npt.NDArray[float], cpt.NDArray[float]]]
+    mask: Optional[Union[npt.NDArray[float], cpt.NDArray[float]]], default None
         optional mask to calculate the correlation under
 
     Returns

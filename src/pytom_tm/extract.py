@@ -47,9 +47,9 @@ def predict_tophat_mask(
     ----------
     score_volume: npt.NDArray[float]
         template matching score map
-    output_path: Optional[pathlib.Path]
+    output_path: Optional[pathlib.Path], default None
         if provided (and plotting is available), write a figure of the fit to the output folder
-    n_false_positives: int
+    n_false_positives: int, default 1
         number of false positive for error function cutoff calculation
 
     Returns

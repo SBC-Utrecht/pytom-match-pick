@@ -30,7 +30,7 @@ class TemplateMatchingPlan:
             3D numpy array representing the mask for the search, same dimensions as template
         device_id: int
             GPU device id to load arrays on
-        wedge: Optional[npt.NDArray[float]]
+        wedge: Optional[npt.NDArray[float]], default None
             3D numpy array that contains the Fourier space weighting for the template, it should be in Fourier
             reduced form, with dimensions (sx, sx, sx // 2 + 1)
         """
@@ -106,9 +106,9 @@ class TemplateMatchingGPU:
             list of tuples with 3 floats representing Euler angle rotations
         angle_ids: list[int]
             list of indices for angle_list to actually search, this can be a subset of the full list
-        mask_is_spherical: bool
+        mask_is_spherical: bool, default True
             True (default) if mask is spherical, set to False for non-spherical mask which increases computation time
-        wedge: Optional[npt.NDArray[float]]
+        wedge: Optional[npt.NDArray[float]], default None
             3D numpy array that contains the Fourier space weighting for the template, it should be in Fourier
             reduced form, with dimensions (sx, sx, sx // 2 + 1)
         """
@@ -258,7 +258,7 @@ def std_under_mask_convolution(
         template mask that has been padded to dimensions of volume
     mask_weight: float
         weight of the mask, usually calculated as mask.sum()
-    volume_rft: Optional[cpt.NDArray[float]]
+    volume_rft: Optional[cpt.NDArray[float]], default None
         optionally provide a precalculated reduced Fourier transform of volume to save computation
 
     Returns
@@ -289,7 +289,7 @@ def mean_under_mask_convolution(
         array containing the rfftn of the volume
     mask: cpt.NDArray[float]
         mask to calculate the mean under
-    mask_weight:
+    mask_weight: float
         weight of the mask, usually calculated as mask.sum()
 
     Returns

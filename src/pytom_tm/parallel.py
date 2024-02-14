@@ -18,7 +18,7 @@ except RuntimeError:
 def gpu_runner(
         gpu_id: int, task_queue: BaseProxy, result_queue: BaseProxy, log_level: int, unittest_mute: bool
 ) -> None:
-    """Start a GPU runner, each runner should be initialized to a multiprocessing.Proces() and manage running jobs
+    """Start a GPU runner, each runner should be initialized to a multiprocessing.Process() and manage running jobs
     on a single GPU. Each runner will grab jobs from the task_queue and assign jobs to the result_queue once they
     finish. When the task_queue is empty the gpu_runner will stop.
 
@@ -64,7 +64,7 @@ def run_job_parallel(
         tuple of len 3 with splits in x, y, and z
     gpu_ids: list[int, ...]
         list of gpu indices to spread jobs over
-    unittest_mute: bool
+    unittest_mute: bool, default False
         boolean to mute spawned process terminal output, only set to True for unittesting
 
     Returns

@@ -66,7 +66,7 @@ def convert_euler(
         Euler rotation axis of input angles
     order_out: str, default 'ZXZ'
         Euler rotation axis of output angles
-    degrees_in: bool
+    degrees_in: bool, default True
         whether the input angles are in degrees
     degrees_out: bool, default True
         whether the output angles should be in degrees

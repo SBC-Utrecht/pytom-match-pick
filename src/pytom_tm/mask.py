@@ -18,11 +18,11 @@ def spherical_mask(
         box size of the mask, equal in each dimension
     radius: float
         radius of sphere
-    smooth: Optional[float]
+    smooth: Optional[float], default None
         sigma (float relative to number of pixels) of gaussian falloff around mask
-    cutoff_sd: int
+    cutoff_sd: int, default 3
         how many standard deviations of the Gaussian falloff to include, default of 3 is a good choice
-    center: Optional[float]
+    center: Optional[float], default None
         alternative center for the mask, default is (size - 1) / 2
 
     Returns
@@ -54,11 +54,11 @@ def ellipsoidal_mask(
         radius of ellipsoid in y
     minor2: float
         radius of ellipsoid in z
-    smooth: Optional[float]
+    smooth: Optional[float], default None
         sigma (float relative to number of pixels) of gaussian falloff around mask
-    cutoff_sd: int
+    cutoff_sd: int, default 3
         how many standard deviations of the Gaussian falloff to include, default of 3 is a good choice
-    center: Optional[float]
+    center: Optional[float], default None
         alternative center for the mask, default is (size - 1) / 2
 
     Returns

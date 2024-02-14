@@ -114,38 +114,38 @@ class TMJob:
             path to mask MRC
         output_dir: pathlib.Path
             path to output directory
-        angle_increment: str
+        angle_increment: str, default '7.00'
             angular increment of template search
-        mask_is_spherical: bool
+        mask_is_spherical: bool, default True
             whether template mask is spherical, reduces computation complexity
-        tilt_angles: Optional[list[float, ...]]
+        tilt_angles: Optional[list[float, ...]], default None
             tilt angles of tilt-series used to reconstruct tomogram, if only two floats will be used to generate a
             continuous wedge model
-        tilt_weighting: bool
+        tilt_weighting: bool, default False
             use advanced tilt weighting options, can be supplemented with CTF parameters and accumulated dose
-        search_x: Optional[list[int, int]]
+        search_x: Optional[list[int, int]], default None
             restrict tomogram search region along the x-axis
-        search_y: Optional[list[int, int]]
+        search_y: Optional[list[int, int]], default None
             restrict tomogram search region along the y-axis
-        search_z: Optional[list[int, int]]
+        search_z: Optional[list[int, int]], default None
             restrict tomogram search region along the z-axis
-        voxel_size: Optional[float]
-            voxel of tomogram and template (in A) if not provided will be read from template/tomogram MRCs
-        low_pass: Optional[float]
+        voxel_size: Optional[float], default None
+            voxel size of tomogram and template (in A) if not provided will be read from template/tomogram MRCs
+        low_pass: Optional[float], default None
             optional low-pass filter (resolution in A) to apply to tomogram and template
-        high_pass: Optional[float]
+        high_pass: Optional[float], default None
             optional high-pass filter (resolution in A) to apply to tomogram and template
-        dose_accumulation: Optional[list[float, ...]]
-            list wil dose accumulation per tilt image
-        ctf_data: Optional[list[dict, ...]]
-            list op dictionaries with CTF parameters per tilt image, see pytom_tm.weight.create_ctf() for parameter
+        dose_accumulation: Optional[list[float, ...]], default None
+            list with dose accumulation per tilt image
+        ctf_data: Optional[list[dict, ...]], default None
+            list of dictionaries with CTF parameters per tilt image, see pytom_tm.weight.create_ctf() for parameter
             definition
-        whiten_spectrum: bool
+        whiten_spectrum: bool, default False
             whether to apply spectrum whitening
-        rotational_symmetry: int
-            specify a rotationa symmetry around the z-axis, is only valid if the symmetry axis of the template is
+        rotational_symmetry: int, default 1
+            specify a rotational symmetry around the z-axis, is only valid if the symmetry axis of the template is
             aligned with the z-axis
-        pytom_tm_version_number: str
+        pytom_tm_version_number: str, default current version
             a string with the version number of pytom_tm for backward compatibility
         """
         self.mask = mask
@@ -335,8 +335,8 @@ class TMJob:
         The sub jobs search area of the full tomogram is defined by: new_job.search_origin and new_job.search_size.
         They are used when loading the search volume from the full tomogram.
 
-        The attribute new_job.whole_start defines how the volume maps back to the score volume of the parent job (
-        which can be different size from the tomogram when the search is restricted along x, y or z).
+        The attribute new_job.whole_start defines how the volume maps back to the score volume of the parent job
+        (which can be a different size than the tomogram when the search is restricted along x, y or z).
 
         Finally, new_job.sub_start and new_job.sub_step, extract the score and angle map without the template
         overhang from the subvolume.
@@ -430,7 +430,7 @@ class TMJob:
 
         Parameters
         ----------
-        stats: Optional[list[dict, ...]]
+        stats: Optional[list[dict, ...]], default None
             optional list of sub job statistics to merge together
 
         Returns
@@ -513,7 +513,7 @@ class TMJob:
         Parameters
         ----------
         gpu_id: int
-            index of the GPU id to run the job on
+            index of the GPU to run the job on
         return_volumes: bool
             False (default) does not return volumes but instead writes them to disk, set to True to instead directly
             return the score and angle volumes

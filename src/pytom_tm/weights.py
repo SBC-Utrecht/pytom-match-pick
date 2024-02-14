@@ -28,12 +28,12 @@ constants = {
 
 
 def hwhm_to_sigma(hwhm: float) -> float:
-    """Convert half with of half maximum of a Gaussian to sigma by dividing by sqrt(2 * ln(2)).
+    """Convert half width of half maximum of a Gaussian to sigma by dividing by sqrt(2 * ln(2)).
 
     Parameters
     ----------
     hwhm: float
-        half with of half maximum of Gaussian
+        half width of half maximum of Gaussian
 
     Returns
     -------
@@ -44,7 +44,7 @@ def hwhm_to_sigma(hwhm: float) -> float:
 
 
 def sigma_to_hwhm(sigma: float) -> float:
-    """Convert sigma to half with of half maximum of a Gaussian by multiplying with sqrt(2 * ln(2)).
+    """Convert sigma to half width of half maximum of a Gaussian by multiplying with sqrt(2 * ln(2)).
 
     Parameters
     ----------
@@ -54,7 +54,7 @@ def sigma_to_hwhm(sigma: float) -> float:
     Returns
     -------
     hwhm: float
-        half with of half maximum of Gaussian
+        half width of half maximum of Gaussian
     """
     return sigma * (np.sqrt(2 * np.log(2)))
 
@@ -134,7 +134,7 @@ def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolu
 
     Parameters
     ----------
-    shape: tuple[int, int, int]
+    shape: Union[tuple[int, int, int], tuple[int, int]]
         shape tuple with x,y or x,y,z dimension
     spacing: float
         voxel size in real space
@@ -160,7 +160,7 @@ def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resol
 
     Parameters
     ----------
-    shape: tuple[int, int, int]
+    shape: Union[tuple[int, int, int], tuple[int, int]]
         shape tuple with x,y or x,y,z dimension
     spacing: float
         voxel size in real space
@@ -193,13 +193,13 @@ def create_gaussian_band_pass(
 
     Parameters
     ----------
-    shape: tuple[int, int, int]
+    shape: Union[tuple[int, int, int], tuple[int, int]]
         shape tuple with x,y or x,y,z dimension
     spacing: float
         voxel size in real space
-    low_pass: Optional[float]
+    low_pass: Optional[float], default None
         resolution of low-pass filter
-    high_pass: Optional[float]
+    high_pass: Optional[float], default None
         resolution of high-pass filter
 
     Returns
