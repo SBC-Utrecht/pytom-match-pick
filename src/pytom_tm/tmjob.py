@@ -621,6 +621,7 @@ class TMJob:
             slice(self.sub_start[1], self.sub_start[1] + self.sub_step[1]),
             slice(self.sub_start[2], self.sub_start[2] + self.sub_step[2])
         )
+        print(search_volume_roi)
 
         tm = TemplateMatchingGPU(
             job_id=self.job_key,
@@ -630,9 +631,9 @@ class TMJob:
             mask=mask,
             angle_list=angle_list,
             angle_ids=angle_ids,
-            stats_roi=search_volume_roi,
             mask_is_spherical=self.mask_is_spherical,
-            wedge=template_wedge
+            wedge=template_wedge,
+            stats_roi=search_volume_roi
         )
         results = tm.run()
         score_volume = results[0][:self.search_size[0], :self.search_size[1], :self.search_size[2]]
