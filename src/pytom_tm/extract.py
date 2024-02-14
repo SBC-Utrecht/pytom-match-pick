@@ -283,7 +283,7 @@ def extract_particles(
 
         fig, ax = plt.subplots()
         ax.scatter(x, y, label='scores', marker='o')
-        ax.plot(x_ext, y_background, label='background', color='tab:orage')
+        ax.plot(x_ext, y_background, label='background', color='tab:orange')
         ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
         ax.set_ylim(top=(3 / 2) * max(y))
         ax.set_ylabel('Occurence')
