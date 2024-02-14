@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytom-template-matching-gpu"
-version = "0.3.4"
+version = "0.3.5"
 description = "GPU template matching from PyTOM as a lightweight pip package"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -26,7 +26,7 @@ classifiers = [
 requires-python = ">= 3.9"
 dependencies = [
     "numpy",
-    "cupy",
+    #"cupy",
     "voltools",
     "tqdm",
     "mrcfile",

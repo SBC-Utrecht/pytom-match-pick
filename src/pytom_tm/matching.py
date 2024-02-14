@@ -7,6 +7,7 @@ from typing import Optional
 from cupyx.scipy.fft import rfftn, irfftn, fftshift
 from tqdm import tqdm
 from pytom_tm.correlation import mean_under_mask, std_under_mask
+from packaging import version
 
 
 class TemplateMatchingPlan:
@@ -311,13 +312,18 @@ update_results_kernel = cp.ElementwiseKernel(
 )
 
 
-"""Calculate the sum of squares in a volume. Mean is assumed to be 0 which makes this operation a lot faster."""
-square_sum_kernel = cp.ReductionKernel(
-    'T x',  # input params
-    'T y',  # output params
-    'x * x',  # pre-processing expression
-    'a + b',  # reduction operation
-    'y = a',  # post-reduction output processing
-    '0',  # identity value
-    'variance'  # kernel name
-)
+# Temporary workaround for ReductionKernel issue in cupy 13.0.0 (see: https://github.com/cupy/cupy/issues/8184)
+if version.parse(cp.__version__) == version.parse('13.0.0'):
+    def square_sum_kernel(x):
+        return (x ** 2).sum()
+else:
+    """Calculate the sum of squares in a volume. Mean is assumed to be 0 which makes this operation a lot faster."""
+    square_sum_kernel = cp.ReductionKernel(
+        'T x',  # input params
+        'T y',  # output params
+        'x * x',  # pre-processing expression
+        'a + b',  # reduction operation
+        'y = a',  # post-reduction output processing
+        '0',  # identity value
+        'variance'  # kernel name
+    )
