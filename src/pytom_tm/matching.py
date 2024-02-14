@@ -86,9 +86,9 @@ class TemplateMatchingGPU:
             mask: npt.NDArray[float],
             angle_list: list[tuple[float, float, float]],
             angle_ids: list[int],
-            stats_roi: tuple[slice, slice, slice],
             mask_is_spherical: bool = True,
-            wedge: Optional[npt.NDArray[float]] = None
+            wedge: Optional[npt.NDArray[float]] = None,
+            stats_roi: Optional[tuple[slice, slice, slice]] = None
     ):
         """Initialize a template matching run.
 
@@ -108,13 +108,14 @@ class TemplateMatchingGPU:
             list of tuples with 3 floats representing Euler angle rotations
         angle_ids: list[int]
             list of indices for angle_list to actually search, this can be a subset of the full list
-        stats_roi: tuple[slice, slice, slice]
-            region of interest to calculate statistics on the search volume
         mask_is_spherical: bool, default True
             True (default) if mask is spherical, set to False for non-spherical mask which increases computation time
         wedge: Optional[npt.NDArray[float]], default None
             3D numpy array that contains the Fourier space weighting for the template, it should be in Fourier
             reduced form, with dimensions (sx, sx, sx // 2 + 1)
+        stats_roi: Optional[tuple[slice, slice, slice]], default None
+            region of interest to calculate statistics on the search volume, default will just take the full search
+            volume
         """
         cp.cuda.Device(device_id).use()
 
@@ -125,8 +126,15 @@ class TemplateMatchingGPU:
         self.mask_is_spherical = mask_is_spherical  # whether mask is spherical
         self.angle_list = angle_list
         self.angle_ids = angle_ids
-        self.stats_roi = stats_roi
         self.stats = {'search_space': 0, 'variance': 0., 'std': 0.}
+        if stats_roi is None:
+            self.stats_roi = (
+                slice(0, volume.shape[0]),
+                slice(0, volume.shape[1]),
+                slice(0, volume.shape[2])
+            )
+        else:
+            self.stats_roi = stats_roi
 
         self.plan = TemplateMatchingPlan(volume, template, mask, device_id, wedge=wedge)
 
@@ -153,6 +161,9 @@ class TemplateMatchingGPU:
         # Size x volume (sxv) and center x volume (xcv)
         sxv, syv, szv = self.plan.template_padded.shape
         cxv, cyv, czv = sxv // 2, syv // 2, szv // 2
+
+        # calculate roi size
+        roi_size = self.plan.volume[self.stats_roi].size
 
         if self.mask_is_spherical:  # Then we only need to calculate std volume once
             self.plan.mask_padded[cxv - cxt:cxv + cxt + mx,
@@ -233,14 +244,11 @@ class TemplateMatchingGPU:
 
             self.stats['variance'] += (
                     square_sum_kernel(
-                        self.plan.ccc_map[self.stats_roi[0], self.stats_roi[1], self.stats_roi[2]]
-                    ) / self.plan.volume.size
+                        self.plan.ccc_map[self.stats_roi]
+                    ) / roi_size
             )
 
-        self.stats['search_space'] = int(
-            self.plan.volume[self.stats_roi[0], self.stats_roi[1], self.stats_roi[2]].size *
-            len(self.angle_ids)
-        )
+        self.stats['search_space'] = int(roi_size * len(self.angle_ids))
         self.stats['variance'] = float(self.stats['variance'] / len(self.angle_ids))
         self.stats['std'] = float(cp.sqrt(self.stats['variance']))
 

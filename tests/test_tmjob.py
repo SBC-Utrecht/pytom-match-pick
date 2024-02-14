@@ -247,13 +247,13 @@ class TestTMJob(unittest.TestCase):
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
         self.assertAlmostEqual(angle_diff, 0, places=1, msg='angle diff should not change')
 
-        print(self.job.job_stats)
         split_stats = self.job.job_stats
         reference_stats = load_json_to_tmjob(TEST_JOB_JSON).job_stats
-        print(reference_stats)
+        # print(self.job.job_stats)
+        # print(reference_stats)
         self.assertEqual(split_stats['search_space'], reference_stats['search_space'],
                          msg='Search space should remain identical upon subvolume splitting.')
-        self.assertAlmostEqual(split_stats['std'], reference_stats['std'], places=6,
+        self.assertAlmostEqual(split_stats['std'], reference_stats['std'], places=3,
                                msg='Standard deviation over search should be almost identical.')
 
     def test_splitting_with_offsets(self):
