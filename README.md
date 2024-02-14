@@ -21,7 +21,7 @@ against a system installed cuda-toolkit. Compared to option (2) this can give an
     conda create -n pytom_tm python=3
     ```
 
-2.  Create a new environment with a prebuild cupy version and complete CUDA-toolkit. This is reliable, but takes more 
+2.  Create a new environment with a prebuild cupy version and complete CUDA-toolkit. This is more reliable, but takes more 
     disk space and has less optimal performance.
 
     ```commandline
