@@ -36,7 +36,7 @@ def generate_template_from_map(
         voxel size of input map (in A)
     output_spacing: float
         voxel size of output map (in A) the ratio of input to output will be used for downsampling
-    ctf_params: Optional[dict]
+    ctf_params: Optional[dict], default None
         dictionary with CTF params to apply to the template, see pytom_tm.weights.create_ctf() for details
     center: bool, default False
         set to True to center the template in the box by calculating the center of mass
