@@ -285,7 +285,7 @@ def extract_particles(
         ax.scatter(x, y, label='scores', marker='o')
         ax.plot(x_ext, y_background, label='background', color='tab:orange')
         ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
-        ax.set_ylim(top=(3 / 2) * max(y))
+        ax.set_ylim(bottom=0, top=(3 / 2) * max(y))
         ax.set_ylabel('Occurence')
         ax.set_xlabel(r'${LCC}_{max}$')
         ax.legend()
