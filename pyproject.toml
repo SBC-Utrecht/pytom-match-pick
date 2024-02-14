@@ -9,7 +9,7 @@ description = "GPU template matching from PyTOM as a lightweight pip package"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
-    {name = "Marten Chaillet"},
+    {name = "Marten Chaillet", email = "m.l.chaillet@uu.nl"},
     {name = "Sander Roet", email = "s.j.s.roet@uu.nl"}	
 ]
 classifiers = [
