@@ -208,7 +208,9 @@ class TMJob:
         logging.debug(f'origin, size = {self.search_origin}, {self.search_size}')
 
         self.whole_start = None
-        self.sub_start, self.sub_step = None, None
+        # for the main job these are always [0,0,0] and self.search_size, for sub_jobs these will differ from the
+        # search origin and search size
+        self.sub_start, self.sub_step = [0, 0, 0], self.search_size.copy()
 
         # Rotation parameters
         self.start_slice = 0
@@ -612,6 +614,11 @@ class TMJob:
             self.steps_slice
         )]
 
+        # slices for relevant part for job statistics
+        x_slice = slice(self.sub_start[0], self.sub_start[0] + self.sub_step[0])
+        y_slice = slice(self.sub_start[1], self.sub_start[1] + self.sub_step[1])
+        z_slice = slice(self.sub_start[2], self.sub_start[2] + self.sub_step[2])
+
         tm = TemplateMatchingGPU(
             job_id=self.job_key,
             device_id=gpu_id,
@@ -620,6 +627,7 @@ class TMJob:
             mask=mask,
             angle_list=angle_list,
             angle_ids=angle_ids,
+            stats_roi=(x_slice, y_slice, z_slice),
             mask_is_spherical=self.mask_is_spherical,
             wedge=template_wedge
         )
