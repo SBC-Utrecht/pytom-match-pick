@@ -272,11 +272,11 @@ def extract_particles(
     ]), scores
 
     if plotting_available:
-        y, bins = np.histogram(scores, bins=30)
+        y, bins = np.histogram(scores, bins=15)
         x = (bins[1:] + bins[:-1]) / 2
         hist_step = bins[1] - bins[0]
         # add 10 more starting values
-        x_ext = np.concatenate((np.linspace(x[0] - 10 * hist_step, x[0], 10), x))
+        x_ext = np.concatenate((np.linspace(x[0] - 5 * hist_step, x[0], 10), x))
         noise_sigma = job.job_stats['std']
         noise_amplitude = (job.job_stats['search_space'] / (noise_sigma * np.sqrt(2 * np.pi))) * hist_step
         y_background = noise_amplitude * np.exp(- x_ext ** 2 / (2 * noise_sigma ** 2))
@@ -285,7 +285,7 @@ def extract_particles(
         ax.scatter(x, y, label='scores', marker='o')
         ax.plot(x_ext, y_background, label='background', color='tab:orange')
         ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
-        ax.set_ylim(bottom=0, top=(3 / 2) * max(y))
+        ax.set_ylim(bottom=0, top=2 * max(y))
         ax.set_ylabel('Occurence')
         ax.set_xlabel(r'${LCC}_{max}$')
         ax.legend()
