@@ -621,7 +621,6 @@ class TMJob:
             slice(self.sub_start[1], self.sub_start[1] + self.sub_step[1]),
             slice(self.sub_start[2], self.sub_start[2] + self.sub_step[2])
         )
-        print(search_volume_roi)
 
         tm = TemplateMatchingGPU(
             job_id=self.job_key,

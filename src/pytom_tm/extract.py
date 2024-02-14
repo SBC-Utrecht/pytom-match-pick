@@ -272,7 +272,7 @@ def extract_particles(
     ]), scores
 
     if plotting_available:
-        y, bins = np.histogram(scores, bins=15)
+        y, bins = np.histogram(scores, bins=20)
         x = (bins[1:] + bins[:-1]) / 2
         hist_step = bins[1] - bins[0]
         # add 10 more starting values
@@ -290,7 +290,11 @@ def extract_particles(
         ax.set_xlabel(r'${LCC}_{max}$')
         ax.legend()
         plt.tight_layout()
-        plt.savefig(job.output_dir.joinpath(f'{job.tomo_id}_extraction_graph.svg'), dpi=600, transparent=False,
-                    bbox_inches='tight')
+        plt.savefig(
+            job.output_dir.joinpath(f'{job.tomo_id}_extraction_graph.svg'),
+            dpi=600,
+            transparent=False,
+            bbox_inches='tight'
+        )
 
     return output
