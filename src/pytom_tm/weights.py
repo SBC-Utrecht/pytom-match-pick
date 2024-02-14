@@ -98,7 +98,7 @@ def radial_reduced_grid(
     ----------
     shape: Union[tuple[int, int, int], tuple[int, int]]
         2D/3D input shape, usually the .shape attribute of a numpy array
-    shape_is_reduced: bool
+    shape_is_reduced: bool, default False
         whether the shape is already in a reduced fourier format, False by default
 
     Returns
@@ -129,7 +129,11 @@ def radial_reduced_grid(
         return np.sqrt(x ** 2 + y ** 2)
 
 
-def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
+def create_gaussian_low_pass(
+        shape: Union[tuple[int, int, int], tuple[int, int]],
+        spacing: float,
+        resolution: float
+) -> npt.NDArray[float]:
     """Create a 3D Gaussian low-pass filter with cutoff (or HWHM) that is reduced in fourier space.
 
     Parameters
@@ -155,7 +159,11 @@ def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolu
     return np.fft.ifftshift(np.exp(-q ** 2 / (2 * sigma_fourier ** 2)), axes=(0, 1))
 
 
-def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
+def create_gaussian_high_pass(
+        shape: Union[tuple[int, int, int], tuple[int, int]],
+        spacing: float,
+        resolution: float
+) -> npt.NDArray[float]:
     """Create a 3D Gaussian high-pass filter with cutoff (or HWHM) that is reduced in fourier space.
 
     Parameters
@@ -182,7 +190,7 @@ def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resol
 
 
 def create_gaussian_band_pass(
-        shape: tuple[int, int, int],
+        shape: Union[tuple[int, int, int], tuple[int, int]],
         spacing: float,
         low_pass: Optional[float] = None,
         high_pass: Optional[float] = None
@@ -246,26 +254,26 @@ def create_wedge(
 
     Parameters
     ----------
-    shape
+    shape: tuple[int, int, int]
         real space shape of volume to which it needs to be applied
-    tilt_angles
+    tilt_angles: list[float, ...]
         tilt angles used for reconstructing the tomogram
-    voxel_size
+    voxel_size: float
         voxel size is needed for the calculation of various filters
-    cut_off_radius
+    cut_off_radius: float, default 1.
         cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    angles_in_degrees
+    angles_in_degrees: bool, default True
         whether angles are in degrees or radians units
-    low_pass
+    low_pass: Optional[float], default None
         low pass filter resolution in A
-    high_pass
+    high_pass: Optional[float], default None
         high pass filter resolution in A
-    tilt_weighting
+    tilt_weighting: bool, default False
         apply tilt weighting
-    accumulated_dose_per_tilt
+    accumulated_dose_per_tilt: Optional[list[float, ...]], default None
         accumulated dose for each tilt for dose weighting
-    ctf_params_per_tilt
-        ctf parameters for each tilt
+    ctf_params_per_tilt: Optional[list[dict]], default None
+        ctf parameters for each tilt (see _create_tilt_weighted_wedge() for dict specification)
 
     Returns
     -------
@@ -451,9 +459,9 @@ def _create_tilt_weighted_wedge(
         cut off for the mask as a fraction of nyquist, value between 0 and 1
     pixel_size_angstrom: float
         the pixel size as a value in Å
-    accumulated_dose_per_tilt: list[float, ...]
+    accumulated_dose_per_tilt: list[float, ...], default None
         the accumulated dose in e− Å−2
-    ctf_params_per_tilt: list[dict, ...]
+    ctf_params_per_tilt: list[dict, ...], default None
         the ctf parameters per tilt angle, list of dicts where each dict has the following keys:
         - 'defocus'; in um
         - 'amplitude'; fraction of amplitude contrast between 0 and 1
@@ -549,7 +557,7 @@ def create_ctf(
 
     Parameters
     ----------
-    shape: tuple[int, int, int]
+    shape: Union[tuple[int, int, int], tuple[int, int]]
         dimensions of volume to create ctf in
     pixel_size: float
         pixel size for ctf in m
@@ -561,9 +569,9 @@ def create_ctf(
         acceleration voltage of the microscope in eV
     spherical_aberration: float
         spherical aberration in m
-    cut_after_first_zero: bool
+    cut_after_first_zero: bool, default False
         whether to cut ctf after first zero crossing
-    flip_phase: bool
+    flip_phase: bool, default False
         make ctf fully positive/negative to imitate ctf correction by phase flipping
 
     Returns
