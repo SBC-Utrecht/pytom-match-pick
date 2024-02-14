@@ -103,7 +103,7 @@ def predict_tophat_mask(
 
     if plotting_available and output_path is not None:
         fig, ax = plt.subplots()
-        ax.scatter(x_raw, y_raw, label='scores', marker='o')
+        ax.scatter(x_raw, y_raw, label='tophat', marker='o')
         ax.plot(x_raw, gauss(x_raw, *coeff_log), label='pred', color='tab:orange')
         ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
         ax.axvspan(x_fit[0], x_fit[-1], alpha=0.25, color='gray', label='fitted data')
@@ -282,7 +282,7 @@ def extract_particles(
         y_background = noise_amplitude * np.exp(- x_ext ** 2 / (2 * noise_sigma ** 2))
 
         fig, ax = plt.subplots()
-        ax.scatter(x, y, label='scores', marker='o')
+        ax.scatter(x, y, label='extracted', marker='o')
         ax.plot(x_ext, y_background, label='background', color='tab:orange')
         ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
         ax.set_ylim(bottom=0, top=2 * max(y))
