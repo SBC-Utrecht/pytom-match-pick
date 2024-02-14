@@ -187,14 +187,10 @@ def extract_particles(
     score_volume[:, :, -particle_radius_px:] = 0
 
     sigma = job.job_stats['std']
+    search_space = job.job_stats['search_space']
     if cut_off is None:
         # formula Rickgauer et al. (2017, eLife): N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
         # we need to find theta (i.e. the cut off)
-        search_space = (
-            # wherever the score volume has not been explicitly set to -1 is the size of the search region
-            (score_volume > -1).sum() *
-            int(np.ceil(job.n_rotations / job.rotational_symmetry))
-        )
         cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
         logging.info(f'cut off for particle extraction: {cut_off}')
     elif cut_off < 0:
@@ -277,9 +273,8 @@ def extract_particles(
         hist_step = bins[1] - bins[0]
         # add 10 more starting values
         x_ext = np.concatenate((np.linspace(x[0] - 5 * hist_step, x[0], 10), x))
-        noise_sigma = job.job_stats['std']
-        noise_amplitude = (job.job_stats['search_space'] / (noise_sigma * np.sqrt(2 * np.pi))) * hist_step
-        y_background = noise_amplitude * np.exp(- x_ext ** 2 / (2 * noise_sigma ** 2))
+        noise_amplitude = (search_space / (sigma * np.sqrt(2 * np.pi))) * hist_step
+        y_background = noise_amplitude * np.exp(- x_ext ** 2 / (2 * sigma ** 2))
 
         fig, ax = plt.subplots()
         ax.scatter(x, y, label='extracted', marker='o')
