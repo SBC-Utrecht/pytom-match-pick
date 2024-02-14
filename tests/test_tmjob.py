@@ -6,7 +6,7 @@ import mrcfile
 from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list
-from pytom_tm.tmjob import TMJob, TMJobError
+from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob
 from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm.extract import extract_particles
 from test_weights import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES
@@ -29,6 +29,7 @@ TEST_SCORES = TEST_DATA_DIR.joinpath('tomogram_scores.mrc')
 TEST_ANGLES = TEST_DATA_DIR.joinpath('tomogram_angles.mrc')
 TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath('custom_angular_search.txt')
 TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath('tomogram_whitening_filter.npy')
+TEST_JOB_JSON = TEST_DATA_DIR.joinpath('tomogram_job.json')
 
 
 class TestTMJob(unittest.TestCase):
@@ -93,6 +94,7 @@ class TestTMJob(unittest.TestCase):
             angle,
             job.voxel_size
         )
+        job.write_to_json(TEST_JOB_JSON)
 
         np.savetxt(TEST_CUSTOM_ANGULAR_SEARCH, np.random.rand(100, 3))
 
@@ -111,6 +113,7 @@ class TestTMJob(unittest.TestCase):
         # the whitening filter might not exist if the job with spectrum whitening failed, so the unlinking needs to
         # allow this (with missing_ok=True) to ensure clean up of the test directory
         TEST_WHITENING_FILTER.unlink(missing_ok=True)
+        TEST_JOB_JSON.unlink()
         TEST_DATA_DIR.rmdir()
 
     def setUp(self):
@@ -208,8 +211,9 @@ class TestTMJob(unittest.TestCase):
             self.job.split_volume_search((10, 3, 2))
 
         sub_jobs = self.job.split_volume_search((2, 3, 2))
+        stats = []
         for x in sub_jobs:
-            x.start_job(0)
+            stats.append(x.start_job(0))
             job_scores = TEST_DATA_DIR.joinpath(f'tomogram_scores_{x.job_key}.mrc')
             job_angles = TEST_DATA_DIR.joinpath(f'tomogram_angles_{x.job_key}.mrc')
             self.assertTrue(
@@ -220,7 +224,7 @@ class TestTMJob(unittest.TestCase):
                 job_angles.exists(),
                 msg='Expected output from job does not exist.'
             )
-        score, angle = self.job.merge_sub_jobs()
+        score, angle = self.job.merge_sub_jobs(stats)
         ind = np.unravel_index(score.argmax(), score.shape)
 
         self.assertTrue(score.max() > 0.931, msg='lcc max value lower than expected')
@@ -243,6 +247,16 @@ class TestTMJob(unittest.TestCase):
         self.assertAlmostEqual(score_diff, 0, places=1, msg='score diff should not be larger than 0.01')
         self.assertAlmostEqual(angle_diff, 0, places=1, msg='angle diff should not change')
 
+        print(self.job.job_stats)
+        split_stats = self.job.job_stats
+        reference_stats = load_json_to_tmjob(TEST_JOB_JSON).job_stats
+        print(reference_stats)
+        self.assertEqual(split_stats['search_space'], reference_stats['search_space'],
+                         msg='Search space should remain identical upon subvolume splitting.')
+        self.assertAlmostEqual(split_stats['std'], reference_stats['std'], places=6,
+                               msg='Standard deviation over search should be almost identical.')
+
+    def test_splitting_with_offsets(self):
         # check if subjobs have correct offsets for the main job, the last sub job will have the largest errors
         job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
                     angle_increment='38.53', voxel_size=1., search_x=[9, 90], search_y=[25, 102], search_z=[19, 54])
