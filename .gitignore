@@ -10,3 +10,6 @@ build/
 
 # skip pycache
 *__pycache__*
+
+# skip vim swap files
+*.swp
