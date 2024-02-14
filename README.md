@@ -12,19 +12,23 @@ nvidia-cuda-toolkit
 
 ## Installation
 
-There are 2 options for creating a conda environment:
+There are 2 options for creating a conda environment. We recommend option (1) which builds cupy against a system 
+installed cuda-toolkit. Compared to option (2) this can give an almost two-fold speedup.
 
-1. **(recommended)** Create a new environment with a prebuild cupy version and complete CUDA-toolkit. This is reliable but takes more disk space.
+1. **(recommended)** Create a new environment without cupy and let the pip installation build cupy against a system 
+   installed CUDA-toolkit.
+
+    ```commandline
+    conda create -n pytom_tm python=3
+    ```
+
+2.  Create a new environment with a prebuild cupy version and complete CUDA-toolkit. This is reliable but takes more 
+    disk space.
 
     ```commandline
     conda create -n pytom_tm -c conda-forge python=3 cupy cuda-version=11.8
     ```
 
-2. Create a new environment without cupy and let pip build against a system installed CUDA-toolkit.
-
-    ```commandline
-    conda create -n pytom_tm python=3
-    ```
 
 Once the environment is created, activate it:
 
@@ -40,7 +44,9 @@ cd pytom-template-matching-gpu
 python -m pip install '.[plotting]'
 ```
 
-The installation above also adds the optional dependencies `[matplotlib, seaborn]` which are required to run `pytom_estimate_roc.py`. They are not essential to the core template matching fucntionality, so for some systems (such as certain cluster environments) it might be desirable to skip them. In that case remove `[plotting]` from the pip install command:
+The installation above also adds the optional dependencies `[matplotlib, seaborn]` which are required to run 
+`pytom_estimate_roc.py`. They are not essential to the core template matching functionality, so for some systems 
+(such as certain cluster environments) it might be desirable to skip them. In that case remove `[plotting]` from the pip install command:
 
 ```commandline
 python -m pip install .
