@@ -26,7 +26,32 @@ def generate_template_from_map(
         output_box_size: Optional[int] = None,
         display_filter: bool = False
 ) -> npt.NDArray[float]:
+    """Generate a template from a density map.
 
+    Parameters
+    ----------
+    input_map: npt.NDArray[float]
+        3D density to use for generating the template, if box is not square it will be padded to square
+    input_spacing: float
+        voxel size of input map (in A)
+    output_spacing: float
+        voxel size of output map (in A) the ratio of input to output will be used for downsampling
+    ctf_params: Optional[dict], default None
+        dictionary with CTF params to apply to the template, see pytom_tm.weights.create_ctf() for details
+    center: bool, default False
+        set to True to center the template in the box by calculating the center of mass
+    filter_to_resolution: Optional[float], default None
+        low-pass filter resolution to apply to template, if not provided will be set to 2 * output_spacing
+    output_box_size:  Optional[int], default None
+        final box size of template
+    display_filter: bool, default False
+        flag to display a plot of the filter applied to the template
+
+    Returns
+    -------
+    template: npt.NDArray[float]
+        processed template in the specified output box size, box will be square
+    """
     # make the map a box with equal dimensions
     if len(set(input_map.shape)) != 1:
         diff = [max(input_map.shape) - s for s in input_map.shape]

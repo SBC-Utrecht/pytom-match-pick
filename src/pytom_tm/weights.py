@@ -28,21 +28,49 @@ constants = {
 
 
 def hwhm_to_sigma(hwhm: float) -> float:
+    """Convert half width of half maximum of a Gaussian to sigma by dividing by sqrt(2 * ln(2)).
+
+    Parameters
+    ----------
+    hwhm: float
+        half width of half maximum of Gaussian
+
+    Returns
+    -------
+    sigma: float
+        sigma of Gaussian
+    """
     return hwhm / (np.sqrt(2 * np.log(2)))
 
 
 def sigma_to_hwhm(sigma: float) -> float:
+    """Convert sigma to half width of half maximum of a Gaussian by multiplying with sqrt(2 * ln(2)).
+
+    Parameters
+    ----------
+    sigma: float
+        sigma of Gaussian
+
+    Returns
+    -------
+    hwhm: float
+        half width of half maximum of Gaussian
+    """
     return sigma * (np.sqrt(2 * np.log(2)))
 
 
 def wavelength_ev2m(voltage: float) -> float:
-    """
-    Calculate wavelength of electrons from voltage.
+    """Calculate wavelength of electrons from voltage.
 
-    @param voltage: voltage of wave in eV
-    @return: wavelength of electrons in m
+    Parameters
+    ----------
+    voltage: float
+        voltage of wave in eV
 
-    @author: Marten Chaillet
+    Returns
+    -------
+    lambda: float
+        wavelength of electrons in m
     """
     h = constants["h"]
     e = constants["el"]
@@ -70,7 +98,7 @@ def radial_reduced_grid(
     ----------
     shape: Union[tuple[int, int, int], tuple[int, int]]
         2D/3D input shape, usually the .shape attribute of a numpy array
-    shape_is_reduced: bool
+    shape_is_reduced: bool, default False
         whether the shape is already in a reduced fourier format, False by default
 
     Returns
@@ -101,13 +129,26 @@ def radial_reduced_grid(
         return np.sqrt(x ** 2 + y ** 2)
 
 
-def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
-    """
-    Create a 3D Gaussian low-pass filter with cutoff (or HWHM) that is reduced in fourier space.
-    @param shape: shape tuple with x,y or x,y,z dimension
-    @param spacing: voxel size in real space
-    @param resolution: resolution in real space to filter towards
-    @return: sphere in square volume
+def create_gaussian_low_pass(
+        shape: Union[tuple[int, int, int], tuple[int, int]],
+        spacing: float,
+        resolution: float
+) -> npt.NDArray[float]:
+    """Create a 3D Gaussian low-pass filter with cutoff (or HWHM) that is reduced in fourier space.
+
+    Parameters
+    ----------
+    shape: Union[tuple[int, int, int], tuple[int, int]]
+        shape tuple with x,y or x,y,z dimension
+    spacing: float
+        voxel size in real space
+    resolution: float
+        resolution in real space to filter towards
+
+    Returns
+    ----------
+    output: npt.NDArray[float]
+        array containing the filter
     """
     q = radial_reduced_grid(shape)
 
@@ -118,13 +159,26 @@ def create_gaussian_low_pass(shape: tuple[int, int, int], spacing: float, resolu
     return np.fft.ifftshift(np.exp(-q ** 2 / (2 * sigma_fourier ** 2)), axes=(0, 1))
 
 
-def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resolution: float) -> npt.NDArray[float]:
-    """
-    Create a 3D Gaussian high-pass filter with cutoff (or HWHM) that is reduced in fourier space.
-    @param shape: shape tuple with x,y or x,y,z dimension
-    @param spacing: voxel size in real space
-    @param resolution: resolution in real space to filter towards
-    @return: sphere in square volume
+def create_gaussian_high_pass(
+        shape: Union[tuple[int, int, int], tuple[int, int]],
+        spacing: float,
+        resolution: float
+) -> npt.NDArray[float]:
+    """Create a 3D Gaussian high-pass filter with cutoff (or HWHM) that is reduced in fourier space.
+
+    Parameters
+    ----------
+    shape: Union[tuple[int, int, int], tuple[int, int]]
+        shape tuple with x,y or x,y,z dimension
+    spacing: float
+        voxel size in real space
+    resolution: float
+        resolution in real space to filter towards
+
+    Returns
+    ----------
+    output: npt.NDArray[float]
+        array containing the filter
     """
     q = radial_reduced_grid(shape)
 
@@ -136,20 +190,30 @@ def create_gaussian_high_pass(shape: tuple[int, int, int], spacing: float, resol
 
 
 def create_gaussian_band_pass(
-        shape: tuple[int, int, int],
+        shape: Union[tuple[int, int, int], tuple[int, int]],
         spacing: float,
         low_pass: Optional[float] = None,
         high_pass: Optional[float] = None
 ) -> npt.NDArray[float]:
-    """
-    Resolution bands presents the resolution shells where information needs to be maintained. For example the bands
+    """Resolution bands presents the resolution shells where information needs to be maintained. For example the bands
     might be (150A, 40A). For a spacing of 15A (nyquist resolution is 30A) this is a mild low pass filter. However,
     quite some low spatial frequencies will be cut by it.
-    @param shape: shape of output, will return fourier reduced shape
-    @param spacing: voxel size of input shape in real space
-    @param low_pass:
-    @param high_pass:
-    @return: a volume with a gaussian bandapss
+
+    Parameters
+    ----------
+    shape: Union[tuple[int, int, int], tuple[int, int]]
+        shape tuple with x,y or x,y,z dimension
+    spacing: float
+        voxel size in real space
+    low_pass: Optional[float], default None
+        resolution of low-pass filter
+    high_pass: Optional[float], default None
+        resolution of high-pass filter
+
+    Returns
+    ----------
+    output: npt.NDArray[float]
+        array containing the band-pass filter
     """
     if high_pass is None and low_pass is None:
         raise ValueError('Either low-pass or high-pass needs to be set for band-pass')
@@ -190,26 +254,26 @@ def create_wedge(
 
     Parameters
     ----------
-    shape
+    shape: tuple[int, int, int]
         real space shape of volume to which it needs to be applied
-    tilt_angles
+    tilt_angles: list[float, ...]
         tilt angles used for reconstructing the tomogram
-    voxel_size
+    voxel_size: float
         voxel size is needed for the calculation of various filters
-    cut_off_radius
+    cut_off_radius: float, default 1.
         cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    angles_in_degrees
+    angles_in_degrees: bool, default True
         whether angles are in degrees or radians units
-    low_pass
+    low_pass: Optional[float], default None
         low pass filter resolution in A
-    high_pass
+    high_pass: Optional[float], default None
         high pass filter resolution in A
-    tilt_weighting
+    tilt_weighting: bool, default False
         apply tilt weighting
-    accumulated_dose_per_tilt
+    accumulated_dose_per_tilt: Optional[list[float, ...]], default None
         accumulated dose for each tilt for dose weighting
-    ctf_params_per_tilt
-        ctf parameters for each tilt
+    ctf_params_per_tilt: Optional[list[dict]], default None
+        ctf parameters for each tilt (see _create_tilt_weighted_wedge() for dict specification)
 
     Returns
     -------
@@ -268,12 +332,22 @@ def _create_symmetric_wedge(
         wedge_angle: float,
         cut_off_radius: float
 ) -> npt.NDArray[float]:
-    """
-    This function returns a symmetric wedge object. Function should not be imported, user should call create_wedge().
-    @param shape: real space shape of volume to which it needs to be applied
-    @param wedge_angle: angle describing symmetric wedge in radians
-    @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
+    """This function returns a symmetric wedge object. Function should not be imported, user should call
+    create_wedge().
+
+    Parameters
+    ----------
+    shape: tuple[int, int, int]
+        real space shape of volume to which it needs to be applied
+    wedge_angle: float
+        angle describing symmetric wedge in radians
+    cut_off_radius: float
+        cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
+
+    Returns
+    ----------
+    wedge: npt.NDArray[float]
+        wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
     x = (np.abs(np.arange(
         -shape[0] // 2 + shape[0] % 2,
@@ -303,12 +377,21 @@ def _create_asymmetric_wedge(
         wedge_angles: tuple[float, float],
         cut_off_radius: float
 ) -> npt.NDArray[float]:
-    """
-    This function returns an asymmetric wedge object. Function should not be imported, user should call create_wedge().
-    @param shape: real space shape of volume to which it needs to be applied
-    @param wedge_angles: two angles describing asymmetric missing wedge in radians
-    @param cut_off_radius: cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    @return: wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
+    """This function returns an asymmetric wedge object. Function should not be imported, user should call create_wedge().
+
+    Parameters
+    ----------
+    shape: tuple[int, int, int]
+        real space shape of volume to which it needs to be applied
+    wedge_angles: tuple[float, float]
+        two angles describing asymmetric missing wedge in radians
+    cut_off_radius: float
+        cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
+
+    Returns
+    ----------
+    wedge: npt.NDArray[float]
+        wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
     x = (np.abs(np.arange(
         -shape[0] // 2 + shape[0] % 2,
@@ -376,9 +459,9 @@ def _create_tilt_weighted_wedge(
         cut off for the mask as a fraction of nyquist, value between 0 and 1
     pixel_size_angstrom: float
         the pixel size as a value in Å
-    accumulated_dose_per_tilt: list[float, ...]
+    accumulated_dose_per_tilt: list[float, ...], default None
         the accumulated dose in e− Å−2
-    ctf_params_per_tilt: list[dict, ...]
+    ctf_params_per_tilt: list[dict, ...], default None
         the ctf parameters per tilt angle, list of dicts where each dict has the following keys:
         - 'defocus'; in um
         - 'amplitude'; fraction of amplitude contrast between 0 and 1
@@ -474,7 +557,7 @@ def create_ctf(
 
     Parameters
     ----------
-    shape: tuple[int, int, int]
+    shape: Union[tuple[int, int, int], tuple[int, int]]
         dimensions of volume to create ctf in
     pixel_size: float
         pixel size for ctf in m
@@ -486,9 +569,9 @@ def create_ctf(
         acceleration voltage of the microscope in eV
     spherical_aberration: float
         spherical aberration in m
-    cut_after_first_zero: bool
+    cut_after_first_zero: bool, default False
         whether to cut ctf after first zero crossing
-    flip_phase: bool
+    flip_phase: bool, default False
         make ctf fully positive/negative to imitate ctf correction by phase flipping
 
     Returns
