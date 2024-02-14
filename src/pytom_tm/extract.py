@@ -257,7 +257,7 @@ def extract_particles(
             start[2]: start[2] + cut_box
         ] *= cut_mask
 
-    return pd.DataFrame(data, columns=[
+    output = pd.DataFrame(data, columns=[
         'ptmCoordinateX',
         'ptmCoordinateY',
         'ptmCoordinateZ',
@@ -270,3 +270,27 @@ def extract_particles(
         'ptmDetectorPixelSize',
         'ptmMicrographName',
     ]), scores
+
+    if plotting_available:
+        y, bins = np.histogram(scores, bins=30)
+        x = (bins[1:] + bins[:-1]) / 2
+        hist_step = bins[1] - bins[0]
+        # add 10 more starting values
+        x_ext = np.concatenate((np.linspace(x[0] - 10 * hist_step, x[0], 10), x))
+        noise_sigma = job.job_stats['std']
+        noise_amplitude = (job.job_stats['search_space'] / (noise_sigma * np.sqrt(2 * np.pi))) * hist_step
+        y_background = noise_amplitude * np.exp(- x_ext ** 2 / (2 * noise_sigma ** 2))
+
+        fig, ax = plt.subplots()
+        ax.scatter(x, y, label='scores', marker='o')
+        ax.plot(x_ext, y_background, label='background', color='tab:orage')
+        ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
+        ax.set_ylim(top=(3 / 2) * max(y))
+        ax.set_ylabel('Occurence')
+        ax.set_xlabel(r'${LCC}_{max}$')
+        ax.legend()
+        plt.tight_layout()
+        plt.savefig(job.output_dir.joinpath(f'{job.tomo_id}_extraction_graph.svg'), dpi=600, transparent=False,
+                    bbox_inches='tight')
+
+    return output
