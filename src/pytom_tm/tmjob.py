@@ -514,7 +514,7 @@ class TMJob:
         ----------
         gpu_id: int
             index of the GPU to run the job on
-        return_volumes: bool
+        return_volumes: bool, default False
             False (default) does not return volumes but instead writes them to disk, set to True to instead directly
             return the score and angle volumes
 
