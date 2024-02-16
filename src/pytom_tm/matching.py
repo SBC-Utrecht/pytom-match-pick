@@ -243,9 +243,9 @@ class TemplateMatchingGPU:
             )
 
             self.stats['variance'] += (
-                    square_sum_kernel(
-                        self.plan.ccc_map[self.stats_roi]
-                    ) / roi_size
+                square_sum_kernel(
+                    self.plan.ccc_map[self.stats_roi]
+                ) / roi_size
             )
 
         self.stats['search_space'] = int(roi_size * len(self.angle_ids))

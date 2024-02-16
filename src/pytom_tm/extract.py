@@ -128,6 +128,7 @@ def extract_particles(
         n_false_positives: int = 1,
         tomogram_mask_path: Optional[pathlib.Path] = None,
         tophat_filter: bool = False,
+        create_plot: bool = True
 ) -> tuple[pd.DataFrame, list[float, ...]]:
     """
     Parameters
@@ -147,6 +148,8 @@ def extract_particles(
         path to a tomographic binary mask for extraction
     tophat_filter: bool
         attempt to only select sharp peaks with the tophat filter
+    create_plot: bool, default True
+        flag for creating extraction plots
 
     Returns
     -------
@@ -165,7 +168,7 @@ def extract_particles(
         predicted_peaks = predict_tophat_mask(
             score_volume,
             output_path=job.output_dir.joinpath(f'{job.tomo_id}_tophat_filter.svg'),
-            n_false_positives=n_false_positives,
+            n_false_positives=n_false_positives
         )
         score_volume *= predicted_peaks  # multiply with predicted peaks to keep only those
 
@@ -267,7 +270,7 @@ def extract_particles(
         'ptmMicrographName',
     ]), scores
 
-    if plotting_available:
+    if plotting_available and create_plot:
         y, bins = np.histogram(scores, bins=20)
         x = (bins[1:] + bins[:-1]) / 2
         hist_step = bins[1] - bins[0]
