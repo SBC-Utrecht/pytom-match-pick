@@ -456,13 +456,13 @@ class TMJob:
             return result
 
         if stats is not None:
-            search_space = sum([s['search_space'] for s in stats])  #reduce(
-            #     lambda x, y: x * y,
-            #     self.search_size
-            # ) * int(np.ceil(self.n_rotations / self.rotational_symmetry))
+            search_space = sum([s['search_space'] for s in stats])
             variance = sum([s['variance'] for s in stats]) / len(stats)
-            std = np.sqrt(variance)
-            self.job_stats = {'search_space': search_space, 'variance': variance, 'std': std}
+            self.job_stats = {
+                'search_space': search_space,
+                'variance': variance,
+                'std': np.sqrt(variance)
+            }
 
         is_subvolume_split = np.all(np.array([x.start_slice for x in self.sub_jobs]) == 0)
 
