@@ -30,6 +30,7 @@ TEST_ANGLES = TEST_DATA_DIR.joinpath('tomogram_angles.mrc')
 TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath('custom_angular_search.txt')
 TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath('tomogram_whitening_filter.npy')
 TEST_JOB_JSON = TEST_DATA_DIR.joinpath('tomogram_job.json')
+TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath('tomogram_job_whitening.json')
 
 
 class TestTMJob(unittest.TestCase):
@@ -98,6 +99,11 @@ class TestTMJob(unittest.TestCase):
 
         np.savetxt(TEST_CUSTOM_ANGULAR_SEARCH, np.random.rand(100, 3))
 
+        # create job with spectrum whitening
+        job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                    angle_increment='90.00', voxel_size=1., whiten_spectrum=True)
+        job.write_to_json(TEST_JOB_JSON_WHITENING)
+
     @classmethod
     def tearDownClass(cls) -> None:
         TEST_MASK.unlink()
@@ -114,6 +120,7 @@ class TestTMJob(unittest.TestCase):
         # allow this (with missing_ok=True) to ensure clean up of the test directory
         TEST_WHITENING_FILTER.unlink(missing_ok=True)
         TEST_JOB_JSON.unlink()
+        TEST_JOB_JSON_WHITENING.unlink()
         TEST_DATA_DIR.rmdir()
 
     def setUp(self):
@@ -199,16 +206,15 @@ class TestTMJob(unittest.TestCase):
 
         # TMJob with none of these weighting options is tested in all other runs in this file.
 
-    def test_whitening_reloading(self):
-        with self.assertLogs(level='INFO') as cm:
-            job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
-                        angle_increment='90.00', voxel_size=1., whiten_spectrum=True)
-        self.assertIn('Estimating whitening filter...', cm.output[0])
-        job_file = pathlib.Path('job.json')
-        job.write_to_json(job_file)
+    def test_load_json_to_tmjob(self):
+        job = load_json_to_tmjob(TEST_JOB_JSON, load_for_extraction=True)
+        self.assertEqual(job, self.job)
         with self.assertNoLogs(level='INFO'):
-            _ = load_json_to_tmjob(job_file, load_for_extraction=True)
-        job_file.unlink()
+            _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=True)
+        with self.assertLogs(level='INFO') as cm:
+            _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=False)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn('Estimating whitening filter...', cm.output[0])
 
     def test_custom_angular_search(self):
         job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
