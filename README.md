@@ -1,3 +1,5 @@
+# This branch is purely for testing tophat kernel connectivity
+
 ![test-badge](https://github.com/SBC-Utrecht/pytom-match-pick/actions/workflows/unit-tests.yml/badge.svg?branch=main)
 # GPU template matching for cryo-ET
 
