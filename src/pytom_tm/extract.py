@@ -29,7 +29,8 @@ def predict_tophat_mask(
         score_volume: npt.NDArray[float],
         output_path: Optional[pathlib.Path] = None,
         n_false_positives: int = 1,
-        create_plot: bool = True
+        create_plot: bool = True,
+        tophat_connectivity: int = 1
 ) -> npt.NDArray[bool]:
     """This function gets as input a score map and returns a peak mask as determined with a tophat transform.
 
@@ -53,6 +54,8 @@ def predict_tophat_mask(
         number of false positive for error function cutoff calculation
     create_plot: bool, default True
         whether to plot the gaussian fit and cut-off estimation
+    tophat_connectivity: int, default 1
+        connectivity of binary structure
 
     Returns
     -------
@@ -63,7 +66,7 @@ def predict_tophat_mask(
         score_volume,
         structure=ndimage.generate_binary_structure(
             rank=3,
-            connectivity=1
+            connectivity=tophat_connectivity
         )
     )
     y, bins = np.histogram(tophat.flatten(), bins=50)
@@ -130,7 +133,8 @@ def extract_particles(
         n_false_positives: int = 1,
         tomogram_mask_path: Optional[pathlib.Path] = None,
         tophat_filter: bool = False,
-        create_plot: bool = True
+        create_plot: bool = True,
+        tophat_connectivity: int = 1,
 ) -> tuple[pd.DataFrame, list[float, ...]]:
     """
     Parameters
@@ -152,6 +156,8 @@ def extract_particles(
         attempt to only select sharp peaks with the tophat filter
     create_plot: bool, default True
         flag for creating extraction plots
+    tophat_connectivity: int, default 1
+        connectivity of kernel for tophat transform
 
     Returns
     -------
@@ -171,7 +177,8 @@ def extract_particles(
             score_volume,
             output_path=job.output_dir.joinpath(f'{job.tomo_id}_tophat_filter.svg'),
             n_false_positives=n_false_positives,
-            create_plot=create_plot
+            create_plot=create_plot,
+            tophat_connectivity=tophat_connectivity,
         )
         score_volume *= predicted_peaks  # multiply with predicted peaks to keep only those
 
