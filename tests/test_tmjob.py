@@ -199,6 +199,17 @@ class TestTMJob(unittest.TestCase):
 
         # TMJob with none of these weighting options is tested in all other runs in this file.
 
+    def test_whitening_reloading(self):
+        with self.assertLogs(level='INFO') as cm:
+            job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
+                        angle_increment='90.00', voxel_size=1., whiten_spectrum=True)
+        self.assertIn('Estimating whitening filter...', cm.output[0])
+        job_file = pathlib.Path('job.json')
+        job.write_to_json(job_file)
+        with self.assertNoLogs(level='INFO'):
+            _ = load_json_to_tmjob(job_file, load_for_extraction=True)
+        job_file.unlink()
+
     def test_custom_angular_search(self):
         job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
                     angle_increment=TEST_CUSTOM_ANGULAR_SEARCH, voxel_size=1.)
