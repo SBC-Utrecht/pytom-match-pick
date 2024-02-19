@@ -405,13 +405,12 @@ class TMJob:
             if start[2] != self.search_origin[2]:
                 whole_start[2] = start[2] + template_shape[2] // 2 - self.search_origin[2]
                 sub_start[2] = template_shape[2] // 2
-            # if this is the last box on an axis, sub_step != split_size -- take ceil for uneven template size
             if end[0] == self.search_origin[0] + self.search_size[0]:
-                sub_step[0] = self.search_size[0] - whole_start[0]
+                sub_step[0] = size[0] - sub_start[0]
             if end[1] == self.search_origin[1] + self.search_size[1]:
-                sub_step[1] = self.search_size[1] - whole_start[1]
+                sub_step[1] = size[1] - sub_start[1]
             if end[2] == self.search_origin[2] + self.search_size[2]:
-                sub_step[2] = self.search_size[2] - whole_start[2]
+                sub_step[2] = size[2] - sub_start[2]
 
             # create a split volume job
             new_job = self.copy()
