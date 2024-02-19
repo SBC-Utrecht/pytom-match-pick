@@ -30,6 +30,7 @@ def predict_tophat_mask(
         score_volume: npt.NDArray[float],
         output_path: Optional[pathlib.Path] = None,
         n_false_positives: int = 1,
+        create_plot: bool = True
 ) -> npt.NDArray[bool]:
     """This function gets as input a score map and returns a peak mask as determined with a tophat transform.
 
@@ -51,6 +52,8 @@ def predict_tophat_mask(
         if provided (and plotting is available), write a figure of the fit to the output folder
     n_false_positives: int, default 1
         number of false positive for error function cutoff calculation
+    create_plot: bool, default True
+        whether to plot the gaussian fit and cut-off estimation
 
     Returns
     -------
@@ -101,9 +104,9 @@ def predict_tophat_mask(
     # we need to find theta (i.e. the cut-off)
     cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * coeff_log[2] + coeff_log[1]
 
-    if plotting_available and output_path is not None:
+    if plotting_available and output_path is not None and create_plot:
         fig, ax = plt.subplots()
-        ax.scatter(x_raw, y_raw, label='scores', marker='o')
+        ax.scatter(x_raw, y_raw, label='tophat', marker='o')
         ax.plot(x_raw, gauss(x_raw, *coeff_log), label='pred', color='tab:orange')
         ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
         ax.axvspan(x_fit[0], x_fit[-1], alpha=0.25, color='gray', label='fitted data')
@@ -128,6 +131,7 @@ def extract_particles(
         n_false_positives: int = 1,
         tomogram_mask_path: Optional[pathlib.Path] = None,
         tophat_filter: bool = False,
+        create_plot: bool = True
 ) -> tuple[pd.DataFrame, list[float, ...]]:
     """
     Parameters
@@ -147,6 +151,8 @@ def extract_particles(
         path to a tomographic binary mask for extraction
     tophat_filter: bool
         attempt to only select sharp peaks with the tophat filter
+    create_plot: bool, default True
+        flag for creating extraction plots
 
     Returns
     -------
@@ -166,6 +172,7 @@ def extract_particles(
             score_volume,
             output_path=job.output_dir.joinpath(f'{job.tomo_id}_tophat_filter.svg'),
             n_false_positives=n_false_positives,
+            create_plot=create_plot
         )
         score_volume *= predicted_peaks  # multiply with predicted peaks to keep only those
 
@@ -187,14 +194,10 @@ def extract_particles(
     score_volume[:, :, -particle_radius_px:] = 0
 
     sigma = job.job_stats['std']
+    search_space = job.job_stats['search_space']
     if cut_off is None:
         # formula Rickgauer et al. (2017, eLife): N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
         # we need to find theta (i.e. the cut off)
-        search_space = (
-            # wherever the score volume has not been explicitly set to -1 is the size of the search region
-            (score_volume > -1).sum() *
-            int(np.ceil(job.n_rotations / job.rotational_symmetry))
-        )
         cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
         logging.info(f'cut off for particle extraction: {cut_off}')
     elif cut_off < 0:
@@ -257,7 +260,7 @@ def extract_particles(
             start[2]: start[2] + cut_box
         ] *= cut_mask
 
-    return pd.DataFrame(data, columns=[
+    output = pd.DataFrame(data, columns=[
         'ptmCoordinateX',
         'ptmCoordinateY',
         'ptmCoordinateZ',
@@ -270,3 +273,31 @@ def extract_particles(
         'ptmDetectorPixelSize',
         'ptmMicrographName',
     ]), scores
+
+    if plotting_available and create_plot:
+        y, bins = np.histogram(scores, bins=20)
+        x = (bins[1:] + bins[:-1]) / 2
+        hist_step = bins[1] - bins[0]
+        # add more starting values for background Gaussian
+        x_ext = np.concatenate((np.linspace(x[0] - 5 * hist_step, x[0], 10), x))
+        # calculate amplitude of Gaussian and correct for histogram step size
+        noise_amplitude = (search_space / (sigma * np.sqrt(2 * np.pi))) * hist_step
+        y_background = noise_amplitude * np.exp(- x_ext ** 2 / (2 * sigma ** 2))
+
+        fig, ax = plt.subplots()
+        ax.scatter(x, y, label='extracted', marker='o')
+        ax.plot(x_ext, y_background, label='background', color='tab:orange')
+        ax.axvline(cut_off, color='gray', linestyle='dashed', label='cut-off')
+        ax.set_ylim(bottom=0, top=2 * max(y))
+        ax.set_ylabel('Occurence')
+        ax.set_xlabel(r'${LCC}_{max}$')
+        ax.legend()
+        plt.tight_layout()
+        plt.savefig(
+            job.output_dir.joinpath(f'{job.tomo_id}_extraction_graph.svg'),
+            dpi=600,
+            transparent=False,
+            bbox_inches='tight'
+        )
+
+    return output

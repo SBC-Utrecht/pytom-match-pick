@@ -208,7 +208,10 @@ class TMJob:
         logging.debug(f'origin, size = {self.search_origin}, {self.search_size}')
 
         self.whole_start = None
-        self.sub_start, self.sub_step = None, None
+        # For the main job these are always [0,0,0] and self.search_size, for sub_jobs these will differ from
+        # self.search_origin and self.search_size. The main job only uses them to calculate the search_volume_roi for
+        # statistics. Sub jobs also use these to extract and place back the relevant region in the master job.
+        self.sub_start, self.sub_step = [0, 0, 0], self.search_size.copy()
 
         # Rotation parameters
         self.start_slice = 0
@@ -376,9 +379,9 @@ class TMJob:
             inc_z, inc_y, inc_x = i // stride_z, (i % stride_z) // stride_y, i % stride_y
 
             _start = tuple([
-                -template_shape[0] // 2 + self.search_origin[0] + inc_x * split_size[0],
-                -template_shape[1] // 2 + self.search_origin[1] + inc_y * split_size[1],
-                -template_shape[2] // 2 + self.search_origin[2] + inc_z * split_size[2]
+                -(template_shape[0] // 2) + self.search_origin[0] + inc_x * split_size[0],
+                -(template_shape[1] // 2) + self.search_origin[1] + inc_y * split_size[1],
+                -(template_shape[2] // 2) + self.search_origin[2] + inc_z * split_size[2]
             ])
 
             _end = tuple([_start[j] + _size[j] for j in range(len(_start))])
@@ -452,13 +455,13 @@ class TMJob:
             return result
 
         if stats is not None:
-            search_space = reduce(
-                lambda x, y: x * y,
-                self.search_size
-            ) * int(np.ceil(self.n_rotations / self.rotational_symmetry))
+            search_space = sum([s['search_space'] for s in stats])
             variance = sum([s['variance'] for s in stats]) / len(stats)
-            std = np.sqrt(variance)
-            self.job_stats = {'search_space': search_space, 'variance': variance, 'std': std}
+            self.job_stats = {
+                'search_space': search_space,
+                'variance': variance,
+                'std': np.sqrt(variance)
+            }
 
         is_subvolume_split = np.all(np.array([x.start_slice for x in self.sub_jobs]) == 0)
 
@@ -612,6 +615,13 @@ class TMJob:
             self.steps_slice
         )]
 
+        # slices for relevant part for job statistics
+        search_volume_roi = (
+            slice(self.sub_start[0], self.sub_start[0] + self.sub_step[0]),
+            slice(self.sub_start[1], self.sub_start[1] + self.sub_step[1]),
+            slice(self.sub_start[2], self.sub_start[2] + self.sub_step[2])
+        )
+
         tm = TemplateMatchingGPU(
             job_id=self.job_key,
             device_id=gpu_id,
@@ -621,7 +631,8 @@ class TMJob:
             angle_list=angle_list,
             angle_ids=angle_ids,
             mask_is_spherical=self.mask_is_spherical,
-            wedge=template_wedge
+            wedge=template_wedge,
+            stats_roi=search_volume_roi
         )
         results = tm.run()
         score_volume = results[0][:self.search_size[0], :self.search_size[1], :self.search_size[2]]
