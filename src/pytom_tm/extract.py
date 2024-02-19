@@ -30,6 +30,7 @@ def predict_tophat_mask(
         score_volume: npt.NDArray[float],
         output_path: Optional[pathlib.Path] = None,
         n_false_positives: int = 1,
+        create_plot: bool = True
 ) -> npt.NDArray[bool]:
     """This function gets as input a score map and returns a peak mask as determined with a tophat transform.
 
@@ -51,6 +52,8 @@ def predict_tophat_mask(
         if provided (and plotting is available), write a figure of the fit to the output folder
     n_false_positives: int, default 1
         number of false positive for error function cutoff calculation
+    create_plot: bool, default True
+        whether to plot the gaussian fit and cut-off estimation
 
     Returns
     -------
@@ -101,7 +104,7 @@ def predict_tophat_mask(
     # we need to find theta (i.e. the cut-off)
     cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * coeff_log[2] + coeff_log[1]
 
-    if plotting_available and output_path is not None:
+    if plotting_available and output_path is not None and create_plot:
         fig, ax = plt.subplots()
         ax.scatter(x_raw, y_raw, label='tophat', marker='o')
         ax.plot(x_raw, gauss(x_raw, *coeff_log), label='pred', color='tab:orange')
@@ -168,7 +171,8 @@ def extract_particles(
         predicted_peaks = predict_tophat_mask(
             score_volume,
             output_path=job.output_dir.joinpath(f'{job.tomo_id}_tophat_filter.svg'),
-            n_false_positives=n_false_positives
+            n_false_positives=n_false_positives,
+            create_plot=create_plot
         )
         score_volume *= predicted_peaks  # multiply with predicted peaks to keep only those
 
@@ -274,8 +278,9 @@ def extract_particles(
         y, bins = np.histogram(scores, bins=20)
         x = (bins[1:] + bins[:-1]) / 2
         hist_step = bins[1] - bins[0]
-        # add 10 more starting values
+        # add more starting values for background Gaussian
         x_ext = np.concatenate((np.linspace(x[0] - 5 * hist_step, x[0], 10), x))
+        # calculate amplitude of Gaussian and correct for histogram step size
         noise_amplitude = (search_space / (sigma * np.sqrt(2 * np.pi))) * hist_step
         y_background = noise_amplitude * np.exp(- x_ext ** 2 / (2 * sigma ** 2))
 
