@@ -16,13 +16,16 @@ from pytom_tm.weights import create_wedge, power_spectrum_profile, profile_to_we
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
 
 
-def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
+def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True) -> TMJob:
     """Load a previous job that was stored with TMJob.write_to_json().
 
     Parameters
     ----------
     file_name: pathlib.Path
         path to TMJob json file
+    load_for_extraction: bool, default True
+        whether a finished job is loaded form disk for extraction, default is True as this function is currently only
+        called for pytom_extract_candidates and pytom_estimate_roc which run on previously finished jobs
 
     Returns
     -------
@@ -55,6 +58,7 @@ def load_json_to_tmjob(file_name: pathlib.Path) -> TMJob:
         rotational_symmetry=data.get('rotational_symmetry', 1),
         # if version number is not in the .json, it must be 0.3.0 or older
         pytom_tm_version_number=data.get('pytom_tm_version_number', '0.3.0'),
+        job_loaded_for_extraction=load_for_extraction,
     )
     job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
@@ -97,7 +101,8 @@ class TMJob:
             ctf_data: Optional[list[dict, ...]] = None,
             whiten_spectrum: bool = False,
             rotational_symmetry: int = 1,
-            pytom_tm_version_number: str = metadata.version('pytom-template-matching-gpu')
+            pytom_tm_version_number: str = metadata.version('pytom-template-matching-gpu'),
+            job_loaded_for_extraction: bool = False,
     ):
         """
         Parameters
@@ -147,6 +152,9 @@ class TMJob:
             aligned with the z-axis
         pytom_tm_version_number: str, default current version
             a string with the version number of pytom_tm for backward compatibility
+        job_loaded_for_extraction: bool, default False
+            flag to set for finished template matching jobs that are loaded back for extraction, it prevents
+            recalculation of the whitening filter which is unnecessary at this stage
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -242,7 +250,7 @@ class TMJob:
         self.ctf_data = ctf_data
         self.whiten_spectrum = whiten_spectrum
         self.whitening_filter = self.output_dir.joinpath(f'{self.tomo_id}_whitening_filter.npy')
-        if self.whiten_spectrum:
+        if self.whiten_spectrum and not job_loaded_for_extraction:
             logging.info('Estimating whitening filter...')
             weights = 1 / np.sqrt(
                 power_spectrum_profile(
