@@ -129,9 +129,9 @@ class TemplateMatchingGPU:
         self.stats = {'search_space': 0, 'variance': 0., 'std': 0.}
         if stats_roi is None:
             self.stats_roi = (
-                slice(0, volume.shape[0]),
-                slice(0, volume.shape[1]),
-                slice(0, volume.shape[2])
+                slice(None),
+                slice(None),
+                slice(None)
             )
         else:
             self.stats_roi = stats_roi

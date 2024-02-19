@@ -30,7 +30,6 @@ TEST_ANGLES = TEST_DATA_DIR.joinpath('tomogram_angles.mrc')
 TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath('custom_angular_search.txt')
 TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath('tomogram_whitening_filter.npy')
 TEST_JOB_JSON = TEST_DATA_DIR.joinpath('tomogram_job.json')
-TEST_JOB_JSON = TEST_DATA_DIR.joinpath('tomogram_job.json')
 
 
 class TestTMJob(unittest.TestCase):
