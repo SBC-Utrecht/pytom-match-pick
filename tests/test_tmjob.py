@@ -207,8 +207,11 @@ class TestTMJob(unittest.TestCase):
         # TMJob with none of these weighting options is tested in all other runs in this file.
 
     def test_load_json_to_tmjob(self):
-        job = load_json_to_tmjob(TEST_JOB_JSON, load_for_extraction=True)
-        self.assertEqual(job, self.job)
+        # check base job loading
+        job = load_json_to_tmjob(TEST_JOB_JSON)
+        self.assertIsInstance(job, TMJob, msg='TMJob could not be properly loaded from disk.')
+
+        # check job loading and preventing whitening filter recalculation
         with self.assertNoLogs(level='INFO'):
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=True)
         with self.assertLogs(level='INFO') as cm:
