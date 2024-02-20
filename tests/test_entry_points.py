@@ -1,5 +1,7 @@
 import unittest
 from shutil import which
+from contextlib import redirect_stdout
+from io import StringIO
 from pytom_tm import entry_points
 
 # (command line function, function in entry_points file)
@@ -24,8 +26,11 @@ class TestEntryPoints(unittest.TestCase):
             # test the command line function can be found
             self.assertIsNotNone(which(cli))
             # assert the entry_point be called with -h and exit cleanly
+            # catch stdout to prevent shell polution
             func = getattr(entry_points, fname)
-            with self.assertRaises(SystemExit) as ex:
+            dump = StringIO()
+            with self.assertRaises(SystemExit) as ex, redirect_stdout(dump):
                 func([cli, '-h'])
+            dump.close()
             # check if the system return code is 0 (success)
             self.assertEqual(ex.exception.code, 0)
