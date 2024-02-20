@@ -121,7 +121,7 @@ def pytom_create_mask(argv=None):
     write_mrc(output_path, mask, args.voxel_size)
 
 
-def create_template(argv=None):
+def pytom_create_template(argv=None):
     from pytom_tm.template import generate_template_from_map
 
     argv = _parse_argv(argv)
