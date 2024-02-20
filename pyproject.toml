@@ -40,12 +40,12 @@ dependencies = [
 plotting = ["matplotlib", "seaborn"]
 
 [project.scripts]
-pytom_create_mask.py = "pytom_tm:entry_points:pytom_create_mask"
-pytom_create_template.py = "pytom_tm:entry_points:pytom_create_template"
-pytom_match_template.py = "pytom_tm:entry_points:match_template"
-pytom_extract_candidates.py = "pytom_tm:entry_points:extract_candidates"
-pytom_estimate_roc.py = "pytom_tm:entry_points:estimate_roc"
-pytom_merge_stars.py = "pytom_tm:entry_points:merge_stars"
+"pytom_create_mask.py" = "pytom_tm.entry_points:pytom_create_mask"
+"pytom_create_template.py" = "pytom_tm.entry_points:pytom_create_template"
+"pytom_match_template.py" = "pytom_tm.entry_points:match_template"
+"pytom_extract_candidates.py" = "pytom_tm.entry_points:extract_candidates"
+"pytom_estimate_roc.py" = "pytom_tm.entry_points:estimate_roc"
+"pytom_merge_stars.py" = "pytom_tm.entry_points:merge_stars"
 
 [project.urls]
 Repository = "https://github.com/SBC-Utrecht/pytom-template-matching-gpu"
