@@ -3,6 +3,8 @@ import sys
 import pathlib
 import logging
 import numpy as np
+import starfile
+from pytom_tm.extract import extract_particles
 from pytom_tm.io import (
     LargerThanZero,
     write_mrc,
@@ -18,7 +20,6 @@ from pytom_tm.io import (
     BetweenZeroAndOne,
 )
 from pytom_tm.tmjob import load_json_to_tmjob
-
 
 def _parse_argv(argv=None):
     if argv is None:
@@ -449,8 +450,6 @@ def estimate_roc(argv=None):
 
 
 def extract_candidates(argv=None):
-    import starfile
-    from pytom_tm.extract import extract_particles
 
     argv = _parse_argv(argv)
     parser = argparse.ArgumentParser(
@@ -838,7 +837,6 @@ def match_template(argv=None):
 
 def merge_stars(argv=None):
     import pandas as pd
-    import starfile
 
     parser = argparse.ArgumentParser(
         description="Merge multiple star files in the same directory. -- Marten Chaillet (@McHaillet)"
