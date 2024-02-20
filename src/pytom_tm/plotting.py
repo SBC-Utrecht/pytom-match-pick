@@ -376,7 +376,7 @@ def plist_quality_gaussian_fit(
         print(f" - optimal correlation coefficient threshold is {x_roc[cutoff]:.3f}")
         print(
             (
-                " - this threshold approximately selects ",
+                " - this threshold approximately selects "
                 f"{(1 - cdf(x_roc[cutoff])) * population_integral:.1f} particles",
             )
         )

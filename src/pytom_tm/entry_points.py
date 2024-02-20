@@ -21,6 +21,7 @@ from pytom_tm.io import (
 )
 from pytom_tm.tmjob import load_json_to_tmjob
 
+
 def _parse_argv(argv=None):
     if argv is None:
         return sys.argv[1:]
@@ -59,7 +60,8 @@ def pytom_create_mask(argv=None):
         required=False,
         default=1.0,
         action=LargerThanZero,
-        help="Provide a voxel size to annotate the MRC (currently not used for any mask calculation).",
+        help="Provide a voxel size to annotate the MRC (currently not used for any "
+        "mask calculation).",
     )
     parser.add_argument(
         "-r",
@@ -67,8 +69,9 @@ def pytom_create_mask(argv=None):
         type=float,
         required=True,
         action=LargerThanZero,
-        help="Radius of the spherical mask in number of pixels. In case minor1 and minor2 are "
-        "provided, this will be the radius of the ellipsoidal mask along the x-axis.",
+        help="Radius of the spherical mask in number of pixels. In case minor1 and "
+        "minor2 are provided, this will be the radius of the ellipsoidal mask along "
+        "the x-axis.",
     )
     parser.add_argument(
         "--radius-minor1",
@@ -90,8 +93,9 @@ def pytom_create_mask(argv=None):
         type=float,
         required=False,
         action=LargerThanZero,
-        help="Sigma of gaussian drop-off around the mask edges in number of pixels. Values in the "
-        "range from 0.5-1.0 are usually sufficient for tomograms with 20A-10A voxel sizes.",
+        help="Sigma of gaussian drop-off around the mask edges in number of pixels. "
+        "Values in the range from 0.5-1.0 are usually sufficient for tomograms with "
+        "20A-10A voxel sizes.",
     )
     argv = _parse_argv(argv)
     args = parser.parse_args(argv)
@@ -122,7 +126,8 @@ def create_template(argv=None):
 
     argv = _parse_argv(argv)
     parser = argparse.ArgumentParser(
-        description="Generate template from MRC density. -- Marten Chaillet (@McHaillet)"
+        description="Generate template from MRC density. "
+        "-- Marten Chaillet (@McHaillet)"
     )
     parser.add_argument(
         "-i",
@@ -137,32 +142,34 @@ def create_template(argv=None):
         "--output-file",
         type=pathlib.Path,
         required=False,
-        help="Provide path to write output, needs to end in .mrc . If not provided file is written to "
-        "current directory in the following format: template_{input_map.stem}_{voxel_size}A.mrc",
+        help="Provide path to write output, needs to end in .mrc . If not provided "
+        "file is written to current directory in the following format: "
+        "template_{input_map.stem}_{voxel_size}A.mrc",
     )
     parser.add_argument(
         "--input-voxel-size-angstrom",
         type=float,
         required=False,
         action=LargerThanZero,
-        help="Voxel size of input map, in Angstrom. If not provided will be read from MRC input (so "
-        "make sure it is annotated correctly!).",
+        help="Voxel size of input map, in Angstrom. If not provided will be read from "
+        "MRC input (so make sure it is annotated correctly!).",
     )
     parser.add_argument(
         "--output-voxel-size-angstrom",
         type=float,
         required=True,
         action=LargerThanZero,
-        help="Output voxel size of the template, in Angstrom. Needs to be equal to the voxel size of "
-        "the tomograms for template matching. Input map will be downsampled to this spacing.",
+        help="Output voxel size of the template, in Angstrom. Needs to be equal to the "
+        "voxel size of the tomograms for template matching. Input map will be "
+        "downsampled to this spacing.",
     )
     parser.add_argument(
         "--center",
         action="store_true",
         default=False,
         required=False,
-        help="Set this flag to automatically center the density in the volume by measuring the center "
-        "of mass.",
+        help="Set this flag to automatically center the density in the volume by "
+        "measuring the center of mass.",
     )
     parser.add_argument(
         "-c",
@@ -170,9 +177,9 @@ def create_template(argv=None):
         action="store_true",
         default=False,
         required=False,
-        help="Set this flag to multiply the input map with a CTF. The following parameters are also "
-        "important to specify because the defaults might not apply to your data: --defocus, "
-        "--amplitude-contrast, --voltage, --Cs.",
+        help="Set this flag to multiply the input map with a CTF. The following "
+        "parameters are also important to specify because the defaults might not apply "
+        "to your data: --defocus, --amplitude-contrast, --voltage, --Cs.",
     )
     parser.add_argument(
         "-z",
@@ -210,27 +217,27 @@ def create_template(argv=None):
         action="store_true",
         default=False,
         required=False,
-        help="Set this flag to cut the CTF after the first zero crossing. Generally recommended to "
-        "apply as the simplistic CTF convolution will likely become inaccurate after this point "
-        "due to defocus gradients.",
+        help="Set this flag to cut the CTF after the first zero crossing. Generally "
+        "recommended to apply as the simplistic CTF convolution will likely become "
+        "inaccurate after this point due to defocus gradients.",
     )
     parser.add_argument(
         "--flip-phase",
         action="store_true",
         default=False,
         required=False,
-        help="Set this flag to apply a phase flipped CTF. Only required if the CTF is modelled "
-        "beyond the first zero crossing and if the tomograms have been CTF corrected by phase "
-        "flipping.",
+        help="Set this flag to apply a phase flipped CTF. Only required if the CTF is "
+        "modelled beyond the first zero crossing and if the tomograms have been CTF "
+        "corrected by phase flipping.",
     )
     parser.add_argument(
         "--low-pass",
         type=float,
         required=False,
         action=LargerThanZero,
-        help="Apply a low pass filter to this resolution, in Angstrom. By default a low pass filter "
-        "is applied to a resolution of (2 * output_spacing_angstrom) before downsampling the "
-        "input volume.",
+        help="Apply a low pass filter to this resolution, in Angstrom. By default a "
+        "low pass filter is applied to a resolution of (2 * output_spacing_angstrom) "
+        "before downsampling the input volume.",
     )
     parser.add_argument(
         "-b",
@@ -238,15 +245,16 @@ def create_template(argv=None):
         type=int,
         required=False,
         action=LargerThanZero,
-        help="Specify a desired size for the output box of the template. Only works if it is larger "
-        "than the downsampled box size of the input.",
+        help="Specify a desired size for the output box of the template. "
+        "Only works if it is larger than the downsampled box size of the input.",
     )
     parser.add_argument(
         "--invert",
         action="store_true",
         default=False,
         required=False,
-        help="Multiply template by -1. WARNING not needed if ctf with defocus is already applied!",
+        help="Multiply template by -1. "
+        "WARNING: not needed if ctf with defocus is already applied!",
     ),
     parser.add_argument(
         "-m",
@@ -274,7 +282,8 @@ def create_template(argv=None):
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log)
 
-    # set input voxel size and give user warning if it does not match with MRC annotation
+    # set input voxel size and give user warning if it does not match
+    # with MRC annotation
     input_data = read_mrc(args.input_map)
     input_meta_data = read_mrc_meta_data(args.input_map)
     if args.input_voxel_size_angstrom is not None:
@@ -301,7 +310,8 @@ def create_template(argv=None):
 
     if map_spacing_angstrom > args.output_voxel_size_angstrom:
         raise NotImplementedError(
-            "It is assumed the input map has smaller voxel size than the output template."
+            "It is assumed the input map has smaller voxel size than the output "
+            "template."
         )
 
     ctf_params = None
@@ -342,7 +352,8 @@ def estimate_roc(argv=None):
     from pytom_tm.plotting import plist_quality_gaussian_fit
 
     parser = argparse.ArgumentParser(
-        description="Estimate ROC curve from TMJob file. -- Marten Chaillet (@McHaillet)"
+        description="Estimate ROC curve from TMJob file. "
+        "-- Marten Chaillet (@McHaillet)"
     )
     parser.add_argument(
         "-j",
@@ -350,8 +361,8 @@ def estimate_roc(argv=None):
         type=pathlib.Path,
         required=True,
         action=CheckFileExists,
-        help="JSON file that contain all data on the template matching job, written out by "
-        "pytom_match_template.py in the destination path.",
+        help="JSON file that contain all data on the template matching job, written "
+        "out by pytom_match_template.py in the destination path.",
     )
     parser.add_argument(
         "-n",
@@ -359,8 +370,8 @@ def estimate_roc(argv=None):
         type=int,
         required=True,
         action=LargerThanZero,
-        help="The number of particles to extract and estimate the ROC on, recommended is to multiply "
-        "the expected number of particles by 3.",
+        help="The number of particles to extract and estimate the ROC on, recommended "
+        "is to multiply the expected number of particles by 3.",
     )
     parser.add_argument(
         "-r",
@@ -368,8 +379,8 @@ def estimate_roc(argv=None):
         type=int,
         required=True,
         action=LargerThanZero,
-        help="Particle radius in pixels in the tomogram. It is used during extraction to remove areas "
-        "around peaks preventing double extraction.",
+        help="Particle radius in pixels in the tomogram. It is used during extraction "
+        "to remove areas around peaks preventing double extraction.",
     )
     parser.add_argument(
         "--bins",
@@ -384,7 +395,8 @@ def estimate_roc(argv=None):
         type=int,
         required=False,
         action=LargerThanZero,
-        help="Expected index of the histogram peak of the Gaussian fitted to the particle population.",
+        help="Expected index of the histogram peak of the Gaussian fitted to the "
+        "particle population.",
     )
     parser.add_argument(
         "--force-peak",
@@ -405,8 +417,8 @@ def estimate_roc(argv=None):
         action="store_true",
         default=False,
         required=False,
-        help="Flag to use a pop-up window for the plot instead of writing it to the location of the "
-        "job file.",
+        help="Flag to use a pop-up window for the plot instead of writing it to the "
+        "location of the job file.",
     )
     parser.add_argument(
         "--log",
@@ -450,7 +462,6 @@ def estimate_roc(argv=None):
 
 
 def extract_candidates(argv=None):
-
     argv = _parse_argv(argv)
     parser = argparse.ArgumentParser(
         description="Run candidate extraction. -- Marten Chaillet (@McHaillet)"
@@ -461,18 +472,18 @@ def extract_candidates(argv=None):
         type=pathlib.Path,
         required=True,
         action=CheckFileExists,
-        help="JSON file that contain all data on the template matching job, written out by "
-        "pytom_match_template.py in the destination path.",
+        help="JSON file that contain all data on the template matching job, written "
+        "out by pytom_match_template.py in the destination path.",
     )
     parser.add_argument(
         "--tomogram-mask",
         type=pathlib.Path,
         required=False,
         action=CheckFileExists,
-        help="Here you can provide a mask for the extraction with dimensions equal to the "
-        "tomogram. All values in the mask that are smaller or equal to 0 will be removed, "
-        "all values larger than 0 are considered regions of interest. It can be used to extract "
-        "annotations only within a specific cellular region.",
+        help="Here you can provide a mask for the extraction with dimensions equal to "
+        "the tomogram. All values in the mask that are smaller or equal to 0 will be "
+        "removed, all values larger than 0 are considered regions of interest. It can "
+        "be used to extract annotations only within a specific cellular region.",
     )
     parser.add_argument(
         "-n",
@@ -487,10 +498,10 @@ def extract_candidates(argv=None):
         type=int,
         required=False,
         action=LargerThanZero,
-        help="Number of false positives to determine the false alarm rate. Here one can increase "
-        "the recall of the particle of interest at the expense of more false positives. The "
-        "default value of 1 is recommended for particles that can be distinguished well from "
-        "the background (high specificity).",
+        help="Number of false positives to determine the false alarm rate. Here one "
+        "can increase the recall of the particle of interest at the expense of more "
+        "false positives. The default value of 1 is recommended for particles that can "
+        "be distinguished well from the background (high specificity).",
         default=1,
     )
     parser.add_argument(
@@ -499,8 +510,8 @@ def extract_candidates(argv=None):
         type=int,
         required=True,
         action=LargerThanZero,
-        help="Particle radius in pixels in the tomogram. It is used during extraction to remove areas "
-        "around peaks preventing double extraction.",
+        help="Particle radius in pixels in the tomogram. It is used during extraction "
+        "to remove areas around peaks preventing double extraction.",
     )
     parser.add_argument(
         "-c",
@@ -508,9 +519,10 @@ def extract_candidates(argv=None):
         type=float,
         required=False,
         help="Override automated extraction cutoff estimation and instead extract the "
-        "number-of-particles down to this LCCmax value. Setting to 0 will keep extracting until "
-        "number-of-particles, or until there are no positive values left in the score map. Values "
-        "larger than 1 make no sense as the correlation cannot be higher than 1.",
+        "number-of-particles down to this LCCmax value. Setting to 0 will keep "
+        "extracting until number-of-particles, or until there are no positive values "
+        "left in the score map. Values larger than 1 make no sense as the correlation "
+        "cannot be higher than 1.",
     )
     parser.add_argument(
         "--tophat-filter",
@@ -576,8 +588,8 @@ def match_template(argv=None):
         "--non-spherical-mask",
         action="store_true",
         required=False,
-        help="Flag to set when the mask is not spherical. It adds the required computations for "
-        "non-spherical masks and roughly doubles computation time.",
+        help="Flag to set when the mask is not spherical. It adds the required "
+        "computations for non-spherical masks and roughly doubles computation time.",
     )
     parser.add_argument(
         "-v",
@@ -603,21 +615,22 @@ def match_template(argv=None):
         type=str,
         required=True,
         action=ParseTiltAngles,
-        help="Tilt angles of the tilt-series, either the minimum and maximum values of the tilts (e.g. "
-        "--tilt-angles -59.1 60.1) or a .rawtlt/.tlt file with all the angles (e.g. "
-        "--tilt-angles tomo101.rawtlt). In case all the tilt angles are provided a more "
-        "elaborate Fourier space constraint can be used",
+        help="Tilt angles of the tilt-series, either the minimum and maximum values of "
+        "the tilts (e.g. --tilt-angles -59.1 60.1) or a .rawtlt/.tlt file with all the "
+        "angles (e.g. --tilt-angles tomo101.rawtlt). In case all the tilt angles are "
+        "provided a more elaborate Fourier space constraint can be used",
     )
     parser.add_argument(
         "--per-tilt-weighting",
         action="store_true",
         default=False,
         required=False,
-        help="Flag to activate per-tilt-weighting, only makes sense if a file with all tilt angles has "
-        "been provided. In case not set, while a tilt angle file is provided, the minimum and "
-        "maximum tilt angle are used to create a binary wedge. The base functionality creates a "
-        "fanned wedge where each tilt is weighted by cos(tilt_angle). If dose accumulation and "
-        "CTF parameters are provided these will all be incorporated in the tilt-weighting.",
+        help="Flag to activate per-tilt-weighting, only makes sense if a file with all "
+        "tilt angles have been provided. In case not set, while a tilt angle file is "
+        "provided, the minimum and maximum tilt angle are used to create a binary "
+        "wedge. The base functionality creates a fanned wedge where each tilt is "
+        "weighted by cos(tilt_angle). If dose accumulation and CTF parameters are "
+        "provided these will all be incorporated in the tilt-weighting.",
     )
     parser.add_argument(
         "--angular-search",
@@ -625,8 +638,9 @@ def match_template(argv=None):
         required=True,
         help="Options are: [7.00, 35.76, 19.95, 90.00, 18.00, "
         "12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00].\n"
-        "Alternatively, a .txt file can be provided with three Euler angles (in radians) per "
-        "line that define the angular search. Angle format is ZXZ anti-clockwise (see: "
+        "Alternatively, a .txt file can be provided with three Euler angles "
+        "(in radians) per line that define the angular search. "
+        "Angle format is ZXZ anti-clockwise (see: "
         "https://www.ccpem.ac.uk/user_help/rotation_conventions.php).",
     )
     parser.add_argument(
@@ -635,9 +649,9 @@ def match_template(argv=None):
         required=False,
         action=LargerThanZero,
         default=1,
-        help="Integer value indicating the rotational symmetry of the template around the z-axis. The "
-        "length of the rotation search will be shortened through division by this value. Only "
-        "works for template symmetry around the z-axis.",
+        help="Integer value indicating the rotational symmetry of the template around "
+        "the z-axis. The length of the rotation search will be shortened through "
+        "division by this value. Only works for template symmetry around the z-axis.",
     )
     parser.add_argument(
         "-s",
@@ -646,8 +660,9 @@ def match_template(argv=None):
         type=int,
         required=False,
         default=[1, 1, 1],
-        help="Split the volume into smaller parts for the search, can be relevant if the volume does "
-        "not fit into GPU memory. Format is x y z, e.g. --volume-split 1 2 1",
+        help="Split the volume into smaller parts for the search, "
+        "can be relevant if the volume does not fit into GPU memory. "
+        "Format is x y z, e.g. --volume-split 1 2 1",
     )
     parser.add_argument(
         "--search-x",
@@ -655,7 +670,8 @@ def match_template(argv=None):
         type=int,
         required=False,
         action=ParseSearch,
-        help="Start and end indices of the search along the x-axis, e.g. --search-x 10 490 ",
+        help="Start and end indices of the search along the x-axis, "
+        "e.g. --search-x 10 490 ",
     )
     parser.add_argument(
         "--search-y",
@@ -663,7 +679,8 @@ def match_template(argv=None):
         type=int,
         required=False,
         action=ParseSearch,
-        help="Start and end indices of the search along the y-axis, e.g. --search-x 10 490 ",
+        help="Start and end indices of the search along the y-axis, "
+        "e.g. --search-x 10 490 ",
     )
     parser.add_argument(
         "--search-z",
@@ -671,53 +688,59 @@ def match_template(argv=None):
         type=int,
         required=False,
         action=ParseSearch,
-        help="Start and end indices of the search along the z-axis, e.g. --search-x 30 230 ",
+        help="Start and end indices of the search along the z-axis, "
+        "e.g. --search-x 30 230 ",
     )
     parser.add_argument(
         "--voxel-size-angstrom",
         type=float,
         required=False,
         action=LargerThanZero,
-        help="Voxel spacing of tomogram/template in angstrom, if not provided will try to read from "
-        "the MRC files. Argument is important for band-pass filtering!",
+        help="Voxel spacing of tomogram/template in angstrom, if not provided will "
+        "try to read from the MRC files. Argument is important for band-pass "
+        "filtering!",
     )
     parser.add_argument(
         "--low-pass",
         type=float,
         required=False,
         action=LargerThanZero,
-        help="Apply a low-pass filter to the tomogram and template. Generally desired if the template "
-        "was already filtered to a certain resolution. Value is the resolution in A.",
+        help="Apply a low-pass filter to the tomogram and template. Generally desired "
+        "if the template was already filtered to a certain resolution. "
+        "Value is the resolution in A.",
     )
     parser.add_argument(
         "--high-pass",
         type=float,
         required=False,
         action=LargerThanZero,
-        help="Apply a high-pass filter to the tomogram and template to reduce correlation with large "
-        "low frequency variations. Value is a resolution in A, e.g. 500 could be appropriate as "
-        "the CTF is often incorrectly modelled up to 50nm.",
+        help="Apply a high-pass filter to the tomogram and template to reduce "
+        "correlation with large low frequency variations. Value is a resolution in A, "
+        "e.g. 500 could be appropriate as the CTF is often incorrectly modelled "
+        "up to 50nm.",
     )
     parser.add_argument(
         "--dose-accumulation",
         type=str,
         required=False,
         action=ParseDoseFile,
-        help="Here you can provide a file that contains the accumulated dose at each tilt angle, "
-        "assuming the same ordering of tilts as the tilt angle file. Format should be a .txt "
-        "file with on each line a dose value in e-/A2 .",
+        help="Here you can provide a file that contains the accumulated dose at each "
+        "tilt angle, assuming the same ordering of tilts as the tilt angle file. "
+        "Format should be a .txt file with on each line a dose value in e-/A2.",
     )
     parser.add_argument(
         "--defocus-file",
         type=str,
         required=False,
         action=ParseDefocusFile,
-        help="Here you can provide an IMOD defocus file (version 2 or 3) or a text file with defocus. "
-        "The values, together with the other ctf parameters (amplitude contrast, voltage, "
-        "spherical abberation, will be used to create a 3D CTF weighting function. IMPORTANT: if "
-        "you provide this, the input template should not be modulated with a CTF beforehand. "
-        "Format should be .defocus (IMOD) or .txt, same ordering as tilt angle list. The .txt "
-        "file should contain a single defocus value (in nm) per line.",
+        help="Here you can provide an IMOD defocus file (version 2 or 3) "
+        "or a text file with defocus. The values, together with the other ctf "
+        "parameters (amplitude contrast, voltage, spherical abberation), "
+        "will be used to create a 3D CTF weighting function. IMPORTANT: if "
+        "you provide this, the input template should not be modulated with a CTF "
+        "beforehand. Format should be .defocus (IMOD) or .txt, "
+        "same ordering as tilt angle list. The .txt file should contain a single "
+        "defocus value (in nm) per line.",
     )
     parser.add_argument(
         "--amplitude-contrast",
@@ -745,9 +768,9 @@ def match_template(argv=None):
         action="store_true",
         default=False,
         required=False,
-        help="Calculate a whitening filtering from the power spectrum of the tomogram; apply it to "
-        "the tomogram patch and template. Effectively puts more weight on high resolution "
-        "features and sharpens the correlation peaks.",
+        help="Calculate a whitening filtering from the power spectrum of the tomogram; "
+        "apply it to the tomogram patch and template. Effectively puts more weight on "
+        "high resolution features and sharpens the correlation peaks.",
     )
     parser.add_argument(
         "-g",
@@ -777,8 +800,9 @@ def match_template(argv=None):
             or args.voltage is None
         ):
             raise ValueError(
-                "Cannot create 3D CTF weighting because one or multiple of the required parameters ("
-                "amplitude-contrast, spherical-abberation or voltage) is/are missing."
+                "Cannot create 3D CTF weighting because one or multiple of "
+                "the required parameters (amplitude-contrast, "
+                "spherical-abberation or voltage) is/are missing."
             )
         ctf_params = [
             {
@@ -839,7 +863,10 @@ def merge_stars(argv=None):
     import pandas as pd
 
     parser = argparse.ArgumentParser(
-        description="Merge multiple star files in the same directory. -- Marten Chaillet (@McHaillet)"
+        description=(
+            "Merge multiple star files in the same directory. "
+            "-- Marten Chaillet (@McHaillet)"
+        )
     )
     parser.add_argument(
         "-i",
@@ -848,7 +875,10 @@ def merge_stars(argv=None):
         required=False,
         default="./",
         action=CheckDirExists,
-        help="Directory with star files, script will try to merge all files that end in '.star'.",
+        help=(
+            "Directory with star files, "
+            "script will try to merge all files that end in '.star'."
+        ),
     )
     parser.add_argument(
         "-o",
