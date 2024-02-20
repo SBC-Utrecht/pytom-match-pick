@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import numpy as np
 import traceback
 from scipy.optimize import curve_fit
