@@ -23,8 +23,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Install and list dependencies
         run: |
-          conda create -y -n pytom_tm -c conda-forge python=3 cupy cuda-version=11.8 
-          conda activate pytom_tm
+          conda install -y -c conda-forge python=3 cupy cuda-version=11.8 
       - name: Install code and list dependencies
         run: |
           python -m pip install .[plotting]
