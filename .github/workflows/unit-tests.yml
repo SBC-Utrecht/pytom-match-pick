@@ -19,7 +19,9 @@ jobs:
       image: continuumio/miniconda3
       options: --runtime=nvidia --gpus all
     steps:
+      - name: Pull code
+      - uses: actions/checkout@v4
       - name: check running dir
         run: ls -a .
-      - name: test-gpu-avail
-        run: nvidia-smi
+      - name: test-conda-avail
+        run: conda -list
