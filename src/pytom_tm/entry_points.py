@@ -531,6 +531,13 @@ def extract_candidates(argv=None):
         help="Attempt to filter only sharp correlation peaks with a tophat transform",
     )
     parser.add_argument(
+        '--tophat-connectivity', 
+        type=int, 
+        required=False, 
+        default=1,
+        help='Set kernel connectivity for ndimage binary structure used for tophat transform'
+    )
+    parser.add_argument(
         "--log",
         type=str,
         required=False,
@@ -551,6 +558,7 @@ def extract_candidates(argv=None):
         n_false_positives=args.number_of_false_positives,
         tomogram_mask_path=args.tomogram_mask,
         tophat_filter=args.tophat_filter,
+        tophat_connectivity=args.tophat_connectivity,
     )
 
     # write out as a RELION type starfile
