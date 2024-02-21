@@ -22,10 +22,20 @@ jobs:
       - name: Pull code
         uses: actions/checkout@v4
       - name: Install dependencies
-        run: conda install -y -c conda-forge python=3 cupy cuda-version=11.8 
+        run: |
+          conda install -y -c conda-forge python=3 cupy cuda-version=11.8 
+          python -m pip install coverage
       - name: Install code and list dependencies
         run: |
           python -m pip install .[plotting]
           conda list
-      - name: Run tests
-        run: cd tests && python -m unittest discover
+      - name: Run tests and generate coverage
+        run: |
+          cd tests 
+          coverage run -m unittest discover
+          coverage xml coverage.xml
+      - name: Get Coverage
+        uses: orgoro/coverage@v3.1
+        with:
+          coverageFile: coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
