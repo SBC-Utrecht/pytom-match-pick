@@ -58,7 +58,8 @@ def generate_template_from_map(
         input_map = np.pad(
             input_map,
             tuple([(d // 2, d // 2 + d % 2) for d in diff]),
-            mode='edge'
+            mode='constant',
+            constant_values=0,
         )
 
     if filter_to_resolution is None:
@@ -79,7 +80,8 @@ def generate_template_from_map(
             input_map = np.pad(
                 input_map,
                 (pad // 2, pad // 2 + pad % 2),
-                mode='edge'
+                mode='constant',
+                constant_values=0
             )
         elif output_box_size < (input_map.shape[0] * input_spacing) // output_spacing:
             logging.warning('Could not set specified box size as the map would need to be cut and this might '

@@ -553,6 +553,8 @@ class TMJob:
             read_mrc(self.template),
             read_mrc(self.mask)
         )
+        # apply mask directly to prevent any wedge convolution with weird edges
+        template *= mask
 
         # init tomogram and template weighting
         tomo_filter, template_wedge = 1, 1
