@@ -20,7 +20,7 @@ jobs:
       options: --runtime=nvidia --gpus all
     steps:
       - name: Pull code
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
       - name: check running dir
         run: ls -a .
       - name: test-conda-avail
