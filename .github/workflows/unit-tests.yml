@@ -36,8 +36,9 @@ jobs:
           cd tests 
           coverage run -m unittest discover
           coverage xml coverage.xml
+          echo ${{ github.event.number }} > coverage.PR
       - name: upload coverage report
         uses: actions/upload-artifact@v4
         with: 
-          path: tests/coverage.xml
+          path: tests/coverage.*
           name: coverage

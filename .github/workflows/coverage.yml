@@ -28,8 +28,12 @@ jobs:
           name: coverage
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id}}
+      - name: get PR
+        id: get-pr
+        run: echo "PR=$(cat coverage.PR)" >> "$GITHUB_OUTPUT"
       - name: Get Coverage
-        uses: orgoro/coverage@v3.1
+        uses: 5monkeys/cobertura-action@master
         with:
-          coverageFile: coverage.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
+          path: coverage.xml
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          pull_request_number: ${{ steps.get-pr.outputs.PR }}
