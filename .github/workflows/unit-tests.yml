@@ -12,6 +12,8 @@ on:
     # Weekly on saturday 23:59
     - cron: "59 23 * * 6"
 
+
+
 jobs:
   test_suite:
     runs-on: [self-hosted, linux, x64, gpu]
@@ -34,8 +36,27 @@ jobs:
           cd tests 
           coverage run -m unittest discover
           coverage xml coverage.xml
+      - name: upload coverage report
+        uses: actions/upload-artifact@v4
+        with: 
+          path: tests/coverage.xml
+          name: coverage
+
+  report-coverage:
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: [test_suite]
+    runs-on: [self-hosted, linux, x64, gpu]
+    container:
+      images: ubuntu
+    permisssions:
+      pull-requests: write
+    steps:
+      - name: download artifact
+        uses: actions/download-artifact@v4
+          with:
+            name: coverage
       - name: Get Coverage
         uses: orgoro/coverage@v3.1
         with:
-          coverageFile: tests/coverage.xml
+          coverageFile: coverage.xml
           token: ${{ secrets.GITHUB_TOKEN }}
