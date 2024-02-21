@@ -12,16 +12,20 @@ on:
     # Weekly on saturday 23:59
     - cron: "59 23 * * 6"
 
-defaults:
-  runs-on: [self-hosted, linux, x64, gpu]
-  container:
-    image: continuumio/miniconda3
-    options: --runtime=nvidia --gpus all
-
 jobs:
   test_suite:
+    runs-on: [self-hosted, linux, x64, gpu]
+    container:
+      image: continuumio/miniconda3
+      options: --runtime=nvidia --gpus all
     steps:
-      - name: check running dir
-        run: ls -a .
-      - name: test-gpu-avail
-        run: nvidia-smi
+      - name: Pull code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: conda install -y -c conda-forge python=3 cupy cuda-version=11.8 
+      - name: Install code and list dependencies
+        run: |
+          python -m pip install .[plotting]
+          conda list
+      - name: Run tests
+        run: cd tests && python -m unittest discover
