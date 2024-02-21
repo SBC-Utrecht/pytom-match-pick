@@ -39,6 +39,17 @@ dependencies = [
 [project.optional-dependencies]
 plotting = ["matplotlib", "seaborn"]
 
+[project.scripts]
+"pytom_create_mask.py" = "pytom_tm.entry_points:pytom_create_mask"
+"pytom_create_template.py" = "pytom_tm.entry_points:pytom_create_template"
+"pytom_match_template.py" = "pytom_tm.entry_points:match_template"
+"pytom_extract_candidates.py" = "pytom_tm.entry_points:extract_candidates"
+"pytom_merge_stars.py" = "pytom_tm.entry_points:merge_stars"
+# as of writing setuptools does not obey entry-point spec here 
+# ref: https://packaging.python.org/en/latest/specifications/entry-points/
+# might fix itself in the future
+"pytom_estimate_roc.py" = "pytom_tm.entry_points:estimate_roc [plotting]"
+
 [project.urls]
 Repository = "https://github.com/SBC-Utrecht/pytom-template-matching-gpu"
 Issues = "https://github.com/SBC-Utrecht/pytom-template-matching-gpu/issues"
@@ -47,13 +58,3 @@ Issues = "https://github.com/SBC-Utrecht/pytom-template-matching-gpu/issues"
 packages = ["pytom_tm", "pytom_tm.angle_lists"]
 package-dir = {"" = "src"}
 package-data = {"pytom_tm.angle_lists" = ["*.txt"]}
-script-files=[ # This is discouraged and should be converted to project.scripts soon
-    "src/bin/pytom_create_mask.py",
-    "src/bin/pytom_create_template.py",
-    "src/bin/pytom_match_template.py",
-    "src/bin/pytom_extract_candidates.py",
-    "src/bin/pytom_estimate_roc.py",
-    "src/bin/pytom_merge_stars.py",
-]
-
-
