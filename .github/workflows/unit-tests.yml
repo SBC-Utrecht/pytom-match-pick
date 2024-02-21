@@ -53,8 +53,8 @@ jobs:
     steps:
       - name: download artifact
         uses: actions/download-artifact@v4
-          with:
-            name: coverage
+        with:
+          name: coverage
       - name: Get Coverage
         uses: orgoro/coverage@v3.1
         with:
