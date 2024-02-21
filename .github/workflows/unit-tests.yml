@@ -47,8 +47,8 @@ jobs:
     needs: [test_suite]
     runs-on: [self-hosted, linux, x64, gpu]
     container:
-      images: ubuntu
-    permisssions:
+      image: ubuntu
+    permissions:
       pull-requests: write
     steps:
       - name: download artifact
