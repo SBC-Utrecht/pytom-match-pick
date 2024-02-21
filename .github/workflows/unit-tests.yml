@@ -27,6 +27,6 @@ jobs:
       - name: List dependencies
         run: conda list
       - name: Install code
-        run: python -m pip install .[plotting]
+        run: "python -m pip install .[plotting]"
       - name: Run tests:
         run: cd tests && python -m unittest discover
