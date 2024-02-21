@@ -21,7 +21,12 @@ jobs:
     steps:
       - name: Pull code
         uses: actions/checkout@v4
-      - name: check running dir
-        run: ls -a .
-      - name: test-conda-avail
-        run: conda -list
+      - name: Install dependencies
+        run: conda create -y -n pytom_tm -c conda-forge python=3 cupy cuda-version=11.8 
+        run: conda activate pytom_tm
+      - name: List dependencies
+        run: conda list
+      - name: Install code
+        run: python -m pip install .[plotting]
+      - name: Run tests:
+        run: cd tests && python -m unittest discover
