@@ -348,7 +348,6 @@ def pytom_create_template(argv=None):
 
 def estimate_roc(argv=None):
     argv = _parse_argv(argv)
-    # TODO: actually move the code to this location
     from pytom_tm.plotting import plist_quality_gaussian_fit
 
     parser = argparse.ArgumentParser(
