@@ -12,6 +12,8 @@ on:
     # Weekly on saturday 23:59
     - cron: "59 23 * * 6"
 
+
+
 jobs:
   test_suite:
     runs-on: [self-hosted, linux, x64, gpu]
@@ -22,10 +24,21 @@ jobs:
       - name: Pull code
         uses: actions/checkout@v4
       - name: Install dependencies
-        run: conda install -y -c conda-forge python=3 cupy cuda-version=11.8 
+        run: |
+          conda install -y -c conda-forge python=3 cupy cuda-version=11.8 
+          python -m pip install coverage
       - name: Install code and list dependencies
         run: |
           python -m pip install .[plotting]
           conda list
-      - name: Run tests
-        run: cd tests && python -m unittest discover
+      - name: Run tests and generate coverage
+        run: |
+          cd tests 
+          coverage run -m unittest discover
+          coverage xml coverage.xml
+          echo ${{ github.event.number }} > coverage.PR
+      - name: upload coverage report
+        uses: actions/upload-artifact@v4
+        with: 
+          path: tests/coverage.*
+          name: coverage
