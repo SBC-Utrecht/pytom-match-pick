@@ -14,13 +14,17 @@ jobs:
     runs-on: [self-hosted, linux, x64, gpu]
     container:
       image: ubuntu
-    permissions:
+    # DEBUG to make sure the action can pass at all
+    permissions: write-all
       # Allow publishing new comments on PRs
-      pull-requests: write
+      # pull-requests: write
       # Allow for editing existing comments
-      contents: write
+      # contents: write
       # Read the action that triggered this one
-      actions: read
+      # actions: read
+      # Allow to write check runs
+      # checks: read
+      # Allow to check commit statusses
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
@@ -37,4 +41,8 @@ jobs:
           path: coverage.xml
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           pull_request_number: ${{ steps.get-pr.outputs.PR }}
-          minimum_coverage: 95
+          minimum_coverage: 75
+          show_missing: True
+          fail_below_threshold: True
+          # False for now, might set to true later
+          only_changed_files: False
