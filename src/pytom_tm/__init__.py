@@ -5,3 +5,6 @@ try:
     import cupy
 except (ModuleNotFoundError, ImportError):
     print('Error for template matching: cupy installation not found or not functional.')
+
+def fake_data(x):
+    return x
