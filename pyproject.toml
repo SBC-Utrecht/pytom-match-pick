@@ -58,3 +58,6 @@ Issues = "https://github.com/SBC-Utrecht/pytom-template-matching-gpu/issues"
 packages = ["pytom_tm", "pytom_tm.angle_lists"]
 package-dir = {"" = "src"}
 package-data = {"pytom_tm.angle_lists" = ["*.txt"]}
+
+[tool.coverage.run]
+concurrency = ["multiprocessing", "thread"]

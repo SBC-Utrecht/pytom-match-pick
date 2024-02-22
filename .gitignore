@@ -13,3 +13,6 @@ build/
 
 # skip vim swap files
 *.swp
+
+# skip coverage files
+.coverage*
