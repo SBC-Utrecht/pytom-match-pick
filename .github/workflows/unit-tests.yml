@@ -34,6 +34,7 @@ jobs:
       - name: Run tests and generate coverage
         run: |
           coverage run -m unittest discover tests/
+          coverage combine
           coverage xml
           echo ${{ github.event.number }} > coverage.PR
       - name: upload coverage report
