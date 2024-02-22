@@ -14,16 +14,19 @@ jobs:
     runs-on: [self-hosted, linux, x64, gpu]
     container:
       image: ubuntu
-    # DEBUG to make sure the action can pass at all
-    permissions: write-all
-      # Allow publishing new comments on PRs
-      # pull-requests: write
-      # Allow for editing existing comments
-      # contents: write
+    permissions: 
       # Read the action that triggered this one
-      # actions: read
+      actions: read
       # Allow to write check runs
-      # checks: read
+      checks: write
+      # Allow for editing existing comments
+      contents: write
+      # Allow publishing new comments on PRs
+      pull-requests: write
+      # Read and update commit statuses
+      statuses: write
+
+      
       # Allow to check commit statusses
     steps:
       - name: Download Artifact
@@ -44,5 +47,6 @@ jobs:
           minimum_coverage: 75
           show_missing: True
           fail_below_threshold: True
+          link_missing_lines: True
           # False for now, might set to true later
           only_changed_files: False
