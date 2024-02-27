@@ -82,7 +82,7 @@ class TestMissingDependencies(unittest.TestCase):
             self.assertFalse(reload(pytom_tm.extract).plotting_available)
             # assert that importing the plotting module fails completely
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):
-                import pytom_tm.plotting
+                reload(pytom_tm.plotting)
 
 
 
