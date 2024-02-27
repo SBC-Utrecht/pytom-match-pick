@@ -14,6 +14,7 @@ from pytom_tm.angles import AVAILABLE_ROTATIONAL_SAMPLING, load_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import create_wedge, power_spectrum_profile, profile_to_weighting, create_gaussian_band_pass
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
+from pytom_tm import __version__ as PYTOM_TM_VERSION
 
 
 def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True) -> TMJob:
@@ -101,7 +102,7 @@ class TMJob:
             ctf_data: Optional[list[dict, ...]] = None,
             whiten_spectrum: bool = False,
             rotational_symmetry: int = 1,
-            pytom_tm_version_number: str = metadata.version('pytom-template-matching-gpu'),
+            pytom_tm_version_number: str = PYTOM_TM_VERSION,
             job_loaded_for_extraction: bool = False,
     ):
         """
