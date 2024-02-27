@@ -4,4 +4,4 @@ __version__ = metadata.version('pytom-match-pick')
 try:
     import cupy
 except (ModuleNotFoundError, ImportError):
-    print('Error for template matching: cupy installation not found or not functional.')
+    raise ImportWarning('Error for template matching: cupy installation not found or not functional.')
