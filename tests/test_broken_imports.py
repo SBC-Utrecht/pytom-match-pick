@@ -3,12 +3,6 @@ import unittest
 from importlib import reload
 # Mock out installed dependencies
 orig_import = __import__
-try:
-    import matplotlib
-    import seaborn
-    skip_plotting = False
-except ImportError:
-    skip_plotting = True
 
 def module_not_found_mock(missing_name):
     def import_mock(name, *args):
@@ -22,7 +16,7 @@ def cupy_import_error_mock(name, *args):
         raise ImportError("Failed to import cupy")
     return orig_import(name, *args)
 
-matplotlib_not_found = module_not_found_mock('matplotlib')
+matplotlib_not_found = module_not_found_mock('matplotlib.pyplot')
 seaborn_not_found = module_not_found_mock('seaborn')
 
 class TestMissingDependencies(unittest.TestCase):
@@ -55,7 +49,8 @@ class TestMissingDependencies(unittest.TestCase):
         import pytom_tm
         with unittest.mock.patch('builtins.__import__', side_effect=matplotlib_not_found):
             with self.assertRaisesRegex(ModuleNotFoundError, 'matplotlib'):
-                import matplotlib
+                # only pyplot is directly imported so this should be tested
+                import matplotlib.pyplot as plt
             # force reload 
             # check if we can still import pytom_tm
             reload(pytom_tm)
@@ -66,7 +61,7 @@ class TestMissingDependencies(unittest.TestCase):
             self.assertFalse(reload(pytom_tm.extract).plotting_available)
             # assert that importing the plotting module fails completely
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):
-                import pytom_tm.plotting
+                reload(pytom_tm.plotting)
 
     def test_missing_seaborn(self):
         # assert working import
