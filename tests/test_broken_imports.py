@@ -16,8 +16,6 @@ def cupy_import_error_mock(name, *args):
         raise ImportError("Failed to import cupy")
     return orig_import(name, *args)
 
-matplotlib_not_found = module_not_found_mock('matplotlib.pyplot')
-seaborn_not_found = module_not_found_mock('seaborn')
 
 class TestMissingDependencies(unittest.TestCase):
 
@@ -47,6 +45,8 @@ class TestMissingDependencies(unittest.TestCase):
     def test_missing_matplotlib(self):
         # assert working import
         import pytom_tm
+
+        matplotlib_not_found = module_not_found_mock('matplotlib.pyplot')
         with unittest.mock.patch('builtins.__import__', side_effect=matplotlib_not_found):
             with self.assertRaisesRegex(ModuleNotFoundError, 'matplotlib'):
                 # only pyplot is directly imported so this should be tested
@@ -66,6 +66,8 @@ class TestMissingDependencies(unittest.TestCase):
     def test_missing_seaborn(self):
         # assert working import
         import pytom_tm
+        
+        seaborn_not_found = module_not_found_mock('seaborn')
         with unittest.mock.patch('builtins.__import__', side_effect=seaborn_not_found):
             with self.assertRaisesRegex(ModuleNotFoundError, 'seaborn'):
                 import seaborn
