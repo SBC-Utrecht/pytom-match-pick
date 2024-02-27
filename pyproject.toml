@@ -3,9 +3,9 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pytom-template-matching-gpu"
+name = "pytom-match-pick"
 version = "0.3.5"
-description = "GPU template matching from PyTOM as a lightweight pip package"
+description = "PyTOM's GPU template matching module as an independent package"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
@@ -51,8 +51,8 @@ plotting = ["matplotlib", "seaborn"]
 "pytom_estimate_roc.py" = "pytom_tm.entry_points:estimate_roc [plotting]"
 
 [project.urls]
-Repository = "https://github.com/SBC-Utrecht/pytom-template-matching-gpu"
-Issues = "https://github.com/SBC-Utrecht/pytom-template-matching-gpu/issues"
+Repository = "https://github.com/SBC-Utrecht/pytom-match-pick"
+Issues = "https://github.com/SBC-Utrecht/pytom-match-pick/issues"
 
 [tool.setuptools]
 packages = ["pytom_tm", "pytom_tm.angle_lists"]
