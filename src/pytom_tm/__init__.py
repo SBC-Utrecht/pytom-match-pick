@@ -1,5 +1,5 @@
 from importlib import metadata
-__version__ = metadata.version('pytom-template-matching-gpu')
+__version__ = metadata.version('pytom-match-pick')
 
 try:
     import cupy
