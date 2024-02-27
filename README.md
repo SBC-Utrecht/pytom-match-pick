@@ -1,4 +1,4 @@
-![test-badge](https://github.com/SBC-Utrecht/pytom-template-matching-gpu/actions/workflows/unit-tests.yml/badge.svg?branch=main)
+![test-badge](https://github.com/SBC-Utrecht/pytom-match-pick/actions/workflows/unit-tests.yml/badge.svg?branch=main)
 # PyTOM GPU template matching for cryo-ET
 PyTOM's GPU template matching as a single pip plugin that can only be run from the command line.
 
