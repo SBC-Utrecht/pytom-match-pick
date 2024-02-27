@@ -40,7 +40,7 @@ class TestMissingDependencies(unittest.TestCase):
         with unittest.mock.patch('builtins.__import__', side_effect=matplotlib_not_found):
             # check if we can still import pytom_tm
             import pytom_tm
-            # check if plotting is indeed disbaled
+            # check if plotting is indeed disabled
             self.assertFalse(pytom_tm.template.plotting_available)
             self.assertFalse(pytom_tm.extract.plotting_available)
             # assert that importing the plotting module fails completely
@@ -51,7 +51,7 @@ class TestMissingDependencies(unittest.TestCase):
         with unittest.mock.patch('builtins.__import__', side_effect=seaborn_not_found):
             # check if we can still import pytom_tm
             import pytom_tm
-            # check if plotting is indeed disbaled
+            # check if plotting is indeed disabled
             self.assertFalse(pytom_tm.template.plotting_available)
             self.assertFalse(pytom_tm.extract.plotting_available)
             # assert that importing the plotting module fails completely
