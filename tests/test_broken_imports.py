@@ -54,8 +54,12 @@ class TestMissingDependencies(unittest.TestCase):
         # assert working import
         import pytom_tm
         with unittest.mock.patch('builtins.__import__', side_effect=matplotlib_not_found):
+            with self.assertRaisesRegex(ModuleNotFoundError, 'matplotlib'):
+                import matplotlib
+            # force reload 
             # check if we can still import pytom_tm
             reload(pytom_tm)
+
             # check if plotting is indeed disabled
             self.assertFalse(pytom_tm.template.plotting_available)
             self.assertFalse(pytom_tm.extract.plotting_available)
@@ -67,6 +71,8 @@ class TestMissingDependencies(unittest.TestCase):
         # assert working import
         import pytom_tm
         with unittest.mock.patch('builtins.__import__', side_effect=seaborn_not_found):
+            with self.assertRaisesRegex(ModuleNotFoundError, 'seaborn'):
+                import seaborn
             # check if we can still import pytom_tm
             reload(pytom_tm)
             # check if plotting is indeed disabled
