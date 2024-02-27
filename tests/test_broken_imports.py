@@ -58,7 +58,7 @@ class TestMissingDependencies(unittest.TestCase):
                 import matplotlib
             # force reload 
             # check if we can still import pytom_tm
-            reload(pytom_tm)
+            pytom_tm = reload(pytom_tm)
 
             # check if plotting is indeed disabled
             self.assertFalse(pytom_tm.template.plotting_available)
@@ -74,7 +74,7 @@ class TestMissingDependencies(unittest.TestCase):
             with self.assertRaisesRegex(ModuleNotFoundError, 'seaborn'):
                 import seaborn
             # check if we can still import pytom_tm
-            reload(pytom_tm)
+            pytom_tm = reload(pytom_tm)
             # check if plotting is indeed disabled
             self.assertFalse(pytom_tm.template.plotting_available)
             self.assertFalse(pytom_tm.extract.plotting_available)
