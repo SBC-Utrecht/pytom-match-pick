@@ -39,8 +39,8 @@ conda activate pytom_tm
 Then clone the repository and install it with pip (building cupy can take a while!): 
 
 ```commandline
-git clone https://github.com/SBC-Utrecht/pytom-template-matching-gpu.git
-cd pytom-template-matching-gpu
+git clone https://github.com/SBC-Utrecht/pytom-match-pick.git
+cd pytom-match-pick
 python -m pip install '.[plotting]'
 ```
 
@@ -73,9 +73,9 @@ specific build compatible with the installed cuda toolkit.
 
 ## Usage
 
-Detailed usage instructions are available on the wiki: https://github.com/SBC-Utrecht/pytom-template-matching-gpu/wiki
+Detailed usage instructions are available on the wiki: https://github.com/SBC-Utrecht/pytom-match-pick/wiki
 
-Also, a tutorial can be found on the same wiki: https://github.com/SBC-Utrecht/pytom-template-matching-gpu/wiki/Tutorial
+Also, a tutorial can be found on the same wiki: https://github.com/SBC-Utrecht/pytom-match-pick/wiki/Tutorial
 
 The following scripts are available to run with `--help` to see parameters:
 
