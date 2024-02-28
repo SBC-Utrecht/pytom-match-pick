@@ -45,7 +45,7 @@ class TestMissingDependencies(unittest.TestCase):
     def test_missing_matplotlib(self):
         # assert working import
         import pytom_tm
-        import .test_entry_points as tep
+        import test_entry_points as tep
         
         matplotlib_not_found = module_not_found_mock('matplotlib.pyplot')
         with unittest.mock.patch('builtins.__import__', side_effect=matplotlib_not_found):
@@ -71,7 +71,7 @@ class TestMissingDependencies(unittest.TestCase):
         # assert working import
         import pytom_tm
         # needed for test test later on
-        import .test_entry_points as tep
+        import test_entry_points as tep
         
         seaborn_not_found = module_not_found_mock('seaborn')
         with unittest.mock.patch('builtins.__import__', side_effect=seaborn_not_found):
