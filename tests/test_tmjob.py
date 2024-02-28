@@ -347,7 +347,3 @@ class TestTMJob(unittest.TestCase):
                                        create_plot=False)
         self.assertNotEqual(len(scores), 0, msg='We expected a detected particle with a extraction mask that '
                                                 'covers the object.')
-
-
-if __name__ == '__main__':
-    unittest.main()

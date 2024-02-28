@@ -314,7 +314,3 @@ class TestWeights(unittest.TestCase):
         self.assertEqual(profile_to_weighting(profile, self.volume_shape_irregular[:2]).shape,
                          self.reduced_irregular_shape_2d,
                          msg='Profile to weighting should return 2D Fourier reduced array.')
-
-
-if __name__ == '__main__':
-    unittest.main()

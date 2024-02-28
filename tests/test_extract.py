@@ -10,7 +10,3 @@ class TestExtract(unittest.TestCase):
         tophat_mask = predict_tophat_mask(volume)
         self.assertEqual(tophat_mask.shape, volume.shape, msg='tophat mask should have same size as input')
         self.assertEqual(tophat_mask.dtype, bool, msg='predicted tophat mask should be boolean')
-
-
-if __name__ == '__main__':
-    unittest.main()
