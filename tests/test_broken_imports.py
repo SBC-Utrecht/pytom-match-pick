@@ -62,6 +62,9 @@ class TestMissingDependencies(unittest.TestCase):
             # assert that importing the plotting module fails completely
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):
                 reload(pytom_tm.plotting)
+            # test that entry point testing still works
+            tested_entry_points = [i[0] for i in reload(.test_entry_points).ENTRY_POINTS_TO_TEST
+            self.assertNotIn('pytom_estimate_roc.py', tested_entry_points)
 
     def test_missing_seaborn(self):
         # assert working import
@@ -81,5 +84,7 @@ class TestMissingDependencies(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):
                 reload(pytom_tm.plotting)
 
-
+            # test that entry point testing still works
+            tested_entry_points = [i[0] for i in reload(.test_entry_points).ENTRY_POINTS_TO_TEST
+            self.assertNotIn('pytom_estimate_roc.py', tested_entry_points)
 
