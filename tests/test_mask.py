@@ -90,7 +90,3 @@ class TestMask(unittest.TestCase):
         self.assertAlmostEqual(sum(nxcc_centered), sum(nxcc_offcenter),
                                places=4, msg='Center of rotation for mask is incorrect.')
         self.assertTrue(sum(nxcc_centered) > 99.09, msg='Precision of mask rotation is too low.')
-
-
-if __name__ == '__main__':
-    unittest.main()

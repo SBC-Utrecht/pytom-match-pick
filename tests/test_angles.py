@@ -28,7 +28,3 @@ class TestAngles(unittest.TestCase):
         for sampling, (angle_file, n_rotations) in AVAILABLE_ROTATIONAL_SAMPLING.items():
             angle_list = load_angle_list(angle_file)
             self.assertEqual(len(angle_list), n_rotations, msg=f'Unexpected number of rotations for {angle_file}')
-
-
-if __name__ == '__main__':
-    unittest.main()

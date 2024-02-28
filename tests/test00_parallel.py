@@ -87,7 +87,3 @@ class TestTMJob(unittest.TestCase):
         self.assertTrue(score.max() > 0.931, msg='lcc max value lower than expected')
         self.assertEqual(ANGLE_ID, angle[ind])
         self.assertSequenceEqual(LOCATION, ind)
-
-
-if __name__ == '__main__':
-    unittest.main()
