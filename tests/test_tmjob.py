@@ -141,6 +141,7 @@ class TestTMJob(unittest.TestCase):
             with self.assertRaises(ValueError, msg='Invalid start index in search should raise ValueError'):
                 TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, voxel_size=1.,
                       **{param: [-10, 100]})
+            with self.assertRaises(ValueError, msg='Invalid start index in search should raise ValueError'):
                 TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, voxel_size=1.,
                       **{param: [110, 130]})
             with self.assertRaises(ValueError, msg='Invalid end index in search should raise ValueError'):
