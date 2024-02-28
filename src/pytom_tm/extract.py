@@ -17,7 +17,6 @@ from tqdm import tqdm
 
 plotting_available = False
 try:
-    import matplotlib
     import matplotlib.pyplot as plt
     import seaborn as sns
     sns.set(context='talk', style='ticks')
