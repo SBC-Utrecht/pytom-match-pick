@@ -63,7 +63,7 @@ class TestMissingDependencies(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):
                 reload(pytom_tm.plotting)
             # test that entry point testing still works
-            tested_entry_points = [i[0] for i in reload(test_entry_points).ENTRY_POINTS_TO_TEST]
+            tested_entry_points = [i[0] for i in reload(.test_entry_points).ENTRY_POINTS_TO_TEST]
             self.assertNotIn('pytom_estimate_roc.py', tested_entry_points)
 
     def test_missing_seaborn(self):
@@ -85,6 +85,6 @@ class TestMissingDependencies(unittest.TestCase):
                 reload(pytom_tm.plotting)
 
             # test that entry point testing still works
-            tested_entry_points = [i[0] for i in reload(test_entry_points).ENTRY_POINTS_TO_TEST]
+            tested_entry_points = [i[0] for i in reload(.test_entry_points).ENTRY_POINTS_TO_TEST]
             self.assertNotIn('pytom_estimate_roc.py', tested_entry_points)
 
