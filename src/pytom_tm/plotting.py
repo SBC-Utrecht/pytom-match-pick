@@ -5,13 +5,13 @@ import itertools
 from scipy.optimize import curve_fit
 from scipy.special import erf
 
-if find_spec("matplotlib") is None or find_spec("seaborn") is None:
+try:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+except ModuleNotFoundError:
     raise RuntimeError(
         "ROC estimation can only be done when matplotlib and seaborn are installed."
     )
-else:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
 sns.set(context="talk", style="ticks")
 
 
