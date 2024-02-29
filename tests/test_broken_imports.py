@@ -4,6 +4,13 @@ from importlib import reload
 # Mock out installed dependencies
 orig_import = __import__
 
+# skip tests if optional stuff is not installed
+SKIP_PLOT = False
+try:
+    import pytom_tm.plotting
+except ModuleNotFoundError:
+    SKIP_PLOT = True
+
 def module_not_found_mock(missing_name):
     def import_mock(name, *args):
         if name == missing_name:
@@ -42,6 +49,7 @@ class TestMissingDependencies(unittest.TestCase):
             self.assertEqual(len(cm.output), 1)
             self.assertIn("cupy installation not found or not functional", cm.output[0])
 
+    @unittest.skipIf(SKIP_PLOT, "plotting module not installed")
     def test_missing_matplotlib(self):
         # assert working import
         import pytom_tm
@@ -63,6 +71,7 @@ class TestMissingDependencies(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):
                 reload(pytom_tm.plotting)
 
+    @unittest.skipIf(SKIP_PLOT, "plotting module not installed")
     def test_missing_seaborn(self):
         # assert working import
         import pytom_tm
