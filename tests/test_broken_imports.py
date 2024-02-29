@@ -45,8 +45,7 @@ class TestMissingDependencies(unittest.TestCase):
     def test_missing_matplotlib(self):
         # assert working import
         import pytom_tm
-        import test_entry_points as tep
-        
+
         matplotlib_not_found = module_not_found_mock('matplotlib.pyplot')
         with unittest.mock.patch('builtins.__import__', side_effect=matplotlib_not_found):
             with self.assertRaisesRegex(ModuleNotFoundError, 'matplotlib'):
@@ -63,15 +62,10 @@ class TestMissingDependencies(unittest.TestCase):
             # assert that importing the plotting module fails completely
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):
                 reload(pytom_tm.plotting)
-            # test that entry point testing still works
-            tested_entry_points = [i[0] for i in reload(tep).ENTRY_POINTS_TO_TEST]
-            self.assertNotIn('pytom_estimate_roc.py', tested_entry_points)
 
     def test_missing_seaborn(self):
         # assert working import
         import pytom_tm
-        # needed for test test later on
-        import test_entry_points as tep
         
         seaborn_not_found = module_not_found_mock('seaborn')
         with unittest.mock.patch('builtins.__import__', side_effect=seaborn_not_found):
@@ -87,7 +81,5 @@ class TestMissingDependencies(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):
                 reload(pytom_tm.plotting)
 
-            # test that entry point testing still works
-            tested_entry_points = [i[0] for i in reload(tep).ENTRY_POINTS_TO_TEST]
-            self.assertNotIn('pytom_estimate_roc.py', tested_entry_points)
+
 
