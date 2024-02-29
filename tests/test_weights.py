@@ -114,6 +114,9 @@ class TestWeights(unittest.TestCase):
         with self.assertRaises(ValueError, msg='Radial reduced grid should raise ValueError if the shape is '
                                                'not 2- or 3-dimensional.'):
             radial_reduced_grid((5, ))
+        with self.assertRaises(ValueError, msg='Radial reduced grid should raise ValueError if the shape is '
+                                               'not 2- or 3-dimensional.'):
+ 
             radial_reduced_grid((5, ) * 4)
 
         self.assertEqual(radial_reduced_grid(self.volume_shape_even).shape, self.reduced_even_shape_3d,
@@ -291,6 +294,9 @@ class TestWeights(unittest.TestCase):
         with self.assertRaises(ValueError, msg='Power spectrum profile should raise ValueError if input image is '
                                                'not 2- or 3-dimensional.'):
             power_spectrum_profile(np.zeros(5))
+        with self.assertRaises(ValueError, msg='Power spectrum profile should raise ValueError if input image is '
+                                               'not 2- or 3-dimensional.'):
+
             power_spectrum_profile(np.zeros((5, ) * 4))
         profile = power_spectrum_profile(np.zeros(self.volume_shape_irregular))
         self.assertEqual(profile.shape, (max(self.volume_shape_irregular) // 2 + 1, ),
@@ -305,6 +311,8 @@ class TestWeights(unittest.TestCase):
         with self.assertRaises(ValueError, msg='Profile to weighting should raise a ValueError if the output shape '
                                                'for the weighting is not 2- or 3-dimensional.'):
             profile_to_weighting(np.zeros(5), (5, ))
+        with self.assertRaises(ValueError, msg='Profile to weighting should raise a ValueError if the output shape '
+                                               'for the weighting is not 2- or 3-dimensional.'):
             profile_to_weighting(np.zeros(5), (5,) * 4)
 
         profile = power_spectrum_profile(np.zeros(self.volume_shape_irregular))

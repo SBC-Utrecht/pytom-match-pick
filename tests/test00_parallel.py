@@ -77,7 +77,7 @@ class TestTMJob(unittest.TestCase):
             self.assertEqual(len(multiprocessing.active_children()), 0,
                              msg='a process was still lingering after a parallel job with partially invalid resources '
                                  'was started')
-        else:
+        else: # pragma: no cover
             self.fail('This should have given a RuntimeError')
 
     def test_parallel_manager(self):
