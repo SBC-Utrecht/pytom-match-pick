@@ -8,7 +8,7 @@ orig_import = __import__
 SKIP_PLOT = False
 try:
     import pytom_tm.plotting
-except ModuleNotFoundError:
+except:
     SKIP_PLOT = True
 
 def module_not_found_mock(missing_name):
