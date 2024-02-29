@@ -61,4 +61,4 @@ package-data = {"pytom_tm.angle_lists" = ["*.txt"]}
 
 [tool.coverage.run]
 concurrency = ["multiprocessing", "thread"]
-parallel-mode = true
+parallel = true
