@@ -1,0 +1,43 @@
+name: "PyPI release"
+on:
+  release:
+    types:
+      - published
+
+# Following: https://docs.pypi.org/trusted-publishers/using-a-publisher/
+jobs:
+  publish_release:
+    runs-on: [self-hosted, linux, x64, gpu]
+    container:
+      image: continuumio/miniconda3
+      options: --runtime=nvidia --gpus all
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - name: Pull code
+        uses: actions/checkout@v4
+      - name: Install build and twine
+        run: |
+          python -m pip install --upgrade build twine
+      - name: build distributions 
+        run: |
+          python -m build 
+      - name: twine check distributions
+        run: |
+          python -m twine check dist/*
+      - name: Publish package distributions to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+      - name: Download conda dependencies 
+        run: |
+          conda install -y -c conda-forge python=3 cupy cuda-version=11.8
+      - name: Install from testPyPi
+        run: |
+          python3 -m pip install --index-url https://test.pypi.org/legacy/ --extra-index-url https://pypi.org/simple/ pytom-match-pick[plotting]
+      - name: Run tests on the installed package
+        run: |
+          python -m unittest discover tests/
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

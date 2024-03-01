@@ -16,3 +16,6 @@ build/
 
 # skip coverage files
 .coverage*
+
+# skip distribution files
+dist/*
