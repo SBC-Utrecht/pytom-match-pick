@@ -35,12 +35,10 @@ Once the environment is created, activate it:
 conda activate pytom_tm
 ```
 
-Then clone the repository and install it with pip (building cupy can take a while!): 
+Then install the code with `pip` (building cupy can take a while!):
 
 ```commandline
-git clone https://github.com/SBC-Utrecht/pytom-match-pick.git
-cd pytom-match-pick
-python -m pip install '.[plotting]'
+python -m pip install pytom-match-pick[plotting]
 ```
 
 The installation above also adds the optional dependencies `[matplotlib, seaborn]` which are required to run 
@@ -48,20 +46,17 @@ The installation above also adds the optional dependencies `[matplotlib, seaborn
 (such as certain cluster environments) it might be desirable to skip them. In that case remove `[plotting]` from the pip install command:
 
 ```commandline
-python -m pip install .
+python -m pip install pytom-match-pick
 ```
 
-## Tests
-
-To run the unittests:
-
+## Cupy warning
+Having issues running the software? If cupy is not correctly installed, 
 ```commandline
-cd tests
-python -m unittest discover
+python -c "import pytom_tm"
 ```
 
-If cupy is not correctly installed, this should raise some errors:
-
+can show a cupy warning. If this is the case, this probably means cupy is not correctly installed.
+Alternatively, cupy can sometimes be installed without issue but not detect CUDA correctly. In that case, the following should raise some errors:
 ```commandline
 python -c "import cupy as cp; a = cp.zeros((100,100))"
 ```
@@ -84,6 +79,30 @@ The following scripts are available to run with `--help` to see parameters:
 - extract candidates from a job file (.json) created in the template matching output folder: `pytom_extract_candidate.py --help`
 - estimate an ROC curve from a job file (.json): `pytom_estimate_roc.py --help`
 - merge multiple star files to a single starfile: `pytom_merge_stars.py --help`
+
+## Developer install
+If you want the most up-to-date version of the code you can get install it from this repository via:
+
+```commandline
+git clone https://github.com/SBC-Utrecht/pytom-match-pick.git
+cd pytom-match-pick
+python -m pip install '.[plotting]'
+```
+
+as above, if you don't want the optional plotting dependencies use the following install command instead:
+```commandline
+python -m pip install .
+```
+
+## Tests
+
+With the developer install also comes the ability to run the unittests,
+from the git repository run:
+
+```commandline
+cd tests
+python -m unittest discover
+```
 
 ## Contributing
 
