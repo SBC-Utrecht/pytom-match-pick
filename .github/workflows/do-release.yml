@@ -35,7 +35,7 @@ jobs:
           conda install -y -c conda-forge python=3 cupy cuda-version=11.8
       - name: Install from testPyPi
         run: |
-          python3 -m pip install --index-url https://test.pypi.org/legacy/ --extra-index-url https://pypi.org/simple/ pytom-match-pick[plotting]
+          python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pytom-match-pick[plotting]
       - name: Run tests on the installed package
         run: |
           python -m unittest discover tests/
