@@ -35,10 +35,10 @@ Once the environment is created, activate it:
 conda activate pytom_tm
 ```
 
-The install the code with `pip` (building cupy can take a while!):
+Then install the code with `pip` (building cupy can take a while!):
 
 ```commandline
-python -m pip install pytom-match-pick.[plotting]
+python -m pip install pytom-match-pick[plotting]
 ```
 
 The installation above also adds the optional dependencies `[matplotlib, seaborn]` which are required to run 
@@ -81,7 +81,7 @@ The following scripts are available to run with `--help` to see parameters:
 - merge multiple star files to a single starfile: `pytom_merge_stars.py --help`
 
 ## Developer install
-If you want the most up-to-date version of the code you can get it from this repository via:
+If you want the most up-to-date version of the code you can get install it from this repository via:
 
 ```commandline
 git clone https://github.com/SBC-Utrecht/pytom-match-pick.git
@@ -91,7 +91,7 @@ python -m pip install '.[plotting]'
 
 as above, if you don't want the optional plotting dependencies use the following install command instead:
 ```commandline
-python -m pip install '.[plotting]'
+python -m pip install .
 ```
 
 ## Tests
