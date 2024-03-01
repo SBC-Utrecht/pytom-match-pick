@@ -50,13 +50,13 @@ python -m pip install pytom-match-pick
 ```
 
 ## Cupy warning
-Trying to import the code with 
+Having issues running the software? If cupy is not correctly installed, 
 ```commandline
 python -c "import pytom_tm"
 ```
 
 can show a cupy warning. If this is the case, this probably means cupy is not correctly installed.
-If your cupy installation is broken, the following should raise some errors:
+Alternatively, cupy can sometimes be installed without issue but not detect CUDA correctly. In that case, the following should raise some errors:
 ```commandline
 python -c "import cupy as cp; a = cp.zeros((100,100))"
 ```
