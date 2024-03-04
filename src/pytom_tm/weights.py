@@ -497,7 +497,7 @@ def _create_tilt_weighted_wedge(
     )) / (image_size // 2)
     tilt_increment = min([abs(x - y) for x, y in pairwise(tilt_angles)])
     overlap_frequency = tilt_increment * image_size / 2
-    ramp_filter = q_grid_1d / overlap_frequency + 1 / len(tilt_angles)
+    ramp_filter = q_grid_1d / overlap_frequency
     ramp_filter[ramp_filter > 1] = 1
     ramp_weighting = np.tile(ramp_filter, (image_size, 1)).T
 
