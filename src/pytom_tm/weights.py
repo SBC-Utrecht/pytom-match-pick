@@ -513,22 +513,16 @@ def _create_tilt_weighted_wedge(
                     ctf_params_per_tilt[i]['cs'] * 1e-3,
                     flip_phase=True  # creating a per tilt ctf is hard if the phase is not flipped
                 ), axes=0,
-            ) * exact_weighting
+            )
             tilt[:, :, image_size // 2] = np.concatenate(
                 (  # duplicate and flip the CTF around the 0 frequency; then concatenate to make it non-reduced
                     np.flip(ctf[:, 1: 1 + image_size - ctf.shape[1]], axis=1),
                     ctf
                 ),
                 axis=1
-            )
+            ) * exact_weighting
         else:
-            tilt[:, :, image_size // 2] = np.concatenate(
-                (  # duplicate and flip the CTF around the 0 frequency; then concatenate to make it non-reduced
-                    np.flip(exact_weighting[:, 1: 1 + image_size - exact_weighting.shape[1]], axis=1),
-                    exact_weighting
-                ),
-                axis=1
-            )
+            tilt[:, :, image_size // 2] = exact_weighting
 
         # rotate the image weights to the tilt angle
         rotated = np.flip(
