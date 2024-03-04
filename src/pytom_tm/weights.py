@@ -487,12 +487,19 @@ def _create_tilt_weighted_wedge(
     image_size = shape[0]  # assign to size variable as all dimensions are equal size
     tilt = np.zeros(shape)
     q_grid = radial_reduced_grid(shape)
+    _, q_grid_1d = radial_average(np.fft.ifftshift(q_grid, axes=(0, 1)))
     tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
     for i, alpha in enumerate(tilt_angles):
+        # calculate weighting correction for overlapping data
+        sampling = np.sin(np.abs((np.array(tilt_angles) - alpha)))
+        overlap = sampling / (2 / image_size)
+        exact_filter = 1 / np.clip(1 - (overlap[:, np.newaxis] * q_grid_1d) ** 2, 0, 2).sum(axis=0)
+        exact_weighting = profile_to_weighting(exact_filter, (image_size, ) * 2)
+
         if ctf_params_per_tilt is not None:
             ctf = np.fft.fftshift(
-                create_ctf(
+                exact_weighting * create_ctf(
                     (image_size, ) * 2,
                     pixel_size_angstrom * 1e-10,
                     ctf_params_per_tilt[i]['defocus'] * 1e-6,
@@ -510,7 +517,13 @@ def _create_tilt_weighted_wedge(
                 axis=1
             )
         else:
-            tilt[:, :, image_size // 2] = 1
+            tilt[:, :, image_size // 2] = np.concatenate(
+                (  # duplicate and flip the CTF around the 0 frequency; then concatenate to make it non-reduced
+                    np.flip(exact_weighting[:, 1: 1 + image_size - exact_weighting.shape[1]], axis=1),
+                    exact_weighting
+                ),
+                axis=1
+            )
 
         # rotate the image weights to the tilt angle
         rotated = np.flip(
@@ -540,7 +553,8 @@ def _create_tilt_weighted_wedge(
                     rotated *
                     np.cos(alpha)  # apply tilt-dependent weighting
             )
-        tilt_weighted_wedge = np.maximum(tilt_weighted_wedge, weighted_tilt)
+
+        tilt_weighted_wedge += weighted_tilt  # np.maximum(tilt_weighted_wedge, weighted_tilt)
 
     tilt_weighted_wedge[q_grid > cut_off_radius] = 0
 
