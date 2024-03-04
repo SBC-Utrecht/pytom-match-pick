@@ -487,21 +487,20 @@ def _create_tilt_weighted_wedge(
     image_size = shape[0]  # assign to size variable as all dimensions are equal size
     tilt = np.zeros(shape)
     q_grid = radial_reduced_grid(shape)
+    tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
+
+    # create ramp weights for to reweight tilt overlap
     q_grid_1d = np.abs(np.arange(
         -image_size // 2 + image_size % 2,
         image_size // 2 + image_size % 2, 1.
-    ))  # / (image_size // 2)
-    tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
+    )) / (image_size // 2)
+    tilt_increment = (np.abs(np.array(tilt_angles)[1:] - np.array(tilt_angles)[:-1])).min()
+    overlap_frequency = tilt_increment * image_size / 2
+    ramp_filter = q_grid_1d / overlap_frequency
+    ramp_filter[ramp_filter > 1] = 1
+    ramp_weighting = np.tile(ramp_filter, (image_size, 1)).T
 
     for i, alpha in enumerate(tilt_angles):
-        # calculate weighting correction for overlapping data
-        sampling = np.sin(np.abs((np.array(tilt_angles) - alpha)))
-        smallest_sampling = np.min(sampling[sampling > 0.001])
-        slice_width = smallest_sampling * (image_size / 2)
-        overlap = sampling / slice_width
-        exact_filter = 1 / np.clip(1 - (overlap[:, np.newaxis] * q_grid_1d) ** 2, 0, 2).sum(axis=0)
-        exact_weighting = np.tile(exact_filter, (image_size, 1)).T
-
         if ctf_params_per_tilt is not None:
             ctf = np.fft.fftshift(
                 create_ctf(
@@ -520,9 +519,9 @@ def _create_tilt_weighted_wedge(
                     ctf
                 ),
                 axis=1
-            ) * exact_weighting
+            ) * ramp_weighting
         else:
-            tilt[:, :, image_size // 2] = exact_weighting
+            tilt[:, :, image_size // 2] = ramp_weighting
 
         # rotate the image weights to the tilt angle
         rotated = np.flip(
