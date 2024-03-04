@@ -490,16 +490,25 @@ def _create_tilt_weighted_wedge(
     q_grid = radial_reduced_grid(shape)
     tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
-    # create ramp weights for to reweight tilt overlap
-    q_grid_1d = np.abs(np.arange(
-        -image_size // 2 + image_size % 2,
-        image_size // 2 + image_size % 2, 1.
-    )) / (image_size // 2) * 0.5  # to nyquist
-    tilt_increment = min([abs(x - y) for x, y in pairwise(tilt_angles)])
-    overlap_frequency = 1 / (tilt_increment * image_size)
-    ramp_filter = q_grid_1d / overlap_frequency
-    ramp_filter[ramp_filter > 1] = 1
-    ramp_weighting = np.tile(ramp_filter, (image_size, 1)).T
+    # create ramp weights for reweighting tilt overlap
+    reconstruction_method = 'ramp-wbp'
+    if reconstruction_method == 'gridding':
+        tilt_increment = min([abs(x - y) for x, y in pairwise(tilt_angles)])
+        overlap_frequency = 1 / (tilt_increment * image_size)
+        ramp_filter = np.abs(np.arange(
+            -image_size // 2 + image_size % 2,
+            image_size // 2 + image_size % 2, 1.
+        )) / (image_size // 2) * .5 / overlap_frequency  # to nyquist
+        ramp_filter[ramp_filter > 1] = 1
+    elif reconstruction_method == 'ramp-wbp':
+        ramp_filter = np.abs(np.arange(
+            -image_size // 2 + image_size % 2,
+            image_size // 2 + image_size % 2, 1.
+        )) / (image_size // 2)
+    else:
+        raise ValueError('Unknown reconstruction method!')
+
+    ramp_weighting = np.tile(ramp_filter[:, np.newaxis], (1, image_size))
 
     for i, alpha in enumerate(tilt_angles):
         if ctf_params_per_tilt is not None:
