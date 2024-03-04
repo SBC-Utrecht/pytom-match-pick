@@ -487,7 +487,10 @@ def _create_tilt_weighted_wedge(
     image_size = shape[0]  # assign to size variable as all dimensions are equal size
     tilt = np.zeros(shape)
     q_grid = radial_reduced_grid(shape)
-    _, q_grid_1d = radial_average(np.fft.ifftshift(q_grid, axes=(0, 1)))
+    q_grid_1d = np.abs(np.arange(
+        -image_size // 2 + image_size % 2,
+        image_size // 2 + image_size % 2, 1.
+    )) / (image_size // 2)
     tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
     for i, alpha in enumerate(tilt_angles):
@@ -495,7 +498,7 @@ def _create_tilt_weighted_wedge(
         sampling = np.sin(np.abs((np.array(tilt_angles) - alpha)))
         overlap = sampling / (2 / image_size)
         exact_filter = 1 / np.clip(1 - (overlap[:, np.newaxis] * q_grid_1d) ** 2, 0, 2).sum(axis=0)
-        exact_weighting = np.fft.fftshift(profile_to_weighting(exact_filter, (image_size, ) * 2), axes=0)
+        exact_weighting = np.tile(exact_filter, (image_size, 1)).T
 
         if ctf_params_per_tilt is not None:
             ctf = np.fft.fftshift(
