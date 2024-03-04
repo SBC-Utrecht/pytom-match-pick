@@ -2,6 +2,7 @@ import numpy as np
 import numpy.typing as npt
 import logging
 import scipy.ndimage as ndimage
+import voltools as vt
 from typing import Optional, Union
 from pytom_tm.io import UnequalSpacingError
 
@@ -513,13 +514,16 @@ def _create_tilt_weighted_wedge(
 
         # rotate the image weights to the tilt angle
         rotated = np.flip(
-            ndimage.rotate(
+            vt.transform(
                 tilt,
-                np.rad2deg(alpha),
-                axes=(0, 2),
-                reshape=False,
-                order=3
-            )[:, :, : image_size // 2 + 1]
+                rotation=(0, alpha, 0),
+                rotation_units='rad',
+                rotation_order='rxyz',
+                center=(image_size // 2, ) * 3,
+                interpolation='filt_bspline',
+                device='cpu'
+            )[:, :, : image_size // 2 + 1],
+            axis=2
         )
 
         # weight with exposure and tilt dampening
