@@ -496,7 +496,9 @@ def _create_tilt_weighted_wedge(
     for i, alpha in enumerate(tilt_angles):
         # calculate weighting correction for overlapping data
         sampling = np.sin(np.abs((np.array(tilt_angles) - alpha)))
-        overlap = sampling / (2 / image_size)
+        smallest_sampling = np.min(sampling[sampling > 0.001])
+        slice_width = min(1, smallest_sampling * (image_size // 2))
+        overlap = sampling / slice_width
         exact_filter = 1 / np.clip(1 - (overlap[:, np.newaxis] * q_grid_1d) ** 2, 0, 2).sum(axis=0)
         exact_weighting = np.tile(exact_filter, (image_size, 1)).T
 
