@@ -495,11 +495,11 @@ def _create_tilt_weighted_wedge(
         sampling = np.sin(np.abs((np.array(tilt_angles) - alpha)))
         overlap = sampling / (2 / image_size)
         exact_filter = 1 / np.clip(1 - (overlap[:, np.newaxis] * q_grid_1d) ** 2, 0, 2).sum(axis=0)
-        exact_weighting = profile_to_weighting(exact_filter, (image_size, ) * 2)
+        exact_weighting = np.fft.fftshift(profile_to_weighting(exact_filter, (image_size, ) * 2), axes=0)
 
         if ctf_params_per_tilt is not None:
             ctf = np.fft.fftshift(
-                exact_weighting * create_ctf(
+                create_ctf(
                     (image_size, ) * 2,
                     pixel_size_angstrom * 1e-10,
                     ctf_params_per_tilt[i]['defocus'] * 1e-6,
@@ -508,7 +508,7 @@ def _create_tilt_weighted_wedge(
                     ctf_params_per_tilt[i]['cs'] * 1e-3,
                     flip_phase=True  # creating a per tilt ctf is hard if the phase is not flipped
                 ), axes=0,
-            )
+            ) * exact_weighting
             tilt[:, :, image_size // 2] = np.concatenate(
                 (  # duplicate and flip the CTF around the 0 frequency; then concatenate to make it non-reduced
                     np.flip(ctf[:, 1: 1 + image_size - ctf.shape[1]], axis=1),
