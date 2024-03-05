@@ -130,7 +130,7 @@ def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: t
             fstream.write(' '.join([str(x) for x in [data[j, i] for j in order]]) + '\n')
 
 
-def read_mrc_meta_data(file_name: pathlib.Path, permissive: bool = True) -> dict:
+def read_mrc_meta_data(file_name: pathlib.Path, permissive: bool = False) -> dict:
     """Read the metadata of provided MRC file path (using mrcfile) and return as dict.
 
     If the voxel size along the x,y,and z dimensions differs a lot (not within 3 decimals) the function will raise an
