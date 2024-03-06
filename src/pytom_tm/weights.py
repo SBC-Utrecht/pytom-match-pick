@@ -490,24 +490,18 @@ def _create_tilt_weighted_wedge(
     q_grid = radial_reduced_grid(shape)
     tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
-    # create ramp weights for reweighting tilt overlap
-    reconstruction_method = 'ramp-wbp'
-    if reconstruction_method == 'gridding':
-        tilt_increment = min([abs(x - y) for x, y in pairwise(tilt_angles)])
-        overlap_frequency = 1 / (tilt_increment * image_size)
-        ramp_filter = np.abs(np.arange(
-            -image_size // 2 + image_size % 2,
-            image_size // 2 + image_size % 2, 1.
-        )) / (image_size // 2) * .5 / overlap_frequency  # to nyquist
-        ramp_filter[ramp_filter > 1] = 1
-    elif reconstruction_method == 'ramp-wbp':
-        ramp_filter = np.abs(np.arange(
-            -image_size // 2 + image_size % 2,
-            image_size // 2 + image_size % 2, 1.
-        )) / (image_size // 2)
-    else:
-        raise ValueError('Unknown reconstruction method!')
+    # create ramp weights to correct tilt summation for overlap
+    tilt_increment = min([abs(x - y) for x, y in pairwise(tilt_angles)])
+    # Crowther freq. determines till what point adjacent tilts overlap in Fourier space
+    overlap_frequency = 1 / (tilt_increment * image_size)
+    freq_1d = np.abs(np.arange(
+        -image_size // 2 + image_size % 2,
+        image_size // 2 + image_size % 2, 1.
+    )) / (image_size // 2) * .5  # multiply with .5 for nyquist frequency
+    ramp_filter = freq_1d / overlap_frequency
+    ramp_filter[ramp_filter > 1] = 1  # linear increase up to overlap frequency
 
+    # generate 2d weights along the tilt axis
     ramp_weighting = np.tile(ramp_filter[:, np.newaxis], (1, image_size))
 
     for i, alpha in enumerate(tilt_angles):
