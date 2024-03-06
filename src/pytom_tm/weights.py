@@ -556,7 +556,7 @@ def _create_tilt_weighted_wedge(
                     np.cos(alpha)  # apply tilt-dependent weighting
             )
 
-        tilt_weighted_wedge += weighted_tilt  # np.maximum(tilt_weighted_wedge, weighted_tilt)
+        tilt_weighted_wedge += weighted_tilt
 
     tilt_weighted_wedge[q_grid > cut_off_radius] = 0
 
