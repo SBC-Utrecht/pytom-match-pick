@@ -2,8 +2,10 @@ import numpy as np
 import numpy.typing as npt
 import logging
 import scipy.ndimage as ndimage
+import voltools as vt
 from typing import Optional, Union
 from pytom_tm.io import UnequalSpacingError
+from itertools import pairwise
 
 
 constants = {
@@ -488,6 +490,20 @@ def _create_tilt_weighted_wedge(
     q_grid = radial_reduced_grid(shape)
     tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
+    # create ramp weights to correct tilt summation for overlap
+    tilt_increment = min([abs(x - y) for x, y in pairwise(tilt_angles)])
+    # Crowther freq. determines till what point adjacent tilts overlap in Fourier space
+    overlap_frequency = 1 / (tilt_increment * image_size)
+    freq_1d = np.abs(np.arange(
+        -image_size // 2 + image_size % 2,
+        image_size // 2 + image_size % 2, 1.
+    )) / (image_size // 2) * .5  # multiply with .5 for nyquist frequency
+    ramp_filter = freq_1d / overlap_frequency
+    ramp_filter[ramp_filter > 1] = 1  # linear increase up to overlap frequency
+
+    # generate 2d weights along the tilt axis
+    ramp_weighting = np.tile(ramp_filter[:, np.newaxis], (1, image_size))
+
     for i, alpha in enumerate(tilt_angles):
         if ctf_params_per_tilt is not None:
             ctf = np.fft.fftshift(
@@ -507,19 +523,22 @@ def _create_tilt_weighted_wedge(
                     ctf
                 ),
                 axis=1
-            )
+            ) * ramp_weighting
         else:
-            tilt[:, :, image_size // 2] = 1
+            tilt[:, :, image_size // 2] = ramp_weighting
 
         # rotate the image weights to the tilt angle
         rotated = np.flip(
-            ndimage.rotate(
+            vt.transform(
                 tilt,
-                np.rad2deg(alpha),
-                axes=(0, 2),
-                reshape=False,
-                order=3
-            )[:, :, : image_size // 2 + 1]
+                rotation=(0, alpha, 0),
+                rotation_units='rad',
+                rotation_order='rxyz',
+                center=(image_size // 2, ) * 3,
+                interpolation='filt_bspline',
+                device='cpu'
+            )[:, :, :image_size // 2 + 1],  # crop back z-axis to reduced Fourier form
+            axis=2
         )
 
         # weight with exposure and tilt dampening
@@ -536,7 +555,8 @@ def _create_tilt_weighted_wedge(
                     rotated *
                     np.cos(alpha)  # apply tilt-dependent weighting
             )
-        tilt_weighted_wedge = np.maximum(tilt_weighted_wedge, weighted_tilt)
+
+        tilt_weighted_wedge += weighted_tilt
 
     tilt_weighted_wedge[q_grid > cut_off_radius] = 0
 
