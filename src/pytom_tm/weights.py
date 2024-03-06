@@ -537,7 +537,7 @@ def _create_tilt_weighted_wedge(
                 center=(image_size // 2, ) * 3,
                 interpolation='filt_bspline',
                 device='cpu'
-            )[:, :, : image_size // 2 + 1],
+            )[:, :, :image_size // 2 + 1],  # crop back z-axis to reduced Fourier form
             axis=2
         )
 
