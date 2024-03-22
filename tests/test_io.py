@@ -14,14 +14,14 @@ class TestBrokenMRC(unittest.TestCase):
             mrc = read_mrc(FAILING_MRC)
         self.assertIsNotNone(mrc)
         self.assertEqual(len(cm.output), 1)
-        self.assertIn(FAILING_MRC, cm.output[0])
+        self.assertIn(FAILING_MRC.name, cm.output[0])
         self.assertIn("make sure this is correct", cm.output[0])
 
     def test_read_mrc_too_broken(self):
         # Test if this mrc raises an error as expected
         with self.assertRaises(ValueError) as err:
             mrc = read_mrc(FAILING_MRC)
-        self.assertIn(FAILING_MRC, str(err.exception)
+        self.assertIn(FAILING_MRC.name, str(err.exception)
         self.assertIn("too corrupt", cm.output[0])
 
     def test_read_mrc_meta_data(self):
@@ -30,7 +30,7 @@ class TestBrokenMRC(unittest.TestCase):
             mrc = read_mrc_meta_data(FAILING_MRC)
         self.assertIsNotNone(mrc)
         self.assertEqual(len(cm.output), 1)
-        self.assertIn(FAILING_MRC, cm.output[0])
+        self.assertIn(FAILING_MRC.name, cm.output[0])
         self.assertIn("make sure this is correct", cm.output[0])
 
 
