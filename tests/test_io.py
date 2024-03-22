@@ -5,9 +5,22 @@ import pathlib
 FAILING_MRC = pathlib.Path(__file__).parent.joinpath(pathlib.Path('Data/human_ribo_mask_32_8_5.mrc'))
 
 class TestBrokenMRC(unittest.TestCase):
-    def test_read_mrc(self):
-        read_mrc(FAILING_MRC)
+    def test_read_mrc_minor_broken(self):
+        # Test if this mrc can be read and if the approriate logs are printed
+        with self.assertLogs(level='WARNING') as cm:
+            mrc = read_mrc(FAILING_MRC)
+        self.assertIsNotNone(mrc)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn(FAILING_MRC, cm.output[0])
+        self.assertIn("make sure this is correct", cm.output[0])
 
-    def test_read_mrc_meat_data(self):
-        read_mrc_meta_data(FAILING_MRC)
+    def test_read_mrc_meta_data(self):
+        # Test if this mrc can be read and if the approriate logs are printed
+        with self.assertLogs(level='WARNING') as cm:
+            mrc = read_mrc_meta_data(FAILING_MRC)
+        self.assertIsNotNone(mrc)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn(FAILING_MRC, cm.output[0])
+        self.assertIn("make sure this is correct", cm.output[0])
+
 
