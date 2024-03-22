@@ -146,7 +146,9 @@ def wrap_mrcfile_readers(func, *args, **kwargs):
                     "However, loading with 'permissive=True' did generate data, make sure this is correct!")
         else:
             logging.debug(f"Could not reasonably recover")
-            raise err
+            raise ValueError(
+                    f"{args[0]} header or data is too corrupt to recover, please fix the header or data"
+                    ) from err
     yield mrc
     # this should only be called after the context exists
     mrc.close()
