@@ -21,8 +21,8 @@ class TestBrokenMRC(unittest.TestCase):
         # Test if this mrc raises an error as expected
         with self.assertRaises(ValueError) as err:
             mrc = read_mrc(FAILING_MRC)
-        self.assertIn(FAILING_MRC.name, str(err.exception)
-        self.assertIn("too corrupt", cm.output[0])
+        self.assertIn(FAILING_MRC.name, str(err.exception))
+        self.assertIn("too corrupt", str(err.exception))
 
     def test_read_mrc_meta_data(self):
         # Test if this mrc can be read and if the approriate logs are printed
