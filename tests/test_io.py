@@ -19,7 +19,7 @@ class TestBrokenMRC(unittest.TestCase):
         # The follwing line is better, but only works in python >= 3.11
         #_ = stack.enter_context(warnings.catch_warnings(action="ignore"))
 
-        self.addCleanup(stack.close())
+        self.addCleanup(stack.close)
         
 
     def test_read_mrc_minor_broken(self):
