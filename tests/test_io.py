@@ -1,6 +1,7 @@
 import unittest
 from pytom_tm.io import read_mrc, read_mrc_meta_data
 import pathlib
+import warnings
 
 FAILING_MRC = pathlib.Path(__file__).parent.joinpath(pathlib.Path('Data/human_ribo_mask_32_8_5.mrc'))
 # The below file was made with head -c 1024 human_ribo_mask_32_8_5.mrc > header_only.mrc
@@ -19,7 +20,8 @@ class TestBrokenMRC(unittest.TestCase):
 
     def test_read_mrc_too_broken(self):
         # Test if this mrc raises an error as expected
-        with self.assertRaises(ValueError) as err:
+        # Mute the RuntimeWarnings comming from other code-base
+        with self.assertRaises(ValueError) as err, warnings.catch_warnings(action="ignore"):
             mrc = read_mrc(CORRUPT_MRC)
         self.assertIn(CORRUPT_MRC.name, str(err.exception))
         self.assertIn("too corrupt", str(err.exception))
