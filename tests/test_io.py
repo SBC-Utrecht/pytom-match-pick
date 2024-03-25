@@ -4,7 +4,7 @@ import pathlib
 
 FAILING_MRC = pathlib.Path(__file__).parent.joinpath(pathlib.Path('Data/human_ribo_mask_32_8_5.mrc'))
 # The below file was made with head -c 1024 human_ribo_mask_32_8_5.mrc > header_only.mrc
-CORRUPT_MRC = pathlib.Path(__file__).parent.joinpath(pathlib.Path('header_only.mrc'))
+CORRUPT_MRC = pathlib.Path(__file__).parent.joinpath(pathlib.Path('Data/header_only.mrc'))
 
 
 class TestBrokenMRC(unittest.TestCase):
@@ -20,8 +20,8 @@ class TestBrokenMRC(unittest.TestCase):
     def test_read_mrc_too_broken(self):
         # Test if this mrc raises an error as expected
         with self.assertRaises(ValueError) as err:
-            mrc = read_mrc(FAILING_MRC)
-        self.assertIn(FAILING_MRC.name, str(err.exception))
+            mrc = read_mrc(CORRUPT_MRC)
+        self.assertIn(CORRUPT_MRC.name, str(err.exception))
         self.assertIn("too corrupt", str(err.exception))
 
     def test_read_mrc_meta_data(self):
