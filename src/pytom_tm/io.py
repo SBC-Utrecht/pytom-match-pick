@@ -132,7 +132,7 @@ def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: t
 
 
 @contextmanager
-def wrap_mrcfile_readers(func, *args, **kwargs):
+def _wrap_mrcfile_readers(func, *args, **kwargs):
     """Try to autorecover broken mrcfiles, assumes 'permissive' is a kwarg and not an arg"""
     try:
         mrc = func(*args, **kwargs)
@@ -171,7 +171,7 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
         'voxel_size' containing the voxel size along x,y,z and dimensions in A units
     """
     meta_data = {}
-    with wrap_mrcfile_readers(mrcfile.mmap, file_name) as mrc:
+    with _wrap_mrcfile_readers(mrcfile.mmap, file_name) as mrc:
         meta_data['shape'] = tuple(map(int, attrgetter('nx', 'ny', 'nz')(mrc.header)))
         # allow small numerical inconsistencies in voxel size of MRC headers, sometimes seen in Warp
         if not all(
@@ -240,7 +240,7 @@ def read_mrc(
     data: npt.NDArray[float]
         returns the MRC data as a numpy array
     """
-    with wrap_mrcfile_readers(mrcfile.open, file_name) as mrc:
+    with _wrap_mrcfile_readers(mrcfile.open, file_name) as mrc:
         data = np.ascontiguousarray(mrc.data.T) if transpose else mrc.data
     return data
 
