@@ -142,7 +142,7 @@ def wrap_mrcfile_readers(func, *args, **kwargs):
         kwargs['permissive']=True
         mrc = func(*args, **kwargs)
         if mrc.data is not None:
-            logging.warning("Loading {args[0]} in strict mode gave an error. "
+            logging.warning(f"Loading {args[0]} in strict mode gave an error. "
                     "However, loading with 'permissive=True' did generate data, make sure this is correct!")
         else:
             logging.debug(f"Could not reasonably recover")
