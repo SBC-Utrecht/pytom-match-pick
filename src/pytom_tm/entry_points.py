@@ -433,7 +433,8 @@ def estimate_roc(argv=None):
     template_matching_job = load_json_to_tmjob(args.job_file)
     # Set cut off to -1 to ensure the number of particles gets extracted
     _, lcc_max_values = extract_particles(
-        template_matching_job, args.radius_px, args.number_of_particles, cut_off=0
+        template_matching_job, args.radius_px, args.number_of_particles, cut_off=0,
+        create_plot=False
     )
 
     score_volume = read_mrc(
