@@ -4,6 +4,7 @@ import argparse
 import logging
 import numpy.typing as npt
 import numpy as np
+from contextlib import contextmanager
 from operator import attrgetter
 from typing import Optional, Union
 
@@ -130,7 +131,29 @@ def write_angle_list(data: npt.NDArray[float], file_name: pathlib.Path, order: t
             fstream.write(' '.join([str(x) for x in [data[j, i] for j in order]]) + '\n')
 
 
-def read_mrc_meta_data(file_name: pathlib.Path, permissive: bool = True) -> dict:
+@contextmanager
+def _wrap_mrcfile_readers(func, *args, **kwargs):
+    """Try to autorecover broken mrcfiles, assumes 'permissive' is a kwarg and not an arg"""
+    try:
+        mrc = func(*args, **kwargs)
+    except ValueError as err:
+        # see if permissive can safe this
+        logging.debug(f"mrcfile raised the following error: {err}, will try to recover")
+        kwargs['permissive']=True
+        mrc = func(*args, **kwargs)
+        if mrc.data is not None:
+            logging.warning(f"Loading {args[0]} in strict mode gave an error. "
+                    "However, loading with 'permissive=True' did generate data, make sure this is correct!")
+        else:
+            logging.debug(f"Could not reasonably recover")
+            raise ValueError(
+                    f"{args[0]} header or data is too corrupt to recover, please fix the header or data"
+                    ) from err
+    yield mrc
+    # this should only be called after the context exists
+    mrc.close()
+
+def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
     """Read the metadata of provided MRC file path (using mrcfile) and return as dict.
 
     If the voxel size along the x,y,and z dimensions differs a lot (not within 3 decimals) the function will raise an
@@ -140,8 +163,6 @@ def read_mrc_meta_data(file_name: pathlib.Path, permissive: bool = True) -> dict
     ----------
     file_name: pathlib.Path
         path to an MRC file
-    permissive: bool
-        True (default) reads file in permissive mode, setting to False will be more strict with bad MRC headers
 
     Returns
     -------
@@ -150,7 +171,7 @@ def read_mrc_meta_data(file_name: pathlib.Path, permissive: bool = True) -> dict
         'voxel_size' containing the voxel size along x,y,z and dimensions in A units
     """
     meta_data = {}
-    with mrcfile.mmap(file_name, permissive=permissive) as mrc:
+    with _wrap_mrcfile_readers(mrcfile.mmap, file_name) as mrc:
         meta_data['shape'] = tuple(map(int, attrgetter('nx', 'ny', 'nz')(mrc.header)))
         # allow small numerical inconsistencies in voxel size of MRC headers, sometimes seen in Warp
         if not all(
@@ -201,7 +222,6 @@ def write_mrc(
 
 def read_mrc(
         file_name: pathlib.Path,
-        permissive: bool = True,
         transpose: bool = True
 ) -> npt.NDArray[float]:
     """Read an MRC file from disk. Data is transposed after reading as pytom internally uses xyz ordering and MRCs
@@ -211,8 +231,6 @@ def read_mrc(
     ----------
     file_name: pathlib.Path
         path to file on disk
-    permissive: bool, default True
-        True (default) reads file in permissive mode, setting to False will be more strict with bad headers
     transpose: bool, default True
         True (default) transposes the volume after reading, setting to False prevents transpose but probably not a
         good idea when using the functions from this module
@@ -222,7 +240,7 @@ def read_mrc(
     data: npt.NDArray[float]
         returns the MRC data as a numpy array
     """
-    with mrcfile.open(file_name, permissive=permissive) as mrc:
+    with _wrap_mrcfile_readers(mrcfile.open, file_name) as mrc:
         data = np.ascontiguousarray(mrc.data.T) if transpose else mrc.data
     return data
 
