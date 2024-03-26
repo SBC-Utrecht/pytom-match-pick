@@ -260,17 +260,17 @@ def extract_particles(
         ] *= cut_mask
 
     output = pd.DataFrame(data, columns=[
-        'ptmCoordinateX',
-        'ptmCoordinateY',
-        'ptmCoordinateZ',
-        'ptmAngleRot',
-        'ptmAngleTilt',
-        'ptmAnglePsi',
-        'ptmLCCmax',
-        'ptmCutOff',
-        'ptmSearchStd',
-        'ptmDetectorPixelSize',
-        'ptmMicrographName',
+        'rlnCoordinateX',
+        'rlnCoordinateY',
+        'rlnCoordinateZ',
+        'rlnAngleRot',
+        'rlnAngleTilt',
+        'rlnAnglePsi',
+        'rlnLCCmax',
+        'rlnCutOff',
+        'rlnSearchStd',
+        'rlnDetectorPixelSize',
+        'rlnMicrographName',
     ]), scores
 
     if plotting_available and create_plot:
