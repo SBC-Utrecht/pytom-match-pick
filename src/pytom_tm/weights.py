@@ -518,11 +518,7 @@ def _create_tilt_weighted_wedge(
                     ctf_params_per_tilt[i]['voltage'] * 1e3,
                     ctf_params_per_tilt[i]['cs'] * 1e-3,
                     flip_phase=True,  # creating per tilt ctf requires phase flip atm
-                    phase_shift_deg=(
-                        ctf_params_per_tilt[i]['phase_shift_deg'] if
-                        version.parse(PYTOM_TM_VERSION) >= version.parse('0.6.1') else
-                        .0
-                    )
+                    phase_shift_deg=ctf_params_per_tilt[i]['phase_shift_deg'],
                 ), axes=0,
             )
             tilt[:, :, image_size // 2] = np.concatenate(
