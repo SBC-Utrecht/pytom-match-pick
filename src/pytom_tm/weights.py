@@ -6,6 +6,8 @@ import voltools as vt
 from typing import Optional, Union
 from pytom_tm.io import UnequalSpacingError
 from itertools import pairwise
+from pytom_tm import __version__ as PYTOM_TM_VERSION
+from packaging import version
 
 
 constants = {
@@ -469,6 +471,7 @@ def _create_tilt_weighted_wedge(
         - 'amplitude'; fraction of amplitude contrast between 0 and 1
         - 'voltage'; in keV
         - 'cs'; spherical abberation in mm
+        - 'phase_shift_deg'; phase shift for phase plates in deg
 
     Returns
     -------
@@ -514,7 +517,12 @@ def _create_tilt_weighted_wedge(
                     ctf_params_per_tilt[i]['amplitude'],
                     ctf_params_per_tilt[i]['voltage'] * 1e3,
                     ctf_params_per_tilt[i]['cs'] * 1e-3,
-                    flip_phase=True  # creating a per tilt ctf is hard if the phase is not flipped
+                    flip_phase=True,  # creating per tilt ctf requires phase flip atm
+                    phase_shift_deg=(
+                        ctf_params_per_tilt[i]['phase_shift_deg'] if
+                        version.parse(PYTOM_TM_VERSION) >= version.parse('0.6.1') else
+                        .0
+                    )
                 ), axes=0,
             )
             tilt[:, :, image_size // 2] = np.concatenate(
@@ -571,7 +579,8 @@ def create_ctf(
         voltage: float,
         spherical_aberration: float,
         cut_after_first_zero: bool = False,
-        flip_phase: bool = False
+        flip_phase: bool = False,
+        phase_shift_deg: float = .0,
 ) -> npt.NDArray[float]:
     """Create a CTF in a 3D volume in reduced format.
 
@@ -593,6 +602,8 @@ def create_ctf(
         whether to cut ctf after first zero crossing
     flip_phase: bool, default False
         make ctf fully positive/negative to imitate ctf correction by phase flipping
+    phase_shift_deg: float, default .0
+        additional phas shift to model phase plates
 
     Returns
     -------
@@ -609,7 +620,7 @@ def create_ctf(
     tan_term = np.arctan(amplitude_contrast / np.sqrt(1 - amplitude_contrast ** 2))
 
     # determine the ctf
-    ctf = - np.sin(chi + tan_term)
+    ctf = - np.sin(chi + tan_term + np.deg2rad(phase_shift_deg))
 
     if cut_after_first_zero:  # find frequency to cut first zero
         def chi_1d(q):
