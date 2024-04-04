@@ -220,6 +220,10 @@ class TestTMJob(unittest.TestCase):
         self.assertEqual(len(cm.output), 1)
         self.assertIn('Estimating whitening filter...', cm.output[0])
 
+        # test backward compatibility with the update to 0.6.1
+        job = load_json_to_tmjob('Data/job_v0.6.0.json')
+        self.assertEqual(job.ctf_data[0]['phase_shift_deg'], .0)
+
     def test_custom_angular_search(self):
         job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
                     angle_increment=TEST_CUSTOM_ANGULAR_SEARCH, voxel_size=1.)
