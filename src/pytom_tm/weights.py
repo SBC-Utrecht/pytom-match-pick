@@ -6,8 +6,6 @@ import voltools as vt
 from typing import Optional, Union
 from pytom_tm.io import UnequalSpacingError
 from itertools import pairwise
-from pytom_tm import __version__ as PYTOM_TM_VERSION
-from packaging import version
 
 
 constants = {
