@@ -615,7 +615,7 @@ def create_ctf(
     tan_term = np.arctan(amplitude_contrast / np.sqrt(1 - amplitude_contrast ** 2))
 
     # determine the ctf
-    ctf = - np.sin(chi + tan_term - np.deg2rad(phase_shift_deg))
+    ctf = - np.sin(chi + tan_term + np.deg2rad(phase_shift_deg))
 
     if cut_after_first_zero:  # find frequency to cut first zero
         def chi_1d(q):
