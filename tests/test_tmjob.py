@@ -32,7 +32,7 @@ TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath('tomogram_whitening_filter.npy')
 TEST_JOB_JSON = TEST_DATA_DIR.joinpath('tomogram_job.json')
 TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath('tomogram_job_whitening.json')
 JOB_FROM_OLD_VERSION = pathlib.Path(__file__).parent.joinpath(pathlib.Path(
-    'Data/job_v0.6.0.json.mrc'
+    'Data/job_v0.6.0.json'
 ))
 
 
