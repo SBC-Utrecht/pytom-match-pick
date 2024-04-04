@@ -62,7 +62,10 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
         job_loaded_for_extraction=load_for_extraction,
     )
     # if the file originates from an old version set the phase shift for compatibility
-    if job.pytom_tm_version_number < version.parse('0.6.1'):
+    if (
+        version.parse(job.pytom_tm_version_number) < version.parse('0.6.1') and
+        job.ctf_data is not None
+    ):
         for tilt in job.ctf_data:
             tilt['phase_shift_deg'] = .0
     job.rotation_file = pathlib.Path(data['rotation_file'])
