@@ -576,7 +576,7 @@ def match_template(argv=None):
     parser = argparse.ArgumentParser(
         description="Run template matching. -- Marten Chaillet (@McHaillet)"
     )
-    io_group = parser.add_argument_group("Template, search volume and output")
+    io_group = parser.add_argument_group("Template, search volume, and output")
     io_group.add_argument(
         "-t",
         "--template",
