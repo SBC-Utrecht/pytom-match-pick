@@ -3,6 +3,8 @@
 
 GPU template matching, originally developed in [PyTom](https://github.com/SBC-Utrecht/PyTom), as a standalone python package that can be run from the command line.
 
+![cover_image](images/tomo200528_100_illustration.png)
+
 ## Requires
 
 ```
