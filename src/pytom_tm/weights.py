@@ -599,7 +599,8 @@ def create_ctf(
     flip_phase: bool, default False
         make ctf fully positive/negative to imitate ctf correction by phase flipping
     phase_shift_deg: float, default .0
-        additional phas shift to model phase plates
+        additional phase shift to model phase plates, same convention as for example:
+        https://github.com/dtegunov/tom_deconv
 
     Returns
     -------
