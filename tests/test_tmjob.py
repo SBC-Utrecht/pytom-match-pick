@@ -31,6 +31,7 @@ TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath('custom_angular_search.txt')
 TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath('tomogram_whitening_filter.npy')
 TEST_JOB_JSON = TEST_DATA_DIR.joinpath('tomogram_job.json')
 TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath('tomogram_job_whitening.json')
+TEST_JOB_OLD_VERSION = TEST_DATA_DIR.joinpath('tomogram_job_old_version.json')
 
 
 class TestTMJob(unittest.TestCase):
@@ -121,6 +122,7 @@ class TestTMJob(unittest.TestCase):
         TEST_WHITENING_FILTER.unlink(missing_ok=True)
         TEST_JOB_JSON.unlink()
         TEST_JOB_JSON_WHITENING.unlink()
+        TEST_JOB_OLD_VERSION.unlink()
         TEST_DATA_DIR.rmdir()
 
     def setUp(self):
@@ -219,6 +221,18 @@ class TestTMJob(unittest.TestCase):
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=False)
         self.assertEqual(len(cm.output), 1)
         self.assertIn('Estimating whitening filter...', cm.output[0])
+
+        # turn current job into 0.6.0 job with ctf params
+        job.pytom_tm_version_number = '0.6.0'
+        job.ctf_data = []
+        for ctf in CTF_PARAMS:
+            job.ctf_data.append(ctf.copy())
+            del job.ctf_data[-1]['phase_shift_deg']
+        job.write_to_json(TEST_JOB_OLD_VERSION)
+
+        # test backward compatibility with the update to 0.6.1
+        job = load_json_to_tmjob(TEST_JOB_OLD_VERSION)
+        self.assertEqual(job.ctf_data[0]['phase_shift_deg'], .0)
 
     def test_custom_angular_search(self):
         job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
