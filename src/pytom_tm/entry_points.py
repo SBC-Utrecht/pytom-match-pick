@@ -780,6 +780,7 @@ def match_template(argv=None):
         "--phase-shift",
         type=float,
         required=False,
+        default=.0,
         action=LargerThanZero,
         help="Phase shift (in degrees) for the CTF to model phase plates.",
     )
