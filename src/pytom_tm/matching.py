@@ -166,6 +166,7 @@ class TemplateMatchingGPU:
         cxv, cyv, czv = sxv // 2, syv // 2, szv // 2
 
         # create slice for padding
+        shift = cp.floor(cp.array(self.plan.scores.shape) / 2).astype(int) + 1
         pad_index = (
             slice(cxv - cxt, cxv + cxt + mx),
             slice(cyv - cyt, cyv + cyt + my),
@@ -173,7 +174,10 @@ class TemplateMatchingGPU:
         )
 
         # calculate roi size
-        roi_size = self.plan.scores[self.stats_roi].size
+        roi_mask = cp.zeros(self.plan.scores.shape, dtype=bool)
+        roi_mask[self.stats_roi] = True
+        roi_mask = cp.flip(cp.roll(roi_mask, -shift, (0, 1, 2)))
+        roi_size = self.plan.scores[roi_mask].size
 
         if self.mask_is_spherical:  # Then we only need to calculate std volume once
             self.plan.mask_padded[pad_index] = self.plan.mask
@@ -247,15 +251,14 @@ class TemplateMatchingGPU:
             )
 
             self.stats['variance'] += (
-                square_sum_kernel(
-                    self.plan.ccc_map[self.stats_roi]
+                masked_square_sum(
+                    self.plan.ccc_map, roi_mask
                 ) / roi_size
             )
 
         # get correct orientation back
-        center = cp.floor(cp.array(self.plan.scores.shape) / 2).astype(int) + 1
-        self.plan.scores = cp.roll(cp.flip(self.plan.scores), center, axis=(0, 1, 2))
-        self.plan.angles = cp.roll(cp.flip(self.plan.angles), center, axis=(0, 1, 2))
+        self.plan.scores = cp.roll(cp.flip(self.plan.scores), shift, axis=(0, 1, 2))
+        self.plan.angles = cp.roll(cp.flip(self.plan.angles), shift, axis=(0, 1, 2))
 
         self.stats['search_space'] = int(roi_size * len(self.angle_ids))
         self.stats['variance'] = float(self.stats['variance'] / len(self.angle_ids))
@@ -314,6 +317,11 @@ update_results_kernel = cp.ElementwiseKernel(
 )
 
 
+@cp.fuse()
+def masked_square_sum(x, i):
+    return cp.sum(x * x * i)
+
+
 # Temporary workaround for ReductionKernel issue in cupy 13.0.0 (see: https://github.com/cupy/cupy/issues/8184)
 if version.parse(cp.__version__) == version.parse('13.0.0'):
     def square_sum_kernel(x):
@@ -322,7 +330,7 @@ else:
     """Calculate the sum of squares in a volume. Mean is assumed to be 0 which makes this operation a lot faster."""
     square_sum_kernel = cp.ReductionKernel(
         'T x',  # input params
-        'T y',  # output params
+        'T z',  # output params
         'x * x',  # pre-processing expression
         'a + b',  # reduction operation
         'y = a',  # post-reduction output processing
