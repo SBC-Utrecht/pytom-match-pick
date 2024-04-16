@@ -252,7 +252,11 @@ class TemplateMatchingGPU:
 
             self.stats['variance'] += masked_square_sum(self.plan.ccc_map, roi_mask, roi_size)
 
-        # get correct orientation back
+        # Get correct orientation back!
+        # Use same method as William Wan's STOPGAP (https://doi.org/10.1107/S205979832400295X):
+        # the search volume is Fourier transformed and conjugated before the iterations
+        # this means the eventual score map needs to be flipped back. The map is also rolled due to the ftshift
+        # effect of a Fourier space correlation function.
         self.plan.scores = cp.roll(cp.flip(self.plan.scores), shift, axis=(0, 1, 2))
         self.plan.angles = cp.roll(cp.flip(self.plan.angles), shift, axis=(0, 1, 2))
 
