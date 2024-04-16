@@ -166,14 +166,14 @@ class TemplateMatchingGPU:
         cxv, cyv, czv = sxv // 2, syv // 2, szv // 2
 
         # create slice for padding
-        shift = cp.floor(cp.array(self.plan.scores.shape) / 2).astype(int) + 1
         pad_index = (
             slice(cxv - cxt, cxv + cxt + mx),
             slice(cyv - cyt, cyv + cyt + my),
             slice(czv - czt, czv + czt + mz),
         )
 
-        # calculate roi size
+        # calculate roi mask
+        shift = cp.floor(cp.array(self.plan.scores.shape) / 2).astype(int) + 1
         roi_mask = cp.zeros(self.plan.scores.shape, dtype=bool)
         roi_mask[self.stats_roi] = True
         roi_mask = cp.flip(cp.roll(roi_mask, -shift, (0, 1, 2)))
@@ -250,11 +250,7 @@ class TemplateMatchingGPU:
                 self.plan.angles
             )
 
-            self.stats['variance'] += (
-                masked_square_sum(
-                    self.plan.ccc_map, roi_mask
-                ) / roi_size
-            )
+            self.stats['variance'] += masked_square_sum(self.plan.ccc_map, roi_mask, roi_size)
 
         # get correct orientation back
         self.plan.scores = cp.roll(cp.flip(self.plan.scores), shift, axis=(0, 1, 2))
@@ -318,22 +314,5 @@ update_results_kernel = cp.ElementwiseKernel(
 
 
 @cp.fuse()
-def masked_square_sum(x, i):
-    return cp.sum(x * x * i)
-
-
-# Temporary workaround for ReductionKernel issue in cupy 13.0.0 (see: https://github.com/cupy/cupy/issues/8184)
-if version.parse(cp.__version__) == version.parse('13.0.0'):
-    def square_sum_kernel(x):
-        return (x ** 2).sum()
-else:
-    """Calculate the sum of squares in a volume. Mean is assumed to be 0 which makes this operation a lot faster."""
-    square_sum_kernel = cp.ReductionKernel(
-        'T x',  # input params
-        'T z',  # output params
-        'x * x',  # pre-processing expression
-        'a + b',  # reduction operation
-        'y = a',  # post-reduction output processing
-        '0',  # identity value
-        'variance'  # kernel name
-    )
+def masked_square_sum(x, i, n):
+    return cp.sum(x * x * i) / n
