@@ -784,25 +784,10 @@ class TMJob:
         )
 
         # load template and mask
-        template, mask = (read_mrc(self.template), read_mrc(self.mask))
-        # apply mask directly to prevent any wedge convolution with weird edges
-        template *= mask
-
-        # adjust ctf parameters for this specific patch in the tomogram
-        full_tomo_center = [s / 2 for s in self.tomo_shape]
-        patch_center = [o + s / 2 for o, s in zip(self.search_origin, self.search_size)]
-        relative_patch_center = [(pc - tc) for pc, tc in zip(patch_center, full_tomo_center)]
-        # express in um as the defocus is expressed in um
-        relative_patch_center_um = [x * self.voxel_size * 1e-4 for x in relative_patch_center]
-        defocus_offsets = get_defocus_offsets(
-            relative_patch_center_um[0],
-            relative_patch_center_um[2],
-            self.tilt_angles
+        template, mask = (
+            read_mrc(self.template),
+            read_mrc(self.mask)
         )
-        for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
-            ctf['defocus'] = ctf['defocus'] - defocus_shift
-        logging.debug(f'Patch center: {relative_patch_center}')
-        logging.debug(f"Defocus values: {[ctf['defocus'] for ctf in self.ctf_data]}")
 
         # init tomogram and template weighting
         tomo_filter, template_wedge = 1, 1
@@ -826,8 +811,28 @@ class TMJob:
 
         # if tilt angles are provided we can create wedge filters
         if self.tilt_angles is not None:
-            # for the tomogram a binary wedge is generated to explicitly set the
-            # missing wedge region to 0
+            if self.tilt_weighting and self.ctf_data is not None:
+                # adjust ctf parameters for this specific patch in the tomogram
+                full_tomo_center = [s / 2 for s in self.tomo_shape]
+                patch_center = [o + s / 2 for o, s in
+                                zip(self.search_origin, self.search_size)]
+                relative_patch_center = [(pc - tc) for pc, tc in
+                                         zip(patch_center, full_tomo_center)]
+                # express in um as the defocus is expressed in um
+                relative_patch_center_um = [x * self.voxel_size * 1e-4 for x in
+                                            relative_patch_center]
+                defocus_offsets = get_defocus_offsets(
+                    relative_patch_center_um[0],
+                    relative_patch_center_um[2],
+                    self.tilt_angles
+                )
+                for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
+                    ctf['defocus'] = ctf['defocus'] - defocus_shift
+                logging.debug(f'Patch center: {relative_patch_center}')
+                logging.debug(
+                    f"Defocus values: {[ctf['defocus'] for ctf in self.ctf_data]}")
+
+            # for the tomogram a binary wedge is generated to explicitly set the missing wedge region to 0
             tomo_filter *= create_wedge(
                 search_volume.shape,
                 self.tilt_angles,
