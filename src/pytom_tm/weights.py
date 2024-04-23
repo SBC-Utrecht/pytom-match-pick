@@ -511,10 +511,10 @@ def _create_tilt_weighted_wedge(
                 create_ctf(
                     (image_size, ) * 2,
                     pixel_size_angstrom * 1e-10,
-                    ctf_params_per_tilt[i]['defocus'] * 1e-6,
+                    ctf_params_per_tilt[i]['defocus'],
                     ctf_params_per_tilt[i]['amplitude'],
-                    ctf_params_per_tilt[i]['voltage'] * 1e3,
-                    ctf_params_per_tilt[i]['cs'] * 1e-3,
+                    ctf_params_per_tilt[i]['voltage'],
+                    ctf_params_per_tilt[i]['cs'],
                     flip_phase=True,  # creating per tilt ctf requires phase flip atm
                     phase_shift_deg=ctf_params_per_tilt[i]['phase_shift_deg'],
                 ), axes=0,
