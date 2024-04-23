@@ -16,7 +16,7 @@ from pytom_tm.io import (
     ParseSearch,
     ParseTiltAngles,
     ParseDoseFile,
-    ParseDefocusFile,
+    ParseDefocus,
     BetweenZeroAndOne,
 )
 from pytom_tm.tmjob import load_json_to_tmjob
@@ -760,7 +760,7 @@ def match_template(argv=None):
         "--defocus",
         type=str,
         required=False,
-        action=ParseDefocusFile,
+        action=ParseDefocus,
         help="Here you can provide an IMOD defocus file (version 2 or 3) "
         "or a text file with defocus. The values, together with the other ctf "
         "parameters (amplitude contrast, voltage, spherical abberation), "
@@ -798,6 +798,18 @@ def match_template(argv=None):
         default=.0,
         action=LargerThanZero,
         help="Phase shift (in degrees) for the CTF to model phase plates.",
+    )
+    filter_group.add_argument(
+        "--tomogram-ctf-model",
+        required=False,
+        choices=["phase-flip"],  # possible wiener filter mode to come?
+        help="Optionally, you can specify if and how the CTF was corrected during "
+             "reconstruction of the input tomogram. This allows "
+             "match-pick to match the weighting of the template to the tomogram. "
+             "Not using this option is appropriate if the CTF was left uncorrected in "
+             "the tomogram. Option 'phase-flip' : appropriate for IMOD's strip-based "
+             "phase flipping or reconstructions generated with "
+             "novaCTF/3dctf."
     )
     filter_group.add_argument(
         "--spectral-whitening",
@@ -842,12 +854,17 @@ def match_template(argv=None):
                 "the required parameters (amplitude-contrast, "
                 "spherical-abberation or voltage) is/are missing."
             )
+        phase_flip_correction = False
+        if (args.tomogram_ctf_model is not None and
+                args.tomogram_ctf_model == "phase-flip"):
+            phase_flip_correction = True
         ctf_params = [
             {
                 "defocus": defocus * 1e-6,
                 "amplitude": args.amplitude_contrast,
                 "voltage": args.voltage * 1e3,
                 "cs": args.spherical_abberation * 1e-3,
+                "flip_phase": phase_flip_correction,
                 "phase_shift_deg": args.phase_shift,
             }
             for defocus in args.defocus
