@@ -757,7 +757,7 @@ def match_template(argv=None):
         "Format should be a .txt file with on each line a dose value in e-/A2.",
     )
     filter_group.add_argument(
-        "--defocus-file",
+        "--defocus",
         type=str,
         required=False,
         action=ParseDefocusFile,
@@ -831,7 +831,7 @@ def match_template(argv=None):
 
     # combine ctf values to ctf_params list of dicts
     ctf_params = None
-    if args.defocus_file is not None:
+    if args.defocus is not None:
         if (
             args.amplitude_contrast is None
             or args.spherical_abberation is None
@@ -850,7 +850,7 @@ def match_template(argv=None):
                 "cs": args.spherical_abberation,
                 "phase_shift_deg": args.phase_shift,
             }
-            for defocus in args.defocus_file
+            for defocus in args.defocus
         ]
 
     job = TMJob(

@@ -100,18 +100,33 @@ class ParseDoseFile(argparse.Action):
         setattr(namespace, self.dest, read_dose_file(file_path))
 
 
-class ParseDefocusFile(argparse.Action):
-    """argparse.Action subclass to read a defocus file, either from IMOD which adheres to their file format,
-    or a txt file containing per line the defocus of each tilt."""
-    def __call__(self, parser, namespace, values: str, option_string: Optional[str] = None):
-        file_path = pathlib.Path(values)
-        if not file_path.exists():
-            parser.error("{0} provided defocus file does not exist".format(option_string))
-        allowed_suffixes = ['.defocus', '.txt']
-        if file_path.suffix not in allowed_suffixes:
-            parser.error("{0} provided defocus file does not have the right suffix, "
-                         "allowed are: {1}".format(option_string, ', '.join(allowed_suffixes)))
-        setattr(namespace, self.dest, read_defocus_file(file_path))
+class ParseDefocus(argparse.Action):
+    """argparse.Action subclass to read a defocus file, either from IMOD which adheres
+    to their file format, or a txt file containing per line the defocus of each tilt."""
+    def __call__(
+            self,
+            parser,
+            namespace,
+            values: str,
+            option_string: Optional[str] = None
+    ):
+        if values.endswith(('.defocus', '.txt')):
+            file_path = pathlib.Path(values)
+            if not file_path.exists():
+                parser.error(
+                    "{0} provided defocus file does not exist".format(option_string)
+                )
+            # in case of a file the parser attribute becomes a list of defocii
+            setattr(namespace, self.dest, read_defocus_file(file_path))
+        else:
+            try:
+                defocus = float(values)
+            except ValueError:
+                parser.error(
+                    "{0} not possible to read defocus as float".format(option_string)
+                )
+            # pass back as list so defocus always returns a list
+            setattr(namespace, self.dest, [defocus])
 
 
 class UnequalSpacingError(Exception):
