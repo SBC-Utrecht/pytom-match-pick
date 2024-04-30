@@ -210,12 +210,12 @@ class TestTMJob(unittest.TestCase):
         self.assertIsInstance(job, TMJob, msg='TMJob could not be properly loaded from disk.')
 
         # check job loading and preventing whitening filter recalculation
-        with self.assertNoLogs(level='INFO'):
+        with self.assertLogs(level='INFO') as cm:
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=True)
+        self.assertNotIn("whitening filter", ''.join(cm.output))
         with self.assertLogs(level='INFO') as cm:
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=False)
-        self.assertEqual(len(cm.output), 1)
-        self.assertIn('Estimating whitening filter...', cm.output[0])
+        self.assertIn('Estimating whitening filter...', ''.join(cm.output))
 
         # turn current job into 0.6.0 job with ctf params
         job.pytom_tm_version_number = '0.6.0'
