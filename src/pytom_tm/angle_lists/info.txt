@@ -1,1 +1,0 @@
-Each row in the angle list text file contains a anti-clockwise ZXZ rotation in radians.
