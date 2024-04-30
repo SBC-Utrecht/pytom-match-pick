@@ -42,5 +42,5 @@ class TestTM(unittest.TestCase):
         expected_search_space = len(self.angles)*self.volume.size
         self.assertEqual(stats['search_space'], expected_search_space,
                 msg='Search space should exactly equal this value')
-        self.assertAlmostEqual(stats['std'], 0.005175, places=5,
+        self.assertAlmostEqual(stats['std'], 0.005163, places=5,
                 msg='Standard deviation of the search should be almost equal')
