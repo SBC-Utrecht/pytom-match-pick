@@ -250,7 +250,9 @@ class TemplateMatchingGPU:
                 self.plan.angles
             )
 
-            self.stats['variance'] += (square_sum_kernel(self.plan.ccc_map * roi_mask) / roi_size)
+            self.stats['variance'] += (
+                square_sum_kernel(self.plan.ccc_map * roi_mask) / roi_size
+            )
 
         # Get correct orientation back!
         # Use same method as William Wan's STOPGAP (https://doi.org/10.1107/S205979832400295X):
