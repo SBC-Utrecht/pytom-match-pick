@@ -250,7 +250,7 @@ class TemplateMatchingGPU:
                 self.plan.angles
             )
 
-            self.stats['variance'] += masked_square_sum(self.plan.ccc_map, roi_mask, roi_size)
+            self.stats['variance'] += (square_sum_kernel(self.plan.ccc_map * roi_mask) / roi_size)
 
         # Get correct orientation back!
         # Use same method as William Wan's STOPGAP (https://doi.org/10.1107/S205979832400295X):
@@ -317,6 +317,18 @@ update_results_kernel = cp.ElementwiseKernel(
 )
 
 
-@cp.fuse()
-def masked_square_sum(x, i, n):
-    return cp.sum(x * x * i) / n
+# Temporary workaround for ReductionKernel issue in cupy 13.0.0 (see: https://github.com/cupy/cupy/issues/8184)
+if version.parse(cp.__version__) == version.parse('13.0.0'):
+    def square_sum_kernel(x):
+        return (x ** 2).sum()
+else:
+    """Calculate the sum of squares in a volume. Mean is assumed to be 0 which makes this operation a lot faster."""
+    square_sum_kernel = cp.ReductionKernel(
+        'T x',  # input params
+        'T y',  # output params
+        'x * x',  # pre-processing expression
+        'a + b',  # reduction operation
+        'y = a',  # post-reduction output processing
+        '0',  # identity value
+        'variance'  # kernel name
+    )
