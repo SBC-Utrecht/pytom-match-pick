@@ -25,7 +25,7 @@ def angle_to_angle_list(angle_diff: float, sort_angles: bool = True, log: bool =
     -------
     angle_list: list[tuple[float, float, float]]
         a list where each element is a tuple of 3 floats containing 
-        an anti-clockwise ZXZ Euler rotation in degrees
+        an anti-clockwise ZXZ Euler rotation in radians
     """
     # We use an approximation of the square root of the area as the median angle diff 
     # This works reasonably well and is based on the following formula:
@@ -38,11 +38,9 @@ def angle_to_angle_list(angle_diff: float, sort_angles: bool = True, log: bool =
     used_angle_diff = (4*np.pi/used_npix)**0.5 * (180/np.pi)
     logging.info(f"Using an angle difference of {used_angle_diff:.4f} for Z1 and X")
     theta, phi = hp.pix2ang(nside, np.arange(used_npix))
-    theta *= 180/np.pi
-    phi *= 180/np.pi
     # Now for psi
     n_psi_angles = int(np.ceil(360/angle_diff))
-    psi, used_psi_diff = np.linspace(0,360, n_psi_angles, endpoint=False, retstep=True)
+    psi, used_psi_diff = np.linspace(0, 2*np.pi, n_psi_angles, endpoint=False, retstep=True)
     logging.info(f"Using an angle difference of {used_psi_diff:.4f} for Z2")
     angle_list = [(ph, th, ps) for ph, th in zip(phi, theta) for ps in psi]
     if sort_angles:
@@ -62,7 +60,7 @@ def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[t
     Returns
     -------
     angle_list: list[tuple[float, float, float]]
-        a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in degrees
+        a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in radians
     """
     with open(str(file_name)) as fstream:
         lines = fstream.readlines()
