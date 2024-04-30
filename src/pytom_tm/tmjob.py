@@ -246,7 +246,7 @@ class TMJob:
             logging.info("Will generate an angle list with a maximum increment of {angle_increment}")
             self.rotation_file = None
             self.angle_list = angle_to_angle_list(angle_increment, sort_angles=False, log=True)
-            self.n_rotaions = len(self.angle_list)
+            self.n_rotations = len(self.angle_list)
             succesfull_angle = True
         elif isinstance(angle_increment, (str, os.PathLike)):
             possible_file_path = pathlib.Path(angle_increment)
