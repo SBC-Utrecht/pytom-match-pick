@@ -239,7 +239,7 @@ class TMJob:
         try:
             angle_increment = float(angle_increment)
             angle_is_float = True
-        except ValueError:
+        except (ValueError, TypeError):
             angle_is_float = False
         if angle_is_float:
             # Generate angle list on the fly
