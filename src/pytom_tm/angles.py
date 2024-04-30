@@ -5,7 +5,7 @@ import numpy as np
 import healpix as hp
 import logging
 
-def angle_to_angle_list(angle_diff: float, sort_angles: bool = True) -> list[tuple[float, float, float]]:
+def angle_to_angle_list(angle_diff: float, sort_angles: bool = True, log: bool = False) -> list[tuple[float, float, float]]:
     """Auto generate an angle list for a given maximum angle difference. 
 
     The code uses healpix to determine Z1 and X and splits Z2 linearly.
@@ -17,6 +17,9 @@ def angle_to_angle_list(angle_diff: float, sort_angles: bool = True) -> list[tup
 
     sort_angles: bool, default True
         sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+
+    log: bool, default False
+        will log some info if True, default is False to prevent spamming the log
 
     Returns
     -------
@@ -34,7 +37,7 @@ def angle_to_angle_list(angle_diff: float, sort_angles: bool = True) -> list[tup
     used_npix = hp.nside2npix(nside)
     used_angle_diff = (4*np.pi/used_npix)**0.5 * (180/np.pi)
     logging.info(f"Using an angle difference of {used_angle_diff:.4f} for Z1 and X")
-    theta, phi = hp.pix2ang(nside, np.arange(npix))
+    theta, phi = hp.pix2ang(nside, np.arange(used_npix))
     theta *= 180/np.pi
     phi *= 180/np.pi
     # Now for psi
