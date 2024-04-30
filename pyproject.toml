@@ -55,9 +55,8 @@ Repository = "https://github.com/SBC-Utrecht/pytom-match-pick"
 Issues = "https://github.com/SBC-Utrecht/pytom-match-pick/issues"
 
 [tool.setuptools]
-packages = ["pytom_tm", "pytom_tm.angle_lists"]
+packages = ["pytom_tm"]
 package-dir = {"" = "src"}
-package-data = {"pytom_tm.angle_lists" = ["*.txt"]}
 
 [tool.coverage.run]
 concurrency = ["multiprocessing", "thread"]
