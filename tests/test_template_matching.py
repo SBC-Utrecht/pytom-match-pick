@@ -4,7 +4,7 @@ import numpy as np
 from pytom_tm.matching import TemplateMatchingGPU
 from importlib_resources import files
 from pytom_tm.mask import spherical_mask
-from pytom_tm.angles import load_angle_list
+from pytom_tm.angles import angle_to_angle_list
 
 
 class TestTM(unittest.TestCase):
@@ -15,7 +15,7 @@ class TestTM(unittest.TestCase):
         self.template[3:8, 4:8, 3:7] = 1.
         self.mask = spherical_mask(self.t_size, 5, 0.5)
         self.gpu_id = 'gpu:0'
-        self.angles = load_angle_list(files('pytom_tm.angle_lists').joinpath('angles_38.53_256.txt'))
+        self.angles = angle_to_angle_list(38.53)
 
     def test_search(self):
         angle_id = 100
@@ -41,4 +41,4 @@ class TestTM(unittest.TestCase):
         self.assertSequenceEqual(loc, ind)
         self.assertEqual(stats['search_space'], 256000000, msg='Search space should exactly equal this value')
         self.assertAlmostEqual(stats['std'], 0.005175, places=5,
-                               msg='Standard deviation of the search should be almost equal')
+                msg='Standard deviation of the search should be almost equal')
