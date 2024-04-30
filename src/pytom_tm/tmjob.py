@@ -11,7 +11,7 @@ import logging
 from typing import Optional, Union
 from functools import reduce
 from scipy.fft import next_fast_len, rfftn, irfftn
-from pytom_tm.angles import load_angle_list
+from pytom_tm.angles import load_angle_list, angle_to_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import create_wedge, power_spectrum_profile, profile_to_weighting, create_gaussian_band_pass
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
