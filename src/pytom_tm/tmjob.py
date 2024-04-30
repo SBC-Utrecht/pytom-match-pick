@@ -2,6 +2,7 @@ from __future__ import annotations
 from importlib import metadata
 from packaging import version
 import pathlib
+import os
 import copy
 import numpy as np
 import numpy.typing as npt
@@ -234,19 +235,31 @@ class TMJob:
         self.steps_slice = 1
         self.rotational_symmetry = rotational_symmetry
         self.angle_increment = angle_increment
-        possible_file_path = pathlib.Path(angle_increment)
-        if possible_file_path.exists() and possible_file_path.suffix == '.txt':
-            logging.info('Custom file provided for the angular search. Checking if it can be read...')
-            # load_angle_list will throw an error if it does not encounter three inputs per line
-            self.n_rotations = len(load_angle_list(possible_file_path, sort_angles=False))
-            self.rotation_file = possible_file_path
-        elif isinstance(angle_increment, float):
+        succesfull_angle = False
+        try:
+            angle_increment = float(angle_increment)
+            angle_is_float = True
+        except ValueError:
+            angle_is_float = False
+        if angle_is_float:
             # Generate angle list on the fly
             logging.info("Will generate an angle list with a maximum increment of {angle_increment}")
             self.rotation_file = None
             self.angle_list = angle_to_angle_list(angle_increment, sort_angles=False, log=True)
             self.n_rotaions = len(self.angle_list)
-        else:
+            succesfull_angle = True
+        elif isinstance(angle_increment, (str, os.PathLike)):
+            possible_file_path = pathlib.Path(angle_increment)
+            if possible_file_path.exists() and possible_file_path.suffix == '.txt':
+                logging.info(
+                    'Custom file provided for the angular search. Checking if it can be read...'
+                )
+                # load_angle_list will throw an error if it does not encounter three inputs per line
+                self.n_rotations = len(load_angle_list(possible_file_path, sort_angles=False))
+                self.rotation_file = possible_file_path
+                succesfull_angle = True
+
+        if not succesfull_angle:
             raise TMJobError('Invalid angular search provided.')
 
         # missing wedge
