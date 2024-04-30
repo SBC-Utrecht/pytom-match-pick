@@ -243,7 +243,7 @@ class TMJob:
             angle_is_float = False
         if angle_is_float:
             # Generate angle list on the fly
-            logging.info("Will generate an angle list with a maximum increment of {angle_increment}")
+            logging.info(f"Will generate an angle list with a maximum increment of {angle_increment}")
             self.rotation_file = None
             self.angle_list = angle_to_angle_list(angle_increment, sort_angles=False, log=True)
             self.n_rotations = len(self.angle_list)

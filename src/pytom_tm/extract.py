@@ -161,10 +161,13 @@ def extract_particles(
 
     score_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_scores.mrc'))
     angle_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_angles.mrc'))
-    angle_list = load_angle_list(
-        job.rotation_file,
-        sort_angles=version.parse(job.pytom_tm_version_number) > version.parse('0.3.0')
-    )
+    if job.rotation_file is not None:
+        angle_list = load_angle_list(
+            job.rotation_file,
+            sort_angles=version.parse(job.pytom_tm_version_number) > version.parse('0.3.0')
+        )
+    else:
+        angle_list = job.angle_list
 
     if tophat_filter:  # constrain the extraction with a tophat filter
         predicted_peaks = predict_tophat_mask(
