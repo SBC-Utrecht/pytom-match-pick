@@ -43,6 +43,7 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
         pathlib.Path(data['template']),
         pathlib.Path(data['mask']),
         pathlib.Path(data['output_dir']),
+        angle_increment=data.get('angle_increment', data['rotation_file']),
         mask_is_spherical=data['mask_is_spherical'],
         tilt_angles=data['tilt_angles'],
         tilt_weighting=data['tilt_weighting'],
@@ -68,7 +69,6 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
     ):
         for tilt in job.ctf_data:
             tilt['phase_shift_deg'] = .0
-    job.rotation_file = pathlib.Path(data['rotation_file'])
     job.whole_start = data['whole_start']
     job.sub_start = data['sub_start']
     job.sub_step = data['sub_step']
@@ -95,7 +95,7 @@ class TMJob:
             template: pathlib.Path,
             mask: pathlib.Path,
             output_dir: pathlib.Path,
-            angle_increment: str = '7.00',
+            angle_increment: Union[str, float] = 7.00,
             mask_is_spherical: bool = True,
             tilt_angles: Optional[list[float, ...]] = None,
             tilt_weighting: bool = False,
@@ -127,7 +127,7 @@ class TMJob:
             path to mask MRC
         output_dir: pathlib.Path
             path to output directory
-        angle_increment: str, default '7.00'
+        angle_increment: Union[str, float]; default 7.00
             angular increment of template search
         mask_is_spherical: bool, default True
             whether template mask is spherical, reduces computation complexity
@@ -233,18 +233,21 @@ class TMJob:
         self.start_slice = 0
         self.steps_slice = 1
         self.rotational_symmetry = rotational_symmetry
-        try:
-            self.rotation_file = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][0]
-            self.n_rotations = AVAILABLE_ROTATIONAL_SAMPLING[angle_increment][1]
-        except KeyError:
-            possible_file_path = pathlib.Path(angle_increment)
-            if possible_file_path.exists() and possible_file_path.suffix == '.txt':
-                logging.info('Custom file provided for the angular search. Checking if it can be read...')
-                # load_angle_list will throw an error if it does not encounter three inputs per line
-                self.n_rotations = len(load_angle_list(possible_file_path))
-                self.rotation_file = possible_file_path
-            else:
-                raise TMJobError('Invalid angular search provided.')
+        self.angle_increment = angle_increment
+        possible_file_path = pathlib.Path(angle_increment)
+        if possible_file_path.exists() and possible_file_path.suffix == '.txt':
+            logging.info('Custom file provided for the angular search. Checking if it can be read...')
+            # load_angle_list will throw an error if it does not encounter three inputs per line
+            self.n_rotations = len(load_angle_list(possible_file_path, sort_angles=False))
+            self.rotation_file = possible_file_path
+        elif isinstance(angle_increment, float):
+            # Generate angle list on the fly
+            logging.info("Will generate an angle list with a maximum increment of {angle_increment}")
+            self.rotation_file = None
+            self.angle_list = angle_to_angle_list(angle_increment, sort_angles=False, log=True)
+            self.n_rotaions = len(self.angle_list)
+        else:
+            raise TMJobError('Invalid angular search provided.')
 
         # missing wedge
         self.tilt_angles = tilt_angles
@@ -624,10 +627,16 @@ class TMJob:
             int(np.ceil(self.n_rotations / self.rotational_symmetry)),
             self.steps_slice
         ))
-        angle_list = load_angle_list(
-            self.rotation_file,
-            sort_angles=version.parse(self.pytom_tm_version_number) > version.parse('0.3.0')
-        )[slice(
+        if self.rotation_file is not None:
+            angle_list = load_angle_list(
+                    self.rotation_file,
+                    sort_angles=version.parse(self.pytom_tm_version_number) > version.parse('0.3.0')
+            )
+        else:
+            # pre-generated list
+            angle_list = self.angle_list
+
+        angle_list = angle_list[slice(
             self.start_slice,
             int(np.ceil(self.n_rotations / self.rotational_symmetry)),
             self.steps_slice
