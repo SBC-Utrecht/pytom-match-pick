@@ -37,6 +37,9 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
     with open(file_name, 'r') as fstream:
         data = json.load(fstream)
 
+
+    # Temporarily silence the info logs
+    logging.disable(logging.INFO)
     job = TMJob(
         data['job_key'],
         data['log_level'],
@@ -63,6 +66,9 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
         pytom_tm_version_number=data.get('pytom_tm_version_number', '0.3.0'),
         job_loaded_for_extraction=load_for_extraction,
     )
+    # reanable the logging as described at 
+    # https://docs.python.org/3/library/logging.html#logging.disable
+    logging.disable(logging.NOTSET)
     # if the file originates from an old version set the phase shift for compatibility
     if (
         version.parse(job.pytom_tm_version_number) < version.parse('0.6.1') and
