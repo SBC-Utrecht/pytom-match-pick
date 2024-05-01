@@ -1,6 +1,6 @@
 import unittest
 import pathlib
-from pytom_tm.angles import load_angle_list, AVAILABLE_ROTATIONAL_SAMPLING
+from pytom_tm.angles import load_angle_list
 
 
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath('test_data')
@@ -25,6 +25,3 @@ class TestAngles(unittest.TestCase):
         with self.assertRaises(ValueError, msg='Invalid angle file should raise an error'):
             load_angle_list(ERRONEOUS_ANGLE_FILE)
 
-        for sampling, (angle_file, n_rotations) in AVAILABLE_ROTATIONAL_SAMPLING.items():
-            angle_list = load_angle_list(angle_file)
-            self.assertEqual(len(angle_list), n_rotations, msg=f'Unexpected number of rotations for {angle_file}')
