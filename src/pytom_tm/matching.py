@@ -95,6 +95,13 @@ class TemplateMatchingGPU:
     ):
         """Initialize a template matching run.
 
+        For other great implementations see:
+        - STOPGAP: https://github.com/wan-lab-vanderbilt/STOPGAP
+        - pyTME: https://github.com/KosinskiLab/pyTME
+
+        The precalculation of conjugated FTs of the tomo was (AFAIK) introduced
+        by STOPGAP!
+
         Parameters
         ----------
         job_id: str
@@ -255,9 +262,10 @@ class TemplateMatchingGPU:
             )
 
         # Get correct orientation back!
-        # Use same method as William Wan's STOPGAP (https://doi.org/10.1107/S205979832400295X):
-        # the search volume is Fourier transformed and conjugated before the iterations
-        # this means the eventual score map needs to be flipped back. The map is also rolled due to the ftshift
+        # Use same method as William Wan's STOPGAP
+        # (https://doi.org/10.1107/S205979832400295X): the search volume is Fourier
+        # transformed and conjugated before the iterations this means the eventual
+        # score map needs to be flipped back. The map is also rolled due to the ftshift
         # effect of a Fourier space correlation function.
         self.plan.scores = cp.roll(cp.flip(self.plan.scores), shift, axis=(0, 1, 2))
         self.plan.angles = cp.roll(cp.flip(self.plan.angles), shift, axis=(0, 1, 2))
