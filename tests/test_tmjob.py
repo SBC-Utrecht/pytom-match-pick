@@ -150,6 +150,10 @@ class TestTMJob(unittest.TestCase):
             with self.assertRaises(ValueError, msg='Invalid end index in search should raise ValueError'):
                 TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, voxel_size=1.,
                       **{param: [0, 120]})
+        # Test broken angle input
+        with self.assertRaisesRegex(TMJobError, 'Invalid angular search'):
+            TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR, 
+                    angle_increment='1.2.3', voxel_size=1.)
 
     def test_tm_job_copy(self):
         copy = self.job.copy()
