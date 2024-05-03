@@ -43,7 +43,7 @@ class TestTMJob(unittest.TestCase):
         template[3:8, 4:8, 3:7] = 1.
         template[7, 8, 5:7] = 1.
         mask = spherical_mask(TEMPLATE_SIZE, 5, 0.5)
-        rotation = angle_to_angle_list(ANGULAR_SEARCH)[ANGLE_ID]
+        rotation = angle_to_angle_list(float(ANGULAR_SEARCH))[ANGLE_ID]
 
         volume[LOCATION[0] - TEMPLATE_SIZE // 2: LOCATION[0] + TEMPLATE_SIZE // 2 + TEMPLATE_SIZE % 2,
                LOCATION[1] - TEMPLATE_SIZE // 2: LOCATION[1] + TEMPLATE_SIZE // 2 + TEMPLATE_SIZE % 2,
