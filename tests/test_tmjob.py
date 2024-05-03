@@ -236,6 +236,7 @@ class TestTMJob(unittest.TestCase):
                 msg='Passing a custom angular search file to TMJob failed.')
 
         # Also test extraction works with custom angle file
+        _ = job.start_job(0, return_volumes=True)
         df, scores = extract_particles(job, 5, 100, create_plot=False)
         self.assertNotEqual(len(scores), 0, msg='Here we expect to get some annotations.')
 
