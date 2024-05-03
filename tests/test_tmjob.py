@@ -16,7 +16,7 @@ TOMO_SHAPE = (100, 107, 59)
 TEMPLATE_SIZE = 13
 LOCATION = (77, 26, 40)
 ANGLE_ID = 100
-ANGULAR_SEARCH = 38.53
+ANGULAR_SEARCH = '38.53'
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath('test_data')
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath('tomogram.mrc')
 TEST_EXTRACTION_MASK_OUTSIDE = TEST_DATA_DIR.joinpath('extraction_mask_outside.mrc')
@@ -82,7 +82,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            angle_increment=38.53,
+            angle_increment=ANGULAR_SEARCH,
             voxel_size=1.
         )
         score, angle = job.start_job(0, return_volumes=True)
@@ -127,7 +127,7 @@ class TestTMJob(unittest.TestCase):
 
     def setUp(self):
         self.job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
-                         angle_increment=38.53, voxel_size=1.)
+                         angle_increment=ANGULAR_SEARCH, voxel_size=1.)
 
     def test_tm_job_errors(self):
         with self.assertRaises(ValueError, msg='Different voxel size in tomogram and template and no voxel size '
@@ -232,8 +232,13 @@ class TestTMJob(unittest.TestCase):
     def test_custom_angular_search(self):
         job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
                     angle_increment=TEST_CUSTOM_ANGULAR_SEARCH, voxel_size=1.)
-        self.assertEqual(job.rotation_file, TEST_CUSTOM_ANGULAR_SEARCH, msg='Passing a custom angular search file to '
-                                                                            'TMJob failed.')
+        self.assertEqual(job.rotation_file, TEST_CUSTOM_ANGULAR_SEARCH, 
+                msg='Passing a custom angular search file to TMJob failed.')
+
+        # Also test extraction works with custom angle file
+        df, scores = extract_particles(job, 5, 100, create_plot=False)
+        self.assertNotEqual(len(scores), 0, msg='Here we expect to get some annotations.')
+
 
     def test_tm_job_split_volume(self):
         with self.assertRaises(RuntimeError, msg='Splitting the volume into smaller boxes than the template should '
@@ -289,7 +294,7 @@ class TestTMJob(unittest.TestCase):
     def test_splitting_with_offsets(self):
         # check if subjobs have correct offsets for the main job, the last sub job will have the largest errors
         job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
-                    angle_increment='38.53', voxel_size=1., search_x=[9, 90], search_y=[25, 102], search_z=[19, 54])
+                    angle_increment=ANGULAR_SEARCH, voxel_size=1., search_x=[9, 90], search_y=[25, 102], search_z=[19, 54])
         # split along each dimension and get only the last sub job
         last_sub_job = job.split_volume_search((2, 3, 2))[-1]
         final_size = [
