@@ -19,10 +19,10 @@ class TestAngles(unittest.TestCase):
             fstream.write(' '.join(map(str, [1.] * 3)))
         # create an unordered angle file    
         with open(UNORDERED_ANGLE_FILE, 'w') as fstream:
-            fstream.write(' '.join([3., 3., 1.] * 3)) 
-            fstream.write(' '.join([3., 2., 1.] * 3)) 
-            fstream.write(' '.join([2., 3., 1.] * 3)) 
-            fstream.write(' '.join([3., 2., 2.] * 3)) 
+            fstream.write(' '.join(['3.', '3.', '1.'])) 
+            fstream.write(' '.join(['3', '2.', '1.'])) 
+            fstream.write(' '.join(['2.', '3.', '1.'])) 
+            fstream.write(' '.join(['3.', '2.', '2.'])) 
 
 
 
@@ -39,5 +39,5 @@ class TestAngles(unittest.TestCase):
 
     def test_load_sort(self):
         angles = load_angle_list(UNORDERED_ANGLE_FILE, sort_angles=True)
-        expected = [(2,3,1), (3,2,1), (3,2,2), (3,3,1)]
+        expected = [(2.,3.,1.), (3.,2.,1.), (3.,2.,2.), (3.,3.,1.)]
         self.asserEqual(angles, expected)
