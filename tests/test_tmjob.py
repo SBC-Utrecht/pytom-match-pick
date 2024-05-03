@@ -4,6 +4,7 @@ import numpy as np
 import voltools as vt
 import mrcfile
 from importlib_resources import files
+from tempfile import TemporaryDirectory
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import load_angle_list, angle_to_angle_list
 from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob
@@ -230,15 +231,27 @@ class TestTMJob(unittest.TestCase):
         self.assertEqual(job.ctf_data[0]['phase_shift_deg'], .0)
 
     def test_custom_angular_search(self):
-        job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, TEST_DATA_DIR,
-                    angle_increment=TEST_CUSTOM_ANGULAR_SEARCH, voxel_size=1.)
-        self.assertEqual(job.rotation_file, TEST_CUSTOM_ANGULAR_SEARCH, 
+        with TemporaryDirectory() as data_dir:
+            job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, data_dir,
+                        angle_increment=TEST_CUSTOM_ANGULAR_SEARCH, voxel_size=1.)
+            self.assertEqual(job.rotation_file, TEST_CUSTOM_ANGULAR_SEARCH, 
                 msg='Passing a custom angular search file to TMJob failed.')
 
-        # Also test extraction works with custom angle file
-        _ = job.start_job(0, return_volumes=True)
-        df, scores = extract_particles(job, 5, 100, create_plot=False)
-        self.assertNotEqual(len(scores), 0, msg='Here we expect to get some annotations.')
+            # Also test extraction works with custom angle file
+
+            scores, angles = job.start_job(0, return_volumes=True)
+            write_mrc(
+                data_dir / "tomogram_scores.mrc",
+                scores,
+                job.voxel_size
+            )
+            write_mrc(
+                data_dir / "tomogram_angles.mrc",
+                angles,
+                job.voxel_size
+            )
+            df, scores = extract_particles(job, 5, 100, create_plot=False)
+            self.assertNotEqual(len(scores), 0, msg='Here we expect to get some annotations.')
 
 
     def test_tm_job_split_volume(self):
