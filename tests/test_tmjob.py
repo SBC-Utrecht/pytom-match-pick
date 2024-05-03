@@ -232,6 +232,7 @@ class TestTMJob(unittest.TestCase):
 
     def test_custom_angular_search(self):
         with TemporaryDirectory() as data_dir:
+            data_dir = pathlib.Path(data_dir)
             job = TMJob('0', 10, TEST_TOMOGRAM, TEST_TEMPLATE, TEST_MASK, data_dir,
                         angle_increment=TEST_CUSTOM_ANGULAR_SEARCH, voxel_size=1.)
             self.assertEqual(job.rotation_file, TEST_CUSTOM_ANGULAR_SEARCH, 
