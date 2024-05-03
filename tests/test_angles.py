@@ -15,14 +15,14 @@ class TestAngles(unittest.TestCase):
         TEST_DATA_DIR.mkdir()
         # create an erroneous angle file
         with open(ERRONEOUS_ANGLE_FILE, 'w') as fstream:
-            fstream.write(' '.join(map(str, [1.] * 4)))
-            fstream.write(' '.join(map(str, [1.] * 3)))
+            fstream.write(' '.join(map(str, [1.] * 4)) + '\n')
+            fstream.write(' '.join(map(str, [1.] * 3)) + '\n')
         # create an unordered angle file    
         with open(UNORDERED_ANGLE_FILE, 'w') as fstream:
-            fstream.write(' '.join(['3.', '3.', '1.'])) 
-            fstream.write(' '.join(['3', '2.', '1.'])) 
-            fstream.write(' '.join(['2.', '3.', '1.'])) 
-            fstream.write(' '.join(['3.', '2.', '2.'])) 
+            fstream.write(' '.join(['3.', '3.', '1.']) + '\n') 
+            fstream.write(' '.join(['3', '2.', '1.']) + '\n') 
+            fstream.write(' '.join(['2.', '3.', '1.'])+ '\n') 
+            fstream.write(' '.join(['3.', '2.', '2.'])+ '\n') 
 
 
 
