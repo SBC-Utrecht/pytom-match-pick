@@ -1,6 +1,6 @@
 import unittest
 import pathlib
-from pytom_tm.angles import load_angle_list
+from pytom_tm.angles import load_angle_list, angle_to_angle_list
 import numpy as np
 import itertools as itt
 import re
