@@ -535,7 +535,9 @@ def extract_candidates(argv=None):
         type=int, 
         required=False, 
         default=1,
-        help='Set kernel connectivity for ndimage binary structure used for tophat transform'
+        action=LargerThanZero,
+        help='Set kernel connectivity for ndimage binary structure used for tophat transform. Integer value in range '
+             '1-3.'
     )
     parser.add_argument(
         "--log",
