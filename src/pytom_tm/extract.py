@@ -69,7 +69,7 @@ def predict_tophat_mask(
             connectivity=tophat_connectivity
         )
     )
-    y, bins = np.histogram(tophat.flatten(), bins=100)
+    y, bins = np.histogram(tophat.flatten(), bins=50)
     bin_centers = (bins[:-1] + bins[1:]) / 2
     x_raw, y_raw = bin_centers[2:], y[2:]  # discard first two points because of over-representation of zeros
 
