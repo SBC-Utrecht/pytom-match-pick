@@ -28,7 +28,7 @@ except ModuleNotFoundError:
 def predict_tophat_mask(
         score_volume: npt.NDArray[float],
         output_path: Optional[pathlib.Path] = None,
-        n_false_positives: int = 1,
+        n_false_positives: float = 1.,
         create_plot: bool = True,
         tophat_connectivity: int = 1
 ) -> npt.NDArray[bool]:
@@ -50,7 +50,7 @@ def predict_tophat_mask(
         template matching score map
     output_path: Optional[pathlib.Path], default None
         if provided (and plotting is available), write a figure of the fit to the output folder
-    n_false_positives: int, default 1
+    n_false_positives: float, default 1.0
         number of false positive for error function cutoff calculation
     create_plot: bool, default True
         whether to plot the gaussian fit and cut-off estimation
@@ -130,7 +130,7 @@ def extract_particles(
         particle_radius_px: int,
         n_particles: int,
         cut_off: Optional[float] = None,
-        n_false_positives: int = 1,
+        n_false_positives: float = 1.,
         tomogram_mask_path: Optional[pathlib.Path] = None,
         tophat_filter: bool = False,
         create_plot: bool = True,
@@ -147,9 +147,9 @@ def extract_particles(
         maximum number of particles to extract
     cut_off: Optional[float]
         manually override the automated score cut-off estimation, value between 0 and 1
-    n_false_positives: int
+    n_false_positives: float, default 1.0
         tune the number of false positives to be included for automated error function cut-off estimation:
-        should be an integer >= 1
+        should be a float > 0
     tomogram_mask_path: Optional[pathlib.Path]
         path to a tomographic binary mask for extraction
     tophat_filter: bool
