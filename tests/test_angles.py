@@ -55,9 +55,8 @@ class TestAngles(unittest.TestCase):
         for out in cm.output:
             # Check if the used_angle <= input angle
             # regex = whitespace -> 0-inf digits -> "." -> 1-inf digits -> whitespace
-            possible_match = re.search(r"\s\d*[.]\d+\s", out)
-            self.assertIsNotNone(possible_match)
-            self.assertEqual(len(possible_match.groups()), 1)
+            possible_match = re.findall(r"\s\d*[.]\d+\s", out)
+            self.assertEqual(len(possible_match), 1)
             self.assertLessEqual(float(possible_match[0]), angle)
 
         # make sure everything is sorted and X is never 0
