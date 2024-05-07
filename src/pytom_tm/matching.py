@@ -38,7 +38,7 @@ class TemplateMatchingPlan:
         # Search volume + and fft transform plan for the volume
         volume_shape = volume.shape
         cp_vol = cp.asarray(volume, dtype=cp.float32, order='C')
-        self.volume_rft_conj = rfftn(cp_vol)).conj()
+        self.volume_rft_conj = rfftn(cp_vol).conj()
         self.volume_sq_rft_conj = rfftn(cp_vol ** 2).conj()
         # Explicit fft plan is no longer necessary as cupy generates a plan behind the scene which leads to
         # comparable timings
