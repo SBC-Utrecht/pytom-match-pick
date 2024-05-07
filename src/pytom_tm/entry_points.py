@@ -623,8 +623,9 @@ def match_template(argv=None):
         "--angular-search",
         type=str,
         required=True,
-        help="Options are: [7.00, 35.76, 19.95, 90.00, 18.00, "
-             "12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00].\n"
+        help="If given a float it will generate an angle list with healpix for Z1 and X1 "
+             "and linear search for Z2. The given angle given will be used as the maximum for the "
+             "linear search and for the mean angle difference from healpix.\n"
              "Alternatively, a .txt file can be provided with three Euler angles "
              "(in radians) per line that define the angular search. "
              "Angle format is ZXZ anti-clockwise (see: "
