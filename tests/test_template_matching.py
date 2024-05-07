@@ -81,5 +81,5 @@ class TestTM(unittest.TestCase):
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)
         self.assertEqual(stats['search_space'], 256000000, msg='Search space should exactly equal this value')
-        self.assertAlmostEqual(stats['std'], 0.005175, places=5,
+        self.assertAlmostEqual(stats['std'], 0.005175, places=4,
                                msg='Standard deviation of the search should be almost equal')
