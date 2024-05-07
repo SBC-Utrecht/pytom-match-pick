@@ -26,7 +26,7 @@ classifiers = [
 requires-python = ">= 3.9"
 dependencies = [
     "numpy",
-    "cupy",
+    "cupy!='13.0.*'", #see https://github.com/SBC-Utrecht/pytom-match-pick/issues/106
     "voltools",
     "tqdm",
     "mrcfile",
