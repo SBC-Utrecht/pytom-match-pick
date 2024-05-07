@@ -5,7 +5,7 @@ import numpy as np
 import healpix as hp
 import logging
 
-def angle_to_angle_list(angle_diff: float, sort_angles: bool = True, log: bool = False) -> list[tuple[float, float, float]]:
+def angle_to_angle_list(angle_diff: float, sort_angles: bool = True) -> list[tuple[float, float, float]]:
     """Auto generate an angle list for a given maximum angle difference. 
 
     The code uses healpix to determine Z1 and X and splits Z2 linearly.
@@ -17,9 +17,6 @@ def angle_to_angle_list(angle_diff: float, sort_angles: bool = True, log: bool =
 
     sort_angles: bool, default True
         sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
-
-    log: bool, default False
-        will log some info if True, default is False to prevent spamming the log
 
     Returns
     -------
