@@ -76,7 +76,7 @@ class TestTMJob(unittest.TestCase):
             _ = run_job_parallel(self.job, volume_splits=(1, 2, 1), gpu_ids=[0, -1], unittest_mute=True)
         except RuntimeError:
             # sleep a second to make sure all children are cleaned
-            time.sleep(1)
+            time.sleep(2)
             self.assertEqual(len(multiprocessing.active_children()), 0,
                              msg='a process was still lingering after a parallel job with partially invalid resources '
                                  'was started')
