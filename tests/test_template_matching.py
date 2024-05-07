@@ -72,7 +72,7 @@ class TestTM(unittest.TestCase):
             self.mask,
             self.angles,
             list(range(len(self.angles))),
-            mask_is_spherical=True,
+            mask_is_spherical=False,
         )
         score_volume, angle_volume, stats = tm.run()
 
