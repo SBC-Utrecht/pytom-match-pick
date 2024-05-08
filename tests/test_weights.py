@@ -51,7 +51,8 @@ for d in [float(x.split()[4]) * 1e-3 for x in IMOD_CTF.split('\n') if x != '']:
         'defocus': d,
         'amplitude': AMP,
         'voltage': VOL,
-        'cs': CS
+        'cs': CS,
+        'phase_shift_deg': .0,
     })
 
 DOSE_FILE = '''60.165 

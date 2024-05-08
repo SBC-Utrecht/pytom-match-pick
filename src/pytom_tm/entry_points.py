@@ -213,6 +213,13 @@ def pytom_create_template(argv=None):
         help="Spherical aberration in mm.",
     )
     parser.add_argument(
+        "--phase-shift",
+        type=float,
+        required=False,
+        default=.0,
+        help="Phase shift (in degrees) for the CTF to model phase plates.",
+    )
+    parser.add_argument(
         "--cut-after-first-zero",
         action="store_true",
         default=False,
@@ -324,6 +331,7 @@ def pytom_create_template(argv=None):
             "spherical_aberration": args.Cs * 1e-3,
             "cut_after_first_zero": args.cut_after_first_zero,
             "flip_phase": args.flip_phase,
+            "phase_shift_deg": args.phase_shift,
         }
 
     template = generate_template_from_map(
@@ -433,7 +441,8 @@ def estimate_roc(argv=None):
     template_matching_job = load_json_to_tmjob(args.job_file)
     # Set cut off to -1 to ensure the number of particles gets extracted
     _, lcc_max_values = extract_particles(
-        template_matching_job, args.radius_px, args.number_of_particles, cut_off=0
+        template_matching_job, args.radius_px, args.number_of_particles, cut_off=0,
+        create_plot=False
     )
 
     score_volume = read_mrc(
@@ -581,7 +590,8 @@ def match_template(argv=None):
     parser = argparse.ArgumentParser(
         description="Run template matching. -- Marten Chaillet (@McHaillet)"
     )
-    parser.add_argument(
+    io_group = parser.add_argument_group("Template, search volume, and output")
+    io_group.add_argument(
         "-t",
         "--template",
         type=pathlib.Path,
@@ -589,22 +599,7 @@ def match_template(argv=None):
         action=CheckFileExists,
         help="Template; MRC file.",
     )
-    parser.add_argument(
-        "-m",
-        "--mask",
-        type=pathlib.Path,
-        required=True,
-        action=CheckFileExists,
-        help="Mask with same box size as template; MRC file.",
-    )
-    parser.add_argument(
-        "--non-spherical-mask",
-        action="store_true",
-        required=False,
-        help="Flag to set when the mask is not spherical. It adds the required "
-        "computations for non-spherical masks and roughly doubles computation time.",
-    )
-    parser.add_argument(
+    io_group.add_argument(
         "-v",
         "--tomogram",
         type=pathlib.Path,
@@ -612,7 +607,7 @@ def match_template(argv=None):
         action=CheckFileExists,
         help="Tomographic volume; MRC file.",
     )
-    parser.add_argument(
+    io_group.add_argument(
         "-d",
         "--destination",
         type=pathlib.Path,
@@ -621,52 +616,46 @@ def match_template(argv=None):
         action=CheckDirExists,
         help="Folder to store the files produced by template matching.",
     )
-    parser.add_argument(
-        "-a",
-        "--tilt-angles",
-        nargs="+",
-        type=str,
+    mask_group = parser.add_argument_group("Mask")
+    mask_group.add_argument(
+        "-m",
+        "--mask",
+        type=pathlib.Path,
         required=True,
-        action=ParseTiltAngles,
-        help="Tilt angles of the tilt-series, either the minimum and maximum values of "
-        "the tilts (e.g. --tilt-angles -59.1 60.1) or a .rawtlt/.tlt file with all the "
-        "angles (e.g. --tilt-angles tomo101.rawtlt). In case all the tilt angles are "
-        "provided a more elaborate Fourier space constraint can be used",
+        action=CheckFileExists,
+        help="Mask with same box size as template; MRC file.",
     )
-    parser.add_argument(
-        "--per-tilt-weighting",
+    mask_group.add_argument(
+        "--non-spherical-mask",
         action="store_true",
-        default=False,
         required=False,
-        help="Flag to activate per-tilt-weighting, only makes sense if a file with all "
-        "tilt angles have been provided. In case not set, while a tilt angle file is "
-        "provided, the minimum and maximum tilt angle are used to create a binary "
-        "wedge. The base functionality creates a fanned wedge where each tilt is "
-        "weighted by cos(tilt_angle). If dose accumulation and CTF parameters are "
-        "provided these will all be incorporated in the tilt-weighting.",
+        help="Flag to set when the mask is not spherical. It adds the required "
+             "computations for non-spherical masks and roughly doubles computation time.",
     )
-    parser.add_argument(
+    rotation_group = parser.add_argument_group('Angular search')
+    rotation_group.add_argument(
         "--angular-search",
         type=str,
         required=True,
         help="Options are: [7.00, 35.76, 19.95, 90.00, 18.00, "
-        "12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00].\n"
-        "Alternatively, a .txt file can be provided with three Euler angles "
-        "(in radians) per line that define the angular search. "
-        "Angle format is ZXZ anti-clockwise (see: "
-        "https://www.ccpem.ac.uk/user_help/rotation_conventions.php).",
+             "12.85, 38.53, 11.00, 17.86, 25.25, 50.00, 3.00].\n"
+             "Alternatively, a .txt file can be provided with three Euler angles "
+             "(in radians) per line that define the angular search. "
+             "Angle format is ZXZ anti-clockwise (see: "
+             "https://www.ccpem.ac.uk/user_help/rotation_conventions.php).",
     )
-    parser.add_argument(
+    rotation_group.add_argument(
         "--z-axis-rotational-symmetry",
         type=int,
         required=False,
         action=LargerThanZero,
         default=1,
         help="Integer value indicating the rotational symmetry of the template around "
-        "the z-axis. The length of the rotation search will be shortened through "
-        "division by this value. Only works for template symmetry around the z-axis.",
+             "the z-axis. The length of the rotation search will be shortened through "
+             "division by this value. Only works for template symmetry around the z-axis.",
     )
-    parser.add_argument(
+    volume_group = parser.add_argument_group('Volume control')
+    volume_group.add_argument(
         "-s",
         "--volume-split",
         nargs=3,
@@ -677,7 +666,7 @@ def match_template(argv=None):
         "can be relevant if the volume does not fit into GPU memory. "
         "Format is x y z, e.g. --volume-split 1 2 1",
     )
-    parser.add_argument(
+    volume_group.add_argument(
         "--search-x",
         nargs=2,
         type=int,
@@ -686,7 +675,7 @@ def match_template(argv=None):
         help="Start and end indices of the search along the x-axis, "
         "e.g. --search-x 10 490 ",
     )
-    parser.add_argument(
+    volume_group.add_argument(
         "--search-y",
         nargs=2,
         type=int,
@@ -695,7 +684,7 @@ def match_template(argv=None):
         help="Start and end indices of the search along the y-axis, "
         "e.g. --search-x 10 490 ",
     )
-    parser.add_argument(
+    volume_group.add_argument(
         "--search-z",
         nargs=2,
         type=int,
@@ -704,7 +693,32 @@ def match_template(argv=None):
         help="Start and end indices of the search along the z-axis, "
         "e.g. --search-x 30 230 ",
     )
-    parser.add_argument(
+    filter_group = parser.add_argument_group('Filter control')
+    filter_group.add_argument(
+        "-a",
+        "--tilt-angles",
+        nargs="+",
+        type=str,
+        required=True,
+        action=ParseTiltAngles,
+        help="Tilt angles of the tilt-series, either the minimum and maximum values of "
+             "the tilts (e.g. --tilt-angles -59.1 60.1) or a .rawtlt/.tlt file with all the "
+             "angles (e.g. --tilt-angles tomo101.rawtlt). In case all the tilt angles are "
+             "provided a more elaborate Fourier space constraint can be used",
+    )
+    filter_group.add_argument(
+        "--per-tilt-weighting",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Flag to activate per-tilt-weighting, only makes sense if a file with all "
+             "tilt angles have been provided. In case not set, while a tilt angle file is "
+             "provided, the minimum and maximum tilt angle are used to create a binary "
+             "wedge. The base functionality creates a fanned wedge where each tilt is "
+             "weighted by cos(tilt_angle). If dose accumulation and CTF parameters are "
+             "provided these will all be incorporated in the tilt-weighting.",
+    )
+    filter_group.add_argument(
         "--voxel-size-angstrom",
         type=float,
         required=False,
@@ -713,7 +727,7 @@ def match_template(argv=None):
         "try to read from the MRC files. Argument is important for band-pass "
         "filtering!",
     )
-    parser.add_argument(
+    filter_group.add_argument(
         "--low-pass",
         type=float,
         required=False,
@@ -722,7 +736,7 @@ def match_template(argv=None):
         "if the template was already filtered to a certain resolution. "
         "Value is the resolution in A.",
     )
-    parser.add_argument(
+    filter_group.add_argument(
         "--high-pass",
         type=float,
         required=False,
@@ -732,7 +746,7 @@ def match_template(argv=None):
         "e.g. 500 could be appropriate as the CTF is often incorrectly modelled "
         "up to 50nm.",
     )
-    parser.add_argument(
+    filter_group.add_argument(
         "--dose-accumulation",
         type=str,
         required=False,
@@ -741,7 +755,7 @@ def match_template(argv=None):
         "tilt angle, assuming the same ordering of tilts as the tilt angle file. "
         "Format should be a .txt file with on each line a dose value in e-/A2.",
     )
-    parser.add_argument(
+    filter_group.add_argument(
         "--defocus-file",
         type=str,
         required=False,
@@ -755,28 +769,36 @@ def match_template(argv=None):
         "same ordering as tilt angle list. The .txt file should contain a single "
         "defocus value (in nm) per line.",
     )
-    parser.add_argument(
+    filter_group.add_argument(
         "--amplitude-contrast",
         type=float,
         required=False,
         action=BetweenZeroAndOne,
         help="Amplitude contrast fraction for CTF.",
     )
-    parser.add_argument(
+    filter_group.add_argument(
         "--spherical-abberation",
         type=float,
         required=False,
         action=LargerThanZero,
         help="Spherical abberation for CTF in mm.",
     )
-    parser.add_argument(
+    filter_group.add_argument(
         "--voltage",
         type=float,
         required=False,
         action=LargerThanZero,
         help="Voltage for CTF in keV.",
     )
-    parser.add_argument(
+    filter_group.add_argument(
+        "--phase-shift",
+        type=float,
+        required=False,
+        default=.0,
+        action=LargerThanZero,
+        help="Phase shift (in degrees) for the CTF to model phase plates.",
+    )
+    filter_group.add_argument(
         "--spectral-whitening",
         action="store_true",
         default=False,
@@ -785,7 +807,8 @@ def match_template(argv=None):
         "apply it to the tomogram patch and template. Effectively puts more weight on "
         "high resolution features and sharpens the correlation peaks.",
     )
-    parser.add_argument(
+    device_group = parser.add_argument_group('Device control')
+    device_group.add_argument(
         "-g",
         "--gpu-ids",
         nargs="+",
@@ -793,7 +816,8 @@ def match_template(argv=None):
         required=True,
         help="GPU indices to run the program on.",
     )
-    parser.add_argument(
+    debug_group = parser.add_argument_group('Logging/debugging')
+    debug_group.add_argument(
         "--log",
         type=str,
         required=False,
@@ -823,6 +847,7 @@ def match_template(argv=None):
                 "amplitude": args.amplitude_contrast,
                 "voltage": args.voltage,
                 "cs": args.spherical_abberation,
+                "phase_shift_deg": args.phase_shift,
             }
             for defocus in args.defocus_file
         ]

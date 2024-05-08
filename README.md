@@ -1,7 +1,9 @@
 ![test-badge](https://github.com/SBC-Utrecht/pytom-match-pick/actions/workflows/unit-tests.yml/badge.svg?branch=main)
-# GPU template matching for cryo-ET
+# pytom-match-pick: GPU template matching for cryo-ET
 
 GPU template matching, originally developed in [PyTom](https://github.com/SBC-Utrecht/PyTom), as a standalone python package that can be run from the command line.
+
+![cover_image](images/tomo200528_100_illustration.png)
 
 ## Requires
 
@@ -79,6 +81,13 @@ The following scripts are available to run with `--help` to see parameters:
 - extract candidates from a job file (.json) created in the template matching output folder: `pytom_extract_candidate.py --help`
 - estimate an ROC curve from a job file (.json): `pytom_estimate_roc.py --help`
 - merge multiple star files to a single starfile: `pytom_merge_stars.py --help`
+
+## Usage questions, ideas and solutions, engagement, etc
+Please use our [github discussions](https://github.com/SBC-Utrecht/pytom-match-pick/discussions) for:
+ - Asking questions about bottlenecks.
+ - Share ideas and solutions.
+ - Engage with other community members about processing strategies.
+ - etc...
 
 ## Developer install
 If you want the most up-to-date version of the code you can get install it from this repository via:
