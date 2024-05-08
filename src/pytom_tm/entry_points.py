@@ -756,6 +756,25 @@ def match_template(argv=None):
         "apply it to the tomogram patch and template. Effectively puts more weight on "
         "high resolution features and sharpens the correlation peaks.",
     )
+    additional_group = parser.add_argument_group('Additional options')
+    additional_group.add_argument(
+        "--random-phase-correction",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Run template matching simultaneously with a phase randomized version of "
+             "the template, and subtract this 'noise' map from the final score map. "
+             "For this method please see STOPGAP as a reference: "
+             "https://doi.org/10.1107/S205979832400295X ."
+    )
+    additional_group.add_argument(
+        "--rng-seed",
+        action=LargerThanZero,
+        default=321,
+        required=False,
+        help="Specify a seed for the random number generator used for phase "
+             "randomization for consistent results!"
+    )
     device_group = parser.add_argument_group('Device control')
     device_group.add_argument(
         "-g",
@@ -836,6 +855,8 @@ def match_template(argv=None):
         whiten_spectrum=args.spectral_whitening,
         rotational_symmetry=args.z_axis_rotational_symmetry,
         particle_diameter=args.particle_diameter,
+        random_phase_correction=args.random_phase_correction,
+        rng_seed=args.rng_seed,
     )
 
     score_volume, angle_volume = run_job_parallel(

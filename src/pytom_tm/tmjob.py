@@ -66,6 +66,8 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
         pytom_tm_version_number=data.get('pytom_tm_version_number', '0.3.0'),
         job_loaded_for_extraction=load_for_extraction,
         particle_diameter=data.get('particle_diameter', None),
+        random_phase_correction=data.get('random_phase_correction', False),
+        rng_seed=data.get('rng_seed', 321),
     )
     # if the file originates from an old version set the phase shift for compatibility
     if (
@@ -212,6 +214,8 @@ class TMJob:
             pytom_tm_version_number: str = PYTOM_TM_VERSION,
             job_loaded_for_extraction: bool = False,
             particle_diameter: Optional[float] = None,
+            random_phase_correction: bool = False,
+            rng_seed: int = 321,
     ):
         """
         Parameters
@@ -263,9 +267,12 @@ class TMJob:
             a string with the version number of pytom_tm for backward compatibility
         job_loaded_for_extraction: bool, default False
             flag to set for finished template matching jobs that are loaded back for extraction, it prevents
-            recalculation of the whitening filter which is unnecessary at this stage
         particle_diameter: Optional[float], default None
             particle diameter (in Angstrom) to calculate angular search
+        random_phase_correction: bool, default False,
+            run matching with a phase randomized version of the template to correct scores for noise
+        rng_seed: int, default 321
+            set a seed for the rng for phase randomization
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -383,6 +390,10 @@ class TMJob:
             )
             weights /= weights.max()  # scale to 1
             np.save(self.whitening_filter, weights)
+
+        # phase randomization options
+        self.random_phase_correction = random_phase_correction
+        self.rng_seed = rng_seed
 
         # Job details
         self.job_key = job_key
@@ -746,7 +757,9 @@ class TMJob:
             angle_ids=angle_ids,
             mask_is_spherical=self.mask_is_spherical,
             wedge=template_wedge,
-            stats_roi=search_volume_roi
+            stats_roi=search_volume_roi,
+            noise_correction=self.random_phase_correction,
+            rng_seed=self.rng_seed,
         )
         results = tm.run()
         score_volume = results[0][:self.search_size[0], :self.search_size[1], :self.search_size[2]]
