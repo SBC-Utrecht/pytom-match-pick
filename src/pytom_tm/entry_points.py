@@ -503,14 +503,16 @@ def extract_candidates(argv=None):
     )
     parser.add_argument(
         "--number-of-false-positives",
-        type=int,
+        type=float,
         required=False,
         action=LargerThanZero,
+        default=1.,
         help="Number of false positives to determine the false alarm rate. Here one "
-        "can increase the recall of the particle of interest at the expense of more "
-        "false positives. The default value of 1 is recommended for particles that can "
-        "be distinguished well from the background (high specificity).",
-        default=1,
+             "can increase the recall of the particle of interest at the expense "
+             "of more false positives. The default value of 1 is recommended for "
+             "particles that can be distinguished well from the background (high "
+             "specificity). The value can also be set between 0 and 1 to make "
+             "the cut-off more restrictive.",
     )
     parser.add_argument(
         "-r",
@@ -540,6 +542,17 @@ def extract_candidates(argv=None):
         help="Attempt to filter only sharp correlation peaks with a tophat transform",
     )
     parser.add_argument(
+        '--tophat-connectivity', 
+        type=int, 
+        required=False, 
+        default=1,
+        action=LargerThanZero,
+        help="Set kernel connectivity for ndimage binary structure used for the "
+             "tophat transform. Integer value in range 1-3. 1 is the most "
+             "restrictive, 3 the least restrictive. Generally recommended to "
+             "leave at 1."
+    )
+    parser.add_argument(
         "--log",
         type=str,
         required=False,
@@ -560,6 +573,7 @@ def extract_candidates(argv=None):
         n_false_positives=args.number_of_false_positives,
         tomogram_mask_path=args.tomogram_mask,
         tophat_filter=args.tophat_filter,
+        tophat_connectivity=args.tophat_connectivity,
     )
 
     # write out as a RELION type starfile
