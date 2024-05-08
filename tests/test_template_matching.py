@@ -76,6 +76,10 @@ class TestTM(unittest.TestCase):
             list(range(len(self.angles))),
             mask_is_spherical=False,
         )
+        # DEBUG remove before merging
+        print(f"{self.angles[100]=}")
+        print(f"{self.angles[48]=}")
+        # END DEBUG
         score_volume, angle_volume, stats = tm.run()
 
         ind = np.unravel_index(score_volume.argmax(), self.volume.shape)
