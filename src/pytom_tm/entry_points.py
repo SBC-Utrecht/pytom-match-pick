@@ -758,6 +758,7 @@ def match_template(argv=None):
     )
     additional_group = parser.add_argument_group('Additional options')
     additional_group.add_argument(
+        "-r",
         "--random-phase-correction",
         action="store_true",
         default=False,
