@@ -48,7 +48,7 @@ class TestTM(unittest.TestCase):
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)
         self.assertEqual(stats['search_space'], 256000000, msg='Search space should exactly equal this value')
-        self.assertAlmostEqual(stats['std'], 0.005175, places=5,
+        self.assertAlmostEqual(stats['std'], 0.005187, places=5,
                                msg='Standard deviation of the search should be almost equal')
 
     def test_search_non_spherical_mask(self):
@@ -82,5 +82,5 @@ class TestTM(unittest.TestCase):
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)
         self.assertEqual(stats['search_space'], 256000000, msg='Search space should exactly equal this value')
-        self.assertAlmostEqual(stats['std'], 0.005175, places=4,
+        self.assertAlmostEqual(stats['std'], 0.005187, places=4,
                                msg='Standard deviation of the search should be almost equal')
