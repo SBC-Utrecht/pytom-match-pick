@@ -4,10 +4,9 @@ import numpy.typing as npt
 import voltools as vt
 import gc
 from typing import Optional
-from cupyx.scipy.fft import rfftn, irfftn, fftshift
+from cupyx.scipy.fft import rfftn, irfftn
 from tqdm import tqdm
 from pytom_tm.correlation import mean_under_mask, std_under_mask
-from packaging import version
 
 
 class TemplateMatchingPlan:
