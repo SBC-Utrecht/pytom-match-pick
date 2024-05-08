@@ -13,6 +13,7 @@ class TestTM(unittest.TestCase):
         self.volume = np.zeros((100, ) * 3, dtype=float)
         self.template = np.zeros((self.t_size, ) * 3, dtype=float)
         self.template[3:8, 4:8, 3:7] = 1.
+        self.template[7, 8, 5:7] = 1.
         self.mask = spherical_mask(self.t_size, 5, 0.5)
         self.gpu_id = 'gpu:0'
         self.angles = angle_to_angle_list(38.53)
@@ -52,6 +53,8 @@ class TestTM(unittest.TestCase):
         self.assertAlmostEqual(stats['std'], 0.005163, places=5,
                 msg='Standard deviation of the search should be almost equal')
 
+
+
     def test_search_non_spherical_mask(self):
         angle_id = 100
         rotation = self.angles[angle_id]
@@ -76,18 +79,16 @@ class TestTM(unittest.TestCase):
             list(range(len(self.angles))),
             mask_is_spherical=False,
         )
-        # DEBUG remove before merging
-        print(f"{self.angles[100]=}")
-        print(f"{self.angles[48]=}")
-        # END DEBUG
         score_volume, angle_volume, stats = tm.run()
 
         ind = np.unravel_index(score_volume.argmax(), self.volume.shape)
         self.assertTrue(score_volume.max() > 0.99, msg='lcc max value lower than expected')
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)
+
         expected_search_space = len(self.angles)*self.volume.size
         self.assertEqual(stats['search_space'], expected_search_space,
                 msg='Search space should exactly equal this value')
-        self.assertAlmostEqual(stats['std'], 0.005163, places=4,
+        self.assertAlmostEqual(stats['std'], 0.005187, places=4,
                 msg='Standard deviation of the search should be almost equal')
+
