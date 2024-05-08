@@ -167,6 +167,8 @@ class TemplateMatchingGPU:
         else:
             self.stats_roi = stats_roi
         self.noise_correction = noise_correction
+
+        # create a 'random noise' version of the template
         shuffled_template = (
             phase_randomize_template(template, rng_seed)
             if noise_correction else None
@@ -294,6 +296,50 @@ class TemplateMatchingGPU:
                 square_sum_kernel(self.plan.ccc_map * roi_mask) / roi_size
             )
 
+            if self.noise_correction:
+                # Rotate noise template texture into template
+                self.plan.random_phase_template_texture.transform(
+                    rotation=(rotation[0], rotation[1], rotation[2]),
+                    rotation_order='rzxz',
+                    output=self.plan.template,
+                    rotation_units='rad'
+                )
+
+                if self.plan.wedge is not None:
+                    # Add wedge to the template after rotating
+                    self.plan.template = irfftn(
+                        rfftn(self.plan.template) * self.plan.wedge,
+                        s=self.plan.template.shape
+                    )
+
+                # Normalize and mask template
+                mean = mean_under_mask(self.plan.template, self.plan.mask, mask_weight=self.plan.mask_weight)
+                std = std_under_mask(self.plan.template, self.plan.mask, mean, mask_weight=self.plan.mask_weight)
+                self.plan.template = ((self.plan.template - mean) / std) * self.plan.mask
+
+                # Paste in center
+                self.plan.template_padded[pad_index] = self.plan.template
+
+                # Fast local correlation function between volume and template, norm is the standard deviation at each
+                # point in the volume in the masked area
+                self.plan.ccc_map = (
+                        irfftn(self.plan.volume_rft_conj * rfftn(self.plan.template_padded),
+                               s=self.plan.template_padded.shape)
+                        / self.plan.std_volume
+                )
+                # update noise scores results
+                update_noise_template_results_kernel(
+                    self.plan.noise_scores,
+                    self.plan.ccc_map,
+                    self.plan.noise_scores,
+                )
+
+        # do the noise correction on the scores map: substract the noise scores first,
+        # and then add the noise mean to ensure stats are consistent
+        self.plan.scores = (
+            (self.plan.scores - self.plan.noise_scores) + self.plan.noise_scores.mean()
+        )
+
         # Get correct orientation back!
         # Use same method as William Wan's STOPGAP
         # (https://doi.org/10.1107/S205979832400295X): the search volume is Fourier
@@ -353,10 +399,19 @@ def std_under_mask_convolution(
 
 """Update scores and angles if a new maximum is found."""
 update_results_kernel = cp.ElementwiseKernel(
-    'float32 scores, float32 ccc_map, float32 angle_id',
-    'float32 out1, float32 out2',
-    'if (scores < ccc_map) {out1 = ccc_map; out2 = angle_id;}',
+    'float32 scores, float32 ccc_map, float32 angles',
+    'float32 scores_out, float32 angles_out',
+    'if (scores < ccc_map) {scores_out = ccc_map; angles_out = angles;}',
     'update_results'
+)
+
+
+"""Update scores for noise template"""
+update_noise_template_results_kernel = cp.ElementwiseKernel(
+    'float32 scores, float32 ccc_map',
+    'float32 scores_out',
+    'if (scores < ccc_map) {scores_out = ccc_map}',
+    'update_noise_template_results'
 )
 
 
