@@ -13,6 +13,7 @@ class TestTM(unittest.TestCase):
         self.volume = np.zeros((100, ) * 3, dtype=float)
         self.template = np.zeros((self.t_size, ) * 3, dtype=float)
         self.template[3:8, 4:8, 3:7] = 1.
+        self.template[7, 8, 5:7] = 1.
         self.mask = spherical_mask(self.t_size, 5, 0.5)
         self.gpu_id = 'gpu:0'
         self.angles = load_angle_list(files('pytom_tm.angle_lists').joinpath('angles_38.53_256.txt'))
