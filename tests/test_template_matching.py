@@ -13,6 +13,7 @@ class TestTM(unittest.TestCase):
         self.volume = np.zeros((100, ) * 3, dtype=float)
         self.template = np.zeros((self.t_size, ) * 3, dtype=float)
         self.template[3:8, 4:8, 3:7] = 1.
+        self.template[7, 8, 5:7] = 1.
         self.mask = spherical_mask(self.t_size, 5, 0.5)
         self.gpu_id = 'gpu:0'
         self.angles = load_angle_list(files('pytom_tm.angle_lists').joinpath('angles_38.53_256.txt'))
@@ -47,7 +48,7 @@ class TestTM(unittest.TestCase):
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)
         self.assertEqual(stats['search_space'], 256000000, msg='Search space should exactly equal this value')
-        self.assertAlmostEqual(stats['std'], 0.005175, places=5,
+        self.assertAlmostEqual(stats['std'], 0.005187, places=5,
                                msg='Standard deviation of the search should be almost equal')
 
     def test_search_non_spherical_mask(self):
@@ -81,5 +82,5 @@ class TestTM(unittest.TestCase):
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)
         self.assertEqual(stats['search_space'], 256000000, msg='Search space should exactly equal this value')
-        self.assertAlmostEqual(stats['std'], 0.005175, places=4,
+        self.assertAlmostEqual(stats['std'], 0.005187, places=4,
                                msg='Standard deviation of the search should be almost equal')
