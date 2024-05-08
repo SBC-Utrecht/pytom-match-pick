@@ -7,6 +7,7 @@ from typing import Optional
 from cupyx.scipy.fft import rfftn, irfftn
 from tqdm import tqdm
 from pytom_tm.correlation import mean_under_mask, std_under_mask
+from pytom_tm.template import phase_randomize_template
 
 
 class TemplateMatchingPlan:
@@ -16,7 +17,8 @@ class TemplateMatchingPlan:
             template: npt.NDArray[float],
             mask: npt.NDArray[float],
             device_id: int,
-            wedge: Optional[npt.NDArray[float]] = None
+            wedge: Optional[npt.NDArray[float]] = None,
+            phase_randomized_template: Optional[npt.NDArray[float]] = None,
     ):
         """Initialize a template matching plan. All the necessary cupy arrays will be allocated on the GPU.
 
@@ -33,6 +35,8 @@ class TemplateMatchingPlan:
         wedge: Optional[npt.NDArray[float]], default None
             3D numpy array that contains the Fourier space weighting for the template, it should be in Fourier
             reduced form, with dimensions (sx, sx, sx // 2 + 1)
+        phase_randomized_template: Optional[npt.NDArray[float]], default None
+            initialize the plan with a phase randomized version of the template for noise correction
         """
         # Search volume + and fft transform plan for the volume
         volume_shape = volume.shape
@@ -64,6 +68,16 @@ class TemplateMatchingPlan:
         self.scores = cp.ones(volume_shape, dtype=cp.float32)*-1000
         self.angles = cp.ones(volume_shape, dtype=cp.float32)*-1000
 
+        self.random_phase_template_texture = None
+        self.noise_scores = None
+        if phase_randomized_template is not None:
+            self.random_phase_template_texture = vt.StaticVolume(
+                cp.asarray(phase_randomized_template, dtype=cp.float32, order='C'),
+                interpolation='filt_bspline',
+                device=f'gpu:{device_id}',
+            )
+            self.noise_scores = cp.ones(volume_shape, dtype=cp.float32)*-1000
+
         # wait for stream to complete the work
         cp.cuda.stream.get_current_stream().synchronize()
 
@@ -91,7 +105,9 @@ class TemplateMatchingGPU:
             angle_ids: list[int],
             mask_is_spherical: bool = True,
             wedge: Optional[npt.NDArray[float]] = None,
-            stats_roi: Optional[tuple[slice, slice, slice]] = None
+            stats_roi: Optional[tuple[slice, slice, slice]] = None,
+            noise_correction: bool = False,
+            rng_seed: int = 321,
     ):
         """Initialize a template matching run.
 
@@ -126,6 +142,11 @@ class TemplateMatchingGPU:
         stats_roi: Optional[tuple[slice, slice, slice]], default None
             region of interest to calculate statistics on the search volume, default will just take the full search
             volume
+        noise_correction: bool, default False
+            initialize template matching with a phase randomized version of the template that is used to subtract
+            background noise from the score map; expense is more gpu memory and computation time
+        rng_seed: int, default 321
+            seed for rng in phase randomization
         """
         cp.cuda.Device(device_id).use()
 
@@ -145,8 +166,20 @@ class TemplateMatchingGPU:
             )
         else:
             self.stats_roi = stats_roi
+        self.noise_correction = noise_correction
+        shuffled_template = (
+            phase_randomize_template(template, rng_seed)
+            if noise_correction else None
+        )
 
-        self.plan = TemplateMatchingPlan(volume, template, mask, device_id, wedge=wedge)
+        self.plan = TemplateMatchingPlan(
+            volume,
+            template,
+            mask,
+            device_id,
+            wedge=wedge,
+            phase_randomized_template=shuffled_template,
+        )
 
     def run(self) -> tuple[npt.NDArray[float], npt.NDArray[float], dict]:
         """Run the template matching job.
