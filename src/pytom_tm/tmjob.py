@@ -1,5 +1,4 @@
 from __future__ import annotations
-from importlib import metadata
 from packaging import version
 import pathlib
 import os
