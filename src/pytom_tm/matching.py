@@ -336,9 +336,10 @@ class TemplateMatchingGPU:
 
         # do the noise correction on the scores map: substract the noise scores first,
         # and then add the noise mean to ensure stats are consistent
-        self.plan.scores = (
-            (self.plan.scores - self.plan.noise_scores) + self.plan.noise_scores.mean()
-        )
+        if self.noise_correction:
+            self.plan.scores = (
+                (self.plan.scores - self.plan.noise_scores) + self.plan.noise_scores.mean()
+            )
 
         # Get correct orientation back!
         # Use same method as William Wan's STOPGAP
@@ -410,7 +411,7 @@ update_results_kernel = cp.ElementwiseKernel(
 update_noise_template_results_kernel = cp.ElementwiseKernel(
     'float32 scores, float32 ccc_map',
     'float32 scores_out',
-    'if (scores < ccc_map) {scores_out = ccc_map}',
+    'if (scores < ccc_map) {scores_out = ccc_map;}',
     'update_noise_template_results'
 )
 
