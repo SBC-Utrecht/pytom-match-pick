@@ -44,7 +44,7 @@ jobs:
           path: coverage.xml
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           pull_request_number: ${{ steps.get-pr.outputs.PR }}
-          minimum_coverage: 79
+          minimum_coverage: 80
           show_missing: True
           fail_below_threshold: True
           link_missing_lines: True
