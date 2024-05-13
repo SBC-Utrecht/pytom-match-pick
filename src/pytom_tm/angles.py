@@ -38,7 +38,7 @@ def angle_to_angle_list(angle_diff: float, sort_angles: bool = True) -> list[tup
     # Now for psi
     n_psi_angles = int(np.ceil(360/angle_diff))
     psi, used_psi_diff = np.linspace(0, 2*np.pi, n_psi_angles, endpoint=False, retstep=True)
-    logging.info(f"Using an angle difference of {used_psi_diff:.4f} for Z2")
+    logging.info(f"Using an angle difference of {np.rad2deg(used_psi_diff):.4f} for Z2")
     angle_list = [(ph, th, ps) for ph, th in zip(phi, theta) for ps in psi]
     if sort_angles:
         angle_list.sort()

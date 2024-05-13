@@ -638,7 +638,7 @@ def match_template(argv=None):
         type=str,
         required=True,
         help="If given a float it will generate an angle list with healpix for Z1 and X1 "
-             "and linear search for Z2. The given angle given will be used as the maximum for the "
+             "and linear search for Z2. The provided angle will be used as the maximum for the "
              "linear search and for the mean angle difference from healpix.\n"
              "Alternatively, a .txt file can be provided with three Euler angles "
              "(in radians) per line that define the angular search. "
