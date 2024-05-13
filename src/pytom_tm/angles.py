@@ -9,7 +9,7 @@ import logging
 
 def angle_to_angle_list(angle_diff: float, 
         sort_angles: bool = True, 
-        log_level: str = "DEBUG"
+        log_level: int = logging.DEBUG
         ) -> list[tuple[float, float, float]]:
     """Auto generate an angle list for a given maximum angle difference. 
 
@@ -21,7 +21,7 @@ def angle_to_angle_list(angle_diff: float,
         maximum difference (in degrees) for the angle list
     sort_angles: bool, default True
         sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
-    log_level: str, default 'DEBUG'
+    log_level: int, default logging.DEBUG
         the log level to use when generating logs
 
 
