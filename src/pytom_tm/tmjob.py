@@ -236,8 +236,12 @@ class TMJob:
         self.steps_slice = 1
         self.rotational_symmetry = rotational_symmetry
         self.rotation_file = angle_increment
+        if job_loaded_for_extraction:
+            log_level='DEBUG'
+        else:
+            log_level='INFO'
         try:
-            angle_list = get_angle_list(angle_increment, sort_angles=False, log_level='INFO')
+            angle_list = get_angle_list(angle_increment, sort_angles=False, log_level=log_level)
         except (ValueError):
             raise TMJobError('Invalid angular search provided.')
 
