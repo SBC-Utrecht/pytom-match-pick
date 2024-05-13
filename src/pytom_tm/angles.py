@@ -107,7 +107,7 @@ def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, 
                 f"Will generate an angle list with a maximum increment of {angle}"
                 )
         return angle_to_angle_list(angle, sort_angles, log_level)
-    if isinstance(angle, (str, os.Pathlike)):
+    if isinstance(angle, (str, os.PathLike)):
         possible_file_path = pathlib.Path(angle)
         if possible_file_path.exists() and possible_file_path.suffix == '.txt':
             logging.log(level, "Custom file provided for the angular search. Checking if it can be read...")
