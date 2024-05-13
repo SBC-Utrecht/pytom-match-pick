@@ -11,7 +11,7 @@ import logging
 from typing import Optional, Union
 from functools import reduce
 from scipy.fft import next_fast_len, rfftn, irfftn
-from pytom_tm.angles import load_angle_list, angle_to_angle_list
+from pytom_tm.angles import get_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import create_wedge, power_spectrum_profile, profile_to_weighting, create_gaussian_band_pass
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
@@ -235,33 +235,13 @@ class TMJob:
         self.start_slice = 0
         self.steps_slice = 1
         self.rotational_symmetry = rotational_symmetry
-        self.angle_increment = angle_increment
-        succesfull_angle = False
+        self.rotation_file = angle_increment
         try:
-            angle_increment = float(angle_increment)
-            angle_is_float = True
-        except (ValueError, TypeError):
-            angle_is_float = False
-        if angle_is_float:
-            # Generate angle list on the fly
-            logging.info(f"Will generate an angle list with a maximum increment of {angle_increment}")
-            self.rotation_file = None
-            self.angle_list = angle_to_angle_list(angle_increment)
-            self.n_rotations = len(self.angle_list)
-            succesfull_angle = True
-        elif isinstance(angle_increment, (str, os.PathLike)):
-            possible_file_path = pathlib.Path(angle_increment)
-            if possible_file_path.exists() and possible_file_path.suffix == '.txt':
-                logging.info(
-                    'Custom file provided for the angular search. Checking if it can be read...'
-                )
-                # load_angle_list will throw an error if it does not encounter three inputs per line
-                self.n_rotations = len(load_angle_list(possible_file_path, sort_angles=False))
-                self.rotation_file = possible_file_path
-                succesfull_angle = True
-
-        if not succesfull_angle:
+            angle_list = get_angle_list(angle_increment, sort_angles=False, log_level='INFO')
+        except (ValueError):
             raise TMJobError('Invalid angular search provided.')
+
+        self.n_rotations = len(angle_list)
 
         # missing wedge
         self.tilt_angles = tilt_angles
@@ -641,14 +621,9 @@ class TMJob:
             int(np.ceil(self.n_rotations / self.rotational_symmetry)),
             self.steps_slice
         ))
-        if self.rotation_file is not None:
-            angle_list = load_angle_list(
-                    self.rotation_file,
-                    sort_angles=version.parse(self.pytom_tm_version_number) > version.parse('0.3.0')
-            )
-        else:
-            # pre-generated list
-            angle_list = self.angle_list
+        angle_list = get_angle_list(self.rotation_file,
+                sort_angles=version.parse(self.pytom_tm_version_number) > version.parse('0.3.0')
+                )
 
         angle_list = angle_list[slice(
             self.start_slice,

@@ -5,7 +5,10 @@ import numpy as np
 import healpix as hp
 import logging
 
-def angle_to_angle_list(angle_diff: float, sort_angles: bool = True) -> list[tuple[float, float, float]]:
+def angle_to_angle_list(angle_diff: float, 
+        sort_angles: bool = True, 
+        log_level: str = "DEBUG"
+        ) -> list[tuple[float, float, float]]:
     """Auto generate an angle list for a given maximum angle difference. 
 
     The code uses healpix to determine Z1 and X and splits Z2 linearly.
@@ -14,9 +17,12 @@ def angle_to_angle_list(angle_diff: float, sort_angles: bool = True) -> list[tup
     ----------
     angle_diff: float
         maximum difference (in degrees) for the angle list
-
     sort_angles: bool, default True
         sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+    log_level: str, default 'DEBUG'
+        the log level to use when generating logs
+
+
 
     Returns
     -------
@@ -33,12 +39,12 @@ def angle_to_angle_list(angle_diff: float, sort_angles: bool = True) -> list[tup
         nside += 1
     used_npix = hp.nside2npix(nside)
     used_angle_diff = (4*np.pi/used_npix)**0.5 * (180/np.pi)
-    logging.info(f"Using an angle difference of {used_angle_diff:.4f} for Z1 and X")
+    logging.log(log_level, f"Using an angle difference of {used_angle_diff:.4f} for Z1 and X")
     theta, phi = hp.pix2ang(nside, np.arange(used_npix))
     # Now for psi
     n_psi_angles = int(np.ceil(360/angle_diff))
     psi, used_psi_diff = np.linspace(0, 2*np.pi, n_psi_angles, endpoint=False, retstep=True)
-    logging.info(f"Using an angle difference of {np.rad2deg(used_psi_diff):.4f} for Z2")
+    logging.log(log_level, f"Using an angle difference of {np.rad2deg(used_psi_diff):.4f} for Z2")
     angle_list = [(ph, th, ps) for ph, th in zip(phi, theta) for ps in psi]
     if sort_angles:
         angle_list.sort()
@@ -67,6 +73,44 @@ def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[t
     if sort_angles:
         angle_list.sort()  # angle list needs to be sorted otherwise symmetry reduction cannot be used!
     return angle_list
+
+def get_angle_list(angle: Union[pathlib.path, float], sort_angles: bool = True, log_level: str = 'DEBUG'):
+    """Either get an angular search file from disk or generate one from a float
+
+    Parameters
+    ----------
+    angle: Union[pathlib.Path, float]
+        either the path to text file containing angular search, 
+          each line should contain 3 floats of anti-clockwise ZXZ
+        or if a float:
+          maximum difference (in degrees) for the angle list
+    sort_angles: bool, default True
+        sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+    log_level: str, default 'DEBUG'
+        the log level to use when generating logs
+
+    Returns
+    -------
+    angle_list: list[tuple[float, float, float]]
+        a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in radians
+    """
+    try:
+        angle = float(angle)
+        angle_is_float = True
+    except (ValueError, TypeError):
+        angle_is_float = False
+    if angle_is_float:
+        logging.log(log_level, 
+                f"Will generate an angle list with a maximum increment of {angle_increment}"
+                )
+        return angle_to_angle_list(angle, sort_angles, log_level)
+    if isinstance(angle, (str, os.Pathlike)):
+        possible_file_path = pathlib.Path(angle)
+        if possible_file_path.exists() and possible_file_path.suffix == '.txt':
+            logging.log(level, "Custom file provided for the angular search. Checking if it can be read...")
+            return load_angle_list(angle, sort_angles)
+    # If no return is hit by now, error out
+    raise ValueError("Invalid angle input provided")
 
 
 def convert_euler(
