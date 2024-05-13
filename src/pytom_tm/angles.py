@@ -104,7 +104,7 @@ def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, 
         angle_is_float = False
     if angle_is_float:
         logging.log(log_level, 
-                f"Will generate an angle list with a maximum increment of {angle_increment}"
+                f"Will generate an angle list with a maximum increment of {angle}"
                 )
         return angle_to_angle_list(angle, sort_angles, log_level)
     if isinstance(angle, (str, os.Pathlike)):

@@ -4,6 +4,7 @@ from pytom_tm.angles import load_angle_list, angle_to_angle_list
 import numpy as np
 import itertools as itt
 import re
+import logging
 
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath('test_data')
 ERRONEOUS_ANGLE_FILE = TEST_DATA_DIR.joinpath('error_angles.txt')
@@ -48,7 +49,7 @@ class TestAngles(unittest.TestCase):
         # ask for a random sample between [1 - 90)
         angle = 1 + np.random.random() * 89
         with self.assertLogs(level='INFO') as cm:
-            angles = angle_to_angle_list(angle)
+            angles = angle_to_angle_list(angle, log_level=logging.INFO)
 
         # Check logs and if all angles are smaller or equal
         self.assertEqual(len(cm.output), 2)
