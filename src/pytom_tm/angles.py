@@ -1,4 +1,5 @@
 import pathlib
+import os
 from typing import Union
 from importlib_resources import files
 from scipy.spatial.transform import Rotation
@@ -75,7 +76,7 @@ def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[t
         angle_list.sort()  # angle list needs to be sorted otherwise symmetry reduction cannot be used!
     return angle_list
 
-def get_angle_list(angle: Union[pathlib.path, float], sort_angles: bool = True, log_level: str = 'DEBUG'):
+def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, log_level: str = 'DEBUG'):
     """Either get an angular search file from disk or generate one from a float
 
     Parameters
