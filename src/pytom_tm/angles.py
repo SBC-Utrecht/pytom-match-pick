@@ -1,4 +1,5 @@
 import pathlib
+from typing import Union
 from importlib_resources import files
 from scipy.spatial.transform import Rotation
 import numpy as np
