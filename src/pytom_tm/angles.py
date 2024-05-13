@@ -96,6 +96,7 @@ def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, 
     angle_list: list[tuple[float, float, float]]
         a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in radians
     """
+    log_level = logging.getLevelNamesMapping()[log_level]
     try:
         angle = float(angle)
         angle_is_float = True
