@@ -215,9 +215,8 @@ class TestTMJob(unittest.TestCase):
         self.assertIsInstance(job, TMJob, msg='TMJob could not be properly loaded from disk.')
 
         # check job loading and preventing whitening filter recalculation
-        with self.assertLogs(level='INFO') as cm:
+        with self.assertNoLogs(level='INFO'):
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=True)
-        self.assertNotIn("whitening filter", ''.join(cm.output))
         with self.assertLogs(level='INFO') as cm:
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=False)
         self.assertIn('Estimating whitening filter...', ''.join(cm.output))
