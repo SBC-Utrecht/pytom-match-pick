@@ -64,8 +64,7 @@ class TestAngles(unittest.TestCase):
         for a, b in itt.pairwise(angles):
             # make sure default is sorted
             self.assertLess(a, b)
-            # make sure X is only 0 or pi at the poles
-            if a[1] in [np.pi, 0]:
-                self.assertEqual(a[0], 0)
+            # make sure X is never 0
+            self.assertNotEqual(a[1], 0)
         # also check the last X
         self.assertNotEqual(b[1], 0)
