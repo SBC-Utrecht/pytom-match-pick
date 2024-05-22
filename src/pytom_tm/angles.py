@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation
 import numpy as np
 import healpix as hp
 import logging
+import itertools as itt
 
 def angle_to_angle_list(angle_diff: float, 
         sort_angles: bool = True, 
@@ -43,6 +44,10 @@ def angle_to_angle_list(angle_diff: float,
     used_angle_diff = (4*np.pi/used_npix)**0.5 * (180/np.pi)
     logging.log(log_level, f"Using an angle difference of {used_angle_diff:.4f} for Z1 and X")
     theta, phi = hp.pix2ang(nside, np.arange(used_npix))
+    # Explicitly add the poles; healpix does not generate these 
+    # They might be significant if template is the most occuring orientation
+    theta = itt.chain([0.0, np.pi], theta)
+    phi = itt.chain([0.0, 0.0], phi)
     # Now for psi
     n_psi_angles = int(np.ceil(360/angle_diff))
     psi, used_psi_diff = np.linspace(0, 2*np.pi, n_psi_angles, endpoint=False, retstep=True)
