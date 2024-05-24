@@ -80,6 +80,74 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
     return job
 
 
+def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
+        """Split a 1D length into FFT optimal sizes, 
+        will return a list of 2 pairs, 
+        where the first pair is the data slice and the second pair is the unique data of that slice"""
+
+        # Everything in this code assumes default slices of [x,y) so including x but excluding y
+        data_slices = []
+        valid_data_slices = []
+        sub_len = []
+        # if single split return early
+        if splits == 1:
+            return [(0, length), (0, lenght)]
+        # Ceil to guarantee that we map the whole length with enough buffer
+        min_len = int(np.ceil(length / splits)) + overhang
+        min_unique_len = min_len - overhang
+        no_overhang_left = 0
+        while True:
+            if no_overhang_left == 0:
+                # Treat first split specially, only right overhang
+                split_length = next_fast_len(min_len)
+                data_slices.append((0, split_length))
+                valid_data_slices.append((0, split_length-overlap))
+                no_overhang_left = split_length-overhang
+                sub_len.append(split_length)
+            elif no_overhang_left + min_len >= length:
+                # Last slice, only overhang to the left
+                split_length = next_fast_len(min_len)
+                data_slices.append((length-split_length, length))
+                valid_data_slices.append((length-split_length+overlap, length))
+                sub_len.append(split_length)
+                break
+            else:
+                # Any other slice
+                split_length = next_fast_len(min_len+overhang)
+                left_overhang = (split_lenght-min_unique_len) // 2
+                temp_left = no_overhang_left - left_overhang
+                temp_right = temp_left + split_length
+                data_slices.append((temp_left, temp_right))
+                valid_data_slices.append((temp_left+overlap, temp_right-overlap))
+                sub_len.append(split_length)
+        # Now generate the best unique data point, 
+        # we always pick the bigest data subset or the left one
+        unique_data = []
+        unique_left = 0
+        for i, (len1, len2) in enumerate(itt.paiwise(sub_len)):
+            if len1 >= len2:
+                right = valid_data_slices[i][1]
+            else:
+                right = valid_data_slices[i+1][0]
+            unique_data.append((unique_left, right))
+            unique_left = right
+        # Add final part
+        if current_point != length:
+            unique_data.append((unique_left, length))
+        # Make sure unique slices are unique and within valid data
+        last_right = 0
+        for (vd_left, vd_right),(ud_left, ud_right) in zip(valid_data_slices, unique_data):
+            if (ud_left < vd_left or 
+                ud_right > vd_right or
+                ud_right > length or
+                ud_left != last_right
+                ):
+                raise RuntimeError("We produced inconsistent slices")
+            last_right = ud_right
+        return zip(data_slices, unique_data)
+     
+
+
 class TMJobError(Exception):
     """TMJob Exception with provided message."""
     def __init__(self, message):
@@ -347,72 +415,6 @@ class TMJob:
 
         return self.sub_jobs
 
-    def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
-        """Split a 1D length into FFT optimal sizes, 
-        will return a list of 2 pairs, 
-        where the first pair is the data slice and the second pair is the unique data of that slice"""
-
-        # Everything in this code assumes default slices of [x,y) so including x but excluding y
-        data_slices = []
-        valid_data_slices = []
-        sub_len = []
-        # if single split return early
-        if splits == 1:
-            return [(0, length), (0, lenght)]
-        # Ceil to guarantee that we map the whole length with enough buffer
-        min_len = int(np.ceil(length / splits)) + overhang
-        min_unique_len = min_len - overhang
-        no_overhang_left = 0
-        while True:
-            if no_overhang_left == 0:
-                # Treat first split specially, only right overhang
-                split_length = next_fast_len(min_len)
-                data_slices.append((0, split_length))
-                valid_data_slices.append((0, split_length-overlap))
-                no_overhang_left = split_length-overhang
-                sub_len.append(split_length)
-            elif no_overhang_left + min_len >= length:
-                # Last slice, only overhang to the left
-                split_length = next_fast_len(min_len)
-                data_slices.append((length-split_length, length))
-                valid_data_slices.append((length-split_length+overlap, length))
-                sub_len.append(split_length)
-                break
-            else:
-                # Any other slice
-                split_length = next_fast_len(min_len+overhang)
-                left_overhang = (split_lenght-min_unique_len) // 2
-                temp_left = no_overhang_left - left_overhang
-                temp_right = temp_left + split_length
-                data_slices.append((temp_left, temp_right))
-                valid_data_slices.append((temp_left+overlap, temp_right-overlap))
-                sub_len.append(split_length)
-        # Now generate the best unique data point, 
-        # we always pick the bigest data subset or the left one
-        unique_data = []
-        unique_left = 0
-        for i, (len1, len2) in enumerate(itt.paiwise(sub_len)):
-            if len1 >= len2:
-                right = valid_data_slices[i][1]
-            else:
-                right = valid_data_slices[i+1][0]
-            unique_data.append((unique_left, right))
-            unique_left = right
-        # Add final part
-        if current_point != length:
-            unique_data.append((unique_left, length))
-        # Make sure unique slices are unique and within valid data
-        last_right = 0
-        for (vd_left, vd_right),(ud_left, ud_right) in zip(valid_data_slices, unique_data):
-            if (ud_left < vd_left or 
-                ud_right > vd_right or
-                ud_right > length or
-                ud_left != last_right
-                ):
-                raise RuntimeError("We produced inconsistent slices")
-            last_right = ud_right
-        return zip(data_slices, unique_data)
-            
     def split_volume_search(self, split: tuple[int, int, int]) -> list[TMJob,...]:
         """Split the search into sub_jobs by dividing into subvolumes. Final number of subvolumes is obtained by
         multiplying all the split together, e.g. (2, 2, 1) results in 4 subvolumes. Sub jobs will obtain the key
