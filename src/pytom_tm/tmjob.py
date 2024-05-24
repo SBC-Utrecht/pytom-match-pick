@@ -91,7 +91,7 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
         sub_len = []
         # if single split return early
         if splits == 1:
-            return [(0, length), (0, lenght)]
+            return [(0, length), (0, length)]
         # Ceil to guarantee that we map the whole length with enough buffer
         min_len = int(np.ceil(length / splits)) + overhang
         min_unique_len = min_len - overhang
@@ -114,7 +114,7 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
             else:
                 # Any other slice
                 split_length = next_fast_len(min_len+overhang)
-                left_overhang = (split_lenght-min_unique_len) // 2
+                left_overhang = (split_length-min_unique_len) // 2
                 temp_left = no_overhang_left - left_overhang
                 temp_right = temp_left + split_length
                 data_slices.append((temp_left, temp_right))
