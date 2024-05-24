@@ -406,7 +406,7 @@ class TMJob:
         for (vd_left, vd_right),(ud_left, ud_right) in zip(valid_data_slices, unique_data):
             if (ud_left < vd_left or 
                 ud_right > vd_right or
-                ud_right > length
+                ud_right > length or
                 ud_left != last_right
                 ):
                 raise RuntimeError("We produced inconsistent slices")
