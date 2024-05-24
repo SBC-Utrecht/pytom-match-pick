@@ -347,7 +347,7 @@ class TMJob:
 
         return self.sub_jobs
 
-	def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
+    def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
         """Split a 1D length into FFT optimal sizes, 
         will return a list of 2 pairs, 
         where the first pair is the data slice and the second pair is the unique data of that slice"""
