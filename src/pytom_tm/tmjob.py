@@ -3,6 +3,7 @@ from importlib import metadata
 from packaging import version
 import pathlib
 import copy
+import itertools as itt
 import numpy as np
 import numpy.typing as npt
 import json
@@ -346,7 +347,73 @@ class TMJob:
 
         return self.sub_jobs
 
-    def split_volume_search(self, split: tuple[int, int, int]) -> list[TMJob, ...]:
+	def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
+        """Split a 1D length into FFT optimal sizes, 
+        will return a list of 2 pairs, 
+        where the first pair is the data slice and the second pair is the unique data of that slice"""
+
+        # Everything in this code assumes default slices of [x,y) so including x but excluding y
+        data_slices = []
+        valid_data_slices = []
+        sub_len = []
+        # if single split return early
+        if splits == 1:
+            return [(0, length), (0, lenght)]
+        # Ceil to guarantee that we map the whole length with enough buffer
+        min_len = int(np.ceil(length / splits)) + overhang
+        min_unique_len = min_len - overhang
+        no_overhang_left = 0
+        while True:
+            if no_overhang_left == 0:
+                # Treat first split specially, only right overhang
+                split_length = next_fast_len(min_len)
+                data_slices.append((0, split_length))
+                valid_data_slices.append((0, split_length-overlap))
+                no_overhang_left = split_length-overhang
+                sub_len.append(split_length)
+            elif no_overhang_left + min_len >= length:
+                # Last slice, only overhang to the left
+                split_length = next_fast_len(min_len)
+                data_slices.append((length-split_length, length))
+                valid_data_slices.append((length-split_length+overlap, length))
+                sub_len.append(split_length)
+                break
+            else:
+                # Any other slice
+                split_length = next_fast_len(min_len+overhang)
+                left_overhang = (split_lenght-min_unique_len) // 2
+                temp_left = no_overhang_left - left_overhang
+                temp_right = temp_left + split_length
+                data_slices.append((temp_left, temp_right))
+                valid_data_slices.append((temp_left+overlap, temp_right-overlap))
+                sub_len.append(split_length)
+        # Now generate the best unique data point, 
+        # we always pick the bigest data subset or the left one
+        unique_data = []
+        unique_left = 0
+        for i, (len1, len2) in enumerate(itt.paiwise(sub_len)):
+            if len1 >= len2:
+                right = valid_data_slices[i][1]
+            else:
+                right = valid_data_slices[i+1][0]
+            unique_data.append((unique_left, right))
+            unique_left = right
+        # Add final part
+        if current_point != length:
+            unique_data.append((unique_left, length))
+        # Make sure unique slices are unique and within valid data
+        last_right = 0
+        for (vd_left, vd_right),(ud_left, ud_right) in zip(valid_data_slices, unique_data):
+            if (ud_left < vd_left or 
+                ud_right > vd_right or
+                ud_right > length
+                ud_left != last_right
+                ):
+                raise RuntimeError("We produced inconsistent slices")
+            last_right = ud_right
+        return zip(data_slices, unique_data)
+            
+    def split_volume_search(self, split: tuple[int, int, int]) -> list[TMJob,...]:
         """Split the search into sub_jobs by dividing into subvolumes. Final number of subvolumes is obtained by
         multiplying all the split together, e.g. (2, 2, 1) results in 4 subvolumes. Sub jobs will obtain the key
         self.job_key + str(i) when looping over range(n).
@@ -372,76 +439,46 @@ class TMJob:
         """
         if len(self.sub_jobs) > 0:
             raise TMJobError('Could not further split this job as it already has subjobs assigned!')
-
-        # size of sub-volumes after splitting
-        split_size = tuple([x // y for x, y in zip(self.search_size, split)])
-
+        
+        search_size = self.seach_size
         # shape of template for overhang
-        template_shape = self.template_shape  # tranposed
+        overhang = self.template_shape  
 
-        # check if valid
-        if any([x > y for x, y in zip(template_shape, split_size)]):
-            raise RuntimeError("Not big enough volume to split!")
-
-        # size of subvolume with overhang (underscore indicates not final tuple)
-        _size = tuple([x + y for x, y in zip(template_shape, split_size)])
-
-        number_of_pieces = reduce((lambda x, y: x * y), split)
+        x_splits = _determine_1D_fft_splits(split_size[0], split[0], overhang)
+        y_splits = _determine_1D_fft_splits(split_size[1], split[1], overhang)
+        z_splits = _determine_1D_fft_splits(split_size[2], split[2], overhang)
 
         sub_jobs = []
+        for i, 3D_data in enumerate(itt.product(x_splits, y_splits, z_splits)):
+            # each data point for each dim is slice(left, right) of the search space
+            # and slice(left,right) of the unique data point in the search space
+            # Look at the comments in the new_job.attribute for the meaning of each attribute
 
-        for i in range(number_of_pieces):
-            stride_z, stride_y = split[0] * split[1], split[0]
-            inc_z, inc_y, inc_x = i // stride_z, (i % stride_z) // stride_y, i % stride_y
 
-            _start = tuple([
-                -(template_shape[0] // 2) + self.search_origin[0] + inc_x * split_size[0],
-                -(template_shape[1] // 2) + self.search_origin[1] + inc_y * split_size[1],
-                -(template_shape[2] // 2) + self.search_origin[2] + inc_z * split_size[2]
-            ])
-
-            _end = tuple([_start[j] + _size[j] for j in range(len(_start))])
-
-            # if start location is smaller than search origin we need to reset it to search origin
-            start = tuple([o if s < o else s for s, o in zip(_start, self.search_origin)])
-            # if end location is larger than origin + search size it needs to be set to origin + search size
-            end = tuple([s + o if e > s + o else e for e, s, o in zip(_end, self.search_size, self.search_origin)])
-            size = tuple([end[j] - start[j] for j in range(len(start))])
-
-            # for reassembling the result
-            whole_start = [0, ] * 3  # whole_start and sub_start should also be job attributes
-            sub_start = [0, ] * 3
-            sub_step = list(split_size)
-            if start[0] != self.search_origin[0]:
-                whole_start[0] = start[0] + template_shape[0] // 2 - self.search_origin[0]
-                sub_start[0] = template_shape[0] // 2
-            if start[1] != self.search_origin[1]:
-                whole_start[1] = start[1] + template_shape[1] // 2 - self.search_origin[1]
-                sub_start[1] = template_shape[1] // 2
-            if start[2] != self.search_origin[2]:
-                whole_start[2] = start[2] + template_shape[2] // 2 - self.search_origin[2]
-                sub_start[2] = template_shape[2] // 2
-            if end[0] == self.search_origin[0] + self.search_size[0]:
-                sub_step[0] = size[0] - sub_start[0]
-            if end[1] == self.search_origin[1] + self.search_size[1]:
-                sub_step[1] = size[1] - sub_start[1]
-            if end[2] == self.search_origin[2] + self.search_size[2]:
-                sub_step[2] = size[2] - sub_start[2]
-
-            # create a split volume job
+            search_origin = tuple(3D_data[d][0][0]+self.search_origin[d] for d in range(3))
+            search_size = tuple(dim_data[0][1] - dim_data[0][0] for dim_data in 3D_data)
+            whole_start = tuple(dim_data[1][0] for dim_data in 3D_data)
+            sub_start = tuple(dim_data[1][0] - dim_data[0][0] for dim_data in 3D_data)
+            sub_step = tuple(dim_data[1][1] - dim_data[1][0] for dim_data in 3D_data) 
             new_job = self.copy()
             new_job.leader = self.job_key
             new_job.job_key = self.job_key + str(i)
-            new_job.search_origin = (start[0], start[1], start[2])
-            new_job.search_size = (size[0], size[1], size[2])
-            new_job.whole_start = tuple(whole_start)
-            new_job.sub_start = tuple(sub_start)
-            new_job.sub_step = tuple(sub_step)
-            new_job.split_size = split_size
+            
+            # search origin with respect to the complete tomogram
+            new_job.search_origin = search_origin
+            # search size TODO: should be combined with the origin into slices
+            new_job.search_size = search_size
+
+            # whole start is the start of the unique data within the complete searched array
+            new_job.whole_start = whole_start
+            # sub_start is where the unique data starts inside the split array
+            new_job.sub_start = sub_start 
+            # sub_step is the step of unique data inside the split array. TODO: should be slices instead
+            new_job.sub_step = sub_step
             sub_jobs.append(new_job)
-
+        
         self.sub_jobs = sub_jobs
-
+        
         return self.sub_jobs
 
     def merge_sub_jobs(self, stats: Optional[list[dict, ...]] = None) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
