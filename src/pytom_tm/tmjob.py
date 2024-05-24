@@ -101,14 +101,14 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
                 # Treat first split specially, only right overhang
                 split_length = next_fast_len(min_len)
                 data_slices.append((0, split_length))
-                valid_data_slices.append((0, split_length-overlap))
+                valid_data_slices.append((0, split_length-overhang))
                 no_overhang_left = split_length-overhang
                 sub_len.append(split_length)
             elif no_overhang_left + min_len >= length:
                 # Last slice, only overhang to the left
                 split_length = next_fast_len(min_len)
                 data_slices.append((length-split_length, length))
-                valid_data_slices.append((length-split_length+overlap, length))
+                valid_data_slices.append((length-split_length+overhang, length))
                 sub_len.append(split_length)
                 break
             else:
@@ -118,7 +118,7 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
                 temp_left = no_overhang_left - left_overhang
                 temp_right = temp_left + split_length
                 data_slices.append((temp_left, temp_right))
-                valid_data_slices.append((temp_left+overlap, temp_right-overlap))
+                valid_data_slices.append((temp_left+overhang, temp_right-overhang))
                 sub_len.append(split_length)
         # Now generate the best unique data point, 
         # we always pick the bigest data subset or the left one
