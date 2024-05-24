@@ -446,9 +446,9 @@ class TMJob:
         # shape of template for overhang
         overhang = self.template_shape  
 
-        x_splits = _determine_1D_fft_splits(split_size[0], split[0], overhang)
-        y_splits = _determine_1D_fft_splits(split_size[1], split[1], overhang)
-        z_splits = _determine_1D_fft_splits(split_size[2], split[2], overhang)
+        x_splits = _determine_1D_fft_splits(search_size[0], split[0], overhang)
+        y_splits = _determine_1D_fft_splits(search_size[1], split[1], overhang)
+        z_splits = _determine_1D_fft_splits(search_size[2], split[2], overhang)
 
         sub_jobs = []
         for i, data_3D in enumerate(itt.product(x_splits, y_splits, z_splits)):
