@@ -449,17 +449,17 @@ class TMJob:
         z_splits = _determine_1D_fft_splits(split_size[2], split[2], overhang)
 
         sub_jobs = []
-        for i, 3D_data in enumerate(itt.product(x_splits, y_splits, z_splits)):
+        for i, data_3D in enumerate(itt.product(x_splits, y_splits, z_splits)):
             # each data point for each dim is slice(left, right) of the search space
             # and slice(left,right) of the unique data point in the search space
             # Look at the comments in the new_job.attribute for the meaning of each attribute
 
 
-            search_origin = tuple(3D_data[d][0][0]+self.search_origin[d] for d in range(3))
-            search_size = tuple(dim_data[0][1] - dim_data[0][0] for dim_data in 3D_data)
-            whole_start = tuple(dim_data[1][0] for dim_data in 3D_data)
-            sub_start = tuple(dim_data[1][0] - dim_data[0][0] for dim_data in 3D_data)
-            sub_step = tuple(dim_data[1][1] - dim_data[1][0] for dim_data in 3D_data) 
+            search_origin = tuple(data_3D[d][0][0]+self.search_origin[d] for d in range(3))
+            search_size = tuple(dim_data[0][1] - dim_data[0][0] for dim_data in data_3D)
+            whole_start = tuple(dim_data[1][0] for dim_data in data_3D)
+            sub_start = tuple(dim_data[1][0] - dim_data[0][0] for dim_data in data_3D)
+            sub_step = tuple(dim_data[1][1] - dim_data[1][0] for dim_data in data_3D) 
             new_job = self.copy()
             new_job.leader = self.job_key
             new_job.job_key = self.job_key + str(i)
