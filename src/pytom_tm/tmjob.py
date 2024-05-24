@@ -440,7 +440,7 @@ class TMJob:
         if len(self.sub_jobs) > 0:
             raise TMJobError('Could not further split this job as it already has subjobs assigned!')
         
-        search_size = self.seach_size
+        search_size = self.search_size
         # shape of template for overhang
         overhang = self.template_shape  
 
