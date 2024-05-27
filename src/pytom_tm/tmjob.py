@@ -96,8 +96,8 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0) -> lis
         -------
         output: list[tuple[tuple[int, int], tuple[int,int]]]:
             A list splits where every split gets two tuples meaning:
-              [start, end] of the temomogram data in this split
-              [start, end] of the unique datapoints in this split
+              [start, end) of the temomogram data in this split
+              [start, end) of the unique datapoints in this split
             If a datapoint exists in 2 splits, we add it as unique to 
             either the split with the most data or the left one if both 
             splits have the same size
