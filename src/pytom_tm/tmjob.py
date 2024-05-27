@@ -91,7 +91,7 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
         sub_len = []
         # if single split return early
         if splits == 1:
-            return [(0, length), (0, length)]
+            return [((0, length), (0, length))]
         # Ceil to guarantee that we map the whole length with enough buffer
         min_len = int(np.ceil(length / splits)) + overhang
         min_unique_len = min_len - overhang
@@ -120,11 +120,12 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
                 data_slices.append((temp_left, temp_right))
                 valid_data_slices.append((temp_left+overhang, temp_right-overhang))
                 sub_len.append(split_length)
+                no_overhang_left = temp_right - overhang
         # Now generate the best unique data point, 
         # we always pick the bigest data subset or the left one
         unique_data = []
         unique_left = 0
-        for i, (len1, len2) in enumerate(itt.paiwise(sub_len)):
+        for i, (len1, len2) in enumerate(itt.pairwise(sub_len)):
             if len1 >= len2:
                 right = valid_data_slices[i][1]
             else:
@@ -132,7 +133,7 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
             unique_data.append((unique_left, right))
             unique_left = right
         # Add final part
-        if current_point != length:
+        if unique_left != length:
             unique_data.append((unique_left, length))
         # Make sure unique slices are unique and within valid data
         last_right = 0
@@ -455,7 +456,6 @@ class TMJob:
             # each data point for each dim is slice(left, right) of the search space
             # and slice(left,right) of the unique data point in the search space
             # Look at the comments in the new_job.attribute for the meaning of each attribute
-
 
             search_origin = tuple(data_3D[d][0][0]+self.search_origin[d] for d in range(3))
             search_size = tuple(dim_data[0][1] - dim_data[0][0] for dim_data in data_3D)
