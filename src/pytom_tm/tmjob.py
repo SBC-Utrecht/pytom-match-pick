@@ -80,11 +80,28 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
     return job
 
 
-def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
-        """Split a 1D length into FFT optimal sizes, 
-        will return a list of 2 pairs, 
-        where the first pair is the data slice and the second pair is the unique data of that slice"""
+def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0) -> list[tuple[tuple[int, int], tuple[int,int]]]:
+        """Split a 1D length into FFT optimal sizes taking into account overhangs
 
+        Parameters
+        ----------
+        length: int
+            Total 1D length to split 
+        splits: int
+            Number of splits to make
+        overhang: int, default 0
+            Minimal overhang/overlap to consider between splits
+
+        Returns
+        -------
+        output: list[tuple[tuple[int, int], tuple[int,int]]]:
+            A list splits where every split gets two tuples meaning:
+              [start, end] of the temomogram data in this split
+              [start, end] of the unique datapoints in this split
+            If a datapoint exists in 2 splits, we add it as unique to 
+            either the split with the most data or the left one if both 
+            splits have the same size
+        """
         # Everything in this code assumes default slices of [x,y) so including x but excluding y
         data_slices = []
         valid_data_slices = []
@@ -145,7 +162,7 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0):
                 ):
                 raise RuntimeError("We produced inconsistent slices")
             last_right = ud_right
-        return zip(data_slices, unique_data)
+        return list(zip(data_slices, unique_data))
      
 
 
