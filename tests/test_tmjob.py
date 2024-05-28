@@ -241,10 +241,16 @@ class TestTMJob(unittest.TestCase):
                                                                             'TMJob failed.')
 
     def test_tm_job_split_volume(self):
-        with self.assertRaises(RuntimeError, msg='Splitting the volume into smaller boxes than the template should '
-                                                 'raise an error.'):
-            self.job.split_volume_search((10, 3, 2))
-
+        # Splitting the volume into smaller boxes than the template should not raise an error
+        _ = self.job.split_volume_search((10, 3, 2))
+        # Reset
+        self.job.sub_jobs = []
+        # Make sure that asking for more splits than pixels results in just a pixel number of jobs
+        with self.assertWarnsRegex(RuntimeWarning, "More splits than pixels"):
+            self.job.split_volume_search((TOMO_SHAPE[0]+42, 1, 1))
+        self.assertEqual(len(self.job.sub_jobs), TOMO_SHAPE[0])
+        # Reset
+        self.job.sub_jobs = []
         sub_jobs = self.job.split_volume_search((2, 3, 2))
         stats = []
         for x in sub_jobs:

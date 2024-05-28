@@ -106,6 +106,9 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0) -> lis
         data_slices = []
         valid_data_slices = []
         sub_len = []
+        if splits > lenght:
+            raise RuntimeWarning("More splits than pixels where asked, 
+                    will default to 1 split per pixel")
         # if single split return early
         if splits == 1:
             return [((0, length), (0, length))]
