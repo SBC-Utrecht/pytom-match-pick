@@ -251,6 +251,9 @@ class TestTMJob(unittest.TestCase):
         self.assertEqual(len(self.job.sub_jobs), TOMO_SHAPE[0])
         # Reset
         self.job.sub_jobs = []
+        # Negative splits should fail
+        with self.assertRaisesRegex(RuntimeError, "splits=-42"):
+            self.job.split_volume_search((-42, 1, 1))
         sub_jobs = self.job.split_volume_search((2, 3, 2))
         stats = []
         for x in sub_jobs:

@@ -2,6 +2,7 @@ from __future__ import annotations
 from importlib import metadata
 from packaging import version
 import pathlib
+import warnings
 import copy
 import itertools as itt
 import numpy as np
@@ -106,15 +107,16 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0) -> lis
         data_slices = []
         valid_data_slices = []
         sub_len = []
-        if splits > length:
-            raise RuntimeWarning(
-                    "More splits than pixels where asked," 
-                    " will default to 1 split per pixel"
-                    )
-            splits = length
         # if single split return early
         if splits == 1:
             return [((0, length), (0, length))]
+        if splits > length:
+            warnings.warn(
+                "More splits than pixels where asked," 
+                " will default to 1 split per pixel",
+                RuntimeWarning
+            )
+            splits = length
         # Ceil to guarantee that we map the whole length with enough buffer
         min_len = int(np.ceil(length / splits)) + overhang
         min_unique_len = min_len - overhang
@@ -127,7 +129,7 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0) -> lis
                 valid_data_slices.append((0, split_length-overhang))
                 no_overhang_left = split_length-overhang
                 sub_len.append(split_length)
-            elif no_overhang_left + min_len >= length:
+            elif no_overhang_left + min_unique_len >= length:
                 # Last slice, only overhang to the left
                 split_length = next_fast_len(min_len)
                 data_slices.append((length-split_length, length))
@@ -144,6 +146,8 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0) -> lis
                 valid_data_slices.append((temp_left+overhang, temp_right-overhang))
                 sub_len.append(split_length)
                 no_overhang_left = temp_right - overhang
+            if split_length <= 0 or no_overhang_left <= 0:
+                raise RuntimeError(f"Cannot generate legal splits for {length=}, {splits=}, {overhang=}")
         # Now generate the best unique data point, 
         # we always pick the bigest data subset or the left one
         unique_data = []
@@ -165,8 +169,8 @@ def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0) -> lis
                 ud_right > vd_right or
                 ud_right > length or
                 ud_left != last_right
-                ):
-                raise RuntimeError("We produced inconsistent slices")
+                ): # pragma: no cover
+                raise RuntimeError(f"We produced inconsistent slices for {length=}, {splits=}, {overhang=}")
             last_right = ud_right
         return list(zip(data_slices, unique_data))
      
