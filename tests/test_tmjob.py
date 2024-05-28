@@ -241,10 +241,19 @@ class TestTMJob(unittest.TestCase):
                                                                             'TMJob failed.')
 
     def test_tm_job_split_volume(self):
-        with self.assertRaises(RuntimeError, msg='Splitting the volume into smaller boxes than the template should '
-                                                 'raise an error.'):
-            self.job.split_volume_search((10, 3, 2))
-
+        # Splitting the volume into smaller boxes than the template should not raise an error
+        _ = self.job.split_volume_search((10, 3, 2))
+        # Reset
+        self.job.sub_jobs = []
+        # Make sure that asking for more splits than pixels results in just a pixel number of jobs
+        with self.assertWarnsRegex(RuntimeWarning, "More splits than pixels"):
+            self.job.split_volume_search((TOMO_SHAPE[0]+42, 1, 1))
+        self.assertEqual(len(self.job.sub_jobs), TOMO_SHAPE[0])
+        # Reset
+        self.job.sub_jobs = []
+        # Negative splits should fail
+        with self.assertRaisesRegex(RuntimeError, "splits=-42"):
+            self.job.split_volume_search((-42, 1, 1))
         sub_jobs = self.job.split_volume_search((2, 3, 2))
         stats = []
         for x in sub_jobs:
@@ -297,13 +306,10 @@ class TestTMJob(unittest.TestCase):
                     angle_increment='38.53', voxel_size=1., search_x=[9, 90], search_y=[25, 102], search_z=[19, 54])
         # split along each dimension and get only the last sub job
         last_sub_job = job.split_volume_search((2, 3, 2))[-1]
-        final_size = [
-            i + j - TEMPLATE_SIZE // 2
-            for i, j
-            in zip(last_sub_job.whole_start, last_sub_job.search_size)
-        ]
+        # Make sure the start of the data + size of the last subjob result in the correct size
+        final_size = [i+j for i,j in zip(last_sub_job.whole_start, last_sub_job.sub_step)]
         self.assertEqual(final_size, job.search_size,
-                         msg='the last subjobs start position plus its size (minus template overhang) should equal '
+                         msg='the last subjobs (unique) start position plus its size should equal '
                              'the search size of the main job')
 
     def test_tm_job_split_angles(self):
