@@ -466,7 +466,7 @@ class TMJob:
         # use overhang//2 (+1 for odd sizes)
         overhang = tuple(sum(divmod(o, 2)) for o in overhang)
 
-        x_splits = _determine_1D_fft_splits(search_size[0], split[0], half_overhang[0])
+        x_splits = _determine_1D_fft_splits(search_size[0], split[0], overhang[0])
         y_splits = _determine_1D_fft_splits(search_size[1], split[1], overhang[1])
         z_splits = _determine_1D_fft_splits(search_size[2], split[2], overhang[2])
 
