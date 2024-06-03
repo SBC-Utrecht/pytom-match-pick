@@ -1,26 +1,56 @@
 import pathlib
+import os
+from typing import Union
 from importlib_resources import files
 from scipy.spatial.transform import Rotation
+import numpy as np
+import healpix as hp
+import logging
+
+def angle_to_angle_list(angle_diff: float, 
+        sort_angles: bool = True, 
+        log_level: int = logging.DEBUG
+        ) -> list[tuple[float, float, float]]:
+    """Auto generate an angle list for a given maximum angle difference. 
+
+    The code uses healpix to determine Z1 and X and splits Z2 linearly.
+
+    Parameters
+    ----------
+    angle_diff: float
+        maximum difference (in degrees) for the angle list
+    sort_angles: bool, default True
+        sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+    log_level: int, default logging.DEBUG
+        the log level to use when generating logs
 
 
-ANGLE_LIST_DIR = files('pytom_tm.angle_lists')
-AVAILABLE_ROTATIONAL_SAMPLING = {
-    '7.00': ['angles_7.00_45123.txt', 45123],
-    '35.76': ['angles_35.76_320.txt', 320],
-    '19.95': ['angles_19.95_1944.txt', 1944],
-    '90.00': ['angles_90.00_26.txt', 26],
-    '18.00': ['angles_18.00_3040.txt', 3040],
-    '12.85': ['angles_12.85_7112.txt', 7112],
-    '38.53': ['angles_38.53_256.txt', 256],
-    '11.00': ['angles_11.00_15192.txt', 15192],
-    '17.86': ['angles_17.86_3040.txt', 3040],
-    '25.25': ['angles_25.25_980.txt', 980],
-    '50.00': ['angles_50.00_100.txt', 100],
-    '3.00': ['angles_3.00_553680.txt', 553680],
-}
-for v in AVAILABLE_ROTATIONAL_SAMPLING.values():
-    v[0] = ANGLE_LIST_DIR.joinpath(v[0])
 
+    Returns
+    -------
+    angle_list: list[tuple[float, float, float]]
+        a list where each element is a tuple of 3 floats containing 
+        an anti-clockwise ZXZ Euler rotation in radians
+    """
+    # We use an approximation of the square root of the area as the median angle diff 
+    # This works reasonably well and is based on the following formula:
+    # angle_diff = (4*np.pi/npix)**0.5 * 360/(2*np.pi)
+    npix = 4 * np.pi / (angle_diff * np.pi / 180) ** 2
+    nside = 0
+    while hp.nside2npix(nside) < npix:
+        nside += 1
+    used_npix = hp.nside2npix(nside)
+    used_angle_diff = (4*np.pi/used_npix)**0.5 * (180/np.pi)
+    logging.log(log_level, f"Using an angle difference of {used_angle_diff:.4f} for Z1 and X")
+    theta, phi = hp.pix2ang(nside, np.arange(used_npix))
+    # Now for psi
+    n_psi_angles = int(np.ceil(360/angle_diff))
+    psi, used_psi_diff = np.linspace(0, 2*np.pi, n_psi_angles, endpoint=False, retstep=True)
+    logging.log(log_level, f"Using an angle difference of {np.rad2deg(used_psi_diff):.4f} for Z2")
+    angle_list = [(ph, th, ps) for ph, th in zip(phi, theta) for ps in psi]
+    if sort_angles:
+        angle_list.sort()
+    return angle_list
 
 def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[tuple[float, float, float]]:
     """Load an angular search list from disk.
@@ -35,7 +65,7 @@ def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[t
     Returns
     -------
     angle_list: list[tuple[float, float, float]]
-        a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in degrees
+        a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in radians
     """
     with open(str(file_name)) as fstream:
         lines = fstream.readlines()
@@ -45,6 +75,45 @@ def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[t
     if sort_angles:
         angle_list.sort()  # angle list needs to be sorted otherwise symmetry reduction cannot be used!
     return angle_list
+
+def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, log_level: str = 'DEBUG'):
+    """Either get an angular search file from disk or generate one from a float
+
+    Parameters
+    ----------
+    angle: Union[pathlib.Path, float]
+        either the path to text file containing angular search, 
+          each line should contain 3 floats of anti-clockwise ZXZ
+        or if a float:
+          maximum difference (in degrees) for the angle list
+    sort_angles: bool, default True
+        sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+    log_level: str, default 'DEBUG'
+        the log level to use when generating logs
+
+    Returns
+    -------
+    angle_list: list[tuple[float, float, float]]
+        a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in radians
+    """
+    log_level = logging.getLevelNamesMapping()[log_level]
+    try:
+        angle = float(angle)
+        angle_is_float = True
+    except (ValueError, TypeError):
+        angle_is_float = False
+    if angle_is_float:
+        logging.log(log_level, 
+                f"Will generate an angle list with a maximum increment of {angle}"
+                )
+        return angle_to_angle_list(angle, sort_angles, log_level)
+    if isinstance(angle, (str, os.PathLike)):
+        possible_file_path = pathlib.Path(angle)
+        if possible_file_path.exists() and possible_file_path.suffix == '.txt':
+            logging.log(log_level, "Custom file provided for the angular search. Checking if it can be read...")
+            return load_angle_list(angle, sort_angles)
+    # If no return is hit by now, error out
+    raise ValueError("Invalid angle input provided")
 
 
 def convert_euler(

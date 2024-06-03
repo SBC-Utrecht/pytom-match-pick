@@ -8,7 +8,7 @@ import pathlib
 from typing import Optional
 from pytom_tm.tmjob import TMJob
 from pytom_tm.mask import spherical_mask
-from pytom_tm.angles import load_angle_list, convert_euler
+from pytom_tm.angles import get_angle_list, convert_euler
 from pytom_tm.io import read_mrc
 from scipy.special import erfcinv
 from scipy.optimize import curve_fit
@@ -167,9 +167,8 @@ def extract_particles(
 
     score_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_scores.mrc'))
     angle_volume = read_mrc(job.output_dir.joinpath(f'{job.tomo_id}_angles.mrc'))
-    angle_list = load_angle_list(
-        job.rotation_file,
-        sort_angles=version.parse(job.pytom_tm_version_number) > version.parse('0.3.0')
+    angle_list = get_angle_list(job.rotation_file,
+            sort_angles=version.parse(job.pytom_tm_version_number) > version.parse('0.3.0')
     )
 
     if tophat_filter:  # constrain the extraction with a tophat filter

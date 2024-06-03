@@ -3,13 +3,13 @@ import voltools as vt
 import cupy as cp
 from importlib_resources import files
 from pytom_tm.mask import spherical_mask
-from pytom_tm.angles import load_angle_list
+from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.correlation import normalised_cross_correlation
 
 
 class TestMask(unittest.TestCase):
     def setUp(self):
-        self.angles = load_angle_list(files('pytom_tm.angle_lists').joinpath('angles_50.00_100.txt'))
+        self.angles = angle_to_angle_list(50.00)
 
     def test_rotational_invariance_even(self):
         # TEST EVEN MASK
