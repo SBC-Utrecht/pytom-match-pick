@@ -130,3 +130,11 @@ class TestEntryPoints(unittest.TestCase):
             arguments.pop('--voltage')
             start(arguments)
 
+        # test debug files
+        arguments = defaults.copy()
+        arguments['--log'] = 'debug'
+        start(arguments)
+        self.assertTrue(DESTINATION.joinpath('template_psf.mrc').exists(),
+                        msg='File should exist in debug mode')
+        self.assertTrue(DESTINATION.joinpath('template_convolved.mrc').exists(),
+                        msg='File should exist in debug mode')
