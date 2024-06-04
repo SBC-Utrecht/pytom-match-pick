@@ -23,7 +23,7 @@ except:
 else:
     ENTRY_POINTS_TO_TEST.append(("pytom_estimate_roc.py", "estimate_roc"))
 
-# Input files for template matching
+# Input files for command line match_template
 TEST_DATA = pathlib.Path(__file__).parent.joinpath('test_data')
 TEMPLATE = TEST_DATA.joinpath('template.mrc')
 MASK = TEST_DATA.joinpath('mask.mrc')
@@ -32,15 +32,17 @@ DESTINATION = TEST_DATA.joinpath('output')
 TILT_ANGLES = TEST_DATA.joinpath('angles.rawtlt')
 DOSE = TEST_DATA.joinpath('test_dose.txt')
 DEFOCUS = TEST_DATA.joinpath('defocus.txt')
-IMOD_DEFOCUS = pathlib.Path(__file__).parent.joinpath('Data').joinpath('test_imod.defocus')
+DEFOCUS_IMOD = pathlib.Path(__file__).parent.joinpath('Data').joinpath(
+    'test_imod.defocus')
 
 
 class TestEntryPoints(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        io.write_mrc(TEMPLATE, np.zeros((5, 5, 5)), 1)
-        io.write_mrc(MASK, np.zeros((5, 5, 5)), 1)
-        io.write_mrc(TOMOGRAM, np.zeros((10, 10, 10)), 1)
+        DESTINATION.mkdir(parents=True)
+        io.write_mrc(TEMPLATE, np.zeros((5, 5, 5), dtype=np.float32), 1)
+        io.write_mrc(MASK, np.zeros((5, 5, 5), dtype=np.float32), 1)
+        io.write_mrc(TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
         np.savetxt(TILT_ANGLES, np.linspace(-50, 50, 35))
         np.savetxt(DOSE, np.linspace(0, 100, 35))
         np.savetxt(DEFOCUS, np.ones(35) * 3000)
@@ -72,5 +74,39 @@ class TestEntryPoints(unittest.TestCase):
             # check if the system return code is 0 (success)
             self.assertEqual(ex.exception.code, 0)
 
-    # def test_match_template(self):
+    def test_match_template(self):
+        entry_points.match_template([
+            '-t', str(TEMPLATE),
+            '-m', str(MASK),
+            '-v', str(TOMOGRAM),
+            '-d', str(DESTINATION),
+            '--angular-search', '35',
+            '--tilt-angles', str(TILT_ANGLES),
+            '--per-tilt-weighting',
+            '--dose-accumulation', str(DOSE),
+            '--defocus', str(DEFOCUS_IMOD),
+            '--amplitude-contrast', '0.08',
+            '--spherical-aberration', '2.7',
+            '--voltage', '300',
+            '--tomogram-ctf-model', 'phase-flip',
+            '-g', '0',
+        ])
+
+        with self.assertRaises(ValueError, msg='Missing CTF params should produce '
+                                               'error'):
+            entry_points.match_template([
+                '-t', str(TEMPLATE),
+                '-m', str(MASK),
+                '-v', str(TOMOGRAM),
+                '-d', str(DESTINATION),
+                '--angular-search', '90',
+                '--tilt-angles', str(TILT_ANGLES),
+                '--per-tilt-weighting',
+                '--dose-accumulation', str(DOSE),
+                '--defocus', str(DEFOCUS_IMOD),
+                '--amplitude-contrast', '0.08',
+                '--spherical-aberration', '2.7',
+                '--tomogram-ctf-model', 'phase-flip',
+                '-g', '0',
+            ])
 

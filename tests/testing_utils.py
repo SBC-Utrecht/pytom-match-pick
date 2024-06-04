@@ -20,7 +20,7 @@ for d in defocus_data:
     })
 
 ACCUMULATED_DOSE = read_dose_file(
-    pathlib.Path(__file__).parent.joinpath('Data').joinpath('test_imod.defocus')
+    pathlib.Path(__file__).parent.joinpath('Data').joinpath('test_dose.txt')
 )
 TILT_ANGLES = read_tlt_file(
     pathlib.Path(__file__).parent.joinpath('Data').joinpath('test_angles.rawtlt')
