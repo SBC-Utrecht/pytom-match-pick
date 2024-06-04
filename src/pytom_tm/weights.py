@@ -300,6 +300,9 @@ def create_wedge(
         tilt_angles_rad = tilt_angles
 
     if tilt_weighting:
+        if len(ctf_params_per_tilt) == 1:
+            # with only single defocus, copy the params for each tilt
+            ctf_params_per_tilt = ctf_params_per_tilt * len(tilt_angles_rad)
         wedge = _create_tilt_weighted_wedge(
             shape,
             tilt_angles_rad,

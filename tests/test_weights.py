@@ -49,9 +49,9 @@ CTF_PARAMS = []
 for d in [float(x.split()[4]) * 1e-3 for x in IMOD_CTF.split('\n') if x != '']:
     CTF_PARAMS.append({
         'defocus': d,
-        'amplitude': AMP,
+        'amplitude_contrast': AMP,
         'voltage': VOL,
-        'cs': CS,
+        'spherical_aberration': CS,
         'phase_shift_deg': .0,
     })
 
