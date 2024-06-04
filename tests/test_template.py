@@ -24,6 +24,12 @@ class TestTemplate(unittest.TestCase):
             msg="Template was not padded to output box size"
         )
 
+        with self.assertLogs(level='WARNING') as cm:
+            new_template = generate_template_from_map(
+                uneven_box, 1, 2, output_box_size=3)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn("Could not set specified box size", cm.output[0])
+
     def test_template_centering(self):
         new_template = generate_template_from_map(
             self.template, 1, 1, center=False,
