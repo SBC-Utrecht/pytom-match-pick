@@ -465,6 +465,13 @@ def extract_candidates(argv=None):
              "leave at 1."
     )
     parser.add_argument(
+        '--centered-coordinates',
+        action="store_true",
+        default=False,
+        required=False,
+        help="Write out centered coordinates for RELION5."
+    )
+    parser.add_argument(
         "--log",
         type=str,
         required=False,
