@@ -255,7 +255,7 @@ class TestWeights(unittest.TestCase):
         weights = create_wedge(self.volume_shape_even, TILT_ANGLES, self.voxel_size * 3,
                                tilt_weighting=True, low_pass=self.low_pass,
                                accumulated_dose_per_tilt=None,
-                               ctf_params_per_tilt=CTF_PARAMS[slice(0, 1)])
+                               ctf_params_per_tilt=CTF_PARAMS[:1])
         self.assertEqual(weights.shape, self.reduced_even_shape_3d,
                          msg='Tilt weighted wedge should work with single defocus.')
 

@@ -114,7 +114,7 @@ class ParseDefocus(argparse.Action):
             file_path = pathlib.Path(values)
             if not file_path.exists():
                 parser.error(
-                    "{0} provided defocus file does not exist".format(option_string)
+                    f"{option_string} provided defocus file does not exist"
                 )
             # in case of a file the parser attribute becomes a list of defocii
             setattr(namespace, self.dest, read_defocus_file(file_path))
@@ -123,7 +123,7 @@ class ParseDefocus(argparse.Action):
                 defocus = float(values)
             except ValueError:
                 parser.error(
-                    "{0} not possible to read defocus as float".format(option_string)
+                    f"{option_string} not possible to read defocus as float"
                 )
             # pass back as list so defocus always returns a list
             setattr(namespace, self.dest, [defocus])
