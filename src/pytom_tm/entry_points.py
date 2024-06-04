@@ -862,9 +862,9 @@ def match_template(argv=None):
         ctf_params = [
             {
                 "defocus": defocus * 1e-6,
-                "amplitude": args.amplitude_contrast,
+                "amplitude_contrast": args.amplitude_contrast,
                 "voltage": args.voltage * 1e3,
-                "cs": args.spherical_abberation * 1e-3,
+                "spherical_abberation": args.spherical_abberation * 1e-3,
                 "flip_phase": phase_flip_correction,
                 "phase_shift_deg": args.phase_shift,
             }
