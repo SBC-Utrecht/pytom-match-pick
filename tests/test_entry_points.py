@@ -36,6 +36,12 @@ DEFOCUS_IMOD = pathlib.Path(__file__).parent.joinpath('Data').joinpath(
     'test_imod.defocus')
 
 
+def prep_argv(arg_dict):
+    argv = []
+    [argv.extend([k, v]) if v != '' else argv.append(k) for k, v in arg_dict.items()]
+    return argv
+
+
 class TestEntryPoints(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -75,38 +81,52 @@ class TestEntryPoints(unittest.TestCase):
             self.assertEqual(ex.exception.code, 0)
 
     def test_match_template(self):
-        entry_points.match_template([
-            '-t', str(TEMPLATE),
-            '-m', str(MASK),
-            '-v', str(TOMOGRAM),
-            '-d', str(DESTINATION),
-            '--angular-search', '35',
-            '--tilt-angles', str(TILT_ANGLES),
-            '--per-tilt-weighting',
-            '--dose-accumulation', str(DOSE),
-            '--defocus', str(DEFOCUS_IMOD),
-            '--amplitude-contrast', '0.08',
-            '--spherical-aberration', '2.7',
-            '--voltage', '300',
-            '--tomogram-ctf-model', 'phase-flip',
-            '-g', '0',
-        ])
+        defaults = {
+            # 'pytom_match_template.py': '',
+            '-t': str(TEMPLATE),
+            '-m': str(MASK),
+            '-v': str(TOMOGRAM),
+            '-d': str(DESTINATION),
+            '--angular-search': '35',
+            '--tilt-angles': str(TILT_ANGLES),
+            '--per-tilt-weighting': '',
+            '--dose-accumulation': str(DOSE),
+            '--defocus': str(DEFOCUS_IMOD),
+            '--amplitude-contrast': '0.08',
+            '--spherical-aberration': '2.7',
+            '--voltage': '300',
+            '--tomogram-ctf-model': 'phase-flip',
+            '-g': '0',
+        }
+
+        def start(arg_dict):  # simplify run
+            entry_points.match_template(prep_argv(arg_dict))
+
+        # test valid defocus arguments
+        for z in [str(DEFOCUS_IMOD), str(DEFOCUS), '3000']:
+            arguments = defaults.copy()
+            arguments['--defocus'] = z
+            start(arguments)
+
+        # test faulty args
+        for z in ['asdf.txt', 'asdf']:
+            dump = StringIO()
+            with self.assertRaises(SystemExit) as ex, redirect_stdout(dump):
+                arguments = defaults.copy()
+                arguments['--defocus'] = z
+                start(arguments)
+            dump.close()
+            # check if the system return code is 0 (success)
+            self.assertEqual(ex.exception.code, 2)
+
+        # remove per-tilt-weighting
+        arguments = defaults.copy()
+        arguments.pop('--per-tilt-weighting')
+        start(arguments)
 
         with self.assertRaises(ValueError, msg='Missing CTF params should produce '
                                                'error'):
-            entry_points.match_template([
-                '-t', str(TEMPLATE),
-                '-m', str(MASK),
-                '-v', str(TOMOGRAM),
-                '-d', str(DESTINATION),
-                '--angular-search', '90',
-                '--tilt-angles', str(TILT_ANGLES),
-                '--per-tilt-weighting',
-                '--dose-accumulation', str(DOSE),
-                '--defocus', str(DEFOCUS_IMOD),
-                '--amplitude-contrast', '0.08',
-                '--spherical-aberration', '2.7',
-                '--tomogram-ctf-model', 'phase-flip',
-                '-g', '0',
-            ])
+            arguments = defaults.copy()
+            arguments.pop('--voltage')
+            start(arguments)
 
