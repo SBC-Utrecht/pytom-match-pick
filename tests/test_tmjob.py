@@ -10,7 +10,7 @@ from pytom_tm.angles import load_angle_list, angle_to_angle_list
 from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob
 from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm.extract import extract_particles
-from test_weights import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES
+from testing_utils import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES
 
 
 TOMO_SHAPE = (100, 107, 59)
