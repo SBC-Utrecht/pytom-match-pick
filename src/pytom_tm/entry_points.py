@@ -172,72 +172,6 @@ def pytom_create_template(argv=None):
         "measuring the center of mass.",
     )
     parser.add_argument(
-        "-c",
-        "--ctf-correction",
-        action="store_true",
-        default=False,
-        required=False,
-        help="Set this flag to multiply the input map with a CTF. The following "
-        "parameters are also important to specify because the defaults might not apply "
-        "to your data: --defocus, --amplitude-contrast, --voltage, --Cs.",
-    )
-    parser.add_argument(
-        "-z",
-        "--defocus",
-        type=float,
-        required=False,
-        default=3.0,
-        help="Defocus in um (negative value is overfocus).",
-    )
-    parser.add_argument(
-        "-a",
-        "--amplitude-contrast",
-        type=float,
-        required=False,
-        default=0.08,
-        help="Fraction of amplitude contrast in the image ctf.",
-    )
-    parser.add_argument(
-        "-v",
-        "--voltage",
-        type=float,
-        required=False,
-        default=300.0,
-        help="Acceleration voltage of electrons in keV",
-    )
-    parser.add_argument(
-        "--Cs",
-        type=float,
-        required=False,
-        default=2.7,
-        help="Spherical aberration in mm.",
-    )
-    parser.add_argument(
-        "--phase-shift",
-        type=float,
-        required=False,
-        default=.0,
-        help="Phase shift (in degrees) for the CTF to model phase plates.",
-    )
-    parser.add_argument(
-        "--cut-after-first-zero",
-        action="store_true",
-        default=False,
-        required=False,
-        help="Set this flag to cut the CTF after the first zero crossing. Generally "
-        "recommended to apply as the simplistic CTF convolution will likely become "
-        "inaccurate after this point due to defocus gradients.",
-    )
-    parser.add_argument(
-        "--flip-phase",
-        action="store_true",
-        default=False,
-        required=False,
-        help="Set this flag to apply a phase flipped CTF. Only required if the CTF is "
-        "modelled beyond the first zero crossing and if the tomograms have been CTF "
-        "corrected by phase flipping.",
-    )
-    parser.add_argument(
         "--low-pass",
         type=float,
         required=False,
@@ -270,13 +204,6 @@ def pytom_create_template(argv=None):
         default=False,
         required=False,
         help="Mirror the final template before writing to disk.",
-    )
-    parser.add_argument(
-        "--display-filter",
-        action="store_true",
-        default=False,
-        required=False,
-        help="Display the combined CTF and low pass filter to the user.",
     )
     parser.add_argument(
         "--log",
@@ -321,28 +248,13 @@ def pytom_create_template(argv=None):
             "template."
         )
 
-    ctf_params = None
-    if args.ctf_correction:
-        ctf_params = {
-            "pixel_size": map_spacing_angstrom * 1e-10,
-            "defocus": args.defocus * 1e-6,
-            "amplitude_contrast": args.amplitude_contrast,
-            "voltage": args.voltage * 1e3,
-            "spherical_aberration": args.Cs * 1e-3,
-            "cut_after_first_zero": args.cut_after_first_zero,
-            "flip_phase": args.flip_phase,
-            "phase_shift_deg": args.phase_shift,
-        }
-
     template = generate_template_from_map(
         input_data,
         map_spacing_angstrom,
         args.output_voxel_size_angstrom,
         center=args.center,
-        ctf_params=ctf_params,
         filter_to_resolution=args.low_pass,
         output_box_size=args.box_size,
-        display_filter=args.display_filter,
     ) * (-1 if args.invert else 1)
 
     logging.debug(f"shape of template after processing is: {template.shape}")
