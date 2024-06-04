@@ -597,7 +597,9 @@ def match_template(argv=None):
         type=pathlib.Path,
         required=True,
         action=CheckFileExists,
-        help="Template; MRC file.",
+        help="Template; MRC file. Object should match the contrast of the tomogram: "
+             "if the tomogram has black ribosomes, the reference should be black. "
+             "(pytom_create_template.py has an option to invert contrast) ",
     )
     io_group.add_argument(
         "-v",

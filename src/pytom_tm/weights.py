@@ -608,7 +608,6 @@ def create_ctf(
         `https://github.com/dtegunov/tom_deconv` except the ctf defintion in tom
         produces the inverse curve of what we have here
 
-
     Returns
     -------
     ctf: npt.NDArray[float]
@@ -644,8 +643,12 @@ def create_ctf(
         # filter the ctf with the cutoff frequency
         ctf[k > k_cutoff] = 0
 
-    if flip_phase:  # phase flip
+    if flip_phase:  # take absolute, ensures matching contrast
         ctf = np.abs(ctf)
+    else:  # multiply the ctf with -1 if we have overfocus, this allows the user to
+        # always match the contrast of the input template with the contrast of the
+        # tomogram: if the tomogram is black the reference should be black.
+        ctf *= (-1 if defocus > 0 else 1)
 
     return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
 
