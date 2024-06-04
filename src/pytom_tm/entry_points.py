@@ -693,11 +693,11 @@ def match_template(argv=None):
         help="Amplitude contrast fraction for CTF.",
     )
     filter_group.add_argument(
-        "--spherical-abberation",
+        "--spherical-aberration",
         type=float,
         required=False,
         action=LargerThanZero,
-        help="Spherical abberation for CTF in mm.",
+        help="Spherical aberration for CTF in mm.",
     )
     filter_group.add_argument(
         "--voltage",
@@ -761,7 +761,7 @@ def match_template(argv=None):
     if args.defocus is not None:
         if (
             args.amplitude_contrast is None
-            or args.spherical_abberation is None
+            or args.spherical_aberration is None
             or args.voltage is None
         ):
             raise ValueError(
@@ -778,7 +778,7 @@ def match_template(argv=None):
                 "defocus": defocus * 1e-6,
                 "amplitude_contrast": args.amplitude_contrast,
                 "voltage": args.voltage * 1e3,
-                "spherical_abberation": args.spherical_abberation * 1e-3,
+                "spherical_aberration": args.spherical_aberration * 1e-3,
                 "flip_phase": phase_flip_correction,
                 "phase_shift_deg": args.phase_shift,
             }
