@@ -322,6 +322,15 @@ def create_wedge(
                 (wedge_angles[0], wedge_angles[1]),
                 cut_off_radius
             ).astype(np.float32)
+        if ctf_params_per_tilt is not None:
+            # - take ctf params from approx. middle tilt as those are most accurate
+            # - in case list has 1 element we take that
+            ctf_params = ctf_params_per_tilt[len(ctf_params_per_tilt) // 2]
+            wedge *= create_ctf(
+                shape,
+                voxel_size * 1e-10,
+                **ctf_params,
+            )
 
     if not (low_pass is None and high_pass is None):
         return wedge * create_gaussian_band_pass(shape, voxel_size, low_pass, high_pass).astype(np.float32)

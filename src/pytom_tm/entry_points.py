@@ -761,14 +761,15 @@ def match_template(argv=None):
         type=str,
         required=False,
         action=ParseDefocus,
-        help="Here you can provide an IMOD defocus file (version 2 or 3) "
-        "or a text file with defocus. The values, together with the other ctf "
+        help="Here you can provide an IMOD defocus (.defocus) file (version 2 or 3) "
+        ", a text (.txt) file with a single defocus value per line (in nm), "
+        "or a single "
+        "defocus value (in nm). "
+        "The value(s), together with the other ctf "
         "parameters (amplitude contrast, voltage, spherical abberation), "
         "will be used to create a 3D CTF weighting function. IMPORTANT: if "
         "you provide this, the input template should not be modulated with a CTF "
-        "beforehand. Format should be .defocus (IMOD) or .txt, "
-        "same ordering as tilt angle list. The .txt file should contain a single "
-        "defocus value (in nm) per line.",
+        "beforehand. If it is a reconstruction it should ideally be Wiener filtered.",
     )
     filter_group.add_argument(
         "--amplitude-contrast",
