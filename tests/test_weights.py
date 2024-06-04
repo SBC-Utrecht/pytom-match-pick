@@ -197,11 +197,14 @@ class TestWeights(unittest.TestCase):
             )
 
         # create test wedges
-        structured_wedge = create_wedge(self.volume_shape_even, TILT_ANGLES, 1., tilt_weighting=True)
+        structured_wedge = create_wedge(self.volume_shape_even, TILT_ANGLES, 1.,
+                                        tilt_weighting=True, ctf_params_per_tilt=CTF_PARAMS)
         symmetric_wedge = create_wedge(self.volume_shape_even, [TILT_ANGLES[0], TILT_ANGLES[-1]],
-                                       1., tilt_weighting=False)
+                                       1., tilt_weighting=False,
+                                       ctf_params_per_tilt=CTF_PARAMS)
         asymmetric_wedge = create_wedge(self.volume_shape_even, [TILT_ANGLES[0], TILT_ANGLES[-2]],
-                                        1., tilt_weighting=False)
+                                        1., tilt_weighting=False,
+                                        ctf_params_per_tilt=CTF_PARAMS)
 
         self.assertEqual(structured_wedge.shape, self.reduced_even_shape_3d,
                          msg='Structured wedge does not have expected output shape')
@@ -249,6 +252,12 @@ class TestWeights(unittest.TestCase):
                                ctf_params_per_tilt=None)
         self.assertEqual(weights.shape, self.reduced_even_shape_3d,
                          msg='Tilt weighted wedge should also work without defocus and dose info.')
+        weights = create_wedge(self.volume_shape_even, TILT_ANGLES, self.voxel_size * 3,
+                               tilt_weighting=True, low_pass=self.low_pass,
+                               accumulated_dose_per_tilt=None,
+                               ctf_params_per_tilt=CTF_PARAMS[slice(0, 1)])
+        self.assertEqual(weights.shape, self.reduced_even_shape_3d,
+                         msg='Tilt weighted wedge should work with single defocus.')
 
     def test_ctf(self):
         ctf_raw = create_ctf(
