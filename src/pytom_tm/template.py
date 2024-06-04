@@ -95,6 +95,6 @@ def generate_template_from_map(
 
     logging.info('Convoluting volume with filter and then downsampling.')
     return zoom(
-        irfftn(rfftn(input_map) * lpf),
+        irfftn(rfftn(input_map) * lpf, s=input_map.shape),
         input_spacing / output_spacing
     )
