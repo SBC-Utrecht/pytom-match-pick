@@ -161,6 +161,7 @@ def extract_particles(
         connectivity of kernel for tophat transform
     relion5_compat: bool, default False
         relion5 compatibility writes coordinates relative to center and in Angstrom
+        center definition should be: tomo_shape / 2 - 1
 
     Returns
     -------
