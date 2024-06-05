@@ -36,6 +36,9 @@ DEFOCUS = TEST_DATA.joinpath('defocus.txt')
 DEFOCUS_IMOD = pathlib.Path(__file__).parent.joinpath('Data').joinpath(
     'test_imod.defocus')
 
+# Initial logging level
+LOG_LEVEL = logging.getLogger().level
+
 
 def prep_argv(arg_dict):
     argv = []
@@ -132,11 +135,13 @@ class TestEntryPoints(unittest.TestCase):
 
         # test debug files
         arguments = defaults.copy()
-        start_level = logging.getLogger().level
-        logging.basicConfig(level=10, force=True)  # set to debug
+        arguments['--log'] = 'debug'
         start(arguments)
+        # these files will only exist if the test managed to set the logging correctly
         self.assertTrue(DESTINATION.joinpath('template_psf.mrc').exists(),
                         msg='File should exist in debug mode')
         self.assertTrue(DESTINATION.joinpath('template_convolved.mrc').exists(),
                         msg='File should exist in debug mode')
-        logging.basicConfig(level=start_level, force=True)  # reset the level
+
+        # rest the log level after the entry point modified it
+        logging.basicConfig(level=LOG_LEVEL, force=True)

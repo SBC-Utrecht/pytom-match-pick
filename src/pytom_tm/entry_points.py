@@ -214,7 +214,7 @@ def pytom_create_template(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     # set input voxel size and give user warning if it does not match
     # with MRC annotation
@@ -348,7 +348,7 @@ def estimate_roc(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     template_matching_job = load_json_to_tmjob(args.job_file)
     # Set cut off to -1 to ensure the number of particles gets extracted
@@ -473,7 +473,7 @@ def extract_candidates(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     # load job and extract particles from the volumes
     job = load_json_to_tmjob(args.job_file)
@@ -754,7 +754,7 @@ def match_template(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     # combine ctf values to ctf_params list of dicts
     ctf_params = None
@@ -868,7 +868,7 @@ def merge_stars(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     files = [f for f in args.input_dir.iterdir() if f.suffix == ".star"]
 
