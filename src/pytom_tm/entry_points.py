@@ -465,11 +465,11 @@ def extract_candidates(argv=None):
              "leave at 1."
     )
     parser.add_argument(
-        '--centered-coordinates',
+        '--relion5-compat',
         action="store_true",
         default=False,
         required=False,
-        help="Write out centered coordinates for RELION5."
+        help="Write out centered coordinates in Angstrom for RELION5."
     )
     parser.add_argument(
         "--log",
@@ -493,6 +493,7 @@ def extract_candidates(argv=None):
         tomogram_mask_path=args.tomogram_mask,
         tophat_filter=args.tophat_filter,
         tophat_connectivity=args.tophat_connectivity,
+        relion5_compat=args.relion5_compat,
     )
 
     # write out as a RELION type starfile

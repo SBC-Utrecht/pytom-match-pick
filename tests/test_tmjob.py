@@ -378,16 +378,38 @@ class TestTMJob(unittest.TestCase):
         df, scores = extract_particles(self.job, 5, 100, create_plot=False)
         self.assertNotEqual(len(scores), 0, msg='Here we expect to get some annotations.')
 
+        # extract particles in relion5 style
+        df_rel5, scores = extract_particles(self.job, 5, 100, create_plot=False,
+                                       relion5_compat=True)
+        for column in (
+                'rlnCenteredCoordinateXAngst',
+                'rlnCenteredCoordinateYAngst',
+                'rlnCenteredCoordinateZAngst',
+                'rlnTomoName',
+        ):
+            self.assertTrue(column in df_rel5.columns,
+                            msg=f'Expected {column} in relion5 dataframe.')
+        centered_location = (
+                (np.array(LOCATION) - (np.array(TOMO_SHAPE) / 2 - 1)) *
+                self.job.voxel_size
+        )
+        diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()
+        self.assertEqual(diff, 0, msg='relion5 compat mode should return a centered '
+                                      'location of the object')
+
         # test extraction mask that does not cover the particle
         df, scores = extract_particles(self.job, 5, 100,
                                        tomogram_mask_path=TEST_EXTRACTION_MASK_OUTSIDE,
                                        create_plot=False)
-        self.assertEqual(len(scores), 0, msg='Length of returned list should be 0 after applying mask where the '
-                                             'object is not in the region of interest.')
+        self.assertEqual(len(scores), 0,
+                         msg='Length of returned list should be 0 after applying mask where the '
+                             'object is not in the region of interest.')
 
         # test mask that covers the particle
         df, scores = extract_particles(self.job, 5, 100,
                                        tomogram_mask_path=TEST_EXTRACTION_MASK_INSIDE,
                                        create_plot=False)
-        self.assertNotEqual(len(scores), 0, msg='We expected a detected particle with a extraction mask that '
-                                                'covers the object.')
+        self.assertNotEqual(len(scores), 0,
+                            msg='We expected a detected particle with a extraction mask that '
+                                'covers the object.')
+

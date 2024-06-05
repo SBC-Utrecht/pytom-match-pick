@@ -135,6 +135,7 @@ def extract_particles(
         tophat_filter: bool = False,
         create_plot: bool = True,
         tophat_connectivity: int = 1,
+        relion5_compat: bool = False,
 ) -> tuple[pd.DataFrame, list[float, ...]]:
     """
     Parameters
@@ -158,6 +159,8 @@ def extract_particles(
         flag for creating extraction plots
     tophat_connectivity: int, default 1
         connectivity of kernel for tophat transform
+    relion5_compat: bool, default False
+        relion5 compatibility writes coordinates relative to center and in Angstrom
 
     Returns
     -------
@@ -277,7 +280,23 @@ def extract_particles(
         'rlnSearchStd',
         'rlnDetectorPixelSize',
         'rlnMicrographName',
-    ]), scores
+    ])
+
+    if relion5_compat:
+        dims = np.array(job.tomo_shape)
+        center = dims / 2 - 1
+        output['rlnCoordinateX'], output['rlnCoordinateY'], output['rlnCoordinateZ'] = (
+            (output['rlnCoordinateX'] - center[0]) * job.voxel_size,
+            (output['rlnCoordinateY'] - center[1]) * job.voxel_size,
+            (output['rlnCoordinateZ'] - center[2]) * job.voxel_size
+        )
+        column_change = {
+            'rlnCoordinateX': 'rlnCenteredCoordinateXAngst',
+            'rlnCoordinateY': 'rlnCenteredCoordinateYAngst',
+            'rlnCoordinateZ': 'rlnCenteredCoordinateZAngst',
+            'rlnMicrographName': 'rlnTomoName'
+        }
+        output = output.rename(columns=column_change)
 
     if plotting_available and create_plot:
         y, bins = np.histogram(scores, bins=20)
@@ -305,4 +324,4 @@ def extract_particles(
             bbox_inches='tight'
         )
 
-    return output
+    return output, scores
