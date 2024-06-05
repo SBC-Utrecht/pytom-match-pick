@@ -2,7 +2,7 @@ import unittest
 import pathlib
 import numpy as np
 from shutil import which
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
 from pytom_tm import entry_points
 from pytom_tm import io
@@ -111,7 +111,7 @@ class TestEntryPoints(unittest.TestCase):
         # test faulty args
         for z in ['asdf.txt', 'asdf']:
             dump = StringIO()
-            with self.assertRaises(SystemExit) as ex, redirect_stdout(dump):
+            with self.assertRaises(SystemExit) as ex, redirect_stdout(dump), redirect_stderr(dump):
                 arguments = defaults.copy()
                 arguments['--defocus'] = z
                 start(arguments)
