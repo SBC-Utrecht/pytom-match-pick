@@ -684,6 +684,18 @@ class TMJob:
                 ctf_params_per_tilt=self.ctf_data
             ).astype(np.float32)
 
+            if logging.DEBUG >= logging.root.level:
+                write_mrc(
+                    self.output_dir.joinpath("template_psf.mrc"),
+                    template_wedge,
+                    self.voxel_size,
+                )
+                write_mrc(
+                    self.output_dir.joinpath("template_convolved.mrc"),
+                    irfftn(rfftn(template) * template_wedge, s=template.shape),
+                    self.voxel_size,
+                )
+
         # apply the optional band pass and whitening filter to the search region
         search_volume = np.real(irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape))
 

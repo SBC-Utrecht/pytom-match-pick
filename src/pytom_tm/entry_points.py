@@ -16,7 +16,7 @@ from pytom_tm.io import (
     ParseSearch,
     ParseTiltAngles,
     ParseDoseFile,
-    ParseDefocusFile,
+    ParseDefocus,
     BetweenZeroAndOne,
 )
 from pytom_tm.tmjob import load_json_to_tmjob
@@ -172,72 +172,6 @@ def pytom_create_template(argv=None):
         "measuring the center of mass.",
     )
     parser.add_argument(
-        "-c",
-        "--ctf-correction",
-        action="store_true",
-        default=False,
-        required=False,
-        help="Set this flag to multiply the input map with a CTF. The following "
-        "parameters are also important to specify because the defaults might not apply "
-        "to your data: --defocus, --amplitude-contrast, --voltage, --Cs.",
-    )
-    parser.add_argument(
-        "-z",
-        "--defocus",
-        type=float,
-        required=False,
-        default=3.0,
-        help="Defocus in um (negative value is overfocus).",
-    )
-    parser.add_argument(
-        "-a",
-        "--amplitude-contrast",
-        type=float,
-        required=False,
-        default=0.08,
-        help="Fraction of amplitude contrast in the image ctf.",
-    )
-    parser.add_argument(
-        "-v",
-        "--voltage",
-        type=float,
-        required=False,
-        default=300.0,
-        help="Acceleration voltage of electrons in keV",
-    )
-    parser.add_argument(
-        "--Cs",
-        type=float,
-        required=False,
-        default=2.7,
-        help="Spherical aberration in mm.",
-    )
-    parser.add_argument(
-        "--phase-shift",
-        type=float,
-        required=False,
-        default=.0,
-        help="Phase shift (in degrees) for the CTF to model phase plates.",
-    )
-    parser.add_argument(
-        "--cut-after-first-zero",
-        action="store_true",
-        default=False,
-        required=False,
-        help="Set this flag to cut the CTF after the first zero crossing. Generally "
-        "recommended to apply as the simplistic CTF convolution will likely become "
-        "inaccurate after this point due to defocus gradients.",
-    )
-    parser.add_argument(
-        "--flip-phase",
-        action="store_true",
-        default=False,
-        required=False,
-        help="Set this flag to apply a phase flipped CTF. Only required if the CTF is "
-        "modelled beyond the first zero crossing and if the tomograms have been CTF "
-        "corrected by phase flipping.",
-    )
-    parser.add_argument(
         "--low-pass",
         type=float,
         required=False,
@@ -272,13 +206,6 @@ def pytom_create_template(argv=None):
         help="Mirror the final template before writing to disk.",
     )
     parser.add_argument(
-        "--display-filter",
-        action="store_true",
-        default=False,
-        required=False,
-        help="Display the combined CTF and low pass filter to the user.",
-    )
-    parser.add_argument(
         "--log",
         type=str,
         required=False,
@@ -287,7 +214,7 @@ def pytom_create_template(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     # set input voxel size and give user warning if it does not match
     # with MRC annotation
@@ -321,28 +248,13 @@ def pytom_create_template(argv=None):
             "template."
         )
 
-    ctf_params = None
-    if args.ctf_correction:
-        ctf_params = {
-            "pixel_size": map_spacing_angstrom * 1e-10,
-            "defocus": args.defocus * 1e-6,
-            "amplitude_contrast": args.amplitude_contrast,
-            "voltage": args.voltage * 1e3,
-            "spherical_aberration": args.Cs * 1e-3,
-            "cut_after_first_zero": args.cut_after_first_zero,
-            "flip_phase": args.flip_phase,
-            "phase_shift_deg": args.phase_shift,
-        }
-
     template = generate_template_from_map(
         input_data,
         map_spacing_angstrom,
         args.output_voxel_size_angstrom,
         center=args.center,
-        ctf_params=ctf_params,
         filter_to_resolution=args.low_pass,
         output_box_size=args.box_size,
-        display_filter=args.display_filter,
     ) * (-1 if args.invert else 1)
 
     logging.debug(f"shape of template after processing is: {template.shape}")
@@ -436,7 +348,7 @@ def estimate_roc(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     template_matching_job = load_json_to_tmjob(args.job_file)
     # Set cut off to -1 to ensure the number of particles gets extracted
@@ -561,7 +473,7 @@ def extract_candidates(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     # load job and extract particles from the volumes
     job = load_json_to_tmjob(args.job_file)
@@ -597,7 +509,9 @@ def match_template(argv=None):
         type=pathlib.Path,
         required=True,
         action=CheckFileExists,
-        help="Template; MRC file.",
+        help="Template; MRC file. Object should match the contrast of the tomogram: "
+             "if the tomogram has black ribosomes, the reference should be black. "
+             "(pytom_create_template.py has an option to invert contrast) ",
     )
     io_group.add_argument(
         "-v",
@@ -757,18 +671,19 @@ def match_template(argv=None):
         "Format should be a .txt file with on each line a dose value in e-/A2.",
     )
     filter_group.add_argument(
-        "--defocus-file",
+        "--defocus",
         type=str,
         required=False,
-        action=ParseDefocusFile,
-        help="Here you can provide an IMOD defocus file (version 2 or 3) "
-        "or a text file with defocus. The values, together with the other ctf "
+        action=ParseDefocus,
+        help="Here you can provide an IMOD defocus (.defocus) file (version 2 or 3) "
+        ", a text (.txt) file with a single defocus value per line (in nm), "
+        "or a single "
+        "defocus value (in nm). "
+        "The value(s), together with the other ctf "
         "parameters (amplitude contrast, voltage, spherical abberation), "
         "will be used to create a 3D CTF weighting function. IMPORTANT: if "
         "you provide this, the input template should not be modulated with a CTF "
-        "beforehand. Format should be .defocus (IMOD) or .txt, "
-        "same ordering as tilt angle list. The .txt file should contain a single "
-        "defocus value (in nm) per line.",
+        "beforehand. If it is a reconstruction it should ideally be Wiener filtered.",
     )
     filter_group.add_argument(
         "--amplitude-contrast",
@@ -778,11 +693,11 @@ def match_template(argv=None):
         help="Amplitude contrast fraction for CTF.",
     )
     filter_group.add_argument(
-        "--spherical-abberation",
+        "--spherical-aberration",
         type=float,
         required=False,
         action=LargerThanZero,
-        help="Spherical abberation for CTF in mm.",
+        help="Spherical aberration for CTF in mm.",
     )
     filter_group.add_argument(
         "--voltage",
@@ -798,6 +713,18 @@ def match_template(argv=None):
         default=.0,
         action=LargerThanZero,
         help="Phase shift (in degrees) for the CTF to model phase plates.",
+    )
+    filter_group.add_argument(
+        "--tomogram-ctf-model",
+        required=False,
+        choices=["phase-flip"],  # possible wiener filter mode to come?
+        help="Optionally, you can specify if and how the CTF was corrected during "
+             "reconstruction of the input tomogram. This allows "
+             "match-pick to match the weighting of the template to the tomogram. "
+             "Not using this option is appropriate if the CTF was left uncorrected in "
+             "the tomogram. Option 'phase-flip' : appropriate for IMOD's strip-based "
+             "phase flipping or reconstructions generated with "
+             "novaCTF/3dctf."
     )
     filter_group.add_argument(
         "--spectral-whitening",
@@ -827,14 +754,14 @@ def match_template(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     # combine ctf values to ctf_params list of dicts
     ctf_params = None
-    if args.defocus_file is not None:
+    if args.defocus is not None:
         if (
             args.amplitude_contrast is None
-            or args.spherical_abberation is None
+            or args.spherical_aberration is None
             or args.voltage is None
         ):
             raise ValueError(
@@ -842,15 +769,20 @@ def match_template(argv=None):
                 "the required parameters (amplitude-contrast, "
                 "spherical-abberation or voltage) is/are missing."
             )
+        phase_flip_correction = False
+        if (args.tomogram_ctf_model is not None and
+                args.tomogram_ctf_model == "phase-flip"):
+            phase_flip_correction = True
         ctf_params = [
             {
-                "defocus": defocus,
-                "amplitude": args.amplitude_contrast,
-                "voltage": args.voltage,
-                "cs": args.spherical_abberation,
+                "defocus": defocus * 1e-6,
+                "amplitude_contrast": args.amplitude_contrast,
+                "voltage": args.voltage * 1e3,
+                "spherical_aberration": args.spherical_aberration * 1e-3,
+                "flip_phase": phase_flip_correction,
                 "phase_shift_deg": args.phase_shift,
             }
-            for defocus in args.defocus_file
+            for defocus in args.defocus
         ]
 
     job = TMJob(
@@ -936,7 +868,7 @@ def merge_stars(argv=None):
         help="Can be set to `info` or `debug`",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log)
+    logging.basicConfig(level=args.log, force=True)
 
     files = [f for f in args.input_dir.iterdir() if f.suffix == ".star"]
 

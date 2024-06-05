@@ -300,6 +300,9 @@ def create_wedge(
         tilt_angles_rad = tilt_angles
 
     if tilt_weighting:
+        if ctf_params_per_tilt is not None and len(ctf_params_per_tilt) == 1:
+            # with only single defocus, copy the params for each tilt
+            ctf_params_per_tilt = ctf_params_per_tilt * len(tilt_angles_rad)
         wedge = _create_tilt_weighted_wedge(
             shape,
             tilt_angles_rad,
@@ -322,6 +325,15 @@ def create_wedge(
                 (wedge_angles[0], wedge_angles[1]),
                 cut_off_radius
             ).astype(np.float32)
+        if ctf_params_per_tilt is not None:
+            # - take ctf params from approx. middle tilt as those are most accurate
+            # - in case list has 1 element we take that
+            ctf_params = ctf_params_per_tilt[len(ctf_params_per_tilt) // 2]
+            wedge *= create_ctf(
+                shape,
+                voxel_size * 1e-10,
+                **ctf_params,
+            )
 
     if not (low_pass is None and high_pass is None):
         return wedge * create_gaussian_band_pass(shape, voxel_size, low_pass, high_pass).astype(np.float32)
@@ -511,12 +523,7 @@ def _create_tilt_weighted_wedge(
                 create_ctf(
                     (image_size, ) * 2,
                     pixel_size_angstrom * 1e-10,
-                    ctf_params_per_tilt[i]['defocus'] * 1e-6,
-                    ctf_params_per_tilt[i]['amplitude'],
-                    ctf_params_per_tilt[i]['voltage'] * 1e3,
-                    ctf_params_per_tilt[i]['cs'] * 1e-3,
-                    flip_phase=True,  # creating per tilt ctf requires phase flip atm
-                    phase_shift_deg=ctf_params_per_tilt[i]['phase_shift_deg'],
+                    **ctf_params_per_tilt[i],
                 ), axes=0,
             )
             tilt[:, :, image_size // 2] = np.concatenate(
@@ -601,7 +608,6 @@ def create_ctf(
         `https://github.com/dtegunov/tom_deconv` except the ctf defintion in tom
         produces the inverse curve of what we have here
 
-
     Returns
     -------
     ctf: npt.NDArray[float]
@@ -637,8 +643,12 @@ def create_ctf(
         # filter the ctf with the cutoff frequency
         ctf[k > k_cutoff] = 0
 
-    if flip_phase:  # phase flip
+    if flip_phase:  # take absolute, ensures matching contrast
         ctf = np.abs(ctf)
+    else:  # multiply the ctf with -1 if we have overfocus, this allows the user to
+        # always match the contrast of the input template with the contrast of the
+        # tomogram: if the tomogram is black the reference should be black.
+        ctf *= (-1 if defocus > 0 else 1)
 
     return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
 

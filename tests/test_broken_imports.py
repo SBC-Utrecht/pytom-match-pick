@@ -65,7 +65,6 @@ class TestMissingDependencies(unittest.TestCase):
             
             # check if plotting is indeed disabled after reload
             # (reload is needed to prevent python import caching)
-            self.assertFalse(reload(pytom_tm.template).plotting_available)
             self.assertFalse(reload(pytom_tm.extract).plotting_available)
             # assert that importing the plotting module fails completely
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):
@@ -84,7 +83,6 @@ class TestMissingDependencies(unittest.TestCase):
             reload(pytom_tm)
             # check if plotting is indeed disabled
             # (reload is needed to prevent python import caching)
-            self.assertFalse(reload(pytom_tm.template).plotting_available)
             self.assertFalse(reload(pytom_tm.extract).plotting_available)
             # assert that importing the plotting module fails completely
             with self.assertRaisesRegex(RuntimeError, "matplotlib and seaborn"):

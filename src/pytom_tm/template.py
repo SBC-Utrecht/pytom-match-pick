@@ -5,26 +5,16 @@ import logging
 from scipy.ndimage import center_of_mass, zoom
 from scipy.fft import rfftn, irfftn
 from typing import Optional
-from pytom_tm.weights import create_ctf, create_gaussian_low_pass, radial_average
-
-plotting_available = True
-try:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    sns.set(context='talk', style='ticks')
-except ModuleNotFoundError:
-    plotting_available = False
+from pytom_tm.weights import create_gaussian_low_pass
 
 
 def generate_template_from_map(
         input_map: npt.NDArray[float],
         input_spacing: float,
         output_spacing: float,
-        ctf_params: Optional[dict] = None,
         center: bool = False,
         filter_to_resolution: Optional[float] = None,
         output_box_size: Optional[int] = None,
-        display_filter: bool = False
 ) -> npt.NDArray[float]:
     """Generate a template from a density map.
 
@@ -36,8 +26,6 @@ def generate_template_from_map(
         voxel size of input map (in A)
     output_spacing: float
         voxel size of output map (in A) the ratio of input to output will be used for downsampling
-    ctf_params: Optional[dict], default None
-        dictionary with CTF params to apply to the template, see pytom_tm.weights.create_ctf() for details
     center: bool, default False
         set to True to center the template in the box by calculating the center of mass
     filter_to_resolution: Optional[float], default None
@@ -98,23 +86,15 @@ def generate_template_from_map(
                       f'{np.round(input_center_of_mass, 2)} '
                       f'and after {np.round(center_of_mass(input_map), 2)}')
 
-    # create ctf function and low pass gaussian if desired
-    # for ctf the spacing of pixels/voxels needs to be in meters (not angstrom)
-    ctf = 1 if ctf_params is None else create_ctf(input_map.shape, **ctf_params).astype(np.float32)
-    lpf = create_gaussian_low_pass(input_map.shape, input_spacing, filter_to_resolution).astype(np.float32)
-
-    if display_filter and plotting_available:
-        q, average = radial_average(ctf * lpf)
-        fig, ax = plt.subplots()
-        ax.plot(q / len(q), average)
-        ax.set_xlabel('Fraction of Nyquist')
-        ax.set_ylabel('Contrast transfer')
-        plt.show()
-    elif display_filter and not plotting_available:
-        logging.info('Plotting not possible as matplotlib is not installed')
+    # create low pass filter
+    lpf = create_gaussian_low_pass(
+        input_map.shape,
+        input_spacing,
+        filter_to_resolution
+    ).astype(np.float32)
 
     logging.info('Convoluting volume with filter and then downsampling.')
     return zoom(
-        irfftn(rfftn(input_map) * ctf * lpf),
+        irfftn(rfftn(input_map) * lpf, s=input_map.shape),
         input_spacing / output_spacing
     )
