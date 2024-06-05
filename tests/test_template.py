@@ -9,6 +9,7 @@ class TestTemplate(unittest.TestCase):
         self.template = np.zeros((13, 13, 13), dtype=np.float32)
         self.template[2:5, 2:5, 7:9] = -1
         self.template[3:5, 3:5, 7:9] = 2
+        self.template_center = (6, 6, 6)
 
     def test_template_padding(self):
         uneven_box = np.zeros((13, 13, 7))
@@ -44,10 +45,10 @@ class TestTemplate(unittest.TestCase):
         )
         square_sum = np.square(new_template - self.template).sum()
         self.assertTrue(square_sum > 10, msg="Template didnt change after shift")
-        print(center_of_mass(self.template))
-        print(center_of_mass(self.template**2))
-        print(center_of_mass(new_template))
-        print(center_of_mass(new_template**2))
+        diff = np.array(center_of_mass(new_template**2)) - np.array(
+            self.template_center)
+        diff = np.abs(diff).sum()
+        self.assertTrue(diff < 1, msg="Total shift difference should be small")
 
     def test_lowpass_resolution(self):
         # Test too low filter resolution
