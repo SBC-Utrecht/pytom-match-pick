@@ -1,6 +1,7 @@
 import unittest
 import pathlib
 import numpy as np
+import logging
 from shutil import which
 from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
@@ -131,9 +132,11 @@ class TestEntryPoints(unittest.TestCase):
 
         # test debug files
         arguments = defaults.copy()
-        arguments['--log'] = 'debug'
+        start_level = logging.getLogger().level
+        logging.basicConfig(level=10, force=True)  # set to debug
         start(arguments)
         self.assertTrue(DESTINATION.joinpath('template_psf.mrc').exists(),
                         msg='File should exist in debug mode')
         self.assertTrue(DESTINATION.joinpath('template_convolved.mrc').exists(),
                         msg='File should exist in debug mode')
+        logging.basicConfig(level=start_level, force=True)  # reset the level
