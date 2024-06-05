@@ -82,7 +82,6 @@ class TestEntryPoints(unittest.TestCase):
 
     def test_match_template(self):
         defaults = {
-            # 'pytom_match_template.py': '',
             '-t': str(TEMPLATE),
             '-m': str(MASK),
             '-v': str(TOMOGRAM),
