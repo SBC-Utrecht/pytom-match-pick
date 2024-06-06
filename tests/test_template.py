@@ -1,12 +1,15 @@
 import unittest
 import numpy as np
 from pytom_tm.template import generate_template_from_map
+from scipy.ndimage import center_of_mass
 
 
 class TestTemplate(unittest.TestCase):
     def setUp(self):
         self.template = np.zeros((13, 13, 13), dtype=np.float32)
-        self.template[3:5, 3:5, 7:9] = 1
+        self.template[2:5, 2:5, 7:9] = -1
+        self.template[3:5, 3:5, 7:9] = 2
+        self.template_center = (6, 6, 6)
 
     def test_template_padding(self):
         uneven_box = np.zeros((13, 13, 7))
@@ -35,13 +38,27 @@ class TestTemplate(unittest.TestCase):
             self.template, 1, 1, center=False,
         )
         square_sum = np.square(new_template - self.template).sum()
-        self.assertTrue(square_sum < 1, msg="Template should not change strongly "
+        self.assertTrue(square_sum < 10, msg="Template should not change strongly "
                                             "without recentering.")
         new_template = generate_template_from_map(
             self.template, 1, 1, center=True,
         )
         square_sum = np.square(new_template - self.template).sum()
-        self.assertTrue(square_sum > 1, msg="Template didnt change after shift")
+        self.assertTrue(square_sum > 10, msg="Template didnt change after shift")
+        diff = np.array(center_of_mass(new_template**2)) - np.array(
+            self.template_center)
+        diff = np.abs(diff).sum()
+        self.assertTrue(diff < 1, msg="Total shift difference should be small")
+        # absolute of template should be identical due to square
+        abs_template = generate_template_from_map(
+            np.abs(self.template), 1, 1, center=True,
+        )
+        diff = (
+                np.array(center_of_mass(new_template ** 2)) -
+                np.array(center_of_mass(abs_template ** 2))
+        )
+        diff = np.abs(diff).sum()
+        self.assertTrue(diff < 1, msg="Absolute should provide exactly same center")
 
     def test_lowpass_resolution(self):
         # Test too low filter resolution

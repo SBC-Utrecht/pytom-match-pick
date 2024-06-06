@@ -59,11 +59,24 @@ def generate_template_from_map(
         logging.warning(warning_text)
         filter_to_resolution = 2 * output_spacing
 
+    if center:
+        volume_center = np.divide(np.subtract(input_map.shape, 1), 2, dtype=np.float32)
+        # square input to make values positive for center of mass
+        input_center_of_mass = center_of_mass(input_map ** 2)
+        shift = np.subtract(volume_center, input_center_of_mass)
+        input_map = vt.transform(input_map, translation=shift, device='cpu')
+
+        logging.debug(f'center of mass, before was '
+                      f'{np.round(input_center_of_mass, 2)} '
+                      f'and after {np.round(center_of_mass(input_map ** 2), 2)}')
+
     # extend volume to the desired output size before applying convolutions!
     if output_box_size is not None:
-        logging.debug(f'size check {output_box_size} > {(input_map.shape[0] * input_spacing) // output_spacing}')
+        logging.debug(
+            f'size check {output_box_size} > {(input_map.shape[0] * input_spacing) // output_spacing}')
         if output_box_size > (input_map.shape[0] * input_spacing) // output_spacing:
-            pad = int(output_box_size * (output_spacing / input_spacing)) - input_map.shape[0]
+            pad = (int(output_box_size * (output_spacing / input_spacing)) - 
+                   input_map.shape[0])
             logging.debug(f'pad with this number of zeros: {pad}')
             input_map = np.pad(
                 input_map,
@@ -71,20 +84,12 @@ def generate_template_from_map(
                 mode='constant',
                 constant_values=0
             )
-        elif output_box_size < (input_map.shape[0] * input_spacing) // output_spacing:
-            logging.warning('Could not set specified box size as the map would need to be cut and this might '
-                            'result in loss of information of the structure. Please decrease the box size of the map '
-                            'by hand (e.g. chimera)')
-
-    if center:
-        volume_center = np.divide(np.subtract(input_map.shape, 1), 2, dtype=np.float32)
-        input_center_of_mass = center_of_mass(input_map)
-        shift = np.subtract(volume_center, input_center_of_mass)
-        input_map = vt.transform(input_map, translation=shift, device='cpu')
-
-        logging.debug(f'center of mass, before was '
-                      f'{np.round(input_center_of_mass, 2)} '
-                      f'and after {np.round(center_of_mass(input_map), 2)}')
+        elif output_box_size < (
+                input_map.shape[0] * input_spacing) // output_spacing:
+            logging.warning(
+                'Could not set specified box size as the map would need to be cut and this might '
+                'result in loss of information of the structure. Please decrease the box size of the map '
+                'by hand (e.g. chimera)')
 
     # create low pass filter
     lpf = create_gaussian_low_pass(
