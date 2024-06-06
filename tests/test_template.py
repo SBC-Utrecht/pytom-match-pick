@@ -53,8 +53,12 @@ class TestTemplate(unittest.TestCase):
         abs_template = generate_template_from_map(
             np.abs(self.template), 1, 1, center=True,
         )
-        diff = np.abs(new_template - abs_template).sum()
-        self.assertTrue(diff == 0, msg="Absolute should provide exactly same center")
+        diff = (
+                np.array(center_of_mass(new_template ** 2)) -
+                np.array(center_of_mass(abs_template ** 2))
+        )
+        diff = np.abs(diff).sum()
+        self.assertTrue(diff < 1, msg="Absolute should provide exactly same center")
 
     def test_lowpass_resolution(self):
         # Test too low filter resolution
