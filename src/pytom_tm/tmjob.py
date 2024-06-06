@@ -65,6 +65,7 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
         # if version number is not in the .json, it must be 0.3.0 or older
         pytom_tm_version_number=data.get('pytom_tm_version_number', '0.3.0'),
         job_loaded_for_extraction=load_for_extraction,
+        particle_diameter=data.get('particle_diameter', None),
     )
     # if the file originates from an old version set the phase shift for compatibility
     if (
@@ -210,6 +211,7 @@ class TMJob:
             rotational_symmetry: int = 1,
             pytom_tm_version_number: str = PYTOM_TM_VERSION,
             job_loaded_for_extraction: bool = False,
+            particle_diameter: Optional[float] = None,
     ):
         """
         Parameters
@@ -262,6 +264,8 @@ class TMJob:
         job_loaded_for_extraction: bool, default False
             flag to set for finished template matching jobs that are loaded back for extraction, it prevents
             recalculation of the whitening filter which is unnecessary at this stage
+        particle_diameter: Optional[float], default None
+            particle diameter (in Angstrom) to calculate angular search
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -332,6 +336,13 @@ class TMJob:
         self.start_slice = 0
         self.steps_slice = 1
         self.rotational_symmetry = rotational_symmetry
+        self.particle_diameter = particle_diameter
+        # calculate increment from particle diameter
+        if angle_increment is None and particle_diameter is not None:
+            max_res = max(
+                2 * self.voxel_size, low_pass if low_pass is not None else 0
+            )
+            angle_increment = np.rad2deg(max_res / particle_diameter)
         self.rotation_file = angle_increment
         if job_loaded_for_extraction:
             log_level='DEBUG'
