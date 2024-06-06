@@ -75,8 +75,8 @@ def generate_template_from_map(
         logging.debug(
             f'size check {output_box_size} > {(input_map.shape[0] * input_spacing) // output_spacing}')
         if output_box_size > (input_map.shape[0] * input_spacing) // output_spacing:
-            pad = int(output_box_size * (output_spacing / input_spacing)) - \
-                  input_map.shape[0]
+            pad = (int(output_box_size * (output_spacing / input_spacing)) - 
+                   input_map.shape[0])
             logging.debug(f'pad with this number of zeros: {pad}')
             input_map = np.pad(
                 input_map,
