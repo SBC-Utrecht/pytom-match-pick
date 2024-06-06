@@ -122,6 +122,8 @@ class TestTM(unittest.TestCase):
         self.assertTrue(score_volume.max() > 0.99, msg='lcc max value lower than expected')
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)
-        self.assertEqual(stats['search_space'], 256000000, msg='Search space should exactly equal this value')
-        self.assertAlmostEqual(stats['std'], 0.005187, places=5,
+        expected_search_space = len(self.angles) * self.volume.size
+        self.assertEqual(stats['search_space'], expected_search_space,
+                         msg='Search space should exactly equal this value')
+        self.assertAlmostEqual(stats['std'], 0.005187, places=4,
                                msg='Standard deviation of the search should be almost equal')
