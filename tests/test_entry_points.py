@@ -142,7 +142,7 @@ class TestEntryPoints(unittest.TestCase):
 
         arguments = defaults.copy()
         arguments.pop('--angular-search')
-        arguments['--particle-diameter'] = '100'
+        arguments['--particle-diameter'] = '50'
         # set low-pass to tune the search to lower degree
         arguments['--low-pass'] = '50'
         start(arguments)
