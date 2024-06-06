@@ -49,6 +49,12 @@ class TestTemplate(unittest.TestCase):
             self.template_center)
         diff = np.abs(diff).sum()
         self.assertTrue(diff < 1, msg="Total shift difference should be small")
+        # absolute of template should be identical due to square
+        abs_template = generate_template_from_map(
+            np.abs(self.template), 1, 1, center=True,
+        )
+        diff = np.abs(new_template - abs_template).sum()
+        self.assertTrue(diff == 0, msg="Absolute should provide exactly same center")
 
     def test_lowpass_resolution(self):
         # Test too low filter resolution
