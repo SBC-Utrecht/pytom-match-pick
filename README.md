@@ -95,13 +95,22 @@ If you want the most up-to-date version of the code you can get install it from 
 ```commandline
 git clone https://github.com/SBC-Utrecht/pytom-match-pick.git
 cd pytom-match-pick
-python -m pip install '.[plotting]'
+python -m pip install '.[plotting,dev]'
 ```
 
 as above, if you don't want the optional plotting dependencies use the following install command instead:
 ```commandline
-python -m pip install .
+python -m pip install '.[dev]'
 ```
+
+For development, please also install pre-commit to check and autostyle the code before 
+you make PRs: 
+
+```commandline
+pre-commit install
+```
+
+This uses Ruff to check and format whenever you make commits. 
 
 ## Tests
 
