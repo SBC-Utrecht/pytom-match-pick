@@ -352,7 +352,8 @@ class TMJob:
         else:
             log_level='INFO'
         try:
-            angle_list = get_angle_list(angle_increment, sort_angles=False, log_level=log_level)
+            angle_list = get_angle_list(angle_increment, sort_angles=False, 
+                    symmetry=rotational_symmetry, log_level=log_level)
         except (ValueError):
             raise TMJobError('Invalid angular search provided.')
 
@@ -716,16 +717,17 @@ class TMJob:
         # load rotation search
         angle_ids = list(range(
             self.start_slice,
-            int(np.ceil(self.n_rotations / self.rotational_symmetry)),
+            self.n_rotations,
             self.steps_slice
         ))
         angle_list = get_angle_list(self.rotation_file,
                 sort_angles=version.parse(self.pytom_tm_version_number) > version.parse('0.3.0')
+                symmetry = self.rotational_symmetry
                 )
 
         angle_list = angle_list[slice(
             self.start_slice,
-            int(np.ceil(self.n_rotations / self.rotational_symmetry)),
+            self.n_rotations,
             self.steps_slice
         )]
 
