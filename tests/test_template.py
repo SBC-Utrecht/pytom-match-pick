@@ -86,3 +86,10 @@ class TestTemplate(unittest.TestCase):
             msg='After phase randomization the template should '
                 'no longer be equal to the input.'
         )
+
+        randomized_seeded = phase_randomize_template(
+            self.template, 11  # use default seed
+        )
+        diff = np.abs(randomized_seeded - randomized).sum()
+        self.assertEqual(diff, 0, msg='Different seed should return different '
+                                      'randomization')
