@@ -556,11 +556,24 @@ def match_template(argv=None):
     )
     rotation_group = parser.add_argument_group('Angular search')
     rotation_group.add_argument(
+        "--particle-diameter",
+        type=float,
+        required=False,
+        action=LargerThanZero,
+        help="Provide a particle diameter (in Angstrom) to automatically determine the "
+             "angular sampling using the Crowther criterion. For the max resolution, "
+             "(2 * pixel size) is used unless a low-pass filter is specified, "
+             "in which case the low-pass resolution is used. For non-globular "
+             "macromolecules choose the diameter along the longest axis.",
+    )
+    rotation_group.add_argument(
         "--angular-search",
         type=str,
-        required=True,
-        help="If given a float it will generate an angle list with healpix for Z1 and X1 "
-             "and linear search for Z2. The provided angle will be used as the maximum for the "
+        required=False,
+        help="This option overrides the angular search calculation from the particle "
+             "diameter. If given a float it will generate an angle list with healpix "
+             "for Z1 and X1 and linear search for Z2. The provided angle will be used "
+             "as the maximum for the "
              "linear search and for the mean angle difference from healpix.\n"
              "Alternatively, a .txt file can be provided with three Euler angles "
              "(in radians) per line that define the angular search. "
@@ -793,6 +806,12 @@ def match_template(argv=None):
             for defocus in args.defocus
         ]
 
+    if args.angular_search is None and args.particle_diameter is None:
+        raise ValueError(
+            'Either the angular search should be specifically set or a particle '
+            'diameter should be provided to infer the angular search!'
+        )
+
     job = TMJob(
         "0",
         args.log,
@@ -816,6 +835,7 @@ def match_template(argv=None):
         ctf_data=ctf_params,
         whiten_spectrum=args.spectral_whitening,
         rotational_symmetry=args.z_axis_rotational_symmetry,
+        particle_diameter=args.particle_diameter,
     )
 
     score_volume, angle_volume = run_job_parallel(
