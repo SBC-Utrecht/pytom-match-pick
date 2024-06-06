@@ -798,7 +798,7 @@ def match_template(argv=None):
             for defocus in args.defocus
         ]
 
-    if args.angular_search is None or args.particle_diameter is None:
+    if args.angular_search is None and args.particle_diameter is None:
         raise ValueError(
             'Either the angular search should be specifically set or a particle '
             'diameter should be provided to infer the angular search!'
