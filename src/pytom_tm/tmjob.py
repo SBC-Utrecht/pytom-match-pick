@@ -721,7 +721,7 @@ class TMJob:
             self.steps_slice
         ))
         angle_list = get_angle_list(self.rotation_file,
-                sort_angles=version.parse(self.pytom_tm_version_number) > version.parse('0.3.0')
+                sort_angles=version.parse(self.pytom_tm_version_number) > version.parse('0.3.0'),
                 symmetry = self.rotational_symmetry
                 )
 
