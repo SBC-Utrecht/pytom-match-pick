@@ -91,5 +91,5 @@ class TestTemplate(unittest.TestCase):
             self.template, 11  # use default seed
         )
         diff = np.abs(randomized_seeded - randomized).sum()
-        self.assertEqual(diff, 0, msg='Different seed should return different '
-                                      'randomization')
+        self.assertNotEqual(diff, 0,
+                            msg='Different seed should return different randomization')
