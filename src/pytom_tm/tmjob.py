@@ -195,7 +195,7 @@ class TMJob:
             template: pathlib.Path,
             mask: pathlib.Path,
             output_dir: pathlib.Path,
-            angle_increment: Union[str, float] = 7.00,
+            angle_increment: Optional[Union[str, float]] = None,
             mask_is_spherical: bool = True,
             tilt_angles: Optional[list[float, ...]] = None,
             tilt_weighting: bool = False,
@@ -338,11 +338,14 @@ class TMJob:
         self.rotational_symmetry = rotational_symmetry
         self.particle_diameter = particle_diameter
         # calculate increment from particle diameter
-        if angle_increment is None and particle_diameter is not None:
-            max_res = max(
-                2 * self.voxel_size, low_pass if low_pass is not None else 0
-            )
-            angle_increment = np.rad2deg(max_res / particle_diameter)
+        if angle_increment is None:
+            if particle_diameter is not None:
+                max_res = max(
+                    2 * self.voxel_size, low_pass if low_pass is not None else 0
+                )
+                angle_increment = np.rad2deg(max_res / particle_diameter)
+            else:
+                angle_increment = 7.
         self.rotation_file = angle_increment
         if job_loaded_for_extraction:
             log_level='DEBUG'
