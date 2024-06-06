@@ -548,11 +548,24 @@ def match_template(argv=None):
     )
     rotation_group = parser.add_argument_group('Angular search')
     rotation_group.add_argument(
+        "--particle-diameter",
+        type=float,
+        required=True,
+        action=LargerThanZero,
+        help="Provide a particle diameter to automatically determine the ideal "
+             "angular sampling using the Crowther criterion. For the max resolution "
+             "the pixel size is used unless a low-pass filter is specified, in which "
+             "the low-pass resolution is used. For non-globular macromolecules choose "
+             "the diameter along the longest axis.",
+    )
+    rotation_group.add_argument(
         "--angular-search",
         type=str,
         required=True,
-        help="If given a float it will generate an angle list with healpix for Z1 and X1 "
-             "and linear search for Z2. The provided angle will be used as the maximum for the "
+        help="This option overrides the angular search calculation from the particle "
+             "diameter. If given a float it will generate an angle list with healpix "
+             "for Z1 and X1 and linear search for Z2. The provided angle will be used "
+             "as the maximum for the "
              "linear search and for the mean angle difference from healpix.\n"
              "Alternatively, a .txt file can be provided with three Euler angles "
              "(in radians) per line that define the angular search. "
