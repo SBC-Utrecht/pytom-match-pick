@@ -561,10 +561,10 @@ def match_template(argv=None):
         required=False,
         action=LargerThanZero,
         help="Provide a particle diameter (in Angstrom) to automatically determine the "
-             "angular sampling using the Crowther criterion. For the max resolution "
-             "the pixel size is used unless a low-pass filter is specified, in which "
-             "the low-pass resolution is used. For non-globular macromolecules choose "
-             "the diameter along the longest axis.",
+             "angular sampling using the Crowther criterion. For the max resolution, "
+             "(2 * pixel size) is used unless a low-pass filter is specified, "
+             "in which case the low-pass resolution is used. For non-globular "
+             "macromolecules choose the diameter along the longest axis.",
     )
     rotation_group.add_argument(
         "--angular-search",
