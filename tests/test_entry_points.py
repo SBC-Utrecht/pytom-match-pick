@@ -133,6 +133,20 @@ class TestEntryPoints(unittest.TestCase):
             arguments.pop('--voltage')
             start(arguments)
 
+        # test angular search and particle diameter options
+        with self.assertRaises(ValueError, msg='Missing angular search should raise '
+                                               'an error.'):
+            arguments = defaults.copy()
+            arguments.pop('--angular-search')
+            start(arguments)
+
+        arguments = defaults.copy()
+        arguments.pop('--angular-search')
+        arguments['--particle-diameter'] = '100'
+        # set low-pass to tune the search to lower degree
+        arguments['--low-pass'] = '50'
+        start(arguments)
+
         # test debug files
         arguments = defaults.copy()
         arguments['--log'] = 'debug'
