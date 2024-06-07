@@ -76,7 +76,7 @@ def load_angle_list(file_name: pathlib.Path, sort_angles: bool = True) -> list[t
         angle_list.sort()  # angle list needs to be sorted otherwise symmetry reduction cannot be used!
     return angle_list
 
-def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, log_level: str = 'DEBUG'):
+def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, symmetry: int = 1, log_level: str = 'DEBUG'):
     """Either get an angular search file from disk or generate one from a float
 
     Parameters
@@ -88,6 +88,8 @@ def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, 
           maximum difference (in degrees) for the angle list
     sort_angles: bool, default True
         sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+    symmetry: int, default 1
+        the returned list will only have Z2 angles [0, (2*pi/symmetry))
     log_level: str, default 'DEBUG'
         the log level to use when generating logs
 
@@ -97,6 +99,8 @@ def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, 
         a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in radians
     """
     log_level = logging.getLevelNamesMapping()[log_level]
+    out = None
+    max_z2 = 2*np.pi/symmetry
     try:
         angle = float(angle)
         angle_is_float = True
@@ -106,14 +110,16 @@ def get_angle_list(angle: Union[pathlib.Path, float], sort_angles: bool = True, 
         logging.log(log_level, 
                 f"Will generate an angle list with a maximum increment of {angle}"
                 )
-        return angle_to_angle_list(angle, sort_angles, log_level)
-    if isinstance(angle, (str, os.PathLike)):
+        out = angle_to_angle_list(angle, sort_angles, log_level)
+    elif isinstance(angle, (str, os.PathLike)):
         possible_file_path = pathlib.Path(angle)
         if possible_file_path.exists() and possible_file_path.suffix == '.txt':
             logging.log(log_level, "Custom file provided for the angular search. Checking if it can be read...")
-            return load_angle_list(angle, sort_angles)
-    # If no return is hit by now, error out
-    raise ValueError("Invalid angle input provided")
+            out = load_angle_list(angle, sort_angles)
+
+    if out is None: # If no angles by now, error out
+        raise ValueError("Invalid angle input provided")
+    return [i for i in out if i[2] < max_z2]
 
 
 def convert_euler(
