@@ -261,28 +261,7 @@ class TemplateMatchingGPU:
                 rotation_units='rad'
             )
 
-            if self.plan.wedge is not None:
-                # Add wedge to the template after rotating
-                self.plan.template = irfftn(
-                    rfftn(self.plan.template) * self.plan.wedge,
-                    s=self.plan.template.shape
-                )
-
-            # Normalize and mask template
-            mean = mean_under_mask(self.plan.template, self.plan.mask, mask_weight=self.plan.mask_weight)
-            std = std_under_mask(self.plan.template, self.plan.mask, mean, mask_weight=self.plan.mask_weight)
-            self.plan.template = ((self.plan.template - mean) / std) * self.plan.mask
-
-            # Paste in center
-            self.plan.template_padded[pad_index] = self.plan.template
-
-            # Fast local correlation function between volume and template, norm is the standard deviation at each
-            # point in the volume in the masked area
-            self.plan.ccc_map = (
-                irfftn(self.plan.volume_rft_conj * rfftn(self.plan.template_padded),
-                       s=self.plan.template_padded.shape)
-                / self.plan.std_volume
-            )
+            self.correlate(pad_index)
 
             # Update the scores and angle_lists
             update_results_kernel(
@@ -306,28 +285,8 @@ class TemplateMatchingGPU:
                     rotation_units='rad'
                 )
 
-                if self.plan.wedge is not None:
-                    # Add wedge to the template after rotating
-                    self.plan.template = irfftn(
-                        rfftn(self.plan.template) * self.plan.wedge,
-                        s=self.plan.template.shape
-                    )
+                self.correlate(pad_index)
 
-                # Normalize and mask template
-                mean = mean_under_mask(self.plan.template, self.plan.mask, mask_weight=self.plan.mask_weight)
-                std = std_under_mask(self.plan.template, self.plan.mask, mean, mask_weight=self.plan.mask_weight)
-                self.plan.template = ((self.plan.template - mean) / std) * self.plan.mask
-
-                # Paste in center
-                self.plan.template_padded[pad_index] = self.plan.template
-
-                # Fast local correlation function between volume and template, norm is the standard deviation at each
-                # point in the volume in the masked area
-                self.plan.ccc_map = (
-                        irfftn(self.plan.volume_rft_conj * rfftn(self.plan.template_padded),
-                               s=self.plan.template_padded.shape)
-                        / self.plan.std_volume
-                )
                 # update noise scores results
                 update_noise_template_results_kernel(
                     self.plan.noise_scores,
@@ -362,6 +321,39 @@ class TemplateMatchingGPU:
         self.plan.clean()
 
         return results
+
+    def correlate(self, padding_index: tuple[slice, slice, slice]):
+        """Correlate template and tomogram.
+
+        Parameters
+        ----------
+        padding_index: tuple[slice, slice, slice]
+            Location to pad template after weighting and normalization
+        """
+        if self.plan.wedge is not None:
+            # Add wedge to the template after rotating
+            self.plan.template = irfftn(
+                rfftn(self.plan.template) * self.plan.wedge,
+                s=self.plan.template.shape
+            )
+
+        # Normalize and mask template
+        mean = mean_under_mask(self.plan.template, self.plan.mask,
+                               mask_weight=self.plan.mask_weight)
+        std = std_under_mask(self.plan.template, self.plan.mask, mean,
+                             mask_weight=self.plan.mask_weight)
+        self.plan.template = ((self.plan.template - mean) / std) * self.plan.mask
+
+        # Paste in center
+        self.plan.template_padded[padding_index] = self.plan.template
+
+        # Fast local correlation function between volume and template, norm is the standard deviation at each
+        # point in the volume in the masked area
+        self.plan.ccc_map = (
+                irfftn(self.plan.volume_rft_conj * rfftn(self.plan.template_padded),
+                       s=self.plan.template_padded.shape)
+                / self.plan.std_volume
+        )
 
 
 def std_under_mask_convolution(
