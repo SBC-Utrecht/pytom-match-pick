@@ -20,6 +20,7 @@ from pytom_tm.io import (
     BetweenZeroAndOne,
 )
 from pytom_tm.tmjob import load_json_to_tmjob
+from os import urandom
 
 
 def _parse_argv(argv=None):
@@ -771,7 +772,7 @@ def match_template(argv=None):
     additional_group.add_argument(
         "--rng-seed",
         action=LargerThanZero,
-        default=321,
+        default=int.from_bytes(urandom(8)),
         required=False,
         help="Specify a seed for the random number generator used for phase "
              "randomization for consistent results!"
