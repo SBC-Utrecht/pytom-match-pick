@@ -5,7 +5,12 @@ import logging
 from scipy.ndimage import center_of_mass, zoom
 from scipy.fft import rfftn, irfftn
 from typing import Optional
-from pytom_tm.weights import create_gaussian_low_pass
+from pytom_tm.weights import (
+    create_ctf,
+    create_gaussian_low_pass,
+    radial_average,
+    radial_reduced_grid,
+)
 
 
 def generate_template_from_map(
@@ -103,3 +108,43 @@ def generate_template_from_map(
         irfftn(rfftn(input_map) * lpf, s=input_map.shape),
         input_spacing / output_spacing
     )
+
+
+def phase_randomize_template(
+        template: npt.NDArray[float],
+        seed: int = 321,
+):
+    """Create a version of the template that has its phases randomly
+    permuted in Fourier space.
+
+    Parameters
+    ----------
+    template: npt.NDArray[float]
+        input structure
+    seed: int, default 321
+        seed for random number generator for phase permutation
+
+    Returns
+    -------
+    result: npt.NDArray[float]
+        phase randomized version of the template
+    """
+    ft = rfftn(template)
+    amplitude = np.abs(ft)
+
+    # permute the phases in flattened version of the array
+    phase = np.angle(ft).flatten()
+    grid = np.fft.ifftshift(
+        radial_reduced_grid(template.shape), axes=(0, 1)
+    ).flatten()
+    relevant_freqs = grid <= 1  # permute only up to Nyquist
+    noise = np.zeros_like(phase)
+    rng = np.random.default_rng(seed)
+    noise[relevant_freqs] = rng.permutation(phase[relevant_freqs])
+
+    # construct the new template
+    noise = np.reshape(noise, amplitude.shape)
+    result = irfftn(
+        amplitude * np.exp(1j * noise), s=template.shape
+    )
+    return result

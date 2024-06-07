@@ -1,7 +1,9 @@
 import unittest
 import numpy as np
-from pytom_tm.template import generate_template_from_map
 from scipy.ndimage import center_of_mass
+from pytom_tm.template import (
+    generate_template_from_map, phase_randomize_template
+)
 
 
 class TestTemplate(unittest.TestCase):
@@ -73,3 +75,21 @@ class TestTemplate(unittest.TestCase):
         with self.assertNoLogs(level='WARNING'):
             _ = generate_template_from_map(self.template, 1., 1.,
                                            filter_to_resolution=2.5)
+
+    def test_phase_randomize_template(self):
+        randomized = phase_randomize_template(
+            self.template,  # use default seed
+        )
+        self.assertEqual(self.template.shape, randomized.shape)
+        self.assertGreater(
+            (self.template != randomized).sum(), 0,
+            msg='After phase randomization the template should '
+                'no longer be equal to the input.'
+        )
+
+        randomized_seeded = phase_randomize_template(
+            self.template, 11  # use default seed
+        )
+        diff = np.abs(randomized_seeded - randomized).sum()
+        self.assertNotEqual(diff, 0,
+                            msg='Different seed should return different randomization')

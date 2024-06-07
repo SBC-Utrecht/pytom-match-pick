@@ -4,10 +4,10 @@ import numpy.typing as npt
 import voltools as vt
 import gc
 from typing import Optional
-from cupyx.scipy.fft import rfftn, irfftn, fftshift
+from cupyx.scipy.fft import rfftn, irfftn
 from tqdm import tqdm
 from pytom_tm.correlation import mean_under_mask, std_under_mask
-from packaging import version
+from pytom_tm.template import phase_randomize_template
 
 
 class TemplateMatchingPlan:
@@ -17,7 +17,8 @@ class TemplateMatchingPlan:
             template: npt.NDArray[float],
             mask: npt.NDArray[float],
             device_id: int,
-            wedge: Optional[npt.NDArray[float]] = None
+            wedge: Optional[npt.NDArray[float]] = None,
+            phase_randomized_template: Optional[npt.NDArray[float]] = None,
     ):
         """Initialize a template matching plan. All the necessary cupy arrays will be allocated on the GPU.
 
@@ -34,6 +35,8 @@ class TemplateMatchingPlan:
         wedge: Optional[npt.NDArray[float]], default None
             3D numpy array that contains the Fourier space weighting for the template, it should be in Fourier
             reduced form, with dimensions (sx, sx, sx // 2 + 1)
+        phase_randomized_template: Optional[npt.NDArray[float]], default None
+            initialize the plan with a phase randomized version of the template for noise correction
         """
         # Search volume + and fft transform plan for the volume
         volume_shape = volume.shape
@@ -65,6 +68,16 @@ class TemplateMatchingPlan:
         self.scores = cp.ones(volume_shape, dtype=cp.float32)*-1000
         self.angles = cp.ones(volume_shape, dtype=cp.float32)*-1000
 
+        self.random_phase_template_texture = None
+        self.noise_scores = None
+        if phase_randomized_template is not None:
+            self.random_phase_template_texture = vt.StaticVolume(
+                cp.asarray(phase_randomized_template, dtype=cp.float32, order='C'),
+                interpolation='filt_bspline',
+                device=f'gpu:{device_id}',
+            )
+            self.noise_scores = cp.ones(volume_shape, dtype=cp.float32)*-1000
+
         # wait for stream to complete the work
         cp.cuda.stream.get_current_stream().synchronize()
 
@@ -92,7 +105,9 @@ class TemplateMatchingGPU:
             angle_ids: list[int],
             mask_is_spherical: bool = True,
             wedge: Optional[npt.NDArray[float]] = None,
-            stats_roi: Optional[tuple[slice, slice, slice]] = None
+            stats_roi: Optional[tuple[slice, slice, slice]] = None,
+            noise_correction: bool = False,
+            rng_seed: int = 321,
     ):
         """Initialize a template matching run.
 
@@ -101,7 +116,8 @@ class TemplateMatchingGPU:
         - pyTME: https://github.com/KosinskiLab/pyTME
 
         The precalculation of conjugated FTs of the tomo was (AFAIK) introduced
-        by STOPGAP!
+        by STOPGAP! Also, they introduced simultaneous matching with a phase randomized
+        version of the template. https://doi.org/10.1107/S205979832400295X
 
         Parameters
         ----------
@@ -127,6 +143,11 @@ class TemplateMatchingGPU:
         stats_roi: Optional[tuple[slice, slice, slice]], default None
             region of interest to calculate statistics on the search volume, default will just take the full search
             volume
+        noise_correction: bool, default False
+            initialize template matching with a phase randomized version of the template that is used to subtract
+            background noise from the score map; expense is more gpu memory and computation time
+        rng_seed: int, default 321
+            seed for rng in phase randomization
         """
         cp.cuda.Device(device_id).use()
 
@@ -146,8 +167,22 @@ class TemplateMatchingGPU:
             )
         else:
             self.stats_roi = stats_roi
+        self.noise_correction = noise_correction
 
-        self.plan = TemplateMatchingPlan(volume, template, mask, device_id, wedge=wedge)
+        # create a 'random noise' version of the template
+        shuffled_template = (
+            phase_randomize_template(template, rng_seed)
+            if noise_correction else None
+        )
+
+        self.plan = TemplateMatchingPlan(
+            volume,
+            template,
+            mask,
+            device_id,
+            wedge=wedge,
+            phase_randomized_template=shuffled_template,
+        )
 
     def run(self) -> tuple[npt.NDArray[float], npt.NDArray[float], dict]:
         """Run the template matching job.
@@ -226,28 +261,7 @@ class TemplateMatchingGPU:
                 rotation_units='rad'
             )
 
-            if self.plan.wedge is not None:
-                # Add wedge to the template after rotating
-                self.plan.template = irfftn(
-                    rfftn(self.plan.template) * self.plan.wedge,
-                    s=self.plan.template.shape
-                )
-
-            # Normalize and mask template
-            mean = mean_under_mask(self.plan.template, self.plan.mask, mask_weight=self.plan.mask_weight)
-            std = std_under_mask(self.plan.template, self.plan.mask, mean, mask_weight=self.plan.mask_weight)
-            self.plan.template = ((self.plan.template - mean) / std) * self.plan.mask
-
-            # Paste in center
-            self.plan.template_padded[pad_index] = self.plan.template
-
-            # Fast local correlation function between volume and template, norm is the standard deviation at each
-            # point in the volume in the masked area
-            self.plan.ccc_map = (
-                irfftn(self.plan.volume_rft_conj * rfftn(self.plan.template_padded),
-                       s=self.plan.template_padded.shape)
-                / self.plan.std_volume
-            )
+            self.correlate(pad_index)
 
             # Update the scores and angle_lists
             update_results_kernel(
@@ -260,6 +274,31 @@ class TemplateMatchingGPU:
 
             self.stats['variance'] += (
                 square_sum_kernel(self.plan.ccc_map * roi_mask) / roi_size
+            )
+
+            if self.noise_correction:
+                # Rotate noise template texture into template
+                self.plan.random_phase_template_texture.transform(
+                    rotation=(rotation[0], rotation[1], rotation[2]),
+                    rotation_order='rzxz',
+                    output=self.plan.template,
+                    rotation_units='rad'
+                )
+
+                self.correlate(pad_index)
+
+                # update noise scores results
+                update_noise_template_results_kernel(
+                    self.plan.noise_scores,
+                    self.plan.ccc_map,
+                    self.plan.noise_scores,
+                )
+
+        # do the noise correction on the scores map: substract the noise scores first,
+        # and then add the noise mean to ensure stats are consistent
+        if self.noise_correction:
+            self.plan.scores = (
+                (self.plan.scores - self.plan.noise_scores) + self.plan.noise_scores.mean()
             )
 
         # Get correct orientation back!
@@ -282,6 +321,39 @@ class TemplateMatchingGPU:
         self.plan.clean()
 
         return results
+
+    def correlate(self, padding_index: tuple[slice, slice, slice]):
+        """Correlate template and tomogram.
+
+        Parameters
+        ----------
+        padding_index: tuple[slice, slice, slice]
+            Location to pad template after weighting and normalization
+        """
+        if self.plan.wedge is not None:
+            # Add wedge to the template after rotating
+            self.plan.template = irfftn(
+                rfftn(self.plan.template) * self.plan.wedge,
+                s=self.plan.template.shape
+            )
+
+        # Normalize and mask template
+        mean = mean_under_mask(self.plan.template, self.plan.mask,
+                               mask_weight=self.plan.mask_weight)
+        std = std_under_mask(self.plan.template, self.plan.mask, mean,
+                             mask_weight=self.plan.mask_weight)
+        self.plan.template = ((self.plan.template - mean) / std) * self.plan.mask
+
+        # Paste in center
+        self.plan.template_padded[padding_index] = self.plan.template
+
+        # Fast local correlation function between volume and template, norm is the standard deviation at each
+        # point in the volume in the masked area
+        self.plan.ccc_map = (
+                irfftn(self.plan.volume_rft_conj * rfftn(self.plan.template_padded),
+                       s=self.plan.template_padded.shape)
+                / self.plan.std_volume
+        )
 
 
 def std_under_mask_convolution(
@@ -321,10 +393,19 @@ def std_under_mask_convolution(
 
 """Update scores and angles if a new maximum is found."""
 update_results_kernel = cp.ElementwiseKernel(
-    'float32 scores, float32 ccc_map, float32 angle_id',
-    'float32 out1, float32 out2',
-    'if (scores < ccc_map) {out1 = ccc_map; out2 = angle_id;}',
+    'float32 scores, float32 ccc_map, float32 angles',
+    'float32 scores_out, float32 angles_out',
+    'if (scores < ccc_map) {scores_out = ccc_map; angles_out = angles;}',
     'update_results'
+)
+
+
+"""Update scores for noise template"""
+update_noise_template_results_kernel = cp.ElementwiseKernel(
+    'float32 scores, float32 ccc_map',
+    'float32 scores_out',
+    'if (scores < ccc_map) {scores_out = ccc_map;}',
+    'update_noise_template_results'
 )
 
 

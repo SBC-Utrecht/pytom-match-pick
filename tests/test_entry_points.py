@@ -147,6 +147,11 @@ class TestEntryPoints(unittest.TestCase):
         arguments['--low-pass'] = '50'
         start(arguments)
 
+        # phase randomization test
+        arguments = defaults.copy()
+        arguments['-r'] = ''
+        start(arguments)
+
         # test debug files
         arguments = defaults.copy()
         arguments['--log'] = 'debug'
