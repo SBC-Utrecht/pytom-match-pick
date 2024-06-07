@@ -129,7 +129,7 @@ def phase_randomize_template(
     result: npt.NDArray[float]
         phase randomized version of the template
     """
-    ft = np.fft.rfftn(template)
+    ft = rfftn(template)
     amplitude = np.abs(ft)
 
     # permute the phases in flattened version of the array
