@@ -117,7 +117,7 @@ class TemplateMatchingGPU:
 
         The precalculation of conjugated FTs of the tomo was (AFAIK) introduced
         by STOPGAP! Also, they introduced simultaneous matching with a phase randomized
-        version of the template.
+        version of the template. https://doi.org/10.1107/S205979832400295X
 
         Parameters
         ----------

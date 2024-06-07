@@ -144,7 +144,7 @@ def phase_randomize_template(
 
     # construct the new template
     noise = np.reshape(noise, amplitude.shape)
-    result = np.fft.irfftn(
+    result = irfftn(
         amplitude * np.exp(1j * noise), s=template.shape
     )
     return result
