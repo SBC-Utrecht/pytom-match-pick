@@ -1,7 +1,6 @@
 from __future__ import annotations
 from packaging import version
 import pathlib
-import os
 import warnings
 import copy
 import itertools as itt
@@ -10,16 +9,22 @@ import numpy.typing as npt
 import json
 import logging
 from typing import Optional, Union
-from functools import reduce
 from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import get_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
-from pytom_tm.weights import create_wedge, power_spectrum_profile, profile_to_weighting, create_gaussian_band_pass
+from pytom_tm.weights import (
+    create_wedge,
+    power_spectrum_profile,
+    profile_to_weighting,
+    create_gaussian_band_pass,
+)
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm import __version__ as PYTOM_TM_VERSION
 
 
-def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True) -> TMJob:
+def load_json_to_tmjob(
+    file_name: pathlib.Path, load_for_extraction: bool = True
+) -> TMJob:
     """Load a previous job that was stored with TMJob.write_to_json().
 
     Parameters
@@ -35,153 +40,158 @@ def load_json_to_tmjob(file_name: pathlib.Path, load_for_extraction: bool = True
     job: TMJob
         initialized TMJob
     """
-    with open(file_name, 'r') as fstream:
+    with open(file_name, "r") as fstream:
         data = json.load(fstream)
 
-
     job = TMJob(
-        data['job_key'],
-        data['log_level'],
-        pathlib.Path(data['tomogram']),
-        pathlib.Path(data['template']),
-        pathlib.Path(data['mask']),
-        pathlib.Path(data['output_dir']),
-        angle_increment=data.get('angle_increment', data['rotation_file']),
-        mask_is_spherical=data['mask_is_spherical'],
-        tilt_angles=data['tilt_angles'],
-        tilt_weighting=data['tilt_weighting'],
-        search_x=data['search_x'],
-        search_y=data['search_y'],
-        search_z=data['search_z'],
-        voxel_size=data['voxel_size'],
-        low_pass=data['low_pass'],
+        data["job_key"],
+        data["log_level"],
+        pathlib.Path(data["tomogram"]),
+        pathlib.Path(data["template"]),
+        pathlib.Path(data["mask"]),
+        pathlib.Path(data["output_dir"]),
+        angle_increment=data.get("angle_increment", data["rotation_file"]),
+        mask_is_spherical=data["mask_is_spherical"],
+        tilt_angles=data["tilt_angles"],
+        tilt_weighting=data["tilt_weighting"],
+        search_x=data["search_x"],
+        search_y=data["search_y"],
+        search_z=data["search_z"],
+        voxel_size=data["voxel_size"],
+        low_pass=data["low_pass"],
         # Use 'get' for backwards compatibility
-        high_pass=data.get('high_pass', None),
-        dose_accumulation=data.get('dose_accumulation', None),
-        ctf_data=data.get('ctf_data', None),
-        whiten_spectrum=data.get('whiten_spectrum', False),
-        rotational_symmetry=data.get('rotational_symmetry', 1),
+        high_pass=data.get("high_pass", None),
+        dose_accumulation=data.get("dose_accumulation", None),
+        ctf_data=data.get("ctf_data", None),
+        whiten_spectrum=data.get("whiten_spectrum", False),
+        rotational_symmetry=data.get("rotational_symmetry", 1),
         # if version number is not in the .json, it must be 0.3.0 or older
-        pytom_tm_version_number=data.get('pytom_tm_version_number', '0.3.0'),
+        pytom_tm_version_number=data.get("pytom_tm_version_number", "0.3.0"),
         job_loaded_for_extraction=load_for_extraction,
-        particle_diameter=data.get('particle_diameter', None),
-        random_phase_correction=data.get('random_phase_correction', False),
-        rng_seed=data.get('rng_seed', 321),
+        particle_diameter=data.get("particle_diameter", None),
+        random_phase_correction=data.get("random_phase_correction", False),
+        rng_seed=data.get("rng_seed", 321),
     )
     # if the file originates from an old version set the phase shift for compatibility
     if (
-        version.parse(job.pytom_tm_version_number) < version.parse('0.6.1') and
-        job.ctf_data is not None
+        version.parse(job.pytom_tm_version_number) < version.parse("0.6.1")
+        and job.ctf_data is not None
     ):
         for tilt in job.ctf_data:
-            tilt['phase_shift_deg'] = .0
-    job.whole_start = data['whole_start']
-    job.sub_start = data['sub_start']
-    job.sub_step = data['sub_step']
-    job.n_rotations = data['n_rotations']
-    job.start_slice = data['start_slice']
-    job.steps_slice = data['steps_slice']
-    job.job_stats = data['job_stats']
+            tilt["phase_shift_deg"] = 0.0
+    job.whole_start = data["whole_start"]
+    job.sub_start = data["sub_start"]
+    job.sub_step = data["sub_step"]
+    job.n_rotations = data["n_rotations"]
+    job.start_slice = data["start_slice"]
+    job.steps_slice = data["steps_slice"]
+    job.job_stats = data["job_stats"]
     return job
 
 
-def _determine_1D_fft_splits(length: int, splits: int, overhang: int = 0) -> list[tuple[tuple[int, int], tuple[int,int]]]:
-        """Split a 1D length into FFT optimal sizes taking into account overhangs
+def _determine_1D_fft_splits(
+    length: int, splits: int, overhang: int = 0
+) -> list[tuple[tuple[int, int], tuple[int, int]]]:
+    """Split a 1D length into FFT optimal sizes taking into account overhangs
 
-        Parameters
-        ----------
-        length: int
-            Total 1D length to split 
-        splits: int
-            Number of splits to make
-        overhang: int, default 0
-            Minimal overhang/overlap to consider between splits
+    Parameters
+    ----------
+    length: int
+        Total 1D length to split
+    splits: int
+        Number of splits to make
+    overhang: int, default 0
+        Minimal overhang/overlap to consider between splits
 
-        Returns
-        -------
-        output: list[tuple[tuple[int, int], tuple[int,int]]]:
-            A list splits where every split gets two tuples meaning:
-              [start, end) of the tomogram data in this split
-              [start, end) of the unique datapoints in this split
-            If a datapoint exists in 2 splits, we add it as unique to 
-            either the split with the most data or the left one if both 
-            splits have the same size
-        """
-        # Everything in this code assumes default slices of [x,y) so including x but excluding y
-        data_slices = []
-        valid_data_slices = []
-        sub_len = []
-        # if single split return early
-        if splits == 1:
-            return [((0, length), (0, length))]
-        if splits > length:
-            warnings.warn(
-                "More splits than pixels where asked," 
-                " will default to 1 split per pixel",
-                RuntimeWarning
+    Returns
+    -------
+    output: list[tuple[tuple[int, int], tuple[int,int]]]:
+        A list splits where every split gets two tuples meaning:
+          [start, end) of the tomogram data in this split
+          [start, end) of the unique datapoints in this split
+        If a datapoint exists in 2 splits, we add it as unique to
+        either the split with the most data or the left one if both
+        splits have the same size
+    """
+    # Everything in this code assumes default slices of [x,y) so including x but excluding y
+    data_slices = []
+    valid_data_slices = []
+    sub_len = []
+    # if single split return early
+    if splits == 1:
+        return [((0, length), (0, length))]
+    if splits > length:
+        warnings.warn(
+            "More splits than pixels where asked," " will default to 1 split per pixel",
+            RuntimeWarning,
+        )
+        splits = length
+    # Ceil to guarantee that we map the whole length with enough buffer
+    min_len = int(np.ceil(length / splits)) + overhang
+    min_unique_len = min_len - overhang
+    no_overhang_left = 0
+    while True:
+        if no_overhang_left == 0:
+            # Treat first split specially, only right overhang
+            split_length = next_fast_len(min_len)
+            data_slices.append((0, split_length))
+            valid_data_slices.append((0, split_length - overhang))
+            no_overhang_left = split_length - overhang
+            sub_len.append(split_length)
+        elif no_overhang_left + min_unique_len >= length:
+            # Last slice, only overhang to the left
+            split_length = next_fast_len(min_len)
+            data_slices.append((length - split_length, length))
+            valid_data_slices.append((length - split_length + overhang, length))
+            sub_len.append(split_length)
+            break
+        else:
+            # Any other slice
+            split_length = next_fast_len(min_len + overhang)
+            left_overhang = (split_length - min_unique_len) // 2
+            temp_left = no_overhang_left - left_overhang
+            temp_right = temp_left + split_length
+            data_slices.append((temp_left, temp_right))
+            valid_data_slices.append((temp_left + overhang, temp_right - overhang))
+            sub_len.append(split_length)
+            no_overhang_left = temp_right - overhang
+        if split_length <= 0 or no_overhang_left <= 0:
+            raise RuntimeError(
+                f"Cannot generate legal splits for {length=}, {splits=}, {overhang=}"
             )
-            splits = length
-        # Ceil to guarantee that we map the whole length with enough buffer
-        min_len = int(np.ceil(length / splits)) + overhang
-        min_unique_len = min_len - overhang
-        no_overhang_left = 0
-        while True:
-            if no_overhang_left == 0:
-                # Treat first split specially, only right overhang
-                split_length = next_fast_len(min_len)
-                data_slices.append((0, split_length))
-                valid_data_slices.append((0, split_length-overhang))
-                no_overhang_left = split_length-overhang
-                sub_len.append(split_length)
-            elif no_overhang_left + min_unique_len >= length:
-                # Last slice, only overhang to the left
-                split_length = next_fast_len(min_len)
-                data_slices.append((length-split_length, length))
-                valid_data_slices.append((length-split_length+overhang, length))
-                sub_len.append(split_length)
-                break
-            else:
-                # Any other slice
-                split_length = next_fast_len(min_len+overhang)
-                left_overhang = (split_length-min_unique_len) // 2
-                temp_left = no_overhang_left - left_overhang
-                temp_right = temp_left + split_length
-                data_slices.append((temp_left, temp_right))
-                valid_data_slices.append((temp_left+overhang, temp_right-overhang))
-                sub_len.append(split_length)
-                no_overhang_left = temp_right - overhang
-            if split_length <= 0 or no_overhang_left <= 0:
-                raise RuntimeError(f"Cannot generate legal splits for {length=}, {splits=}, {overhang=}")
-        # Now generate the best unique data point, 
-        # we always pick the bigest data subset or the left one
-        unique_data = []
-        unique_left = 0
-        for i, (len1, len2) in enumerate(itt.pairwise(sub_len)):
-            if len1 >= len2:
-                right = valid_data_slices[i][1]
-            else:
-                right = valid_data_slices[i+1][0]
-            unique_data.append((unique_left, right))
-            unique_left = right
-        # Add final part
-        if unique_left != length:
-            unique_data.append((unique_left, length))
-        # Make sure unique slices are unique and within valid data
-        last_right = 0
-        for (vd_left, vd_right),(ud_left, ud_right) in zip(valid_data_slices, unique_data):
-            if (ud_left < vd_left or 
-                ud_right > vd_right or
-                ud_right > length or
-                ud_left != last_right
-                ): # pragma: no cover
-                raise RuntimeError(f"We produced inconsistent slices for {length=}, {splits=}, {overhang=}")
-            last_right = ud_right
-        return list(zip(data_slices, unique_data))
-     
+    # Now generate the best unique data point,
+    # we always pick the bigest data subset or the left one
+    unique_data = []
+    unique_left = 0
+    for i, (len1, len2) in enumerate(itt.pairwise(sub_len)):
+        if len1 >= len2:
+            right = valid_data_slices[i][1]
+        else:
+            right = valid_data_slices[i + 1][0]
+        unique_data.append((unique_left, right))
+        unique_left = right
+    # Add final part
+    if unique_left != length:
+        unique_data.append((unique_left, length))
+    # Make sure unique slices are unique and within valid data
+    last_right = 0
+    for (vd_left, vd_right), (ud_left, ud_right) in zip(valid_data_slices, unique_data):
+        if (
+            ud_left < vd_left
+            or ud_right > vd_right
+            or ud_right > length
+            or ud_left != last_right
+        ):  # pragma: no cover
+            raise RuntimeError(
+                f"We produced inconsistent slices for {length=}, {splits=}, {overhang=}"
+            )
+        last_right = ud_right
+    return list(zip(data_slices, unique_data))
 
 
 class TMJobError(Exception):
     """TMJob Exception with provided message."""
+
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
@@ -189,32 +199,32 @@ class TMJobError(Exception):
 
 class TMJob:
     def __init__(
-            self,
-            job_key: str,
-            log_level: int,
-            tomogram: pathlib.Path,
-            template: pathlib.Path,
-            mask: pathlib.Path,
-            output_dir: pathlib.Path,
-            angle_increment: Optional[Union[str, float]] = None,
-            mask_is_spherical: bool = True,
-            tilt_angles: Optional[list[float, ...]] = None,
-            tilt_weighting: bool = False,
-            search_x: Optional[list[int, int]] = None,
-            search_y: Optional[list[int, int]] = None,
-            search_z: Optional[list[int, int]] = None,
-            voxel_size: Optional[float] = None,
-            low_pass: Optional[float] = None,
-            high_pass: Optional[float] = None,
-            dose_accumulation: Optional[list[float, ...]] = None,
-            ctf_data: Optional[list[dict, ...]] = None,
-            whiten_spectrum: bool = False,
-            rotational_symmetry: int = 1,
-            pytom_tm_version_number: str = PYTOM_TM_VERSION,
-            job_loaded_for_extraction: bool = False,
-            particle_diameter: Optional[float] = None,
-            random_phase_correction: bool = False,
-            rng_seed: int = 321,
+        self,
+        job_key: str,
+        log_level: int,
+        tomogram: pathlib.Path,
+        template: pathlib.Path,
+        mask: pathlib.Path,
+        output_dir: pathlib.Path,
+        angle_increment: Optional[Union[str, float]] = None,
+        mask_is_spherical: bool = True,
+        tilt_angles: Optional[list[float, ...]] = None,
+        tilt_weighting: bool = False,
+        search_x: Optional[list[int, int]] = None,
+        search_y: Optional[list[int, int]] = None,
+        search_z: Optional[list[int, int]] = None,
+        voxel_size: Optional[float] = None,
+        low_pass: Optional[float] = None,
+        high_pass: Optional[float] = None,
+        dose_accumulation: Optional[list[float, ...]] = None,
+        ctf_data: Optional[list[dict, ...]] = None,
+        whiten_spectrum: bool = False,
+        rotational_symmetry: int = 1,
+        pytom_tm_version_number: str = PYTOM_TM_VERSION,
+        job_loaded_for_extraction: bool = False,
+        particle_diameter: Optional[float] = None,
+        random_phase_correction: bool = False,
+        rng_seed: int = 321,
     ):
         """
         Parameters
@@ -284,53 +294,75 @@ class TMJob:
         try:
             meta_data_tomo = read_mrc_meta_data(self.tomogram)
         except UnequalSpacingError:  # add information that the problem is the tomogram
-            raise UnequalSpacingError('Input tomogram voxel spacing is not equal in each dimension!')
+            raise UnequalSpacingError(
+                "Input tomogram voxel spacing is not equal in each dimension!"
+            )
 
         try:
             meta_data_template = read_mrc_meta_data(self.template)
         except UnequalSpacingError:  # add information that the problem is the template
-            raise UnequalSpacingError('Input template voxel spacing is not equal in each dimension!')
+            raise UnequalSpacingError(
+                "Input template voxel spacing is not equal in each dimension!"
+            )
 
-        self.tomo_shape = meta_data_tomo['shape']
-        self.template_shape = meta_data_template['shape']
+        self.tomo_shape = meta_data_tomo["shape"]
+        self.template_shape = meta_data_template["shape"]
 
         if voxel_size is not None:
             if voxel_size <= 0:
-                raise ValueError('Invalid voxel size provided, smaller or equal to zero.')
+                raise ValueError(
+                    "Invalid voxel size provided, smaller or equal to zero."
+                )
             self.voxel_size = voxel_size
             if (  # allow tiny numerical differences that are not relevant for template matching
-                    round(self.voxel_size, 3) != round(meta_data_tomo['voxel_size'], 3) or
-                    round(self.voxel_size, 3) != round(meta_data_template['voxel_size'], 3)
+                round(self.voxel_size, 3) != round(meta_data_tomo["voxel_size"], 3)
+                or round(self.voxel_size, 3)
+                != round(meta_data_template["voxel_size"], 3)
             ):
-                logging.debug(f"provided {self.voxel_size} tomogram {meta_data_tomo['voxel_size']} "
-                              f"template {meta_data_template['voxel_size']}")
-                print('WARNING: Provided voxel size does not match voxel size annotated in tomogram/template mrc.')
-        elif (round(meta_data_tomo['voxel_size'], 3) == round(meta_data_template['voxel_size'], 3) and
-              meta_data_tomo['voxel_size'] > 0):
-            self.voxel_size = round(meta_data_tomo['voxel_size'], 3)
+                logging.debug(
+                    f"provided {self.voxel_size} tomogram {meta_data_tomo['voxel_size']} "
+                    f"template {meta_data_template['voxel_size']}"
+                )
+                print(
+                    "WARNING: Provided voxel size does not match voxel size annotated in tomogram/template mrc."
+                )
+        elif (
+            round(meta_data_tomo["voxel_size"], 3)
+            == round(meta_data_template["voxel_size"], 3)
+            and meta_data_tomo["voxel_size"] > 0
+        ):
+            self.voxel_size = round(meta_data_tomo["voxel_size"], 3)
         else:
-            raise ValueError('Voxel size could not be assigned, either a mismatch between tomogram and template or'
-                             ' annotated as 0.')
+            raise ValueError(
+                "Voxel size could not be assigned, either a mismatch between tomogram and template or"
+                " annotated as 0."
+            )
 
-        search_origin = [x[0] if x is not None else 0 for x in (search_x, search_y, search_z)]
+        search_origin = [
+            x[0] if x is not None else 0 for x in (search_x, search_y, search_z)
+        ]
         # Check if tomogram origin is valid
         if all([0 <= x < y for x, y in zip(search_origin, self.tomo_shape)]):
             self.search_origin = search_origin
         else:
-            raise ValueError('Invalid input provided for search origin of tomogram.')
+            raise ValueError("Invalid input provided for search origin of tomogram.")
 
         # if end not valid raise and error
         search_end = []
         for x, s in zip([search_x, search_y, search_z], self.tomo_shape):
             if x is not None:
                 if not x[1] <= s:
-                    raise ValueError('One of search end indices is larger than the tomogram dimension.')
+                    raise ValueError(
+                        "One of search end indices is larger than the tomogram dimension."
+                    )
                 search_end.append(x[1])
             else:
                 search_end.append(s)
-        self.search_size = [end - start for end, start in zip(search_end, self.search_origin)]
+        self.search_size = [
+            end - start for end, start in zip(search_end, self.search_origin)
+        ]
 
-        logging.debug(f'origin, size = {self.search_origin}, {self.search_size}')
+        logging.debug(f"origin, size = {self.search_origin}, {self.search_size}")
 
         self.whole_start = None
         # For the main job these are always [0,0,0] and self.search_size, for sub_jobs these will differ from
@@ -351,17 +383,21 @@ class TMJob:
                 )
                 angle_increment = np.rad2deg(max_res / particle_diameter)
             else:
-                angle_increment = 7.
+                angle_increment = 7.0
         self.rotation_file = angle_increment
         if job_loaded_for_extraction:
-            log_level='DEBUG'
+            log_level = "DEBUG"
         else:
-            log_level='INFO'
+            log_level = "INFO"
         try:
-            angle_list = get_angle_list(angle_increment, sort_angles=False, 
-                    symmetry=rotational_symmetry, log_level=log_level)
-        except (ValueError):
-            raise TMJobError('Invalid angular search provided.')
+            angle_list = get_angle_list(
+                angle_increment,
+                sort_angles=False,
+                symmetry=rotational_symmetry,
+                log_level=log_level,
+            )
+        except ValueError:
+            raise TMJobError("Invalid angular search provided.")
 
         self.n_rotations = len(angle_list)
 
@@ -376,15 +412,20 @@ class TMJob:
         self.dose_accumulation = dose_accumulation
         self.ctf_data = ctf_data
         self.whiten_spectrum = whiten_spectrum
-        self.whitening_filter = self.output_dir.joinpath(f'{self.tomo_id}_whitening_filter.npy')
+        self.whitening_filter = self.output_dir.joinpath(
+            f"{self.tomo_id}_whitening_filter.npy"
+        )
         if self.whiten_spectrum and not job_loaded_for_extraction:
-            logging.info('Estimating whitening filter...')
+            logging.info("Estimating whitening filter...")
             weights = 1 / np.sqrt(
                 power_spectrum_profile(
                     read_mrc(self.tomogram)[
-                        self.search_origin[0]: self.search_origin[0] + self.search_size[0],
-                        self.search_origin[1]: self.search_origin[1] + self.search_size[1],
-                        self.search_origin[2]: self.search_origin[2] + self.search_size[2]
+                        self.search_origin[0] : self.search_origin[0]
+                        + self.search_size[0],
+                        self.search_origin[1] : self.search_origin[1]
+                        + self.search_size[1],
+                        self.search_origin[2] : self.search_origin[2]
+                        + self.search_size[2],
                     ]
                 )
             )
@@ -427,16 +468,25 @@ class TMJob:
             path to the output file
         """
         d = self.__dict__.copy()
-        d.pop('sub_jobs')
-        d.pop('search_origin')
-        d.pop('search_size')
-        d['search_x'] = [self.search_origin[0], self.search_origin[0] + self.search_size[0]]
-        d['search_y'] = [self.search_origin[1], self.search_origin[1] + self.search_size[1]]
-        d['search_z'] = [self.search_origin[2], self.search_origin[2] + self.search_size[2]]
+        d.pop("sub_jobs")
+        d.pop("search_origin")
+        d.pop("search_size")
+        d["search_x"] = [
+            self.search_origin[0],
+            self.search_origin[0] + self.search_size[0],
+        ]
+        d["search_y"] = [
+            self.search_origin[1],
+            self.search_origin[1] + self.search_size[1],
+        ]
+        d["search_z"] = [
+            self.search_origin[2],
+            self.search_origin[2] + self.search_size[2],
+        ]
         for key, value in d.items():
             if isinstance(value, pathlib.Path):
                 d[key] = str(value)
-        with open(file_name, 'w') as fstream:
+        with open(file_name, "w") as fstream:
             json.dump(d, fstream, indent=4)
 
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
@@ -454,7 +504,9 @@ class TMJob:
             a list of TMJobs that were split from self, the jobs are also assigned as the TMJob.sub_jobs attribute
         """
         if len(self.sub_jobs) > 0:
-            raise TMJobError('Could not further split this job as it already has subjobs assigned!')
+            raise TMJobError(
+                "Could not further split this job as it already has subjobs assigned!"
+            )
 
         sub_jobs = []
         for i in range(n):
@@ -469,7 +521,7 @@ class TMJob:
 
         return self.sub_jobs
 
-    def split_volume_search(self, split: tuple[int, int, int]) -> list[TMJob,...]:
+    def split_volume_search(self, split: tuple[int, int, int]) -> list[TMJob, ...]:
         """Split the search into sub_jobs by dividing into subvolumes. Final number of subvolumes is obtained by
         multiplying all the split together, e.g. (2, 2, 1) results in 4 subvolumes. Sub jobs will obtain the key
         self.job_key + str(i) when looping over range(n).
@@ -494,8 +546,10 @@ class TMJob:
             a list of TMJobs that were split from self, the jobs are also assigned as the TMJob.sub_jobs attribute
         """
         if len(self.sub_jobs) > 0:
-            raise TMJobError('Could not further split this job as it already has subjobs assigned!')
-        
+            raise TMJobError(
+                "Could not further split this job as it already has subjobs assigned!"
+            )
+
         search_size = self.search_size
         # shape of template for overhang
         overhang = self.template_shape
@@ -512,15 +566,17 @@ class TMJob:
             # and slice(left,right) of the unique data point in the search space
             # Look at the comments in the new_job.attribute for the meaning of each attribute
 
-            search_origin = tuple(data_3D[d][0][0]+self.search_origin[d] for d in range(3))
+            search_origin = tuple(
+                data_3D[d][0][0] + self.search_origin[d] for d in range(3)
+            )
             search_size = tuple(dim_data[0][1] - dim_data[0][0] for dim_data in data_3D)
             whole_start = tuple(dim_data[1][0] for dim_data in data_3D)
             sub_start = tuple(dim_data[1][0] - dim_data[0][0] for dim_data in data_3D)
-            sub_step = tuple(dim_data[1][1] - dim_data[1][0] for dim_data in data_3D) 
+            sub_step = tuple(dim_data[1][1] - dim_data[1][0] for dim_data in data_3D)
             new_job = self.copy()
             new_job.leader = self.job_key
             new_job.job_key = self.job_key + str(i)
-            
+
             # search origin with respect to the complete tomogram
             new_job.search_origin = search_origin
             # search size TODO: should be combined with the origin into slices
@@ -529,16 +585,18 @@ class TMJob:
             # whole start is the start of the unique data within the complete searched array
             new_job.whole_start = whole_start
             # sub_start is where the unique data starts inside the split array
-            new_job.sub_start = sub_start 
+            new_job.sub_start = sub_start
             # sub_step is the step of unique data inside the split array. TODO: should be slices instead
             new_job.sub_step = sub_step
             sub_jobs.append(new_job)
-        
+
         self.sub_jobs = sub_jobs
-        
+
         return self.sub_jobs
 
-    def merge_sub_jobs(self, stats: Optional[list[dict, ...]] = None) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    def merge_sub_jobs(
+        self, stats: Optional[list[dict, ...]] = None
+    ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
         """Merge the sub jobs present in self.sub_jobs together to create the final output score and angle maps.
 
         Parameters
@@ -554,26 +612,25 @@ class TMJob:
         if len(self.sub_jobs) == 0:
             # read the volumes, remove them and return them
             score_file, angle_file = (
-                self.output_dir.joinpath(f'{self.tomo_id}_scores_{self.job_key}.mrc'),
-                self.output_dir.joinpath(f'{self.tomo_id}_angles_{self.job_key}.mrc')
+                self.output_dir.joinpath(f"{self.tomo_id}_scores_{self.job_key}.mrc"),
+                self.output_dir.joinpath(f"{self.tomo_id}_angles_{self.job_key}.mrc"),
             )
-            result = (
-                read_mrc(score_file),
-                read_mrc(angle_file)
-            )
+            result = (read_mrc(score_file), read_mrc(angle_file))
             (score_file.unlink(), angle_file.unlink())
             return result
 
         if stats is not None:
-            search_space = sum([s['search_space'] for s in stats])
-            variance = sum([s['variance'] for s in stats]) / len(stats)
+            search_space = sum([s["search_space"] for s in stats])
+            variance = sum([s["variance"] for s in stats]) / len(stats)
             self.job_stats = {
-                'search_space': search_space,
-                'variance': variance,
-                'std': np.sqrt(variance)
+                "search_space": search_space,
+                "variance": variance,
+                "std": np.sqrt(variance),
             }
 
-        is_subvolume_split = np.all(np.array([x.start_slice for x in self.sub_jobs]) == 0)
+        is_subvolume_split = np.all(
+            np.array([x.start_slice for x in self.sub_jobs]) == 0
+        )
 
         score_volumes, angle_volumes = [], []
         for x in self.sub_jobs:
@@ -582,7 +639,10 @@ class TMJob:
             angle_volumes.append(result[1])
 
         if not is_subvolume_split:
-            scores, angles = np.zeros_like(score_volumes[0]) - 1., np.zeros_like(angle_volumes[0]) - 1.
+            scores, angles = (
+                np.zeros_like(score_volumes[0]) - 1.0,
+                np.zeros_like(angle_volumes[0]) - 1.0,
+            )
             for s, a in zip(score_volumes, angle_volumes):
                 angles = np.where(s > scores, a, angles)
                 # prevents race condition due to slicing
@@ -591,34 +651,34 @@ class TMJob:
         else:
             scores, angles = (
                 np.zeros(self.search_size, dtype=np.float32),
-                np.zeros(self.search_size, dtype=np.float32)
+                np.zeros(self.search_size, dtype=np.float32),
             )
             for job, s, a in zip(self.sub_jobs, score_volumes, angle_volumes):
                 sub_scores = s[
-                             job.sub_start[0]: job.sub_start[0] + job.sub_step[0],
-                             job.sub_start[1]: job.sub_start[1] + job.sub_step[1],
-                             job.sub_start[2]: job.sub_start[2] + job.sub_step[2]]
+                    job.sub_start[0] : job.sub_start[0] + job.sub_step[0],
+                    job.sub_start[1] : job.sub_start[1] + job.sub_step[1],
+                    job.sub_start[2] : job.sub_start[2] + job.sub_step[2],
+                ]
                 sub_angles = a[
-                             job.sub_start[0]: job.sub_start[0] + job.sub_step[0],
-                             job.sub_start[1]: job.sub_start[1] + job.sub_step[1],
-                             job.sub_start[2]: job.sub_start[2] + job.sub_step[2]]
+                    job.sub_start[0] : job.sub_start[0] + job.sub_step[0],
+                    job.sub_start[1] : job.sub_start[1] + job.sub_step[1],
+                    job.sub_start[2] : job.sub_start[2] + job.sub_step[2],
+                ]
                 # Then the corrected sub part needs to be placed back into the full volume
                 scores[
-                    job.whole_start[0]: job.whole_start[0] + sub_scores.shape[0],
-                    job.whole_start[1]: job.whole_start[1] + sub_scores.shape[1],
-                    job.whole_start[2]: job.whole_start[2] + sub_scores.shape[2]
+                    job.whole_start[0] : job.whole_start[0] + sub_scores.shape[0],
+                    job.whole_start[1] : job.whole_start[1] + sub_scores.shape[1],
+                    job.whole_start[2] : job.whole_start[2] + sub_scores.shape[2],
                 ] = sub_scores
                 angles[
-                    job.whole_start[0]: job.whole_start[0] + sub_scores.shape[0],
-                    job.whole_start[1]: job.whole_start[1] + sub_scores.shape[1],
-                    job.whole_start[2]: job.whole_start[2] + sub_scores.shape[2]
+                    job.whole_start[0] : job.whole_start[0] + sub_scores.shape[0],
+                    job.whole_start[1] : job.whole_start[1] + sub_scores.shape[1],
+                    job.whole_start[2] : job.whole_start[2] + sub_scores.shape[2],
                 ] = sub_angles
         return scores, angles
 
     def start_job(
-            self,
-            gpu_id: int,
-            return_volumes: bool = False
+        self, gpu_id: int, return_volumes: bool = False
     ) -> Union[tuple[npt.NDArray[float], npt.NDArray[float]], dict]:
         """Run this template matching job on the specified GPU. Search statistics of the job will always be assigned
         to the self.job_stats.
@@ -638,23 +698,27 @@ class TMJob:
             are returned the output consists of a dictionary with search statistics
         """
         # next fast fft len
-        logging.debug(f'Next fast fft shape: {tuple([next_fast_len(s, real=True) for s in self.search_size])}')
-        search_volume = np.zeros(tuple([next_fast_len(s, real=True) for s in self.search_size]), dtype=np.float32)
+        logging.debug(
+            f"Next fast fft shape: {tuple([next_fast_len(s, real=True) for s in self.search_size])}"
+        )
+        search_volume = np.zeros(
+            tuple([next_fast_len(s, real=True) for s in self.search_size]),
+            dtype=np.float32,
+        )
 
         # load the (sub)volume
-        search_volume[:self.search_size[0],
-                      :self.search_size[1],
-                      :self.search_size[2]] = np.ascontiguousarray(
-            read_mrc(self.tomogram)[self.search_origin[0]: self.search_origin[0] + self.search_size[0],
-                                    self.search_origin[1]: self.search_origin[1] + self.search_size[1],
-                                    self.search_origin[2]: self.search_origin[2] + self.search_size[2]]
+        search_volume[
+            : self.search_size[0], : self.search_size[1], : self.search_size[2]
+        ] = np.ascontiguousarray(
+            read_mrc(self.tomogram)[
+                self.search_origin[0] : self.search_origin[0] + self.search_size[0],
+                self.search_origin[1] : self.search_origin[1] + self.search_size[1],
+                self.search_origin[2] : self.search_origin[2] + self.search_size[2],
+            ]
         )
 
         # load template and mask
-        template, mask = (
-            read_mrc(self.template),
-            read_mrc(self.mask)
-        )
+        template, mask = (read_mrc(self.template), read_mrc(self.mask))
         # apply mask directly to prevent any wedge convolution with weird edges
         template *= mask
 
@@ -663,27 +727,19 @@ class TMJob:
         # first generate bandpass filters
         if not (self.low_pass is None and self.high_pass is None):
             tomo_filter *= create_gaussian_band_pass(
-                    search_volume.shape,
-                    self.voxel_size,
-                    self.low_pass,
-                    self.high_pass
+                search_volume.shape, self.voxel_size, self.low_pass, self.high_pass
             ).astype(np.float32)
             template_wedge *= create_gaussian_band_pass(
-                self.template_shape,
-                self.voxel_size,
-                self.low_pass,
-                self.high_pass
+                self.template_shape, self.voxel_size, self.low_pass, self.high_pass
             ).astype(np.float32)
 
         # then multiply with optional whitening filters
         if self.whiten_spectrum:
             tomo_filter *= profile_to_weighting(
-                np.load(self.whitening_filter),
-                search_volume.shape
+                np.load(self.whitening_filter), search_volume.shape
             ).astype(np.float32)
             template_wedge *= profile_to_weighting(
-                np.load(self.whitening_filter),
-                self.template_shape
+                np.load(self.whitening_filter), self.template_shape
             ).astype(np.float32)
 
         # if tilt angles are provided we can create wedge filters
@@ -693,20 +749,20 @@ class TMJob:
                 search_volume.shape,
                 self.tilt_angles,
                 self.voxel_size,
-                cut_off_radius=1.,
+                cut_off_radius=1.0,
                 angles_in_degrees=True,
-                tilt_weighting=False
+                tilt_weighting=False,
             ).astype(np.float32)
             # for the template a binary or per-tilt-weighted wedge is generated depending on the options
             template_wedge *= create_wedge(
                 self.template_shape,
                 self.tilt_angles,
                 self.voxel_size,
-                cut_off_radius=1.,
+                cut_off_radius=1.0,
                 angles_in_degrees=True,
                 tilt_weighting=self.tilt_weighting,
                 accumulated_dose_per_tilt=self.dose_accumulation,
-                ctf_params_per_tilt=self.ctf_data
+                ctf_params_per_tilt=self.ctf_data,
             ).astype(np.float32)
 
             if logging.DEBUG >= logging.root.level:
@@ -722,30 +778,28 @@ class TMJob:
                 )
 
         # apply the optional band pass and whitening filter to the search region
-        search_volume = np.real(irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape))
+        search_volume = np.real(
+            irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape)
+        )
 
         # load rotation search
-        angle_ids = list(range(
-            self.start_slice,
-            self.n_rotations,
-            self.steps_slice
-        ))
-        angle_list = get_angle_list(self.rotation_file,
-                sort_angles=version.parse(self.pytom_tm_version_number) > version.parse('0.3.0'),
-                symmetry = self.rotational_symmetry
-                )
+        angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
+        angle_list = get_angle_list(
+            self.rotation_file,
+            sort_angles=version.parse(self.pytom_tm_version_number)
+            > version.parse("0.3.0"),
+            symmetry=self.rotational_symmetry,
+        )
 
-        angle_list = angle_list[slice(
-            self.start_slice,
-            self.n_rotations,
-            self.steps_slice
-        )]
+        angle_list = angle_list[
+            slice(self.start_slice, self.n_rotations, self.steps_slice)
+        ]
 
         # slices for relevant part for job statistics
         search_volume_roi = (
             slice(self.sub_start[0], self.sub_start[0] + self.sub_step[0]),
             slice(self.sub_start[1], self.sub_start[1] + self.sub_step[1]),
-            slice(self.sub_start[2], self.sub_start[2] + self.sub_step[2])
+            slice(self.sub_start[2], self.sub_start[2] + self.sub_step[2]),
         )
 
         tm = TemplateMatchingGPU(
@@ -763,8 +817,12 @@ class TMJob:
             rng_seed=self.rng_seed,
         )
         results = tm.run()
-        score_volume = results[0][:self.search_size[0], :self.search_size[1], :self.search_size[2]]
-        angle_volume = results[1][:self.search_size[0], :self.search_size[1], :self.search_size[2]]
+        score_volume = results[0][
+            : self.search_size[0], : self.search_size[1], : self.search_size[2]
+        ]
+        angle_volume = results[1][
+            : self.search_size[0], : self.search_size[1], : self.search_size[2]
+        ]
         self.job_stats = results[2]
 
         del tm  # delete the template matching plan
@@ -773,13 +831,13 @@ class TMJob:
             return score_volume, angle_volume
         else:  # otherwise write them out with job_key
             write_mrc(
-                self.output_dir.joinpath(f'{self.tomo_id}_scores_{self.job_key}.mrc'),
+                self.output_dir.joinpath(f"{self.tomo_id}_scores_{self.job_key}.mrc"),
                 score_volume,
-                self.voxel_size
+                self.voxel_size,
             )
             write_mrc(
-                self.output_dir.joinpath(f'{self.tomo_id}_angles_{self.job_key}.mrc'),
+                self.output_dir.joinpath(f"{self.tomo_id}_angles_{self.job_key}.mrc"),
                 angle_volume,
-                self.voxel_size
+                self.voxel_size,
             )
             return self.job_stats
