@@ -1,6 +1,5 @@
 import numpy as np
 import traceback
-from importlib.util import find_spec
 import itertools
 from scipy.optimize import curve_fit
 from scipy.special import erf
@@ -332,9 +331,7 @@ def plist_quality_gaussian_fit(
         n_false_positives = 0.0
         # list for storing probability of true positives and false positives
         # for each cutoff
-        recall = (
-            []
-        )  # recall = TP / (TP + FN); TP + FN is the full area under the Gaussian curve
+        recall = []  # recall = TP / (TP + FN); TP + FN is the full area under the Gaussian curve
         fdr = []  # false discovery rate = FP / (TP + FP); == 1 - TP / (TP + FP)
 
         # find integral of gaussian particle population;

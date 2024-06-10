@@ -1,7 +1,6 @@
 import unittest
 import voltools as vt
 import cupy as cp
-from importlib_resources import files
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.correlation import normalised_cross_correlation
@@ -18,39 +17,39 @@ class TestMask(unittest.TestCase):
         mask = cp.asarray(spherical_mask(12, 4, 0.5))
         mask_rotated = cp.zeros_like(mask)
 
-        mask_texture = vt.StaticVolume(
-            mask,
-            interpolation='filt_bspline',
-            device='gpu'
-        )
+        mask_texture = vt.StaticVolume(mask, interpolation="filt_bspline", device="gpu")
 
         for i in range(len(self.angles)):
-
             mask_texture.transform(
                 rotation=self.angles[i],
-                rotation_units='rad',
-                rotation_order='rzxz',
+                rotation_units="rad",
+                rotation_order="rzxz",
                 center=tuple([x // 2 for x in mask.shape]),
-                output=mask_rotated
+                output=mask_rotated,
             )
 
-            nxcc_offcenter.append(normalised_cross_correlation(mask, mask_rotated).get())
+            nxcc_offcenter.append(
+                normalised_cross_correlation(mask, mask_rotated).get()
+            )
 
         for i in range(len(self.angles)):
-
             mask_texture.transform(
                 rotation=self.angles[i],
-                rotation_units='rad',
-                rotation_order='rzxz',
+                rotation_units="rad",
+                rotation_order="rzxz",
                 output=mask_rotated,
                 # center=np.divide(np.subtract(mask.shape, 1), 2, dtype=np.float32),
             )
 
             nxcc_centered.append(normalised_cross_correlation(mask, mask_rotated).get())
 
-        self.assertTrue(sum(nxcc_centered) > sum(nxcc_offcenter),
-                        msg='Center of rotation for mask is incorrect.')
-        self.assertTrue(sum(nxcc_centered) > 99.27, msg='Precision of mask rotation is too low.')
+        self.assertTrue(
+            sum(nxcc_centered) > sum(nxcc_offcenter),
+            msg="Center of rotation for mask is incorrect.",
+        )
+        self.assertTrue(
+            sum(nxcc_centered) > 99.27, msg="Precision of mask rotation is too low."
+        )
 
     def test_rotational_invariance_uneven(self):
         # TEST UNEVEN MASK
@@ -59,34 +58,38 @@ class TestMask(unittest.TestCase):
         mask = cp.asarray(spherical_mask(13, 4, 0.5))
         mask_rotated = cp.zeros_like(mask)
 
-        mask_texture = vt.StaticVolume(
-            mask,
-            interpolation='filt_bspline',
-            device='gpu'
-        )
+        mask_texture = vt.StaticVolume(mask, interpolation="filt_bspline", device="gpu")
 
         for i in range(len(self.angles)):
             mask_texture.transform(
                 rotation=self.angles[i],
-                rotation_units='rad',
-                rotation_order='rzxz',
+                rotation_units="rad",
+                rotation_order="rzxz",
                 center=tuple([x // 2 for x in mask.shape]),
-                output=mask_rotated
+                output=mask_rotated,
             )
 
-            nxcc_offcenter.append(normalised_cross_correlation(mask, mask_rotated).get())
+            nxcc_offcenter.append(
+                normalised_cross_correlation(mask, mask_rotated).get()
+            )
 
         for i in range(len(self.angles)):
             mask_texture.transform(
                 rotation=self.angles[i],
-                rotation_units='rad',
-                rotation_order='rzxz',
+                rotation_units="rad",
+                rotation_order="rzxz",
                 output=mask_rotated,
                 # center=np.divide(np.subtract(mask.shape, 1), 2, dtype=np.float32),
             )
 
             nxcc_centered.append(normalised_cross_correlation(mask, mask_rotated).get())
 
-        self.assertAlmostEqual(sum(nxcc_centered), sum(nxcc_offcenter),
-                               places=4, msg='Center of rotation for mask is incorrect.')
-        self.assertTrue(sum(nxcc_centered) > 99.09, msg='Precision of mask rotation is too low.')
+        self.assertAlmostEqual(
+            sum(nxcc_centered),
+            sum(nxcc_offcenter),
+            places=4,
+            msg="Center of rotation for mask is incorrect.",
+        )
+        self.assertTrue(
+            sum(nxcc_centered) > 99.09, msg="Precision of mask rotation is too low."
+        )

@@ -190,14 +190,16 @@ def pytom_create_template(argv=None):
         help="Specify a desired size for the output box of the template. "
         "Only works if it is larger than the downsampled box size of the input.",
     )
-    parser.add_argument(
-        "--invert",
-        action="store_true",
-        default=False,
-        required=False,
-        help="Multiply template by -1. "
-        "WARNING: not needed if ctf with defocus is already applied!",
-    ),
+    (
+        parser.add_argument(
+            "--invert",
+            action="store_true",
+            default=False,
+            required=False,
+            help="Multiply template by -1. "
+            "WARNING: not needed if ctf with defocus is already applied!",
+        ),
+    )
     parser.add_argument(
         "-m",
         "--mirror",
@@ -354,8 +356,11 @@ def estimate_roc(argv=None):
     template_matching_job = load_json_to_tmjob(args.job_file)
     # Set cut off to -1 to ensure the number of particles gets extracted
     _, lcc_max_values = extract_particles(
-        template_matching_job, args.radius_px, args.number_of_particles, cut_off=0,
-        create_plot=False
+        template_matching_job,
+        args.radius_px,
+        args.number_of_particles,
+        cut_off=0,
+        create_plot=False,
     )
 
     score_volume = read_mrc(
@@ -419,13 +424,13 @@ def extract_candidates(argv=None):
         type=float,
         required=False,
         action=LargerThanZero,
-        default=1.,
+        default=1.0,
         help="Number of false positives to determine the false alarm rate. Here one "
-             "can increase the recall of the particle of interest at the expense "
-             "of more false positives. The default value of 1 is recommended for "
-             "particles that can be distinguished well from the background (high "
-             "specificity). The value can also be set between 0 and 1 to make "
-             "the cut-off more restrictive.",
+        "can increase the recall of the particle of interest at the expense "
+        "of more false positives. The default value of 1 is recommended for "
+        "particles that can be distinguished well from the background (high "
+        "specificity). The value can also be set between 0 and 1 to make "
+        "the cut-off more restrictive.",
     )
     parser.add_argument(
         "-r",
@@ -455,22 +460,22 @@ def extract_candidates(argv=None):
         help="Attempt to filter only sharp correlation peaks with a tophat transform",
     )
     parser.add_argument(
-        '--tophat-connectivity', 
-        type=int, 
-        required=False, 
+        "--tophat-connectivity",
+        type=int,
+        required=False,
         default=1,
         action=LargerThanZero,
         help="Set kernel connectivity for ndimage binary structure used for the "
-             "tophat transform. Integer value in range 1-3. 1 is the most "
-             "restrictive, 3 the least restrictive. Generally recommended to "
-             "leave at 1."
+        "tophat transform. Integer value in range 1-3. 1 is the most "
+        "restrictive, 3 the least restrictive. Generally recommended to "
+        "leave at 1.",
     )
     parser.add_argument(
-        '--relion5-compat',
+        "--relion5-compat",
         action="store_true",
         default=False,
         required=False,
-        help="Write out centered coordinates in Angstrom for RELION5."
+        help="Write out centered coordinates in Angstrom for RELION5.",
     )
     parser.add_argument(
         "--log",
@@ -519,8 +524,8 @@ def match_template(argv=None):
         required=True,
         action=CheckFileExists,
         help="Template; MRC file. Object should match the contrast of the tomogram: "
-             "if the tomogram has black ribosomes, the reference should be black. "
-             "(pytom_create_template.py has an option to invert contrast) ",
+        "if the tomogram has black ribosomes, the reference should be black. "
+        "(pytom_create_template.py has an option to invert contrast) ",
     )
     io_group.add_argument(
         "-v",
@@ -553,33 +558,33 @@ def match_template(argv=None):
         action="store_true",
         required=False,
         help="Flag to set when the mask is not spherical. It adds the required "
-             "computations for non-spherical masks and roughly doubles computation time.",
+        "computations for non-spherical masks and roughly doubles computation time.",
     )
-    rotation_group = parser.add_argument_group('Angular search')
+    rotation_group = parser.add_argument_group("Angular search")
     rotation_group.add_argument(
         "--particle-diameter",
         type=float,
         required=False,
         action=LargerThanZero,
         help="Provide a particle diameter (in Angstrom) to automatically determine the "
-             "angular sampling using the Crowther criterion. For the max resolution, "
-             "(2 * pixel size) is used unless a low-pass filter is specified, "
-             "in which case the low-pass resolution is used. For non-globular "
-             "macromolecules choose the diameter along the longest axis.",
+        "angular sampling using the Crowther criterion. For the max resolution, "
+        "(2 * pixel size) is used unless a low-pass filter is specified, "
+        "in which case the low-pass resolution is used. For non-globular "
+        "macromolecules choose the diameter along the longest axis.",
     )
     rotation_group.add_argument(
         "--angular-search",
         type=str,
         required=False,
         help="This option overrides the angular search calculation from the particle "
-             "diameter. If given a float it will generate an angle list with healpix "
-             "for Z1 and X1 and linear search for Z2. The provided angle will be used "
-             "as the maximum for the "
-             "linear search and for the mean angle difference from healpix.\n"
-             "Alternatively, a .txt file can be provided with three Euler angles "
-             "(in radians) per line that define the angular search. "
-             "Angle format is ZXZ anti-clockwise (see: "
-             "https://www.ccpem.ac.uk/user_help/rotation_conventions.php).",
+        "diameter. If given a float it will generate an angle list with healpix "
+        "for Z1 and X1 and linear search for Z2. The provided angle will be used "
+        "as the maximum for the "
+        "linear search and for the mean angle difference from healpix.\n"
+        "Alternatively, a .txt file can be provided with three Euler angles "
+        "(in radians) per line that define the angular search. "
+        "Angle format is ZXZ anti-clockwise (see: "
+        "https://www.ccpem.ac.uk/user_help/rotation_conventions.php).",
     )
     rotation_group.add_argument(
         "--z-axis-rotational-symmetry",
@@ -588,10 +593,10 @@ def match_template(argv=None):
         action=LargerThanZero,
         default=1,
         help="Integer value indicating the rotational symmetry of the template around "
-             "the z-axis. The length of the rotation search will be shortened through "
-             "division by this value. Only works for template symmetry around the z-axis.",
+        "the z-axis. The length of the rotation search will be shortened through "
+        "division by this value. Only works for template symmetry around the z-axis.",
     )
-    volume_group = parser.add_argument_group('Volume control')
+    volume_group = parser.add_argument_group("Volume control")
     volume_group.add_argument(
         "-s",
         "--volume-split",
@@ -630,7 +635,7 @@ def match_template(argv=None):
         help="Start and end indices of the search along the z-axis, "
         "e.g. --search-x 30 230 ",
     )
-    filter_group = parser.add_argument_group('Filter control')
+    filter_group = parser.add_argument_group("Filter control")
     filter_group.add_argument(
         "-a",
         "--tilt-angles",
@@ -639,9 +644,9 @@ def match_template(argv=None):
         required=True,
         action=ParseTiltAngles,
         help="Tilt angles of the tilt-series, either the minimum and maximum values of "
-             "the tilts (e.g. --tilt-angles -59.1 60.1) or a .rawtlt/.tlt file with all the "
-             "angles (e.g. --tilt-angles tomo101.rawtlt). In case all the tilt angles are "
-             "provided a more elaborate Fourier space constraint can be used",
+        "the tilts (e.g. --tilt-angles -59.1 60.1) or a .rawtlt/.tlt file with all the "
+        "angles (e.g. --tilt-angles tomo101.rawtlt). In case all the tilt angles are "
+        "provided a more elaborate Fourier space constraint can be used",
     )
     filter_group.add_argument(
         "--per-tilt-weighting",
@@ -649,11 +654,11 @@ def match_template(argv=None):
         default=False,
         required=False,
         help="Flag to activate per-tilt-weighting, only makes sense if a file with all "
-             "tilt angles have been provided. In case not set, while a tilt angle file is "
-             "provided, the minimum and maximum tilt angle are used to create a binary "
-             "wedge. The base functionality creates a fanned wedge where each tilt is "
-             "weighted by cos(tilt_angle). If dose accumulation and CTF parameters are "
-             "provided these will all be incorporated in the tilt-weighting.",
+        "tilt angles have been provided. In case not set, while a tilt angle file is "
+        "provided, the minimum and maximum tilt angle are used to create a binary "
+        "wedge. The base functionality creates a fanned wedge where each tilt is "
+        "weighted by cos(tilt_angle). If dose accumulation and CTF parameters are "
+        "provided these will all be incorporated in the tilt-weighting.",
     )
     filter_group.add_argument(
         "--voxel-size-angstrom",
@@ -732,7 +737,7 @@ def match_template(argv=None):
         "--phase-shift",
         type=float,
         required=False,
-        default=.0,
+        default=0.0,
         action=LargerThanZero,
         help="Phase shift (in degrees) for the CTF to model phase plates.",
     )
@@ -741,12 +746,12 @@ def match_template(argv=None):
         required=False,
         choices=["phase-flip"],  # possible wiener filter mode to come?
         help="Optionally, you can specify if and how the CTF was corrected during "
-             "reconstruction of the input tomogram. This allows "
-             "match-pick to match the weighting of the template to the tomogram. "
-             "Not using this option is appropriate if the CTF was left uncorrected in "
-             "the tomogram. Option 'phase-flip' : appropriate for IMOD's strip-based "
-             "phase flipping or reconstructions generated with "
-             "novaCTF/3dctf."
+        "reconstruction of the input tomogram. This allows "
+        "match-pick to match the weighting of the template to the tomogram. "
+        "Not using this option is appropriate if the CTF was left uncorrected in "
+        "the tomogram. Option 'phase-flip' : appropriate for IMOD's strip-based "
+        "phase flipping or reconstructions generated with "
+        "novaCTF/3dctf.",
     )
     filter_group.add_argument(
         "--spectral-whitening",
@@ -757,7 +762,7 @@ def match_template(argv=None):
         "apply it to the tomogram patch and template. Effectively puts more weight on "
         "high resolution features and sharpens the correlation peaks.",
     )
-    additional_group = parser.add_argument_group('Additional options')
+    additional_group = parser.add_argument_group("Additional options")
     additional_group.add_argument(
         "-r",
         "--random-phase-correction",
@@ -765,9 +770,9 @@ def match_template(argv=None):
         default=False,
         required=False,
         help="Run template matching simultaneously with a phase randomized version of "
-             "the template, and subtract this 'noise' map from the final score map. "
-             "For this method please see STOPGAP as a reference: "
-             "https://doi.org/10.1107/S205979832400295X ."
+        "the template, and subtract this 'noise' map from the final score map. "
+        "For this method please see STOPGAP as a reference: "
+        "https://doi.org/10.1107/S205979832400295X .",
     )
     additional_group.add_argument(
         "--rng-seed",
@@ -775,9 +780,9 @@ def match_template(argv=None):
         default=int.from_bytes(urandom(8)),
         required=False,
         help="Specify a seed for the random number generator used for phase "
-             "randomization for consistent results!"
+        "randomization for consistent results!",
     )
-    device_group = parser.add_argument_group('Device control')
+    device_group = parser.add_argument_group("Device control")
     device_group.add_argument(
         "-g",
         "--gpu-ids",
@@ -786,7 +791,7 @@ def match_template(argv=None):
         required=True,
         help="GPU indices to run the program on.",
     )
-    debug_group = parser.add_argument_group('Logging/debugging')
+    debug_group = parser.add_argument_group("Logging/debugging")
     debug_group.add_argument(
         "--log",
         type=str,
@@ -812,8 +817,10 @@ def match_template(argv=None):
                 "spherical-abberation or voltage) is/are missing."
             )
         phase_flip_correction = False
-        if (args.tomogram_ctf_model is not None and
-                args.tomogram_ctf_model == "phase-flip"):
+        if (
+            args.tomogram_ctf_model is not None
+            and args.tomogram_ctf_model == "phase-flip"
+        ):
             phase_flip_correction = True
         ctf_params = [
             {
@@ -829,8 +836,8 @@ def match_template(argv=None):
 
     if args.angular_search is None and args.particle_diameter is None:
         raise ValueError(
-            'Either the angular search should be specifically set or a particle '
-            'diameter should be provided to infer the angular search!'
+            "Either the angular search should be specifically set or a particle "
+            "diameter should be provided to infer the angular search!"
         )
 
     job = TMJob(

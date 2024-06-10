@@ -14,27 +14,28 @@ ENTRY_POINTS_TO_TEST = [
     ("pytom_create_template.py", "pytom_create_template"),
     ("pytom_match_template.py", "match_template"),
     ("pytom_extract_candidates.py", "extract_candidates"),
-    ("pytom_merge_stars.py",  "merge_stars"),
-    ]
+    ("pytom_merge_stars.py", "merge_stars"),
+]
 # Test if optional dependencies are installed
 try:
-    from pytom_tm import plotting
-except:
+    from pytom_tm import plotting  # noqa: F401
+except RuntimeError:
     pass
 else:
     ENTRY_POINTS_TO_TEST.append(("pytom_estimate_roc.py", "estimate_roc"))
 
 # Input files for command line match_template
-TEST_DATA = pathlib.Path(__file__).parent.joinpath('test_data')
-TEMPLATE = TEST_DATA.joinpath('template.mrc')
-MASK = TEST_DATA.joinpath('mask.mrc')
-TOMOGRAM = TEST_DATA.joinpath('tomogram.mrc')
-DESTINATION = TEST_DATA.joinpath('output')
-TILT_ANGLES = TEST_DATA.joinpath('angles.rawtlt')
-DOSE = TEST_DATA.joinpath('test_dose.txt')
-DEFOCUS = TEST_DATA.joinpath('defocus.txt')
-DEFOCUS_IMOD = pathlib.Path(__file__).parent.joinpath('Data').joinpath(
-    'test_imod.defocus')
+TEST_DATA = pathlib.Path(__file__).parent.joinpath("test_data")
+TEMPLATE = TEST_DATA.joinpath("template.mrc")
+MASK = TEST_DATA.joinpath("mask.mrc")
+TOMOGRAM = TEST_DATA.joinpath("tomogram.mrc")
+DESTINATION = TEST_DATA.joinpath("output")
+TILT_ANGLES = TEST_DATA.joinpath("angles.rawtlt")
+DOSE = TEST_DATA.joinpath("test_dose.txt")
+DEFOCUS = TEST_DATA.joinpath("defocus.txt")
+DEFOCUS_IMOD = (
+    pathlib.Path(__file__).parent.joinpath("Data").joinpath("test_imod.defocus")
+)
 
 # Initial logging level
 LOG_LEVEL = logging.getLogger().level
@@ -42,7 +43,7 @@ LOG_LEVEL = logging.getLogger().level
 
 def prep_argv(arg_dict):
     argv = []
-    [argv.extend([k, v]) if v != '' else argv.append(k) for k, v in arg_dict.items()]
+    [argv.extend([k, v]) if v != "" else argv.append(k) for k, v in arg_dict.items()]
     return argv
 
 
@@ -79,44 +80,48 @@ class TestEntryPoints(unittest.TestCase):
             func = getattr(entry_points, fname)
             dump = StringIO()
             with self.assertRaises(SystemExit) as ex, redirect_stdout(dump):
-                func([cli, '-h'])
+                func([cli, "-h"])
             dump.close()
             # check if the system return code is 0 (success)
             self.assertEqual(ex.exception.code, 0)
 
     def test_match_template(self):
         defaults = {
-            '-t': str(TEMPLATE),
-            '-m': str(MASK),
-            '-v': str(TOMOGRAM),
-            '-d': str(DESTINATION),
-            '--angular-search': '35',
-            '--tilt-angles': str(TILT_ANGLES),
-            '--per-tilt-weighting': '',
-            '--dose-accumulation': str(DOSE),
-            '--defocus': str(DEFOCUS_IMOD),
-            '--amplitude-contrast': '0.08',
-            '--spherical-aberration': '2.7',
-            '--voltage': '300',
-            '--tomogram-ctf-model': 'phase-flip',
-            '-g': '0',
+            "-t": str(TEMPLATE),
+            "-m": str(MASK),
+            "-v": str(TOMOGRAM),
+            "-d": str(DESTINATION),
+            "--angular-search": "35",
+            "--tilt-angles": str(TILT_ANGLES),
+            "--per-tilt-weighting": "",
+            "--dose-accumulation": str(DOSE),
+            "--defocus": str(DEFOCUS_IMOD),
+            "--amplitude-contrast": "0.08",
+            "--spherical-aberration": "2.7",
+            "--voltage": "300",
+            "--tomogram-ctf-model": "phase-flip",
+            "-g": "0",
         }
 
         def start(arg_dict):  # simplify run
             entry_points.match_template(prep_argv(arg_dict))
 
         # test valid defocus arguments
-        for z in [str(DEFOCUS_IMOD), str(DEFOCUS), '3000']:
+        for z in [str(DEFOCUS_IMOD), str(DEFOCUS), "3000"]:
             arguments = defaults.copy()
-            arguments['--defocus'] = z
+            arguments["--defocus"] = z
             start(arguments)
 
         # test faulty args
-        for z in ['asdf.txt', 'asdf']:
+        for z in ["asdf.txt", "asdf"]:
             dump = StringIO()
-            with self.assertRaises(SystemExit) as ex, redirect_stdout(dump), redirect_stderr(dump):
+            with (
+                self.assertRaises(SystemExit) as ex,
+                redirect_stdout(dump),
+                redirect_stderr(dump),
+            ):
                 arguments = defaults.copy()
-                arguments['--defocus'] = z
+                arguments["--defocus"] = z
                 start(arguments)
             dump.close()
             # check if the system return code is 0 (success)
@@ -124,43 +129,49 @@ class TestEntryPoints(unittest.TestCase):
 
         # remove per-tilt-weighting
         arguments = defaults.copy()
-        arguments.pop('--per-tilt-weighting')
+        arguments.pop("--per-tilt-weighting")
         start(arguments)
 
-        with self.assertRaises(ValueError, msg='Missing CTF params should produce '
-                                               'error'):
+        with self.assertRaises(
+            ValueError, msg="Missing CTF params should produce " "error"
+        ):
             arguments = defaults.copy()
-            arguments.pop('--voltage')
+            arguments.pop("--voltage")
             start(arguments)
 
         # test angular search and particle diameter options
-        with self.assertRaises(ValueError, msg='Missing angular search should raise '
-                                               'an error.'):
+        with self.assertRaises(
+            ValueError, msg="Missing angular search should raise " "an error."
+        ):
             arguments = defaults.copy()
-            arguments.pop('--angular-search')
+            arguments.pop("--angular-search")
             start(arguments)
 
         arguments = defaults.copy()
-        arguments.pop('--angular-search')
-        arguments['--particle-diameter'] = '50'
+        arguments.pop("--angular-search")
+        arguments["--particle-diameter"] = "50"
         # set low-pass to tune the search to lower degree
-        arguments['--low-pass'] = '50'
+        arguments["--low-pass"] = "50"
         start(arguments)
 
         # phase randomization test
         arguments = defaults.copy()
-        arguments['-r'] = ''
+        arguments["-r"] = ""
         start(arguments)
 
         # test debug files
         arguments = defaults.copy()
-        arguments['--log'] = 'debug'
+        arguments["--log"] = "debug"
         start(arguments)
         # these files will only exist if the test managed to set the logging correctly
-        self.assertTrue(DESTINATION.joinpath('template_psf.mrc').exists(),
-                        msg='File should exist in debug mode')
-        self.assertTrue(DESTINATION.joinpath('template_convolved.mrc').exists(),
-                        msg='File should exist in debug mode')
+        self.assertTrue(
+            DESTINATION.joinpath("template_psf.mrc").exists(),
+            msg="File should exist in debug mode",
+        )
+        self.assertTrue(
+            DESTINATION.joinpath("template_convolved.mrc").exists(),
+            msg="File should exist in debug mode",
+        )
 
         # rest the log level after the entry point modified it
         logging.basicConfig(level=LOG_LEVEL, force=True)
