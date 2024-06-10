@@ -40,6 +40,8 @@ dependencies = [
 [project.optional-dependencies]
 plotting = ["matplotlib", "seaborn"]
 dev = ["ruff", "pre-commit"]
+all = ["pytom-match-pick[plotting]", "pytom-match-pick[dev]"]
+
 
 [project.scripts]
 "pytom_create_mask.py" = "pytom_tm.entry_points:pytom_create_mask"
