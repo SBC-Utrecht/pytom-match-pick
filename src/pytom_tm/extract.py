@@ -211,7 +211,7 @@ def extract_particles(
     if tomogram_mask is not None:
         slices = [
             slice(origin, origin + size)
-            for origin, size in zip(job.search_orgin, job.search_size)
+            for origin, size in zip(job.search_origin, job.search_size)
         ]
         tomogram_mask = tomogram_mask[*slices]
         # mask should be larger than zero in regions of interest!
