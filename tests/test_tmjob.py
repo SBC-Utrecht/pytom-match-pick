@@ -481,6 +481,14 @@ class TestTMJob(unittest.TestCase):
             "almost identical.",
         )
 
+    def test_splitting_with_tomogram_mask(self):
+        # TODO: add test
+        self.fail()
+
+    def test_splitting_with_broken_tomogram_mask(self):
+        # TODO: add test
+        self.fail()
+
     def test_splitting_with_offsets(self):
         # check if subjobs have correct offsets for the main job, the last sub job will have the largest errors
         job = TMJob(
