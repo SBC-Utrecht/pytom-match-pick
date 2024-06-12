@@ -635,6 +635,15 @@ def match_template(argv=None):
         help="Start and end indices of the search along the z-axis, "
         "e.g. --search-x 30 230 ",
     )
+    volume_group.add_argument(
+        "--tomogram-mask",
+        type=pathlib.Path,
+        required=False,
+        action=CheckFileExists,
+        help="Here you can provide a mask for matching with dimensions equal to "
+        "the tomogram. If a subvolume only has values <= 0 for this mask it will be skipped.",
+    )
+
     filter_group = parser.add_argument_group("Filter control")
     filter_group.add_argument(
         "-a",
