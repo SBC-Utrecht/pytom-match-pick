@@ -410,7 +410,7 @@ def extract_candidates(argv=None):
         "the tomogram. All values in the mask that are smaller or equal to 0 will be "
         "removed, all values larger than 0 are considered regions of interest. It can "
         "be used to extract annotations only within a specific cellular region."
-        "If the job was run with a tomogram mask, this will override that mask",
+        "If the job was run with a tomogram mask, this file will be used instead of the job mask",
     )
     parser.add_argument(
         "-n",
