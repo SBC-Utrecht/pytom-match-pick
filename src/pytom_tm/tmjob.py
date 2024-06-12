@@ -57,6 +57,8 @@ def load_json_to_tmjob(
         search_x=data["search_x"],
         search_y=data["search_y"],
         search_z=data["search_z"],
+        # Use 'get' for backwards compatibility
+        tomogram_mask=data.get("tomogram_mask", None),
         voxel_size=data["voxel_size"],
         low_pass=data["low_pass"],
         # Use 'get' for backwards compatibility
@@ -213,6 +215,7 @@ class TMJob:
         search_x: Optional[list[int, int]] = None,
         search_y: Optional[list[int, int]] = None,
         search_z: Optional[list[int, int]] = None,
+        tomogram_mask: Optional[pathlib.Path] = None,
         voxel_size: Optional[float] = None,
         low_pass: Optional[float] = None,
         high_pass: Optional[float] = None,
@@ -256,6 +259,8 @@ class TMJob:
             restrict tomogram search region along the y-axis
         search_z: Optional[list[int, int]], default None
             restrict tomogram search region along the z-axis
+        tomogram_mask: Optional[pathlib.Path], default None
+            when volume splitting tomograms, only subjobs where any(mask > 0) will be generated
         voxel_size: Optional[float], default None
             voxel size of tomogram and template (in A) if not provided will be read from template/tomogram MRCs
         low_pass: Optional[float], default None
@@ -363,6 +368,7 @@ class TMJob:
         ]
 
         logging.debug(f"origin, size = {self.search_origin}, {self.search_size}")
+        self.tomogram_mask = tomogram_mask
 
         self.whole_start = None
         # For the main job these are always [0,0,0] and self.search_size, for sub_jobs these will differ from
@@ -535,6 +541,8 @@ class TMJob:
         Finally, new_job.sub_start and new_job.sub_step, extract the score and angle map without the template
         overhang from the subvolume.
 
+        If self.tomogram_mask is set, we will skip subjobs where all(mask <= 0).
+
         Parameters
         ----------
         split: tuple[int, int, int]
@@ -551,6 +559,14 @@ class TMJob:
             )
 
         search_size = self.search_size
+        if self.tomogram_mask is not None:
+            tomogram_mask = read_mrc(self.tomogram_mask)
+            if np.all(tomogram_mask <= 0):
+                raise TMJobError(
+                    f"No positive values in tomogram mask: {self.tomogram_mask}"
+                )
+        else:
+            tomogram_mask = None
         # shape of template for overhang
         overhang = self.template_shape
         # use overhang//2 (+1 for odd sizes)
@@ -573,6 +589,16 @@ class TMJob:
             whole_start = tuple(dim_data[1][0] for dim_data in data_3D)
             sub_start = tuple(dim_data[1][0] - dim_data[0][0] for dim_data in data_3D)
             sub_step = tuple(dim_data[1][1] - dim_data[1][0] for dim_data in data_3D)
+
+            # check if this contains any of the unique data points are where tomo_mask>=0
+            if tomogram_mask is not None:
+                slices = [
+                    slice(origin, origin + step)
+                    for origin, step in zip(whole_start, sub_step)
+                ]
+                if np.all(tomogram_mask[*slices] <= 0):
+                    # No non-masked unique data-points, skipping
+                    continue
             new_job = self.copy()
             new_job.leader = self.job_key
             new_job.job_key = self.job_key + str(i)

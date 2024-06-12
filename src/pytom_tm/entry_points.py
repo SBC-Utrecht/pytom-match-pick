@@ -865,6 +865,7 @@ def match_template(argv=None):
         search_x=args.search_x,
         search_y=args.search_y,
         search_z=args.search_z,
+        tomogram_mask=args.tomogram_mask,
         voxel_size=args.voxel_size_angstrom,
         low_pass=args.low_pass,
         high_pass=args.high_pass,
