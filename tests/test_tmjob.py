@@ -249,7 +249,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_DATA_DIR,
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
-                template_mask=TEST_BROKEN_TOMOGRAM_MASK,
+                tomogram_mask=TEST_BROKEN_TOMOGRAM_MASK,
             )
 
     def test_tm_job_copy(self):
