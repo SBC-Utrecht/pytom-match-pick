@@ -87,7 +87,6 @@ class TestTMJob(unittest.TestCase):
             overwrite=True,
         )
         write_mrc(TEST_TOMOGRAM, volume, 1.0)
-        #
 
         # do a run without splitting to compare against
         job = TMJob(
