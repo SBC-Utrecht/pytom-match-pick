@@ -369,6 +369,12 @@ class TMJob:
 
         logging.debug(f"origin, size = {self.search_origin}, {self.search_size}")
         self.tomogram_mask = tomogram_mask
+        if tomogram_mask is not None:
+            temp = read_mrc(tomogram_mask)
+            if np.all(temp <= 0):
+                raise ValueError(
+                    f"No values larger than 0 found in the template mask: {tomogram_mask}"
+                )
 
         self.whole_start = None
         # For the main job these are always [0,0,0] and self.search_size, for sub_jobs these will differ from
@@ -560,11 +566,8 @@ class TMJob:
 
         search_size = self.search_size
         if self.tomogram_mask is not None:
+            # This should have some positve values after the check in the __init__
             tomogram_mask = read_mrc(self.tomogram_mask)
-            if np.all(tomogram_mask <= 0):
-                raise TMJobError(
-                    f"No positive values in tomogram mask: {self.tomogram_mask}"
-                )
         else:
             tomogram_mask = None
         # shape of template for overhang
