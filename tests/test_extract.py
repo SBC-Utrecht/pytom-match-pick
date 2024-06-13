@@ -17,5 +17,6 @@ class TestExtract(unittest.TestCase):
             tophat_mask.dtype, bool, msg="predicted tophat mask should be boolean"
         )
 
-    def test_extract_job_with_tomogram_mask(self):
-        self.fail()
+    # part of the extraction test in test_tmjob.py
+    # def test_extract_job_with_tomogram_mask(self):
+    #    pass
