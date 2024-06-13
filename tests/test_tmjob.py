@@ -492,12 +492,12 @@ class TestTMJob(unittest.TestCase):
         job = self.job.copy()
         job.tomogram_mask = TEST_EXTRACTION_MASK_INSIDE
         job.split_volume_search((10, 10, 10))
-        self.assertLess(len(job.subjobs), 10 * 10 * 10)
+        self.assertLess(len(job.sub_jobs), 10 * 10 * 10)
 
     def test_splitting_with_broken_tomogram_mask(self):
         job = self.job.copy()
         job.tomogram_mask = TEST_BROKEN_TOMOGRAM_MASK
-        with self.assertRaisesRegex(TMJobError, TEST_BROKEN_TOMOGRAM_MASK):
+        with self.assertRaisesRegex(TMJobError, str(TEST_BROKEN_TOMOGRAM_MASK)):
             job.split_volume_search((2, 2, 2))
 
     def test_splitting_with_offsets(self):
