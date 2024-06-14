@@ -1,4 +1,7 @@
 ![test-badge](https://github.com/SBC-Utrecht/pytom-match-pick/actions/workflows/unit-tests.yml/badge.svg?branch=main)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10728422.svg)](https://doi.org/10.5281/zenodo.10728422)
+
+
 # pytom-match-pick: GPU template matching for cryo-ET
 
 GPU template matching, originally developed in [PyTom](https://github.com/SBC-Utrecht/PyTom), as a standalone python package that can be run from the command line.
