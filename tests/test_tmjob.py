@@ -19,6 +19,7 @@ ANGLE_ID = 100
 ANGULAR_SEARCH = "38.53"
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath("test_data")
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath("tomogram.mrc")
+TEST_BROKEN_TOMOGRAM_MASK = TEST_DATA_DIR.joinpath("broken_tomogram_mask.mrc")
 TEST_EXTRACTION_MASK_OUTSIDE = TEST_DATA_DIR.joinpath("extraction_mask_outside.mrc")
 TEST_EXTRACTION_MASK_INSIDE = TEST_DATA_DIR.joinpath("extraction_mask_inside.mrc")
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath("template.mrc")
@@ -119,9 +120,14 @@ class TestTMJob(unittest.TestCase):
         )
         job.write_to_json(TEST_JOB_JSON_WHITENING)
 
+        # write broken tomogram mask
+        broken_tomogram_mask = np.zeros(TOMO_SHAPE, dtype=np.float32)
+        write_mrc(TEST_BROKEN_TOMOGRAM_MASK, broken_tomogram_mask, 1.0)
+
     @classmethod
     def tearDownClass(cls) -> None:
         TEST_MASK.unlink()
+        TEST_BROKEN_TOMOGRAM_MASK.unlink()
         TEST_EXTRACTION_MASK_OUTSIDE.unlink()
         TEST_EXTRACTION_MASK_INSIDE.unlink()
         TEST_TEMPLATE.unlink()
@@ -230,6 +236,20 @@ class TestTMJob(unittest.TestCase):
                 TEST_DATA_DIR,
                 angle_increment="1.2.3",
                 voxel_size=1.0,
+            )
+
+        # Test broken template mask
+        with self.assertRaisesRegex(ValueError, str(TEST_BROKEN_TOMOGRAM_MASK)):
+            TMJob(
+                "0",
+                10,
+                TEST_TOMOGRAM,
+                TEST_TEMPLATE,
+                TEST_MASK,
+                TEST_DATA_DIR,
+                angle_increment=ANGULAR_SEARCH,
+                voxel_size=1.0,
+                tomogram_mask=TEST_BROKEN_TOMOGRAM_MASK,
             )
 
     def test_tm_job_copy(self):
@@ -481,6 +501,12 @@ class TestTMJob(unittest.TestCase):
             "almost identical.",
         )
 
+    def test_splitting_with_tomogram_mask(self):
+        job = self.job.copy()
+        job.tomogram_mask = TEST_EXTRACTION_MASK_INSIDE
+        job.split_volume_search((10, 10, 10))
+        self.assertLess(len(job.sub_jobs), 10 * 10 * 10)
+
     def test_splitting_with_offsets(self):
         # check if subjobs have correct offsets for the main job, the last sub job will have the largest errors
         job = TMJob(
@@ -602,10 +628,25 @@ class TestTMJob(unittest.TestCase):
             msg="Length of returned list should be 0 after applying mask where the "
             "object is not in the region of interest.",
         )
-
-        # test mask that covers the particle
+        # test if the extraction mask can be grabbed from the job instead
+        job = self.job.copy()
+        job.tomogram_mask = TEST_EXTRACTION_MASK_OUTSIDE
         df, scores = extract_particles(
-            self.job,
+            job,
+            5,
+            100,
+            create_plot=False,
+        )
+        self.assertEqual(
+            len(scores),
+            0,
+            msg="Length of returned list should be 0 after applying mask where the "
+            "object is not in the region of interest.",
+        )
+
+        # test mask that covers the particle and should override the one now attached to the job
+        df, scores = extract_particles(
+            job,
             5,
             100,
             tomogram_mask_path=TEST_EXTRACTION_MASK_INSIDE,

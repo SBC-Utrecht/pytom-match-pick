@@ -16,3 +16,7 @@ class TestExtract(unittest.TestCase):
         self.assertEqual(
             tophat_mask.dtype, bool, msg="predicted tophat mask should be boolean"
         )
+
+    # part of the extraction test in test_tmjob.py
+    # def test_extract_job_with_tomogram_mask(self):
+    #    pass

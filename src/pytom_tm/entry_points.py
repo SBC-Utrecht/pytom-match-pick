@@ -409,7 +409,8 @@ def extract_candidates(argv=None):
         help="Here you can provide a mask for the extraction with dimensions equal to "
         "the tomogram. All values in the mask that are smaller or equal to 0 will be "
         "removed, all values larger than 0 are considered regions of interest. It can "
-        "be used to extract annotations only within a specific cellular region.",
+        "be used to extract annotations only within a specific cellular region."
+        "If the job was run with a tomogram mask, this file will be used instead of the job mask",
     )
     parser.add_argument(
         "-n",
@@ -635,6 +636,15 @@ def match_template(argv=None):
         help="Start and end indices of the search along the z-axis, "
         "e.g. --search-x 30 230 ",
     )
+    volume_group.add_argument(
+        "--tomogram-mask",
+        type=pathlib.Path,
+        required=False,
+        action=CheckFileExists,
+        help="Here you can provide a mask for matching with dimensions equal to "
+        "the tomogram. If a subvolume only has values <= 0 for this mask it will be skipped.",
+    )
+
     filter_group = parser.add_argument_group("Filter control")
     filter_group.add_argument(
         "-a",
@@ -856,6 +866,7 @@ def match_template(argv=None):
         search_x=args.search_x,
         search_y=args.search_y,
         search_z=args.search_z,
+        tomogram_mask=args.tomogram_mask,
         voxel_size=args.voxel_size_angstrom,
         low_pass=args.low_pass,
         high_pass=args.high_pass,

@@ -164,7 +164,7 @@ def extract_particles(
         tune the number of false positives to be included for automated error function cut-off estimation:
         should be a float > 0
     tomogram_mask_path: Optional[pathlib.Path]
-        path to a tomographic binary mask for extraction
+        path to a tomographic binary mask for extraction, will override job.tomogram_mask
     tophat_filter: bool
         attempt to only select sharp peaks with the tophat filter
     create_plot: bool, default True
@@ -202,12 +202,19 @@ def extract_particles(
         )
 
     # apply tomogram mask if provided
+    tomogram_mask = None
     if tomogram_mask_path is not None:
-        tomogram_mask = read_mrc(tomogram_mask_path)[
-            job.search_origin[0] : job.search_origin[0] + job.search_size[0],
-            job.search_origin[1] : job.search_origin[1] + job.search_size[1],
-            job.search_origin[2] : job.search_origin[2] + job.search_size[2],
-        ]  # mask should be larger than zero in regions of interest!
+        tomogram_mask = read_mrc(tomogram_mask_path)
+    elif job.tomogram_mask is not None:
+        tomogram_mask = read_mrc(job.tomogram_mask)
+
+    if tomogram_mask is not None:
+        slices = [
+            slice(origin, origin + size)
+            for origin, size in zip(job.search_origin, job.search_size)
+        ]
+        tomogram_mask = tomogram_mask[*slices]
+        # mask should be larger than zero in regions of interest!
         score_volume[tomogram_mask <= 0] = 0
 
     # mask edges of score volume
