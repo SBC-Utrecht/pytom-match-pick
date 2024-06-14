@@ -373,7 +373,7 @@ class TMJob:
             temp = read_mrc(tomogram_mask)
             if np.all(temp <= 0):
                 raise ValueError(
-                    f"No values larger than 0 found in the template mask: {tomogram_mask}"
+                    f"No values larger than 0 found in the tomogram mask: {tomogram_mask}"
                 )
 
         self.whole_start = None
