@@ -34,7 +34,7 @@ dependencies = [
     "importlib_resources",
     "packaging",
     "scipy",
-    "healpix",
+    "git+https://github.com/ntessore/healpix.git" #healpix, see if building from source fixes numpy 2 issues
 ]
 
 [project.optional-dependencies]
