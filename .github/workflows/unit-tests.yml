@@ -25,8 +25,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          conda install -y -c conda-forge python=3 cupy cuda-version=11.8 
-          conda install -y -c conda-forge gcc #needed until healpix releases numpy 2 version
+          conda install -y -c conda-forge python=3 cupy cuda-version=11.8 gcc #gcc only needed until healpix releases under numpy>2
           python -m pip install coverage
       - name: Install base dev code and list dependencies 
         run: |
