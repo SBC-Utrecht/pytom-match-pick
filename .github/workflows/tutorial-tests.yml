@@ -44,6 +44,8 @@ jobs:
         run: |
           mkdir wiki/dataset
           mkdir wiki/templates
+          mkdir wiki/results_80S
+          mkdir wiki/results_60S
           cd wiki/templates
           cp ../data/6qzp_60S wiki/templates/
           curl https://files.wwpdb.org/pub/emdb/structures/EMD-2938/map/emd_2938.map.gz -o emd_2938.map.gz
