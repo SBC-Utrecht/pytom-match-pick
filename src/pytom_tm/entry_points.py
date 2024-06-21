@@ -786,6 +786,7 @@ def match_template(argv=None):
     )
     additional_group.add_argument(
         "--rng-seed",
+        type=int,
         action=LargerThanZero,
         default=int.from_bytes(urandom(8)),
         required=False,
