@@ -824,9 +824,8 @@ class TMJob:
                 )
                 for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
                     ctf["defocus"] = ctf["defocus"] + defocus_shift
-                logging.log(self.log_level, f"Patch center: {relative_patch_center}")
-                logging.log(
-                    self.log_level,
+                logging.debug(f"Patch center: {relative_patch_center}")
+                logging.debug(
                     f"Defocus values: {[ctf['defocus'] for ctf in self.ctf_data]}",
                 )
 
