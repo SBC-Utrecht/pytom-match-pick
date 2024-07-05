@@ -157,7 +157,6 @@ class TestEntryPoints(unittest.TestCase):
         # phase randomization test
         arguments = defaults.copy()
         arguments["-r"] = ""
-        arguments["-r"] = ""
         start(arguments)
         # test if we can set the rng seed, see issue #194
         arguments["--rng-seed"] = "42"
