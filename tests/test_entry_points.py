@@ -158,6 +158,9 @@ class TestEntryPoints(unittest.TestCase):
         arguments = defaults.copy()
         arguments["-r"] = ""
         start(arguments)
+        # test if we can set the rng seed, see issue #194
+        arguments["--rng-seed"] = "42"
+        start(arguments)
 
         # test debug files
         arguments = defaults.copy()
