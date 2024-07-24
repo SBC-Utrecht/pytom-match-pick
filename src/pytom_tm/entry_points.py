@@ -713,9 +713,9 @@ def match_template(argv=None):
         required=False,
         action=ParseDefocus,
         help="Here you can provide an IMOD defocus (.defocus) file (version 2 or 3) "
-        ", a text (.txt) file with a single defocus value per line (in nm), "
+        ", a text (.txt) file with a single defocus value per line (in μm), "
         "or a single "
-        "defocus value (in nm). "
+        "defocus value (in μm). "
         "The value(s), together with the other ctf "
         "parameters (amplitude contrast, voltage, spherical abberation), "
         "will be used to create a 3D CTF weighting function. IMPORTANT: if "
