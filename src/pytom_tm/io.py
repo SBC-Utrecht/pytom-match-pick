@@ -448,6 +448,6 @@ def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
     if file_name.suffix == ".defocus":
         return read_imod_defocus_file(file_name)
     elif file_name.suffix == ".txt":
-        return [x * 1e-3 for x in read_txt_file(file_name)]
+        return read_txt_file(file_name)
     else:
         raise ValueError("Defocus file needs to have format .defocus or .txt")
