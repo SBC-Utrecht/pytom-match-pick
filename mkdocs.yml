@@ -8,6 +8,12 @@ copyright: Copyright &copy; 2024
 nav:
   - Home:
     - Overview: index.md
+    - Usage: Usage.md
+    - Timings: Timings.md
+    - FAQ: Frequently-asked-questions-(FAQ).md
+    - For developers: Developers.md
+  - Tutorial:
+    - Ribosomes on ER microsomes: tutorials/Tutorial.md
   - Discussions: https://github.com/SBC-Utrecht/pytom-match-pick/discussions
   - Report a bug: https://github.com/SBC-Utrecht/pytom-match-pick/issues
 
@@ -24,7 +30,9 @@ theme:
 
 markdown_extensions:
         # - include
-    - pymdownx.snippets
+  - pymdownx.snippets
+  - pymdownx.arithmatex:
+      generic: true
 
 plugins:
   - search

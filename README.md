@@ -86,7 +86,7 @@ The following scripts are available to run with `--help` to see parameters:
 - estimate an ROC curve from a job file (.json): `pytom_estimate_roc.py --help`
 - merge multiple star files to a single starfile: `pytom_merge_stars.py --help`
 
-Detailed usage instructions and a tutorial are available on our site: https://SBC-Utrecht.github.io/pytom-match-pick
+Detailed usage instructions and a tutorial are available on [our site](https://SBC-Utrecht.github.io/pytom-match-pick).
 
 ## Usage questions, ideas and solutions, engagement, etc
 Please use our [github discussions](https://github.com/SBC-Utrecht/pytom-match-pick/discussions) for:
