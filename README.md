@@ -59,7 +59,7 @@ The installation above also adds the optional dependencies `[matplotlib, seaborn
 python -m pip install pytom-match-pick
 ```
 
-## Cupy warning
+### Cupy warning
 Having issues running the software? If cupy is not correctly installed, 
 ```commandline
 python -c "import pytom_tm"
@@ -77,10 +77,6 @@ specific build compatible with the installed cuda toolkit.
 
 ## Usage
 
-Detailed usage instructions are available on the wiki: https://github.com/SBC-Utrecht/pytom-match-pick/wiki
-
-Also, a tutorial can be found on the same wiki: https://github.com/SBC-Utrecht/pytom-match-pick/wiki/Tutorial
-
 The following scripts are available to run with `--help` to see parameters:
 
 - create a template from an mrc file containing a density map: `pytom_create_template.py --help`
@@ -89,6 +85,8 @@ The following scripts are available to run with `--help` to see parameters:
 - extract candidates from a job file (.json) created in the template matching output folder: `pytom_extract_candidate.py --help`
 - estimate an ROC curve from a job file (.json): `pytom_estimate_roc.py --help`
 - merge multiple star files to a single starfile: `pytom_merge_stars.py --help`
+
+Detailed usage instructions and a tutorial are available on our site: https://SBC-Utrecht.github.io/pytom-match-pick
 
 ## Usage questions, ideas and solutions, engagement, etc
 Please use our [github discussions](https://github.com/SBC-Utrecht/pytom-match-pick/discussions) for:
