@@ -6,7 +6,12 @@
 
 GPU template matching, originally developed in [PyTom](https://github.com/SBC-Utrecht/PyTom), as a standalone python package that can be run from the command line.
 
-![cover_image](images/tomo200528_100_illustration.png)
+![cover_image](docs/images/tomo200528_100_illustration.png)
+
+<!--
+This line starts the block that is incorporated into the website via mkdocs snippets
+-->
+#--8<-- [start:docs]
 
 ## Requires
 
@@ -148,3 +153,8 @@ For a reference on GPU accelerated template matching in tomograms please see the
     DOI = {10.3390/ijms241713375}
 }
 ```
+
+<!--
+This ends the block for the website
+-->
+# --8<-- [end:docs]

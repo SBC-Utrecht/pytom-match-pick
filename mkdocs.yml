@@ -1,0 +1,30 @@
+site_name: pytom-match-pick
+site_url: https://SBC-Utrecht.github.io/pytom-match-pick
+site_author: Marten Chaillet
+repo_name: pytom-match-pick
+repo_url: https://github.com/SBC-Utrecht/pytom-match-pick
+copyright: Copyright &copy; 2024
+
+nav:
+  - Home:
+    - Overview: index.md
+  - Discussions: https://github.com/SBC-Utrecht/pytom-match-pick/discussions
+  - Report a bug: https://github.com/SBC-Utrecht/pytom-match-pick/issues
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    # - navigation.instant.progress  # possible progress bar, but site is too small to justify
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+    - toc.follow
+
+markdown_extensions:
+        # - include
+    - pymdownx.snippets
+
+plugins:
+  - search
