@@ -27,12 +27,26 @@ theme:
     - navigation.tabs.sticky
     - navigation.expand
     - toc.follow
+    - content.code.copy
 
 markdown_extensions:
         # - include
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      base_path: [".", "src/pytom_tm"]
+  - pymdownx.superfences
   - pymdownx.arithmatex:
       generic: true
+  - attr_list
+  - md_in_html
+
+extra_javascript:
+  - javascripts/katex.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
+
+extra_css:
+  - https://unpkg.com/katex@0/dist/katex.min.css
 
 plugins:
   - search
+  - markdown-exec

@@ -155,4 +155,4 @@ For a reference on GPU accelerated template matching in tomograms please see the
 <!--
 This ends the block for the website
 -->
-# --8<-- [end:docs]
+#--8<-- [end:docs]

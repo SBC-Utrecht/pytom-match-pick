@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           # pip install -e .
-          pip install mkdocs mkdocs-material
+          pip install mkdocs mkdocs-material markdown-exec
 
       # Build the book
       - name: Build the book

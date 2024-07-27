@@ -16,3 +16,19 @@ Using template matching in this software consists of the following steps:
 2. [Matching the template in a tomogram](template-matching)
 3. [Extracting particles through curve fitting](extracting-particles)
 4. [Merging annotations for export to other software](merging-annotations)
+
+
+### pytom_match_template.py
+
+```python
+# import argparse
+---8<--- "entry_points.py:match_template_usage"
+# parser.print_help()
+```
+
+
+```bash exec="on" result="ansi"
+pytom_match_template.py -h 
+```
+
+
