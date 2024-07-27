@@ -32,7 +32,8 @@ theme:
 markdown_extensions:
         # - include
   - pymdownx.snippets:
-      base_path: [".", "src/pytom_tm"]
+      base_path: ["README.md", "src/pytom_tm/entry_points.py"]
+      check_paths: true
   - pymdownx.superfences
   - pymdownx.arithmatex:
       generic: true

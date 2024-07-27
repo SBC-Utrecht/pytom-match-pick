@@ -515,7 +515,7 @@ def match_template(argv=None):
 
     argv = _parse_argv(argv)
 
-    # ---8<---[start:match_template_usage]
+    # ---8<--- [start:match_template_usage]
 
     parser = argparse.ArgumentParser(
         description="Run template matching. -- Marten Chaillet (@McHaillet)"
@@ -815,7 +815,7 @@ def match_template(argv=None):
         help="Can be set to `info` or `debug`",
     )
 
-    # ---8<---[end:match_template_usage]
+    # ---8<--- [end:match_template_usage]
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)

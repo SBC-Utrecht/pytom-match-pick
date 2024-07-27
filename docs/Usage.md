@@ -20,10 +20,16 @@ Using template matching in this software consists of the following steps:
 
 ### pytom_match_template.py
 
-```python
-# import argparse
+```
 ---8<--- "entry_points.py:match_template_usage"
-# parser.print_help()
+```
+
+```python exec="on" result="ansi"
+import argparse
+(
+---8<--- "entry_points.py:match_template_usage"
+)
+parser.print_help()
 ```
 
 
