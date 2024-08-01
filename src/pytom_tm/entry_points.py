@@ -198,15 +198,13 @@ def pytom_create_template(argv=None):
         help="Specify a desired size for the output box of the template. "
         "Only works if it is larger than the downsampled box size of the input.",
     )
-    (
-        parser.add_argument(
-            "--invert",
-            action="store_true",
-            default=False,
-            required=False,
-            help="Multiply template by -1. "
-            "WARNING: not needed if ctf with defocus is already applied!",
-        ),
+    parser.add_argument(
+        "--invert",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Multiply template by -1. "
+        "WARNING: not needed if ctf with defocus is already applied!",
     )
     parser.add_argument(
         "-m",
