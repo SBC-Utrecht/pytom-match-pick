@@ -12,28 +12,109 @@ For usage you need at least a set of reconstructed tomograms in the MRC format a
 
 Using template matching in this software consists of the following steps:
 
-1. [Creating a template and mask](creating-a-template-and-mask)
-2. [Matching the template in a tomogram](template-matching)
-3. [Extracting particles through curve fitting](extracting-particles)
-4. [Merging annotations for export to other software](merging-annotations)
+1. Creating a template and mask
+2. Matching the template in a tomogram
+3. Extracting particles
+4. Merging annotations for export to other software
 
+
+## 1. Creating a template and mask
+
+### pytom_create_template.py
+
+```python exec="on" result="ansi" 
+import argparse
+code = ("""
+---8<--- "entry_points.py:create_template_usage"
+""")
+cleaned_lines = [line.lstrip() for line in code.splitlines()
+    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+]
+cleaned_code = '\n'.join(cleaned_lines)
+exec(cleaned_code)
+print(parser.format_help())
+```
+
+### pytom_create_mask.py
+
+```python exec="on" result="ansi"
+import argparse
+code = ("""
+---8<--- "entry_points.py:create_mask_usage"
+""")
+cleaned_lines = [line.lstrip() for line in code.splitlines()
+    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+]
+cleaned_code = '\n'.join(cleaned_lines)
+exec(cleaned_code)
+print(parser.format_help())
+```
+
+## 2. Matching the template in a tomogram
 
 ### pytom_match_template.py
 
 ```python exec="on" result="ansi"
-import argparse, pathlib
-from os import urandom
+import argparse
 code = ("""
 ---8<--- "entry_points.py:match_template_usage"
 """)
-cleaned_code = '\n'.join(line.lstrip() for line in code.splitlines() if 'action=' not in line)
+cleaned_lines = [line.lstrip() for line in code.splitlines()
+    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+]
+cleaned_code = '\n'.join(cleaned_lines)
 exec(cleaned_code)
-parser.print_help()
+print(parser.format_help())
 ```
 
+## 3. Extracting particles
 
-```bash exec="on" result="ansi"
-pytom_match_template.py -h 
+### pytom_extract_candidates.py
+
+```python exec="on" result="ansi"
+import argparse
+code = ("""
+---8<--- "entry_points.py:extract_candidates_usage"
+""")
+cleaned_lines = [line.lstrip() for line in code.splitlines()
+    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+]
+cleaned_code = '\n'.join(cleaned_lines)
+exec(cleaned_code)
+print(parser.format_help())
 ```
+
+### pytom_estimate_roc.py
+
+```python exec="on" result="ansi"
+import argparse
+code = ("""
+---8<--- "entry_points.py:estimate_roc_usage"
+""")
+cleaned_lines = [line.lstrip() for line in code.splitlines()
+    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+]
+cleaned_code = '\n'.join(cleaned_lines)
+exec(cleaned_code)
+print(parser.format_help())
+```
+
+## 4. Merging annotations for export to other software
+
+### pytom_merge_stars.py
+
+```python exec="on" result="ansi"
+import argparse
+code = ("""
+---8<--- "entry_points.py:merge_stars_usage"
+""")
+cleaned_lines = [line.lstrip() for line in code.splitlines()
+    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+]
+cleaned_code = '\n'.join(cleaned_lines)
+exec(cleaned_code)
+print(parser.format_help())
+```
+
 
 

@@ -37,8 +37,9 @@ def pytom_create_mask(argv=None):
     # ---8<--- [start:create_mask_usage]
 
     parser = argparse.ArgumentParser(
+        prog="pytom_create_mask.py",
         description="Create a mask for template matching. "
-        "-- Marten Chaillet (@McHaillet)"
+        "-- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-b",
@@ -135,8 +136,9 @@ def pytom_create_template(argv=None):
     # ---8<--- [start:create_template_usage]
 
     parser = argparse.ArgumentParser(
+        prog="pytom_create_template.py",
         description="Generate template from MRC density. "
-        "-- Marten Chaillet (@McHaillet)"
+        "-- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-i",
@@ -285,8 +287,9 @@ def estimate_roc(argv=None):
     # ---8<--- [start:estimate_roc_usage]
 
     parser = argparse.ArgumentParser(
+        prog="pytom_estimate_roc.py",
         description="Estimate ROC curve from TMJob file. "
-        "-- Marten Chaillet (@McHaillet)"
+        "-- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-j",
@@ -407,7 +410,8 @@ def extract_candidates(argv=None):
     # ---8<--- [start:extract_candidates_usage]
 
     parser = argparse.ArgumentParser(
-        description="Run candidate extraction. -- Marten Chaillet (@McHaillet)"
+        prog="pytom_extract_candidates.py",
+        description="Run candidate extraction. -- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-j",
@@ -538,7 +542,8 @@ def match_template(argv=None):
     # ---8<--- [start:match_template_usage]
 
     parser = argparse.ArgumentParser(
-        description="Run template matching. -- Marten Chaillet (@McHaillet)"
+        prog="pytom_match_template.py",
+        description="Run template matching. -- Marten Chaillet (@McHaillet)",
     )
     io_group = parser.add_argument_group("Template, search volume, and output")
     io_group.add_argument(
@@ -932,10 +937,11 @@ def merge_stars(argv=None):
     # ---8<--- [start:merge_stars_usage]
 
     parser = argparse.ArgumentParser(
+        prog="pytom_merge_stars.py",
         description=(
             "Merge multiple star files in the same directory. "
             "-- Marten Chaillet (@McHaillet)"
-        )
+        ),
     )
     parser.add_argument(
         "-i",
