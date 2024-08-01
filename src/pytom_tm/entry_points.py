@@ -34,6 +34,8 @@ def pytom_create_mask(argv=None):
 
     argv = _parse_argv(argv)
 
+    # ---8<--- [start:create_mask_usage]
+
     parser = argparse.ArgumentParser(
         description="Create a mask for template matching. "
         "-- Marten Chaillet (@McHaillet)"
@@ -98,6 +100,9 @@ def pytom_create_mask(argv=None):
         "Values in the range from 0.5-1.0 are usually sufficient for tomograms with "
         "20A-10A voxel sizes.",
     )
+
+    # ---8<--- [end:create_mask_usage]
+
     argv = _parse_argv(argv)
     args = parser.parse_args(argv)
 
@@ -126,6 +131,9 @@ def pytom_create_template(argv=None):
     from pytom_tm.template import generate_template_from_map
 
     argv = _parse_argv(argv)
+
+    # ---8<--- [start:create_template_usage]
+
     parser = argparse.ArgumentParser(
         description="Generate template from MRC density. "
         "-- Marten Chaillet (@McHaillet)"
@@ -216,6 +224,9 @@ def pytom_create_template(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+
+    # ---8<--- [end:create_template_usage]
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
@@ -272,6 +283,8 @@ def pytom_create_template(argv=None):
 def estimate_roc(argv=None):
     argv = _parse_argv(argv)
     from pytom_tm.plotting import plist_quality_gaussian_fit
+
+    # ---8<--- [start:estimate_roc_usage]
 
     parser = argparse.ArgumentParser(
         description="Estimate ROC curve from TMJob file. "
@@ -350,6 +363,9 @@ def estimate_roc(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+
+    # ---8<--- [end:estimate_roc_usage]
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
@@ -389,6 +405,9 @@ def estimate_roc(argv=None):
 
 def extract_candidates(argv=None):
     argv = _parse_argv(argv)
+
+    # ---8<--- [start:extract_candidates_usage]
+
     parser = argparse.ArgumentParser(
         description="Run candidate extraction. -- Marten Chaillet (@McHaillet)"
     )
@@ -486,6 +505,9 @@ def extract_candidates(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+
+    # ---8<--- [end:extract_candidates_usage]
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
@@ -909,6 +931,8 @@ def match_template(argv=None):
 def merge_stars(argv=None):
     import pandas as pd
 
+    # ---8<--- [start:merge_stars_usage]
+
     parser = argparse.ArgumentParser(
         description=(
             "Merge multiple star files in the same directory. "
@@ -943,6 +967,9 @@ def merge_stars(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+
+    # ---8<--- [end:merge_stars_usage]
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
