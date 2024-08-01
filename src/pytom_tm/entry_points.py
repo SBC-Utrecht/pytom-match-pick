@@ -584,7 +584,7 @@ def match_template(argv=None):
         "diameter. If given a float it will generate an angle list with healpix "
         "for Z1 and X1 and linear search for Z2. The provided angle will be used "
         "as the maximum for the "
-        "linear search and for the mean angle difference from healpix.\n"
+        "linear search and for the mean angle difference from healpix."
         "Alternatively, a .txt file can be provided with three Euler angles "
         "(in radians) per line that define the angular search. "
         "Angle format is ZXZ anti-clockwise (see: "

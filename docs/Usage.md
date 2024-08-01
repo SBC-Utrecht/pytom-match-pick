@@ -20,15 +20,14 @@ Using template matching in this software consists of the following steps:
 
 ### pytom_match_template.py
 
-```
----8<--- "entry_points.py:match_template_usage"
-```
-
 ```python exec="on" result="ansi"
-import argparse
-(
+import argparse, pathlib
+from os import urandom
+code = ("""
 ---8<--- "entry_points.py:match_template_usage"
-)
+""")
+cleaned_code = '\n'.join(line.lstrip() for line in code.splitlines() if 'action=' not in line)
+exec(cleaned_code)
 parser.print_help()
 ```
 
