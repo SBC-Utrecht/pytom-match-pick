@@ -20,7 +20,16 @@ Using template matching in this software consists of the following steps:
 
 ## 1. Creating a template and mask
 
+This section contains usage information for `pytom_create_template.py` and 
+`pytom_create_mask.py`.
+
+**Important**:
+- The template and mask need to have the same box size.
+- The template needs to have the same contrast as the tomogram (e.g. the particles are black in both the tomogram and template).
+
 ### pytom_create_template.py
+
+Using an EM map as a reference structure generally leads to the best results. Alternatively a structure from the PDB can be converted in Chimera(X) using the molmap command to create an MRC file that models the electrostatic potential.
 
 ```python exec="on" result="ansi" 
 import argparse
@@ -36,6 +45,8 @@ print(parser.format_help())
 ```
 
 ### pytom_create_mask.py
+
+The mask around the template can be quite tight to remove as much noise as possible around the particles of interest. We recommend around 10%-20% overhang relative to the particle radius. You can also generate an ellipsoidal mask for particles that do not approximate well as a sphere. Though you will probably need to reorient this mask in chimera and resample to the grid of the template. Optionally you could also create a structured mask around the template in external software (via thresholding and dilation for example). Take into account that non-spherical masks roughly double the template matching computation time.
 
 ```python exec="on" result="ansi"
 import argparse
@@ -53,6 +64,13 @@ print(parser.format_help())
 ## 2. Matching the template in a tomogram
 
 ### pytom_match_template.py
+
+#### About CTFs
+
+Some form of CTF **should** be applied to the template:
+- In case all the neccesary parameters for CTF correction can be passed to `pytom_match_template.py`, you should only scale the template and adjust its contrast in this script.
+- Otherwise the template can be multiplied with a CTF here, in which case we often cut the CTF after the first zero crossing and apply a low pass filter. This is due to defocus gradient effects leading to wrong CTF crossings and reducing the correlation.
+
 
 ```python exec="on" result="ansi"
 import argparse
