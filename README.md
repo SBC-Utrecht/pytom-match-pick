@@ -4,8 +4,7 @@
 
 # pytom-match-pick: GPU template matching for cryo-ET
 
-GPU template matching, originally developed in [PyTom](https://github.
-com/SBC-Utrecht/PyTom), as a standalone python package that is run from the command 
+GPU template matching, originally developed in [PyTom](https://github.com/SBC-Utrecht/PyTom), as a standalone python package that is run from the command 
 line.
 
 ![cover_image](docs/images/tomo200528_100_illustration.png)
@@ -13,7 +12,7 @@ line.
 <!--
 This line starts the block that is incorporated into the website via mkdocs snippets
 -->
-#--8<-- [start:docs]
+[//]: # (#--8<-- [start:docs])
 
 ## Requires
 
@@ -163,4 +162,4 @@ For a reference on GPU accelerated template matching in tomograms please see the
 <!--
 This ends the block for the website
 -->
-#--8<-- [end:docs]
+[//]: # (#--8<-- [end:docs])
