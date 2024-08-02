@@ -191,7 +191,11 @@ print(parser.format_help())
 
 ## 4. Merging annotations for export to other software
 
+After running template matching and candidate extraction on multiple tomograms, each tomogram will have an individual starfile with particle annotations. Each starfile will contain the `MicrographName` column which refers back to the tomogram name. Multiple starfiles can therefore be appended to results in a large list which can be used in other software (such as RELION, WarpM) to load annotations. These software will link the annotations to specific tilt-series using the `MicrographName` column.
+
 ### pytom_merge_stars.py
+
+Without providing any parameters the script will try to merge all the starfiles in the current working directory and save them to a new file `particles.star`.
 
 ```python exec="on" result="ansi"
 import argparse
