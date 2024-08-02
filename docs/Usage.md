@@ -20,12 +20,11 @@ Using template matching in this software consists of the following steps:
 
 ## 1. Creating a template and mask
 
-This section contains usage information for `pytom_create_template.py` and 
-`pytom_create_mask.py`.
-
 **Important**:
 - The template and mask need to have the same box size.
-- The template needs to have the same contrast as the tomogram (e.g. the particles are black in both the tomogram and template).
+- The template needs to have the same contrast as the tomogram (e.g. the particles 
+  are black in both the tomogram and template). Contrast can be adjusted with the 
+  `--invert` option.
 
 ### pytom_create_template.py
 
@@ -65,12 +64,50 @@ print(parser.format_help())
 
 ### pytom_match_template.py
 
-#### About CTFs
+This script requires at least a tomogram, a template, a mask, the min and max tilt angles (for missing wedge constraint), an angular search, and a GPU index to run. The search can be limited along any dimension with the `--search-x`, `--search-y`, and `--search-z` parameters; for example to skip some empty regions in the z-dimension where the ice layer is not yet present, or to remove some reconstruction artifact region along the x-dimension. With the `--volume-split` option, a tomogram can be split into chunks to allow them to fit in GPU memory (useful for large tomograms). Providing multiple GPU's will allow the program to split the angular search (or the subvolume search) over multiple cards to speed up the algorithm. 
 
-Some form of CTF **should** be applied to the template:
-- In case all the neccesary parameters for CTF correction can be passed to `pytom_match_template.py`, you should only scale the template and adjust its contrast in this script.
-- Otherwise the template can be multiplied with a CTF here, in which case we often cut the CTF after the first zero crossing and apply a low pass filter. This is due to defocus gradient effects leading to wrong CTF crossings and reducing the correlation.
+The software automatically calculates the angular search based on the available 
+resolution and provided particle diameter. The required search is found from the 
+Crowther criterion $\Delta \alpha = \frac{180}{\pi r_{max} d}$. For the maximal 
+resolution the voxel size is used, unless a low-pass filter is specified as this 
+limits the available maximal resolution. You can exploit this to reduce the angular 
+search! For non-spherical particles we suggest choosing the particle diameter as the 
+longest axis of the macromolecule. 
 
+In case the template matching is run with a non-spherical mask, it is essential to set the `--non-spherical-mask` flag. It requires a slight modification of the calculation that will roughly double the computation time, so only use non-spherical masks if absolutely necessary.
+
+#### Optimizing results: per tilt weighting with CTFs and dose accumulation
+
+Optimal results are obtained by also incorporating information for the 3D CTF. You 
+can pass the following files (and parameters):
+- Tilt angles: a `.rawtlt` or `.tlt` file to the `--tilt-angles` parameter with all the 
+  tilt 
+  angles used to reconstruct the tomogram. You should then also set the 
+  `--per-tilt-weighting` flag.
+- CTF data: a `.defocus` file from IMOD or `.txt` file to `--defocus-file`. The `.txt` file 
+  should specify the defocus of each tilt in **$\micro m$**. You can also give a 
+  single defocus value (in $\micro m$). The CTF will also require input for 
+  `--voltage`, `--amplitude-contrast`, and `--spherical-abberation`.
+- Dose weighting: a `.txt` file to `--dose-accumulation` with the accumulated dose per 
+  tilt (assuming the same ordering as `.tlt`). Each line contains a single float 
+  specifying the accumulated dose in **e-/A2**. Dose weighting only works in 
+  combination with `--per-tilt-weighting`.
+
+_(As a side note, you can also only enable `--per-tilt-weighting` **without** dose accumulation and CTFs, or **with either** dose accumulation or CTFs.)_
+
+When enabling the CTF model here (with the defocus file), it is important that the template is not multiplied with a CTF before passing it to this script. The template only needs to be scaled to the correct pixel size and the contrast should be adjusted to match the contrast in the tomograms.
+
+Secondly, if the tomogram was CTF corrected, for example by using IMODs 
+strip-based CTF correction or NovaCTF. Its important to add the parameter 
+`--tomogram-ctf-model phase-flip` which modifies the template CTF to match the 
+tomograms CTF correction.
+
+#### Background corrections
+
+The software contains two background correction methods that might improve results: 
+`--spectral-whitening` or `--random-phase-correction` (from STOPGAP). In our 
+experience the random phase correction is most reliable, while spectral whitening 
+never seemed to clearly improve results.
 
 ```python exec="on" result="ansi"
 import argparse
