@@ -252,4 +252,4 @@ This roughly doubles the runtime. For me, it takes 1h20m on one RTX3060.
 ## Conclusion
 
 We hope you enjoyed our tutorial on GPU-acculated template matching in 
-cryo-ET! If you ran into any issues during the tutorial please let us know on our [github issues page](https://github.com/SBC-Utrecht/pytom-template-matching-gpu/issues). On this repository's [Discussions page](https://github.com/SBC-Utrecht/pytom-match-pick/discussions) you can also reach out with specific questions about running the software for your dataset, and find previous discussions.
+cryo-ET! If you ran into any issues during the tutorial please let us know on our [github issues page](https://github.com/SBC-Utrecht/pytom-match-pick/issues). On this repository's [Discussions page](https://github.com/SBC-Utrecht/pytom-match-pick/discussions) you can also reach out with specific questions about running the software for your dataset, and find previous discussions.
