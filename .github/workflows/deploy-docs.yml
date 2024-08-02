@@ -5,15 +5,15 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 # This job installs dependencies, builds the docs, and pushes it to
 # the `gh-pages` branch of the same repository.
 jobs:
   deploy-book:
     if: github.repository == 'SBC-Utrecht/pytom-match-pick'
     runs-on: ubuntu-latest
-    permissions:
-        pages: write
-        contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
