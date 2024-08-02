@@ -11,6 +11,8 @@ jobs:
   deploy-book:
     if: github.repository == 'SBC-Utrecht/pytom-match-pick'
     runs-on: ubuntu-latest
+    permissions:
+        pages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
