@@ -89,7 +89,7 @@ can pass the following files (and parameters):
   `--voltage`, `--amplitude-contrast`, and `--spherical-abberation`.
 * Dose weighting: a `.txt` file to `--dose-accumulation` with the accumulated dose per 
   tilt (assuming the same ordering as `.tlt`). Each line contains a single float 
-  specifying the accumulated dose in $e^{-}/\AA^{2}$. Dose weighting only works in 
+  specifying the accumulated dose in $e^{-}/\unicode{212B}^{2}$. Dose weighting only works in 
   combination with `--per-tilt-weighting`.
 
 _(As a side note, you can also only enable `--per-tilt-weighting` **without** dose accumulation and CTFs, or **with either** dose accumulation or CTFs.)_
@@ -125,7 +125,7 @@ print(parser.format_help())
 
 Both scripts run on the job file created in `pytom_match_template.py` which contains details about correlation statistics and the output files. The job file always has the format `[TOMO_ID]_job.json`.
 
-**IMPORTANT** For both scripts the `[-r, --radius-px]` option needs to be considered carefully. The particle extraction will mask out spheres with this radius around each peak in the score volume and prevents selecting the same macromolecule twice. It is specified as an integer **number of pixels** (not Angstrom!) and ideally it should be the radius of the particle of interest. It can be found by dividing the particle radius by the pixel size, e.g. a ribosome (r = 290A / 2) in a 15A tomogram should gets a pixel radius of 9.6. As it needs to be an integer value and ribosomes are not perfect spheres, it is best to round it down to 9 pixels. 
+**IMPORTANT** For both scripts the `[-r, --radius-px]` option needs to be considered carefully. The particle extraction will mask out spheres with this radius around each peak in the score volume and prevents selecting the same macromolecule twice. It is specified as an integer **number of pixels** (not Angstrom!) and ideally it should be the radius of the particle of interest. It can be found by dividing the particle radius by the pixel size, e.g. a ribosome (r = 290Å / 2) in a 15Å tomogram should gets a pixel radius of 9.6. As it needs to be an integer value and ribosomes are not perfect spheres, it is best to round it down to 9 pixels. 
 
 ### pytom_extract_candidates.py
 
