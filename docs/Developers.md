@@ -23,8 +23,8 @@ _rlnMicrographName #11
 ```
 
 With RELION5 compatibility mode in `pytom_extract_candidates.py` the star file 
-columns are this (correcting the position in to Angstrom and relative to the 
-tomogram center):
+columns slightly change. The positions are here relative to the tomogram center 
+and in Angstrom instead of nr. of voxels:
 
 ```
 # Created by the starfile Python package (version x.x.x) at xx:xx:xx on xx/xx/xxxx
