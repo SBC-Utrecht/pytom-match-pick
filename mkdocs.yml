@@ -1,0 +1,53 @@
+site_name: pytom-match-pick
+site_url: https://SBC-Utrecht.github.io/pytom-match-pick
+site_author: Marten Chaillet
+repo_name: pytom-match-pick
+repo_url: https://github.com/SBC-Utrecht/pytom-match-pick
+copyright: Copyright &copy; 2024
+
+nav:
+  - Home:
+    - Overview: index.md
+    - Usage: Usage.md
+    - Timings: Timings.md
+    - FAQ: Frequently-asked-questions-(FAQ).md
+    - For developers: Developers.md
+  - Tutorial:
+    - Ribosomes on ER microsomes: tutorials/Tutorial.md
+  - Discussions: https://github.com/SBC-Utrecht/pytom-match-pick/discussions
+  - Report a bug: https://github.com/SBC-Utrecht/pytom-match-pick/issues
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    # - navigation.instant.progress  # possible progress bar, but site is too small to justify
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+    - toc.follow
+    - content.code.copy
+
+markdown_extensions:
+        # - include
+  - pymdownx.snippets:
+      base_path: ["README.md", "src/pytom_tm/entry_points.py"]
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - attr_list
+  - md_in_html
+
+extra_javascript:
+  - javascripts/katex.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
+
+extra_css:
+  - https://unpkg.com/katex@0/dist/katex.min.css
+
+plugins:
+  - search
+  - markdown-exec

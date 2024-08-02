@@ -34,9 +34,12 @@ def pytom_create_mask(argv=None):
 
     argv = _parse_argv(argv)
 
+    # ---8<--- [start:create_mask_usage]
+
     parser = argparse.ArgumentParser(
+        prog="pytom_create_mask.py",
         description="Create a mask for template matching. "
-        "-- Marten Chaillet (@McHaillet)"
+        "-- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-b",
@@ -98,6 +101,9 @@ def pytom_create_mask(argv=None):
         "Values in the range from 0.5-1.0 are usually sufficient for tomograms with "
         "20A-10A voxel sizes.",
     )
+
+    # ---8<--- [end:create_mask_usage]
+
     argv = _parse_argv(argv)
     args = parser.parse_args(argv)
 
@@ -126,9 +132,13 @@ def pytom_create_template(argv=None):
     from pytom_tm.template import generate_template_from_map
 
     argv = _parse_argv(argv)
+
+    # ---8<--- [start:create_template_usage]
+
     parser = argparse.ArgumentParser(
+        prog="pytom_create_template.py",
         description="Generate template from MRC density. "
-        "-- Marten Chaillet (@McHaillet)"
+        "-- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-i",
@@ -190,15 +200,13 @@ def pytom_create_template(argv=None):
         help="Specify a desired size for the output box of the template. "
         "Only works if it is larger than the downsampled box size of the input.",
     )
-    (
-        parser.add_argument(
-            "--invert",
-            action="store_true",
-            default=False,
-            required=False,
-            help="Multiply template by -1. "
-            "WARNING: not needed if ctf with defocus is already applied!",
-        ),
+    parser.add_argument(
+        "--invert",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Multiply template by -1. "
+        "WARNING: not needed if ctf with defocus is already applied!",
     )
     parser.add_argument(
         "-m",
@@ -216,6 +224,9 @@ def pytom_create_template(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+
+    # ---8<--- [end:create_template_usage]
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
@@ -273,9 +284,12 @@ def estimate_roc(argv=None):
     argv = _parse_argv(argv)
     from pytom_tm.plotting import plist_quality_gaussian_fit
 
+    # ---8<--- [start:estimate_roc_usage]
+
     parser = argparse.ArgumentParser(
+        prog="pytom_estimate_roc.py",
         description="Estimate ROC curve from TMJob file. "
-        "-- Marten Chaillet (@McHaillet)"
+        "-- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-j",
@@ -350,6 +364,9 @@ def estimate_roc(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+
+    # ---8<--- [end:estimate_roc_usage]
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
@@ -389,8 +406,12 @@ def estimate_roc(argv=None):
 
 def extract_candidates(argv=None):
     argv = _parse_argv(argv)
+
+    # ---8<--- [start:extract_candidates_usage]
+
     parser = argparse.ArgumentParser(
-        description="Run candidate extraction. -- Marten Chaillet (@McHaillet)"
+        prog="pytom_extract_candidates.py",
+        description="Run candidate extraction. -- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-j",
@@ -486,6 +507,9 @@ def extract_candidates(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+
+    # ---8<--- [end:extract_candidates_usage]
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
@@ -514,8 +538,12 @@ def match_template(argv=None):
     from pytom_tm.parallel import run_job_parallel
 
     argv = _parse_argv(argv)
+
+    # ---8<--- [start:match_template_usage]
+
     parser = argparse.ArgumentParser(
-        description="Run template matching. -- Marten Chaillet (@McHaillet)"
+        prog="pytom_match_template.py",
+        description="Run template matching. -- Marten Chaillet (@McHaillet)",
     )
     io_group = parser.add_argument_group("Template, search volume, and output")
     io_group.add_argument(
@@ -581,7 +609,7 @@ def match_template(argv=None):
         "diameter. If given a float it will generate an angle list with healpix "
         "for Z1 and X1 and linear search for Z2. The provided angle will be used "
         "as the maximum for the "
-        "linear search and for the mean angle difference from healpix.\n"
+        "linear search and for the mean angle difference from healpix."
         "Alternatively, a .txt file can be provided with three Euler angles "
         "(in radians) per line that define the angular search. "
         "Angle format is ZXZ anti-clockwise (see: "
@@ -811,6 +839,9 @@ def match_template(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+
+    # ---8<--- [end:match_template_usage]
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
@@ -903,11 +934,14 @@ def match_template(argv=None):
 def merge_stars(argv=None):
     import pandas as pd
 
+    # ---8<--- [start:merge_stars_usage]
+
     parser = argparse.ArgumentParser(
+        prog="pytom_merge_stars.py",
         description=(
             "Merge multiple star files in the same directory. "
             "-- Marten Chaillet (@McHaillet)"
-        )
+        ),
     )
     parser.add_argument(
         "-i",
@@ -937,6 +971,9 @@ def merge_stars(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+
+    # ---8<--- [end:merge_stars_usage]
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
