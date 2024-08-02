@@ -9,6 +9,7 @@ on:
 # the `gh-pages` branch of the same repository.
 jobs:
   deploy-book:
+    if: github.repository == ‘SBC-Utrecht/pytom-match-pick’
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
