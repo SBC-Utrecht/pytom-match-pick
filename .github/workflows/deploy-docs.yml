@@ -5,7 +5,7 @@ on:
     branches:
       - main
 
-# This job installs dependencies, builds the book, and pushes it to
+# This job installs dependencies, builds the docs, and pushes it to
 # the `gh-pages` branch of the same repository.
 jobs:
   deploy-book:
@@ -21,7 +21,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # pip install -e .
           pip install mkdocs mkdocs-material markdown-exec
 
       # Build the book
