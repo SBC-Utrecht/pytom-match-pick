@@ -89,7 +89,7 @@ can pass the following files (and parameters):
   `--voltage`, `--amplitude-contrast`, and `--spherical-abberation`.
 * Dose weighting: a `.txt` file to `--dose-accumulation` with the accumulated dose per 
   tilt (assuming the same ordering as `.tlt`). Each line contains a single float 
-  specifying the accumulated dose in $e^{-}/\unicode{212B}^{2}$. Dose weighting only works in 
+  specifying the accumulated dose in $e^{-}/\text{Å}^{2}$. Dose weighting only works in 
   combination with `--per-tilt-weighting`.
 
 _(As a side note, you can also only enable `--per-tilt-weighting` **without** dose accumulation and CTFs, or **with either** dose accumulation or CTFs.)_
