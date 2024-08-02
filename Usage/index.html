@@ -1,0 +1,1554 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="Marten Chaillet">
+      
+      
+        <link rel="canonical" href="https://SBC-Utrecht.github.io/pytom-match-pick/Usage/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../Timings/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
+    
+    
+      
+        <title>Usage - pytom-match-pick</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.3cba04c6.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#requirements" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="pytom-match-pick" class="md-header__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pytom-match-pick
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Usage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SBC-Utrecht/pytom-match-pick" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pytom-match-pick
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href=".." class="md-tabs__link">
+          
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/Tutorial/" class="md-tabs__link">
+          
+  
+  Tutorial
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions" class="md-tabs__link">
+        
+  
+    
+  
+  Discussions
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/issues" class="md-tabs__link">
+        
+  
+    
+  
+  Report a bug
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="pytom-match-pick" class="md-nav__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    pytom-match-pick
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pytom-match-pick
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Home
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#template-matching-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template matching workflow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-creating-a-template-and-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Creating a template and mask
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Creating a template and mask">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pytom_create_templatepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_create_template.py
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pytom_create_maskpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_create_mask.py
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-matching-the-template-in-a-tomogram" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Matching the template in a tomogram
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Matching the template in a tomogram">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pytom_match_templatepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_match_template.py
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="pytom_match_template.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optimizing-results-per-tilt-weighting-with-ctfs-and-dose-accumulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optimizing results: per tilt weighting with CTFs and dose accumulation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background-corrections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Background corrections
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-extracting-particles" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Extracting particles
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Extracting particles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pytom_extract_candidatespy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_extract_candidates.py
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="pytom_extract_candidates.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#star-file-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      STAR file metadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-true-positive-estimation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default true positive estimation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tophat-transform-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tophat transform filter
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pytom_estimate_rocpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_estimate_roc.py
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-merging-annotations-for-export-to-other-software" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Merging annotations for export to other software
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Merging annotations for export to other software">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pytom_merge_starspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_merge_stars.py
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Timings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Frequently-asked-questions-%28FAQ%29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    FAQ
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Developers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    For developers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/Tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ribosomes on ER microsomes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Discussions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/issues" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Report a bug
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#template-matching-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template matching workflow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-creating-a-template-and-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Creating a template and mask
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Creating a template and mask">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pytom_create_templatepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_create_template.py
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pytom_create_maskpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_create_mask.py
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-matching-the-template-in-a-tomogram" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Matching the template in a tomogram
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Matching the template in a tomogram">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pytom_match_templatepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_match_template.py
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="pytom_match_template.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optimizing-results-per-tilt-weighting-with-ctfs-and-dose-accumulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optimizing results: per tilt weighting with CTFs and dose accumulation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background-corrections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Background corrections
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-extracting-particles" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Extracting particles
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Extracting particles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pytom_extract_candidatespy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_extract_candidates.py
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="pytom_extract_candidates.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#star-file-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      STAR file metadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-true-positive-estimation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default true positive estimation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tophat-transform-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tophat transform filter
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pytom_estimate_rocpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_estimate_roc.py
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-merging-annotations-for-export-to-other-software" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Merging annotations for export to other software
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Merging annotations for export to other software">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pytom_merge_starspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      pytom_merge_stars.py
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Usage</h1>
+
+<p>Features in a tomogram that resemble a structural 'template' can be localized in an automated fashion using 'template matching'. In this approach a 3D template is correlated with a given tomogram. In this procedure the different possible rotations and translations are sampled exhaustively using the algorithm described in <a href="http://dx.doi.org/10.1016/S0076-6879(10)83011-3">Förster et al. (2010)</a>.</p>
+<h2 id="requirements">Requirements</h2>
+<p>For usage you need at least a set of reconstructed tomograms in the MRC format and a template structure in the MRC format. Tomograms in IMOD format (.rec) are also okay but need to be renamed (or softlinked!) to have the correct extension (.mrc). Tomograms are ideally binned 6x or 8x to prevent excessive runtimes. The template can be an EM reconstruction (from the EMDB) or a PDB that was coverted to a density (for example via Chimera molmap).</p>
+<h2 id="template-matching-workflow">Template matching workflow</h2>
+<p>Using template matching in this software consists of the following steps:</p>
+<ol>
+<li>Creating a template and mask</li>
+<li>Matching the template in a tomogram</li>
+<li>Extracting particles</li>
+<li>Merging annotations for export to other software</li>
+</ol>
+<h2 id="1-creating-a-template-and-mask">1. Creating a template and mask</h2>
+<p><strong>Important</strong>:
+- The template and mask need to have the same box size.
+- The template needs to have the same contrast as the tomogram (e.g. the particles 
+  are black in both the tomogram and template). Contrast can be adjusted with the 
+  <code>--invert</code> option.</p>
+<h3 id="pytom_create_templatepy">pytom_create_template.py</h3>
+<p>Using an EM map as a reference structure generally leads to the best results. Alternatively a structure from the PDB can be converted in Chimera(X) using the molmap command to create an MRC file that models the electrostatic potential.</p>
+<div class="highlight"><pre><span></span><code>usage: pytom_create_template.py [-h] -i INPUT_MAP [-o OUTPUT_FILE]
+                                [--input-voxel-size-angstrom INPUT_VOXEL_SIZE_ANGSTROM]
+                                --output-voxel-size-angstrom
+                                OUTPUT_VOXEL_SIZE_ANGSTROM [--center CENTER]
+                                [--low-pass LOW_PASS] [-b BOX_SIZE]
+                                [--invert INVERT] [-m MIRROR] [--log LOG]
+
+Generate template from MRC density. -- Marten Chaillet (@McHaillet)
+
+options:
+  -h, --help            show this help message and exit
+  -i INPUT_MAP, --input-map INPUT_MAP
+                        Map to generate template from; MRC file.
+  -o OUTPUT_FILE, --output-file OUTPUT_FILE
+                        Provide path to write output, needs to end in .mrc .
+                        If not provided file is written to current directory
+                        in the following format:
+                        template_{input_map.stem}_{voxel_size}A.mrc
+  --input-voxel-size-angstrom INPUT_VOXEL_SIZE_ANGSTROM
+                        Voxel size of input map, in Angstrom. If not provided
+                        will be read from MRC input (so make sure it is
+                        annotated correctly!).
+  --output-voxel-size-angstrom OUTPUT_VOXEL_SIZE_ANGSTROM
+                        Output voxel size of the template, in Angstrom. Needs
+                        to be equal to the voxel size of the tomograms for
+                        template matching. Input map will be downsampled to
+                        this spacing.
+  --center CENTER       Set this flag to automatically center the density in
+                        the volume by measuring the center of mass.
+  --low-pass LOW_PASS   Apply a low pass filter to this resolution, in
+                        Angstrom. By default a low pass filter is applied to a
+                        resolution of (2 * output_spacing_angstrom) before
+                        downsampling the input volume.
+  -b BOX_SIZE, --box-size BOX_SIZE
+                        Specify a desired size for the output box of the
+                        template. Only works if it is larger than the
+                        downsampled box size of the input.
+  --invert INVERT       Multiply template by -1. WARNING: not needed if ctf
+                        with defocus is already applied!
+  -m MIRROR, --mirror MIRROR
+                        Mirror the final template before writing to disk.
+  --log LOG             Can be set to `info` or `debug`
+</code></pre></div>
+<h3 id="pytom_create_maskpy">pytom_create_mask.py</h3>
+<p>The mask around the template can be quite tight to remove as much noise as possible around the particles of interest. We recommend around 10%-20% overhang relative to the particle radius. You can also generate an ellipsoidal mask for particles that do not approximate well as a sphere. Though you will probably need to reorient this mask in chimera and resample to the grid of the template. Optionally you could also create a structured mask around the template in external software (via thresholding and dilation for example). Take into account that non-spherical masks roughly double the template matching computation time.</p>
+<div class="highlight"><pre><span></span><code>usage: pytom_create_mask.py [-h] -b BOX_SIZE [-o OUTPUT_FILE]
+                            [--voxel-size VOXEL_SIZE] -r RADIUS
+                            [--radius-minor1 RADIUS_MINOR1]
+                            [--radius-minor2 RADIUS_MINOR2] [-s SIGMA]
+
+Create a mask for template matching. -- Marten Chaillet (@McHaillet)
+
+options:
+  -h, --help            show this help message and exit
+  -b BOX_SIZE, --box-size BOX_SIZE
+                        Shape of square box for the mask.
+  -o OUTPUT_FILE, --output-file OUTPUT_FILE
+                        Provide path to write output, needs to end in .mrc .If
+                        not provided file is written to current directory in
+                        the following format:
+                        ./mask_b[box_size]px_r[radius]px.mrc
+  --voxel-size VOXEL_SIZE
+                        Provide a voxel size to annotate the MRC (currently
+                        not used for any mask calculation).
+  -r RADIUS, --radius RADIUS
+                        Radius of the spherical mask in number of pixels. In
+                        case minor1 and minor2 are provided, this will be the
+                        radius of the ellipsoidal mask along the x-axis.
+  --radius-minor1 RADIUS_MINOR1
+                        Radius of the ellipsoidal mask along the y-axis in
+                        number of pixels.
+  --radius-minor2 RADIUS_MINOR2
+                        Radius of the ellipsoidal mask along the z-axis in
+                        number of pixels.
+  -s SIGMA, --sigma SIGMA
+                        Sigma of gaussian drop-off around the mask edges in
+                        number of pixels. Values in the range from 0.5-1.0 are
+                        usually sufficient for tomograms with 20A-10A voxel
+                        sizes.
+</code></pre></div>
+<h2 id="2-matching-the-template-in-a-tomogram">2. Matching the template in a tomogram</h2>
+<h3 id="pytom_match_templatepy">pytom_match_template.py</h3>
+<p>This script requires at least a tomogram, a template, a mask, the min and max tilt angles (for missing wedge constraint), an angular search, and a GPU index to run. The search can be limited along any dimension with the <code>--search-x</code>, <code>--search-y</code>, and <code>--search-z</code> parameters; for example to skip some empty regions in the z-dimension where the ice layer is not yet present, or to remove some reconstruction artifact region along the x-dimension. With the <code>--volume-split</code> option, a tomogram can be split into chunks to allow them to fit in GPU memory (useful for large tomograms). Providing multiple GPU's will allow the program to split the angular search (or the subvolume search) over multiple cards to speed up the algorithm. </p>
+<p>The software automatically calculates the angular search based on the available 
+resolution and provided particle diameter. The required search is found from the 
+Crowther criterion <span class="arithmatex">\(\Delta \alpha = \frac{180}{\pi r_{max} d}\)</span>. For the maximal 
+resolution the voxel size is used, unless a low-pass filter is specified as this 
+limits the available maximal resolution. You can exploit this to reduce the angular 
+search! For non-spherical particles we suggest choosing the particle diameter as the 
+longest axis of the macromolecule. </p>
+<p>In case the template matching is run with a non-spherical mask, it is essential to set the <code>--non-spherical-mask</code> flag. It requires a slight modification of the calculation that will roughly double the computation time, so only use non-spherical masks if absolutely necessary.</p>
+<h4 id="optimizing-results-per-tilt-weighting-with-ctfs-and-dose-accumulation">Optimizing results: per tilt weighting with CTFs and dose accumulation</h4>
+<p>Optimal results are obtained by also incorporating information for the 3D CTF. You 
+can pass the following files (and parameters):</p>
+<ul>
+<li>Tilt angles: a <code>.rawtlt</code> or <code>.tlt</code> file to the <code>--tilt-angles</code> parameter with all the 
+  tilt 
+  angles used to reconstruct the tomogram. You should then also set the 
+  <code>--per-tilt-weighting</code> flag.</li>
+<li>CTF data: a <code>.defocus</code> file from IMOD or <code>.txt</code> file to <code>--defocus-file</code>. The <code>.
+  txt</code> file 
+  should specify the defocus of each tilt in <span class="arithmatex">\(\mu m\)</span>. You can also give a 
+  single defocus value (in <span class="arithmatex">\(\mu m\)</span>). The CTF will also require input for 
+  <code>--voltage</code>, <code>--amplitude-contrast</code>, and <code>--spherical-abberation</code>.</li>
+<li>Dose weighting: a <code>.txt</code> file to <code>--dose-accumulation</code> with the accumulated dose per 
+  tilt (assuming the same ordering as <code>.tlt</code>). Each line contains a single float 
+  specifying the accumulated dose in <span class="arithmatex">\(e^{-}/\text{Å}^{2}\)</span>. Dose weighting only works in 
+  combination with <code>--per-tilt-weighting</code>.</li>
+</ul>
+<p><em>(As a side note, you can also only enable <code>--per-tilt-weighting</code> <strong>without</strong> dose accumulation and CTFs, or <strong>with either</strong> dose accumulation or CTFs.)</em></p>
+<p>When enabling the CTF model here (with the defocus file), it is important that the template is not multiplied with a CTF before passing it to this script. The template only needs to be scaled to the correct pixel size and the contrast should be adjusted to match the contrast in the tomograms.</p>
+<p>Secondly, if the tomogram was CTF corrected, for example by using IMODs 
+strip-based CTF correction or NovaCTF. Its important to add the parameter 
+<code>--tomogram-ctf-model phase-flip</code> which modifies the template CTF to match the 
+tomograms CTF correction.</p>
+<h4 id="background-corrections">Background corrections</h4>
+<p>The software contains two background correction methods that might improve results: 
+<code>--spectral-whitening</code> or <code>--random-phase-correction</code> (from STOPGAP). In our 
+experience the random phase correction is most reliable, while spectral whitening 
+never seemed to clearly improve results.</p>
+<div class="highlight"><pre><span></span><code>usage: pytom_match_template.py [-h] -t TEMPLATE -v TOMOGRAM [-d DESTINATION]
+                               -m MASK
+                               [--non-spherical-mask NON_SPHERICAL_MASK]
+                               [--particle-diameter PARTICLE_DIAMETER]
+                               [--angular-search ANGULAR_SEARCH]
+                               [--z-axis-rotational-symmetry Z_AXIS_ROTATIONAL_SYMMETRY]
+                               [-s VOLUME_SPLIT VOLUME_SPLIT VOLUME_SPLIT]
+                               [--search-x SEARCH_X SEARCH_X]
+                               [--search-y SEARCH_Y SEARCH_Y]
+                               [--search-z SEARCH_Z SEARCH_Z]
+                               [--tomogram-mask TOMOGRAM_MASK] -a TILT_ANGLES
+                               [TILT_ANGLES ...]
+                               [--per-tilt-weighting PER_TILT_WEIGHTING]
+                               [--voxel-size-angstrom VOXEL_SIZE_ANGSTROM]
+                               [--low-pass LOW_PASS] [--high-pass HIGH_PASS]
+                               [--dose-accumulation DOSE_ACCUMULATION]
+                               [--defocus DEFOCUS]
+                               [--amplitude-contrast AMPLITUDE_CONTRAST]
+                               [--spherical-aberration SPHERICAL_ABERRATION]
+                               [--voltage VOLTAGE] [--phase-shift PHASE_SHIFT]
+                               [--tomogram-ctf-model {phase-flip}]
+                               [--spectral-whitening SPECTRAL_WHITENING]
+                               [-r RANDOM_PHASE_CORRECTION]
+                               [--rng-seed RNG_SEED] -g GPU_IDS [GPU_IDS ...]
+                               [--log LOG]
+
+Run template matching. -- Marten Chaillet (@McHaillet)
+
+options:
+  -h, --help            show this help message and exit
+
+Template, search volume, and output:
+  -t TEMPLATE, --template TEMPLATE
+                        Template; MRC file. Object should match the contrast
+                        of the tomogram: if the tomogram has black ribosomes,
+                        the reference should be black.
+                        (pytom_create_template.py has an option to invert
+                        contrast)
+  -v TOMOGRAM, --tomogram TOMOGRAM
+                        Tomographic volume; MRC file.
+  -d DESTINATION, --destination DESTINATION
+                        Folder to store the files produced by template
+                        matching.
+
+Mask:
+  -m MASK, --mask MASK  Mask with same box size as template; MRC file.
+  --non-spherical-mask NON_SPHERICAL_MASK
+                        Flag to set when the mask is not spherical. It adds
+                        the required computations for non-spherical masks and
+                        roughly doubles computation time.
+
+Angular search:
+  --particle-diameter PARTICLE_DIAMETER
+                        Provide a particle diameter (in Angstrom) to
+                        automatically determine the angular sampling using the
+                        Crowther criterion. For the max resolution, (2 * pixel
+                        size) is used unless a low-pass filter is specified,
+                        in which case the low-pass resolution is used. For
+                        non-globular macromolecules choose the diameter along
+                        the longest axis.
+  --angular-search ANGULAR_SEARCH
+                        This option overrides the angular search calculation
+                        from the particle diameter. If given a float it will
+                        generate an angle list with healpix for Z1 and X1 and
+                        linear search for Z2. The provided angle will be used
+                        as the maximum for the linear search and for the mean
+                        angle difference from healpix.Alternatively, a .txt
+                        file can be provided with three Euler angles (in
+                        radians) per line that define the angular search.
+                        Angle format is ZXZ anti-clockwise (see: https://www.c
+                        cpem.ac.uk/user_help/rotation_conventions.php).
+  --z-axis-rotational-symmetry Z_AXIS_ROTATIONAL_SYMMETRY
+                        Integer value indicating the rotational symmetry of
+                        the template around the z-axis. The length of the
+                        rotation search will be shortened through division by
+                        this value. Only works for template symmetry around
+                        the z-axis.
+
+Volume control:
+  -s VOLUME_SPLIT VOLUME_SPLIT VOLUME_SPLIT, --volume-split VOLUME_SPLIT VOLUME_SPLIT VOLUME_SPLIT
+                        Split the volume into smaller parts for the search,
+                        can be relevant if the volume does not fit into GPU
+                        memory. Format is x y z, e.g. --volume-split 1 2 1
+  --search-x SEARCH_X SEARCH_X
+                        Start and end indices of the search along the x-axis,
+                        e.g. --search-x 10 490
+  --search-y SEARCH_Y SEARCH_Y
+                        Start and end indices of the search along the y-axis,
+                        e.g. --search-x 10 490
+  --search-z SEARCH_Z SEARCH_Z
+                        Start and end indices of the search along the z-axis,
+                        e.g. --search-x 30 230
+  --tomogram-mask TOMOGRAM_MASK
+                        Here you can provide a mask for matching with
+                        dimensions equal to the tomogram. If a subvolume only
+                        has values &lt;= 0 for this mask it will be skipped.
+
+Filter control:
+  -a TILT_ANGLES [TILT_ANGLES ...], --tilt-angles TILT_ANGLES [TILT_ANGLES ...]
+                        Tilt angles of the tilt-series, either the minimum and
+                        maximum values of the tilts (e.g. --tilt-angles -59.1
+                        60.1) or a .rawtlt/.tlt file with all the angles (e.g.
+                        --tilt-angles tomo101.rawtlt). In case all the tilt
+                        angles are provided a more elaborate Fourier space
+                        constraint can be used
+  --per-tilt-weighting PER_TILT_WEIGHTING
+                        Flag to activate per-tilt-weighting, only makes sense
+                        if a file with all tilt angles have been provided. In
+                        case not set, while a tilt angle file is provided, the
+                        minimum and maximum tilt angle are used to create a
+                        binary wedge. The base functionality creates a fanned
+                        wedge where each tilt is weighted by cos(tilt_angle).
+                        If dose accumulation and CTF parameters are provided
+                        these will all be incorporated in the tilt-weighting.
+  --voxel-size-angstrom VOXEL_SIZE_ANGSTROM
+                        Voxel spacing of tomogram/template in angstrom, if not
+                        provided will try to read from the MRC files. Argument
+                        is important for band-pass filtering!
+  --low-pass LOW_PASS   Apply a low-pass filter to the tomogram and template.
+                        Generally desired if the template was already filtered
+                        to a certain resolution. Value is the resolution in A.
+  --high-pass HIGH_PASS
+                        Apply a high-pass filter to the tomogram and template
+                        to reduce correlation with large low frequency
+                        variations. Value is a resolution in A, e.g. 500 could
+                        be appropriate as the CTF is often incorrectly
+                        modelled up to 50nm.
+  --dose-accumulation DOSE_ACCUMULATION
+                        Here you can provide a file that contains the
+                        accumulated dose at each tilt angle, assuming the same
+                        ordering of tilts as the tilt angle file. Format
+                        should be a .txt file with on each line a dose value
+                        in e-/A2.
+  --defocus DEFOCUS     Here you can provide an IMOD defocus (.defocus) file
+                        (version 2 or 3) , a text (.txt) file with a single
+                        defocus value per line (in μm), or a single defocus
+                        value (in μm). The value(s), together with the other
+                        ctf parameters (amplitude contrast, voltage, spherical
+                        abberation), will be used to create a 3D CTF weighting
+                        function. IMPORTANT: if you provide this, the input
+                        template should not be modulated with a CTF
+                        beforehand. If it is a reconstruction it should
+                        ideally be Wiener filtered.
+  --amplitude-contrast AMPLITUDE_CONTRAST
+                        Amplitude contrast fraction for CTF.
+  --spherical-aberration SPHERICAL_ABERRATION
+                        Spherical aberration for CTF in mm.
+  --voltage VOLTAGE     Voltage for CTF in keV.
+  --phase-shift PHASE_SHIFT
+                        Phase shift (in degrees) for the CTF to model phase
+                        plates.
+  --tomogram-ctf-model {phase-flip}
+                        Optionally, you can specify if and how the CTF was
+                        corrected during reconstruction of the input tomogram.
+                        This allows match-pick to match the weighting of the
+                        template to the tomogram. Not using this option is
+                        appropriate if the CTF was left uncorrected in the
+                        tomogram. Option &#39;phase-flip&#39; : appropriate for IMOD&#39;s
+                        strip-based phase flipping or reconstructions
+                        generated with novaCTF/3dctf.
+  --spectral-whitening SPECTRAL_WHITENING
+                        Calculate a whitening filtering from the power
+                        spectrum of the tomogram; apply it to the tomogram
+                        patch and template. Effectively puts more weight on
+                        high resolution features and sharpens the correlation
+                        peaks.
+
+Additional options:
+  -r RANDOM_PHASE_CORRECTION, --random-phase-correction RANDOM_PHASE_CORRECTION
+                        Run template matching simultaneously with a phase
+                        randomized version of the template, and subtract this
+                        &#39;noise&#39; map from the final score map. For this method
+                        please see STOPGAP as a reference:
+                        https://doi.org/10.1107/S205979832400295X .
+  --rng-seed RNG_SEED   Specify a seed for the random number generator used
+                        for phase randomization for consistent results!
+
+Device control:
+  -g GPU_IDS [GPU_IDS ...], --gpu-ids GPU_IDS [GPU_IDS ...]
+                        GPU indices to run the program on.
+
+Logging/debugging:
+  --log LOG             Can be set to `info` or `debug`
+</code></pre></div>
+<h2 id="3-extracting-particles">3. Extracting particles</h2>
+<p>Both scripts run on the job file created in <code>pytom_match_template.py</code> which contains details about correlation statistics and the output files. The job file always has the format <code>[TOMO_ID]_job.json</code>.</p>
+<p><strong>IMPORTANT</strong> For both scripts the <code>[-r, --radius-px]</code> option needs to be considered carefully. The particle extraction will mask out spheres with this radius around each peak in the score volume and prevents selecting the same macromolecule twice. It is specified as an integer <strong>number of pixels</strong> (not Angstrom!) and ideally it should be the radius of the particle of interest. It can be found by dividing the particle radius by the pixel size, e.g. a ribosome (r = 290Å / 2) in a 15Å tomogram should gets a pixel radius of 9.6. As it needs to be an integer value and ribosomes are not perfect spheres, it is best to round it down to 9 pixels. </p>
+<h3 id="pytom_extract_candidatespy">pytom_extract_candidates.py</h3>
+<h4 id="star-file-metadata">STAR file metadata</h4>
+<p>Resulting STAR files from extraction have three colums with extraction statistics (<code>LCCmax</code>, <code>CutOff</code>, <code>SearchStd</code>). Dividing the <code>LCCmax</code> and the <code>CutOff</code> by the <code>SearchStd</code>, will express them as a number of <span class="arithmatex">\(\sigma\)</span> or (3D SNR; similar to <a href="https://doi.org/10.7554/eLife.25648">Rickgauer et al. (2017)</a>.</p>
+<p>STAR files written out by the template matching module will have RELION compliant column headers, i.e. <code>rlnCoordinateX</code> and <code>rlnAgleRot</code>, to simplify integration with other software. The Euler angles that are written out therefore also follow the same conventions as RELION and Warp, i.e. <code>rlnAngleRot</code>, <code>rlnAngleTilt</code>, <code>rlnAnglePsi</code> are intrinsic clockwise ZYZ Euler angles. Hence they can be directly used for subtomogram averaging in RELION. See here for more info: <a href="https://www.ccpem.ac.uk/user_help/rotation_conventions.php">https://www.ccpem.ac.uk/user_help/rotation_conventions.php</a>.</p>
+<p>Please see the <a href="../Developers/">For developers</a> section for more details on the 
+metadata. </p>
+<h4 id="default-true-positive-estimation">Default true positive estimation</h4>
+<p>The particle extraction has been updated to use the formula in <a href="https://doi.org/10.7554/eLife.25648">Rickgauer et al. (2017)</a> for finding the extraction threshold based on the false alarm rate. This was not yet described in our <a href="https://www.mdpi.com/1422-0067/24/17/13375">IJMS publication</a> but is essentially very similar to the Gaussian fit that we used. However, it is more reliable and also specific to the standard deviation <span class="arithmatex">\(\sigma\)</span> of the search in each tomogram. <code>pytom_match_template.py</code> keeps track of <span class="arithmatex">\(\sigma\)</span> and stores it in the job file. The user can specify a number of false positives to allow per tomogram with a minimum value of 1. It can be increased to make the extraction threshold more lenient which might increase the number of true positives at the expense of more false positives. The parameter should roughly correspond to the number of false positives that end up in the extracted particle list.</p>
+<p>Template matching has a huge search space <span class="arithmatex">\(N_{voxels} * N_{rotations}\)</span> which is mainly 
+false positives, and has in comparison a tiny fraction of true positives. If we have 
+a Gaussian for the background (with expected mean 0 and some standard deviation), 
+the false alarm rate can be calculated for a certain cut-off value, as it is 
+dependent on the size of the search space. For example, a false alarm rate of <span class="arithmatex">\((N_
+{voxels} * N_{rotations})^{-1}\)</span>, indicates it would expect 1 false positive in the 
+whole search. This can be calculated with the error function,</p>
+<div class="arithmatex">\[N^{-1} = \text{erfc}( \theta / ( \sigma \sqrt{2} ) ) / (2 n_{\text{FP}})\]</div>
+<p>, where theta is the cut-off, sigma the standard deviation of the Gaussian, and N the search space. <span class="arithmatex">\(n_{\text{FP}}\)</span> represents the scaling by the user of tolerated number of false positives.</p>
+<h4 id="tophat-transform-filter">Tophat transform filter</h4>
+<p>This option can be used to filter the score map for sharp peaks (steep local maxima) 
+which usually correspond to true positives. This will be described in a forthcoming 
+publication. For now, you can check out Marten's poster at CCPEM that shows some 
+preliminary results: <a href="https://doi.org/10.5281/zenodo.13165643">10.5281/zenodo.13165643</a>.</p>
+<div class="highlight"><pre><span></span><code>usage: pytom_extract_candidates.py [-h] -j JOB_FILE
+                                   [--tomogram-mask TOMOGRAM_MASK] -n
+                                   NUMBER_OF_PARTICLES
+                                   [--number-of-false-positives NUMBER_OF_FALSE_POSITIVES]
+                                   -r RADIUS_PX [-c CUT_OFF]
+                                   [--tophat-filter TOPHAT_FILTER]
+                                   [--tophat-connectivity TOPHAT_CONNECTIVITY]
+                                   [--relion5-compat RELION5_COMPAT]
+                                   [--log LOG]
+
+Run candidate extraction. -- Marten Chaillet (@McHaillet)
+
+options:
+  -h, --help            show this help message and exit
+  -j JOB_FILE, --job-file JOB_FILE
+                        JSON file that contain all data on the template
+                        matching job, written out by pytom_match_template.py
+                        in the destination path.
+  --tomogram-mask TOMOGRAM_MASK
+                        Here you can provide a mask for the extraction with
+                        dimensions equal to the tomogram. All values in the
+                        mask that are smaller or equal to 0 will be removed,
+                        all values larger than 0 are considered regions of
+                        interest. It can be used to extract annotations only
+                        within a specific cellular region.If the job was run
+                        with a tomogram mask, this file will be used instead
+                        of the job mask
+  -n NUMBER_OF_PARTICLES, --number-of-particles NUMBER_OF_PARTICLES
+                        Maximum number of particles to extract from tomogram.
+  --number-of-false-positives NUMBER_OF_FALSE_POSITIVES
+                        Number of false positives to determine the false alarm
+                        rate. Here one can increase the recall of the particle
+                        of interest at the expense of more false positives.
+                        The default value of 1 is recommended for particles
+                        that can be distinguished well from the background
+                        (high specificity). The value can also be set between
+                        0 and 1 to make the cut-off more restrictive.
+  -r RADIUS_PX, --radius-px RADIUS_PX
+                        Particle radius in pixels in the tomogram. It is used
+                        during extraction to remove areas around peaks
+                        preventing double extraction.
+  -c CUT_OFF, --cut-off CUT_OFF
+                        Override automated extraction cutoff estimation and
+                        instead extract the number-of-particles down to this
+                        LCCmax value. Setting to 0 will keep extracting until
+                        number-of-particles, or until there are no positive
+                        values left in the score map. Values larger than 1
+                        make no sense as the correlation cannot be higher than
+                        1.
+  --tophat-filter TOPHAT_FILTER
+                        Attempt to filter only sharp correlation peaks with a
+                        tophat transform
+  --tophat-connectivity TOPHAT_CONNECTIVITY
+                        Set kernel connectivity for ndimage binary structure
+                        used for the tophat transform. Integer value in range
+                        1-3. 1 is the most restrictive, 3 the least
+                        restrictive. Generally recommended to leave at 1.
+  --relion5-compat RELION5_COMPAT
+                        Write out centered coordinates in Angstrom for
+                        RELION5.
+  --log LOG             Can be set to `info` or `debug`
+</code></pre></div>
+<h3 id="pytom_estimate_rocpy">pytom_estimate_roc.py</h3>
+<p>This script runs the Gaussian fit as described in the <a href="https://www.mdpi.com/1422-0067/24/17/13375">IJMS publication</a>. It requires installation with plotting dependencies as it writes out or displays a figure showing the Gaussian fit and estimated ROC curve. The benefit is that it estimates some classification statistics (such as false discovery rate and sensitivity). You can use it to esimate an extraction threshold for a representative tomogram and then supply this threshold as the <code>[-c, --cut-off]</code> parameter for <code>pytom_extract_candidates.py</code>.</p>
+<div class="highlight"><pre><span></span><code>usage: pytom_estimate_roc.py [-h] -j JOB_FILE -n NUMBER_OF_PARTICLES -r
+                             RADIUS_PX [--bins BINS]
+                             [--gaussian-peak GAUSSIAN_PEAK]
+                             [--force-peak FORCE_PEAK] [--crop-plot CROP_PLOT]
+                             [--show-plot SHOW_PLOT] [--log LOG]
+
+Estimate ROC curve from TMJob file. -- Marten Chaillet (@McHaillet)
+
+options:
+  -h, --help            show this help message and exit
+  -j JOB_FILE, --job-file JOB_FILE
+                        JSON file that contain all data on the template
+                        matching job, written out by pytom_match_template.py
+                        in the destination path.
+  -n NUMBER_OF_PARTICLES, --number-of-particles NUMBER_OF_PARTICLES
+                        The number of particles to extract and estimate the
+                        ROC on, recommended is to multiply the expected number
+                        of particles by 3.
+  -r RADIUS_PX, --radius-px RADIUS_PX
+                        Particle radius in pixels in the tomogram. It is used
+                        during extraction to remove areas around peaks
+                        preventing double extraction.
+  --bins BINS           Number of bins for the histogram to fit Gaussians on.
+  --gaussian-peak GAUSSIAN_PEAK
+                        Expected index of the histogram peak of the Gaussian
+                        fitted to the particle population.
+  --force-peak FORCE_PEAK
+                        Force the particle peak to the provided peak index.
+  --crop-plot CROP_PLOT
+                        Flag to crop the plot relative to the height of the
+                        particle population.
+  --show-plot SHOW_PLOT
+                        Flag to use a pop-up window for the plot instead of
+                        writing it to the location of the job file.
+  --log LOG             Can be set to `info` or `debug`
+</code></pre></div>
+<h2 id="4-merging-annotations-for-export-to-other-software">4. Merging annotations for export to other software</h2>
+<p>After running template matching and candidate extraction on multiple tomograms, each tomogram will have an individual starfile with particle annotations. Each starfile will contain the <code>MicrographName</code> column which refers back to the tomogram name. Multiple starfiles can therefore be appended to results in a large list which can be used in other software (such as RELION, WarpM) to load annotations. These software will link the annotations to specific tilt-series using the <code>MicrographName</code> column.</p>
+<h3 id="pytom_merge_starspy">pytom_merge_stars.py</h3>
+<p>Without providing any parameters the script will try to merge all the starfiles in the current working directory and save them to a new file <code>particles.star</code>.</p>
+<div class="highlight"><pre><span></span><code>usage: pytom_merge_stars.py [-h] [-i INPUT_DIR] [-o OUTPUT_FILE] [--log LOG]
+
+Merge multiple star files in the same directory. -- Marten Chaillet
+(@McHaillet)
+
+options:
+  -h, --help            show this help message and exit
+  -i INPUT_DIR, --input-dir INPUT_DIR
+                        Directory with star files, script will try to merge
+                        all files that end in &#39;.star&#39;.
+  -o OUTPUT_FILE, --output-file OUTPUT_FILE
+                        Output star file name.
+  --log LOG             Can be set to `info` or `debug`
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.expand", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.fe8b6f2b.min.js"></script>
+      
+        <script src="../assets/_markdown_exec_pyodide.js"></script>
+      
+        <script src="../javascripts/katex.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>

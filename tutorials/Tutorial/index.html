@@ -1,0 +1,1105 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="Marten Chaillet">
+      
+      
+        <link rel="canonical" href="https://SBC-Utrecht.github.io/pytom-match-pick/tutorials/Tutorial/">
+      
+      
+        <link rel="prev" href="../../Developers/">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
+    
+    
+      
+        <title>Ribosomes on ER microsomes - pytom-match-pick</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.3cba04c6.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#preparing-the-dataset-and-template" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="pytom-match-pick" class="md-header__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pytom-match-pick
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Ribosomes on ER microsomes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SBC-Utrecht/pytom-match-pick" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pytom-match-pick
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  Tutorial
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions" class="md-tabs__link">
+        
+  
+    
+  
+  Discussions
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/issues" class="md-tabs__link">
+        
+  
+    
+  
+  Report a bug
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="pytom-match-pick" class="md-nav__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    pytom-match-pick
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pytom-match-pick
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Home
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Usage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Timings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Frequently-asked-questions-%28FAQ%29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    FAQ
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Developers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    For developers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Ribosomes on ER microsomes
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Ribosomes on ER microsomes
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#preparing-the-dataset-and-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preparing the dataset and template
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Preparing the dataset and template">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tomogram-voxel-size-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tomogram voxel size fix
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-matching-the-80s-ribosome-with-a-binary-wedge-and-simple-ctf" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 1: Matching the 80S ribosome with a binary wedge and simple CTF
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 1: Matching the 80S ribosome with a binary wedge and simple CTF">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#preparing-the-template-and-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preparing the template and mask
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-template-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running template matching
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-matching-the-60s-ribosomal-subunit-with-a-tilt-weighted-psf" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#preparing-the-template-and-mask_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preparing the template and mask
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-template-matching_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running template matching
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#increasing-the-angular-sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Increasing the angular sampling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Discussions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/issues" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Report a bug
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#preparing-the-dataset-and-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preparing the dataset and template
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Preparing the dataset and template">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tomogram-voxel-size-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tomogram voxel size fix
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-matching-the-80s-ribosome-with-a-binary-wedge-and-simple-ctf" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 1: Matching the 80S ribosome with a binary wedge and simple CTF
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 1: Matching the 80S ribosome with a binary wedge and simple CTF">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#preparing-the-template-and-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preparing the template and mask
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-template-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running template matching
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-matching-the-60s-ribosomal-subunit-with-a-tilt-weighted-psf" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#preparing-the-template-and-mask_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preparing the template and mask
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-template-matching_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running template matching
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#increasing-the-angular-sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Increasing the angular sampling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Ribosomes on ER microsomes</h1>
+
+<p>In this tutorial we are going to use template matching to detect human 80S ribosomes in a sample of ER-derived microsomes. As the tutorial dataset imaged isolated ER-derived vesicles with a 200 keV microscope, and the ice layer thickness is on the order of ~180 nm, the contrast is quite good. So, to make it more challenging, we are also going to test matching with only the 60S subunit. This way we can demonstrate some optimizations that can be made to maximize correlation. Besides, using <a href="https://elifesciences.org/reviewed-preprints/90486">baited reconstruction</a> can also be a good way to prevent bias in the template search. </p>
+<h2 id="preparing-the-dataset-and-template">Preparing the dataset and template</h2>
+<p>The tutorial dataset can be downloaded from DataverseNL: <a href="https://doi.org/10.34894/TLGJCM">https://doi.org/10.34894/TLGJCM</a>. The raw tilt-series can also be found on DataverseNL: <a href="https://doi.org/10.34894/OLYEFI">https://doi.org/10.34894/OLYEFI</a>. Tilt-series were collected identically to <a href="https://www.ebi.ac.uk/empiar/EMPIAR-11751/">EMPIAR-11751</a>. A quick overview of the preprocessing workflow: (1) MotionCor2 was used to correct the motion in raw movie frames, (2) ctfplotter from IMOD was used to estimate defocus values, (3) ctfphaseflip from IMOD was used to do strip-based phaseflipping, and (4) AreTomo was used for reconstructing tomograms (weighted-back-projection) with 5x5 local patch alignment. Besides the tomograms (in MRC format), we provide for each tomogram a <code>.rawtlt</code> file with tilt angles, a <code>_dose.txt</code> file with accumulated dose per frame, and a <code>.defocus</code> file with per tilt defocus values.</p>
+<p>We will initially use a cryo-EM reconstruction of the human 80S ribosome, which you will need to download from the EMDB: <a href="https://www.emdataresource.org/EMD-2938">https://www.emdataresource.org/EMD-2938</a>.</p>
+<p>Secondly, we will use a PDB model of the human 80S ribosome, <a href="https://www.rcsb.org/structure/6QZP">6qzp</a>. To prepare the structure, first download the <code>.cif</code> file from the PDB. Then, the structure can be opened in ChimeraX and with the following command in the ChimeraX command line, a simple electrostatic potential model of the 60S large ribosomal subunit can be generated: </p>
+<p><code>molmap #1/L? 5 gridSpacing 1.724</code>.</p>
+<p>This means we sample the map on a 1.724 Å grid (which corresponds to the tilt-series' pixel size of this dataset) and at a resolution of 5 Å. <code>#1/L?</code> selects only chains starting with L from loaded model 1, i.e. chains that belong to the large subunit. Afterwards save the generated potential as an .mrc file: <code>6qzp_60S.mrc</code>. (It can also be downloaded <a href="../data/6qzp_60S.mrc">here</a>)</p>
+<p>Finally, we assume the following folder structure for this tutorial, with the current working directory <code>tm_tutorial</code> :</p>
+<div class="highlight"><pre><span></span><code>tm_tutorial/
++- dataset/
+¦  +- tomo200528_100.mrc
+¦  +- tomo200528_100.rawtlt
+¦  +- tomo200528_100.defocus
+¦  +- tomo200528_100_dose.txt
+¦  +- tomo200528_101.mrc
+¦  +- ...
++- templates/
+¦  +- 6qzp_60S.mrc
+¦  +- emd_2938.mrc
++- results_80S/
++- results_60S/
+</code></pre></div>
+<h3 id="tomogram-voxel-size-fix">Tomogram voxel size fix</h3>
+<p>I made the mistake to not annotate the voxel size in the tomograms correctly (thanks to @jinxsfe for pointing this out!). Please run the following command to fix the voxel size in the MRC headers:</p>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span>x<span class="w"> </span><span class="k">in</span><span class="w"> </span>dataset/.mrc<span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import mrcfile; mrc = mrcfile.mmap(&#39;</span><span class="nv">$x</span><span class="s2">&#39;, &#39;r+&#39;); mrc.voxel_size = 13.79&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">done</span>
+</code></pre></div>
+<h2 id="part-1-matching-the-80s-ribosome-with-a-binary-wedge-and-simple-ctf">Part 1: Matching the 80S ribosome with a binary wedge and simple CTF</h2>
+<p>This section corresponds to the base method where the template is prepared by convolution with a single CTF and is adjusted with a binary wedge during the template matching run.</p>
+<h3 id="preparing-the-template-and-mask">Preparing the template and mask</h3>
+<p>Let's generate a template for the template matching run:</p>
+<div class="highlight"><pre><span></span><code>pytom_create_template.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-i<span class="w"> </span>templates/emd_2938.map<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-o<span class="w"> </span>templates/80S.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--input-voxel<span class="w"> </span><span class="m">1</span>.1<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--output-voxel<span class="w"> </span><span class="m">13</span>.79<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--center<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--invert<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-b<span class="w"> </span><span class="m">60</span>
+</code></pre></div>
+<p>The <code>--ctf-correction</code> option convolutes the template with a single 3D-CTF with the specified defocus to roughly match the appearance of the particles in the tomograms. Even though each tilt-series will have different defocus values, for full ribosomes this is usually sufficient. The <code>--flip-phase</code> option takes the <code>absolute()</code> of the CTF before applying it. This is because the tomograms have been CTF-corrected which is done through phase-flipping. Since the <code>absolute()</code> operation makes all the values positive and our input map is white, we get back a white template. However, the tomograms of the dataset have black contrast (veryify by opening a tomogram), so finally the <code>--invert</code> flag needs to be set to make the template black.</p>
+<p>Secondly, we need a mask with the same box size as the template and a radius that fully encompasses our ribosome structure. The diameter of a ribosome is roughly 300 Å, which means we need at least (300 Å / 13.79 Å =) 22 pixels to cover the ribosome. With some overhang we extend it to 24 pixels diameter, and therefore set the mask radius (<code>--radius</code>) to 12 pixels. The mask will also need a smooth fall-off to prevent aliasing artifacts, which we set with <code>--sigma</code>:</p>
+<div class="highlight"><pre><span></span><code>pytom_create_mask.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-b<span class="w"> </span><span class="m">60</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-o<span class="w"> </span>templates/mask.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--voxel-size<span class="w"> </span><span class="m">13</span>.79<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--radius<span class="w"> </span><span class="m">12</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--sigma<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<p>The <code>--voxel-size</code> is not really required for the mask, but in case you want to open the mask and template in ChimeraX (or napari) they are automatically scaled to the right size. If you have ChimeraX/napari/3dmod available its anyway a good idea to open the mask and template at this point to get a feel for the data. The mask should always be 1 in the center and 0 outside with a smooth fall-off. The template should have contrast matching your tomogram (i.e. black if the tomogram has black objects, and white vice versa).</p>
+<figure>
+  <img alt="template_and_mask" src="../images/0_template_mask.png" width="400" />
+  <figcaption>Template and mask slice</figcaption>
+</figure>
+<p>The large template and mask box sizes might seem surprising, but they are needed for proper weighting during template matching. Similar to large box size during downstream high-resolution averaging, the overhang here also provides better sampling of weighting functions in Fourier space. The larger size increases the number of sampling points for CTFs and tomographic point spread functions.</p>
+<h3 id="running-template-matching">Running template matching</h3>
+<p>The template matching for the 80S ribosome can be started as follows:</p>
+<div class="highlight"><pre><span></span><code>pytom_match_template.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-t<span class="w"> </span>templates/80S.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-m<span class="w"> </span>templates/mask.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-v<span class="w"> </span>dataset/tomo200528_100.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-d<span class="w"> </span>results_80S/<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--particle-diameter<span class="w"> </span><span class="m">300</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-a<span class="w"> </span>dataset/tomo200528_100.rawtlt<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--low-pass<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--defocus<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--amplitude<span class="w"> </span><span class="m">0</span>.08<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--spherical<span class="w"> </span><span class="m">2</span>.7<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--voltage<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--tomogram-ctf-model<span class="w"> </span>phase-flip<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-g<span class="w"> </span><span class="m">0</span>
+</code></pre></div>
+<p>A low-pass filter of 40 Å is set to prevent bias. Then, the angular search is calculated from the Crowther criterion using a diameter <span class="arithmatex">\(d\)</span> of 300 Å and a <span class="arithmatex">\(r_{max}\)</span> of 1/(40 Å) (due to the low-pass filter), which results in a roughly 7° increment (<a href="https://github.com/SBC-Utrecht/pytom-template-matching-gpu/wiki/template-matching">see this wiki page for more info on the required sampling</a>). Here, the program was started on the system GPU with index 0. If you have more GPU's available for the tutorial you can simply add them and pytom-match-pick will automatically distribute the angular search, e.g. <code>-g 0 1 2 3</code> will run on the first 4 GPU's in the system.</p>
+<p><strong>Out of memory!</strong> Although unlikely to happen during the tutorial, in later usage of the software your GPUs might run out of memory. This is especially likely for 4x or lower binned tomograms. If this happens, you can use the <code>--split</code> option to tile the tomogram into multiple sections. You need to specify the number of splits along each dimension, for example <code>--split 2 1 1</code> will split into 2 sections along the x-axis, <code>--split 2 2 1</code> will split once in x and once in y, resulting in 4 subvolumes!</p>
+<p>To visualize the results it can be very informative to open the tomogram and score map side-by-side in Napari. Which should look like this:</p>
+<figure>
+  <img alt="part1_score_map" src="../images/1_tomo200528_100_slice69_comb.png" width="800" />
+  <figcaption>Slice 69 of dataset/tomo200528_100.mrc and results_80S/tomo200528_100_scores.mrc (in Napari)</figcaption>
+</figure>
+<p>Then we calculate the receiver operator curve (ROC) to estimate true positives using:</p>
+<div class="highlight"><pre><span></span><code>pytom_estimate_roc.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_100_job.json<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-n<span class="w"> </span><span class="m">800</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-r<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--bins<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--crop-plot<span class="w">  </span>&gt;<span class="w"> </span>results_80S/tomo200528_100_roc.log
+</code></pre></div>
+<p>This will automatically write a file to the folder where the job file is located (<code>tomo200528_100_roc.svg</code>). Additionally, here the terminal output is also written to the file <code>results_80S/tomo200528_100_roc.log</code> as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (<code>cat results_80S/tomo200528_100_roc.log</code>), the estimated number of total true positives is approx. 180 ribosomes.</p>
+<figure>
+  <img alt="part1_roc" src="../images/1_tomo200528_100_roc_80S.svg" width="800" />
+  <figcaption>ROC curve (results_80S/tomo200528_100_roc.svg)</figcaption>
+</figure>
+<p>In this case the result is quite good: the Rectangle Under the Curve (RUC) is around 0.9 (1 is optimal). Also the fit of the gaussians seems very appropriate for the histogram, so we can use the estimated cut-off value (<code>0.194</code>) to extract particle coordinates and rotations into a STAR file: </p>
+<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_100_job.json<span class="w"> </span>-n<span class="w"> </span><span class="m">300</span><span class="w"> </span>-r<span class="w"> </span><span class="m">8</span><span class="w"> </span>-c<span class="w"> </span><span class="m">0</span>.194
+</code></pre></div>
+<p>This will extract ~160 particles and save their annotations to the file <code>results_80S/tomo200528_100_particles.star</code>.</p>
+<p>Alternatively, <code>pytom_extract_candidates.py</code> also has a default extraction cut-off estimation that can work well. Run the command without the <code>-c</code> parameter:</p>
+<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_100_job.json<span class="w"> </span>-n<span class="w"> </span><span class="m">300</span><span class="w"> </span>-r<span class="w"> </span><span class="m">8</span>
+</code></pre></div>
+<p>It produces a very similar result: the script prints the estimated cut-off to the terminal (<code>0.197</code>) (very similar to the ROC estimated cut-off) and it also extracts ~160 particles. (Take care: the previous STAR file is overwritten.)</p>
+<h2 id="part-2-matching-the-60s-ribosomal-subunit-with-a-tilt-weighted-psf">Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF</h2>
+<p>Now, let's apply the same base method using only the 60S subunit.</p>
+<h3 id="preparing-the-template-and-mask_1">Preparing the template and mask</h3>
+<p>The 60S template can be generated with this command:</p>
+<div class="highlight"><pre><span></span><code>pytom_create_template.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-i<span class="w"> </span>templates/6qzp_60S.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-o<span class="w"> </span>templates/60S.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--input-voxel<span class="w"> </span><span class="m">1</span>.724<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--output-voxel<span class="w"> </span><span class="m">13</span>.79<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--center<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--invert<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-b<span class="w"> </span><span class="m">60</span>
+</code></pre></div>
+<p>For the mask the radius is slightly reduced to constrain it around the 60S subunit:</p>
+<div class="highlight"><pre><span></span><code>pytom_create_mask.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-b<span class="w"> </span><span class="m">60</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-o<span class="w"> </span>templates/mask_60S.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--voxel-size<span class="w"> </span><span class="m">13</span>.79<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--radius<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--sigma<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<h3 id="running-template-matching_1">Running template matching</h3>
+<p>Template matching is run for the 60S subunit, where the low-pass filter is now set 
+to 35 Å to include more high-resolution information in the template matching. This 
+results in an angular sampling ~6.5°. We 
+could also entirely remove it, but this would increase the sampling to 5.3°
+which is less feasible for the tutorial. This potentially introduces more bias, 
+however: with only the large subunit as a reference we can always test for detection 
+of the small subunit in subtomogram averages.</p>
+<p>The tilt-weighted PSF is also used here with the flag <code>--per-tilt-weighting</code> and by 
+providing an IMOD-style defocus file (.defocus) and a text file dose accumulation. 
+Furthermore, we run with <code>--random-phase-correction</code> to flatten the background noise 
+using the method introduced by STOPGAP.</p>
+<div class="highlight"><pre><span></span><code>pytom_match_template.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-t<span class="w"> </span>templates/60S.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-m<span class="w"> </span>templates/mask_60S.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-v<span class="w"> </span>dataset/tomo200528_100.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-d<span class="w"> </span>results_60S/<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--particle-diameter<span class="w"> </span><span class="m">300</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-a<span class="w"> </span>dataset/tomo200528_100.rawtlt<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--per-tilt-weighting<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--low-pass<span class="w"> </span><span class="m">35</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--defocus<span class="w"> </span>dataset/tomo200528_100.defocus<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--amplitude<span class="w"> </span><span class="m">0</span>.08<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--spherical<span class="w"> </span><span class="m">2</span>.7<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--voltage<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--tomogram-ctf-model<span class="w"> </span>phase-flip<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--dose-accumulation<span class="w"> </span>dataset/tomo200528_100_dose.txt<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--random-phase<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-g<span class="w"> </span><span class="m">0</span>
+</code></pre></div>
+<p>Again, the slice and score map can be visualized in Napari:</p>
+<figure>
+  <img alt="part2_score_map" src="../images/2_tomo200528_100_slice69_simple.png" width="800" />
+  <figcaption>Slice 69 of dataset/tomo200528_100.mrc and results_60S/tomo200528_100_scores.mrc (in Napari)</figcaption>
+</figure>
+<p>Matching only with the 60S subunit greatly reduces the peak height at the actual ribosome locations. Instead gold markers now start correlating heavily with the template and get higher values than the particles of interest. The reason is two-fold: (1) the size of the template has become smaller and (2) the switch from an EM-map to a PDB based model usually reduces correlation. The second point (2) can be caused by the electrostatic potential modelling with the simplistic molmap, which does not consider atom number and solvent embedding, but also because EM-maps might contain some additional heterogeneous densities.</p>
+<p>The ROC curve is now estimated with: </p>
+<div class="highlight"><pre><span></span><code>pytom_estimate_roc.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-j<span class="w"> </span>results_60S/tomo200528_100_job.json<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-n<span class="w"> </span><span class="m">800</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-r<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--bins<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--crop-plot<span class="w">  </span>&gt;<span class="w"> </span>results_60S/tomo200528_100_roc.log
+</code></pre></div>
+<figure>
+  <img alt="part2_roc" src="../images/2_tomo200528_100_roc_simple.svg" width="800" />
+  <figcaption>ROC curve (results_60S/tomo200528_100_roc.svg)</figcaption>
+</figure>
+<p>The loss of quality is mainly visible from the gaussian fit (left plot). Even though the reported quality is still quite good (RUC), it is clear that the curve fit is not proper. This is due to the three mixed distributions that now appear: the left-most correctly fitted background noise (blue curve), the middle peak is from 60S subunits and the right-most peak from gold markers. The particle of interest and gold markers are both fitted as true positives (orange curve).</p>
+<p>Sadly, gold markers (but also carbon film, and ice) can quite often interfere with 
+template matching because of their high scattering potential leading to edges with very high signal-to-noise ratio (SNR). One way of dealing with this, is gold marker removal for which their are tools in IMOD, and also deep-learning based tools (e.g. <a href="https://teamtomo.org/fidder/">fidder</a>), that remove gold markers on the tilt-image level before tomographic reconstruction. </p>
+<h2 id="increasing-the-angular-sampling">Increasing the angular sampling</h2>
+<p>To improve the results, the angular sampling needs to be increased. For 
+part 2 of this tutorial, we set the low-pass filter to 35 Å. This means template 
+matching is now including resolution up to 1/(35 Å), 
+which changes the required angular sampling to 6.5°. Running the template matching 
+command from part 2 without a low-pass filter increases the angular increment to 5.3°.
+This roughly doubles the runtime. For me, it takes 1h20m on one RTX3060. </p>
+<h2 id="conclusion">Conclusion</h2>
+<p>We hope you enjoyed our tutorial on GPU-acculated template matching in 
+cryo-ET! If you ran into any issues during the tutorial please let us know on our <a href="https://github.com/SBC-Utrecht/pytom-match-pick/issues">github issues page</a>. On this repository's <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions">Discussions page</a> you can also reach out with specific questions about running the software for your dataset, and find previous discussions.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.expand", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.fe8b6f2b.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>
