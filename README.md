@@ -4,7 +4,9 @@
 
 # pytom-match-pick: GPU template matching for cryo-ET
 
-GPU template matching, originally developed in [PyTom](https://github.com/SBC-Utrecht/PyTom), as a standalone python package that can be run from the command line.
+GPU template matching, originally developed in [PyTom](https://github.
+com/SBC-Utrecht/PyTom), as a standalone python package that is run from the command 
+line.
 
 ![cover_image](docs/images/tomo200528_100_illustration.png)
 
