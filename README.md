@@ -118,7 +118,13 @@ you make PRs:
 pre-commit install
 ```
 
-This uses Ruff to check and format whenever you make commits. 
+This uses Ruff to check and format whenever you make commits.
+
+If you update anything in the (documentation) `docs/` folder make sure to test build the website locally:
+
+```commandline
+mkdocs serve
+```
 
 ## Tests
 
