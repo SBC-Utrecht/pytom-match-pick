@@ -1,4 +1,3 @@
-## Timings of the software
 
 This page provides a quick overview of software timings. All were run on a tomogram with dimension (462x478x250) and a template box size of 34x34x34.
 
