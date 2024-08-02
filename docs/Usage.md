@@ -77,17 +77,19 @@ In case the template matching is run with a non-spherical mask, it is essential 
 
 Optimal results are obtained by also incorporating information for the 3D CTF. You 
 can pass the following files (and parameters):
-- Tilt angles: a `.rawtlt` or `.tlt` file to the `--tilt-angles` parameter with all the 
+
+* Tilt angles: a `.rawtlt` or `.tlt` file to the `--tilt-angles` parameter with all the 
   tilt 
   angles used to reconstruct the tomogram. You should then also set the 
   `--per-tilt-weighting` flag.
-- CTF data: a `.defocus` file from IMOD or `.txt` file to `--defocus-file`. The `.txt` file 
-  should specify the defocus of each tilt in **$\micro m$**. You can also give a 
-  single defocus value (in $\micro m$). The CTF will also require input for 
+* CTF data: a `.defocus` file from IMOD or `.txt` file to `--defocus-file`. The `.
+  txt` file 
+  should specify the defocus of each tilt in $\mu m$. You can also give a 
+  single defocus value (in $\mu m$). The CTF will also require input for 
   `--voltage`, `--amplitude-contrast`, and `--spherical-abberation`.
-- Dose weighting: a `.txt` file to `--dose-accumulation` with the accumulated dose per 
+* Dose weighting: a `.txt` file to `--dose-accumulation` with the accumulated dose per 
   tilt (assuming the same ordering as `.tlt`). Each line contains a single float 
-  specifying the accumulated dose in **e-/A2**. Dose weighting only works in 
+  specifying the accumulated dose in $e^{-}/\AA^{2}$. Dose weighting only works in 
   combination with `--per-tilt-weighting`.
 
 _(As a side note, you can also only enable `--per-tilt-weighting` **without** dose accumulation and CTFs, or **with either** dose accumulation or CTFs.)_
