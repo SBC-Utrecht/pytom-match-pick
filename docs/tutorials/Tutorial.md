@@ -100,7 +100,7 @@ pytom_match_template.py \
  -g 0
 ```
 
-A low-pass filter of 40 Å is set to prevent bias. Then, the angular search is calculated from the Crowther criterion using a diameter $d$ of 300 Å and a $r_{max}$ of 1/(40 Å) (due to the low-pass filter), which results in a roughly 7° increment ([see this wiki page for more info on the required sampling](https://github.com/SBC-Utrecht/pytom-template-matching-gpu/wiki/template-matching)). Here, the program was started on the system GPU with index 0. If you have more GPU's available for the tutorial you can simply add them and pytom-match-pick will automatically distribute the angular search, e.g. `-g 0 1 2 3` will run on the first 4 GPU's in the system.
+A low-pass filter of 40 Å is set to prevent bias. Then, the angular search is calculated from the Crowther criterion using a diameter $d$ of 300 Å and a $r_{max}$ of 1/(40 Å) (due to the low-pass filter), which results in a roughly 7° increment. Here, the program was started on the system GPU with index 0. If you have more GPU's available for the tutorial you can simply add them and pytom-match-pick will automatically distribute the angular search, e.g. `-g 0 1 2 3` will run on the first 4 GPU's in the system.
 
 **Out of memory!** Although unlikely to happen during the tutorial, in later usage of the software your GPUs might run out of memory. This is especially likely for 4x or lower binned tomograms. If this happens, you can use the `--split` option to tile the tomogram into multiple sections. You need to specify the number of splits along each dimension, for example `--split 2 1 1` will split into 2 sections along the x-axis, `--split 2 2 1` will split once in x and once in y, resulting in 4 subvolumes!
 
