@@ -2,10 +2,11 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10728422.svg)](https://doi.org/10.5281/zenodo.10728422)
 
 
-# pytom-match-pick: GPU template matching for cryo-ET
+# pytom-match-pick
 
-GPU template matching, originally developed in [PyTom](https://github.com/SBC-Utrecht/PyTom), as a standalone python package that is run from the command 
-line.
+GPU-accelerated template matching for cryo-electron tomography, originally developed in [PyTom](https://github.com/SBC-Utrecht/PyTom), as a standalone Python package that is run from the command line. 
+
+This software is developed by Marten L. Chaillet ([@McHaillet](https://github.com/McHaillet)) and Sander Roet ([@sroet](https://github.com/sroet)) in the group of Friedrich Förster at Utrecht University.
 
 ![cover_image](docs/images/tomo200528_100_illustration.png)
 
@@ -141,23 +142,7 @@ Contributions to the project are very welcome! Feel free to make a pull request 
 
 ## Citation
 
-For a reference on GPU accelerated template matching in tomograms please see the [IJMS publication](https://www.mdpi.com/1422-0067/24/17/13375).
-
-
-```
-@Article{ijms241713375,
-    AUTHOR = {Chaillet, Marten L. and van der Schot, Gijs and Gubins, Ilja and Roet, Sander and Veltkamp, Remco C. and Förster, Friedrich},
-    TITLE = {Extensive Angular Sampling Enables the Sensitive Localization of Macromolecules in Electron Tomograms},
-    JOURNAL = {International Journal of Molecular Sciences},
-    VOLUME = {24},
-    YEAR = {2023},
-    NUMBER = {17},
-    ARTICLE-NUMBER = {13375},
-    URL = {https://www.mdpi.com/1422-0067/24/17/13375},
-    ISSN = {1422-0067},
-    DOI = {10.3390/ijms241713375}
-}
-```
+Chaillet, M. L., van der Schot, G., Gubins, I., Roet, S., Veltkamp, R. C., & Förster, F. (2023). Extensive angular sampling enables the sensitive localization of macromolecules in electron tomograms. _International Journal of Molecular Sciences_, 24(17), 13375. <https://doi.org/10.3390/ijms241713375>
 
 <!--
 This ends the block for the website
