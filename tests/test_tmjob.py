@@ -643,6 +643,19 @@ class TestTMJob(unittest.TestCase):
             msg="Length of returned list should be 0 after applying mask where the "
             "object is not in the region of interest.",
         )
+        # test if all masks are ignored if ignore_tomogram_mask=True
+        df, scores = extract_particles(
+            job,
+            5,
+            100,
+            tomogram_mask_path=TEST_EXTRACTION_MASK_OUTSIDE,
+            create_plot=False,
+        )
+        self.assertNotEqual(
+            len(scores),
+            0,
+            msg="We would expect some annotations if all tomogram masks are ignored",
+        )
 
         # test mask that covers the particle and should override the one now attached to the job
         df, scores = extract_particles(
