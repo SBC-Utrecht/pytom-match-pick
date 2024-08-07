@@ -1253,8 +1253,9 @@ Volume control:
                         e.g. --search-x 30 230
   --tomogram-mask TOMOGRAM_MASK
                         Here you can provide a mask for matching with
-                        dimensions equal to the tomogram. If a subvolume only
-                        has values &lt;= 0 for this mask it will be skipped.
+                        dimensions (in pixels) equal to the tomogram. If a
+                        subvolume only has values &lt;= 0 for this mask it will
+                        be skipped.
 
 Filter control:
   -a TILT_ANGLES [TILT_ANGLES ...], --tilt-angles TILT_ANGLES [TILT_ANGLES ...]
@@ -1389,13 +1390,13 @@ options:
                         in the destination path.
   --tomogram-mask TOMOGRAM_MASK
                         Here you can provide a mask for the extraction with
-                        dimensions equal to the tomogram. All values in the
-                        mask that are smaller or equal to 0 will be removed,
-                        all values larger than 0 are considered regions of
-                        interest. It can be used to extract annotations only
-                        within a specific cellular region.If the job was run
-                        with a tomogram mask, this file will be used instead
-                        of the job mask
+                        dimensions (in pixels) equal to the tomogram. All
+                        values in the mask that are smaller or equal to 0 will
+                        be removed, all values larger than 0 are considered
+                        regions of interest. It can be used to extract
+                        annotations only within a specific cellular region.If
+                        the job was run with a tomogram mask, this file will
+                        be used instead of the job mask
   --ignore_tomogram_mask IGNORE_TOMOGRAM_MASK
                         Flag to ignore the input and TM job tomogram mask.
                         Useful if the scores mrc looks reasonable, but this
