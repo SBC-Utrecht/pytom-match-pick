@@ -86,8 +86,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="pytom-match-pick" class="md-header__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <img src="../../images/60S_masked.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -204,7 +203,7 @@
         <a href="./" class="md-tabs__link">
           
   
-  Tutorial
+  Tutorials
 
         </a>
       </li>
@@ -276,8 +275,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="pytom-match-pick" class="md-nav__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <img src="../../images/60S_masked.png" alt="logo">
 
     </a>
     pytom-match-pick
@@ -478,7 +476,7 @@
             
   
   <span class="md-ellipsis">
-    Tutorial
+    Tutorials
   </span>
   
 
@@ -488,7 +486,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            Tutorial
+            Tutorials
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -927,7 +925,7 @@
 <span class="w"> </span>--tomogram-ctf-model<span class="w"> </span>phase-flip<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-g<span class="w"> </span><span class="m">0</span>
 </code></pre></div>
-<p>A low-pass filter of 40 Å is set to prevent bias. Then, the angular search is calculated from the Crowther criterion using a diameter <span class="arithmatex">\(d\)</span> of 300 Å and a <span class="arithmatex">\(r_{max}\)</span> of 1/(40 Å) (due to the low-pass filter), which results in a roughly 7° increment (<a href="https://github.com/SBC-Utrecht/pytom-template-matching-gpu/wiki/template-matching">see this wiki page for more info on the required sampling</a>). Here, the program was started on the system GPU with index 0. If you have more GPU's available for the tutorial you can simply add them and pytom-match-pick will automatically distribute the angular search, e.g. <code>-g 0 1 2 3</code> will run on the first 4 GPU's in the system.</p>
+<p>A low-pass filter of 40 Å is set to prevent bias. Then, the angular search is calculated from the Crowther criterion using a diameter <span class="arithmatex">\(d\)</span> of 300 Å and a <span class="arithmatex">\(r_{max}\)</span> of 1/(40 Å) (due to the low-pass filter), which results in a roughly 7° increment. Here, the program was started on the system GPU with index 0. If you have more GPU's available for the tutorial you can simply add them and pytom-match-pick will automatically distribute the angular search, e.g. <code>-g 0 1 2 3</code> will run on the first 4 GPU's in the system.</p>
 <p><strong>Out of memory!</strong> Although unlikely to happen during the tutorial, in later usage of the software your GPUs might run out of memory. This is especially likely for 4x or lower binned tomograms. If this happens, you can use the <code>--split</code> option to tile the tomogram into multiple sections. You need to specify the number of splits along each dimension, for example <code>--split 2 1 1</code> will split into 2 sections along the x-axis, <code>--split 2 2 1</code> will split once in x and once in y, resulting in 4 subvolumes!</p>
 <p>To visualize the results it can be very informative to open the tomogram and score map side-by-side in Napari. Which should look like this:</p>
 <figure>
@@ -1066,7 +1064,7 @@ cryo-ET! If you ran into any issues during the tutorial please let us know on ou
       <div class="md-copyright">
   
     <div class="md-copyright__highlight">
-      Copyright &copy; 2024
+      Copyright &copy; 2024 Marten L. Chaillet
     </div>
   
   

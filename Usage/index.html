@@ -88,8 +88,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="pytom-match-pick" class="md-header__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <img src="../images/60S_masked.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -206,7 +205,7 @@
         <a href="../tutorials/Tutorial/" class="md-tabs__link">
           
   
-  Tutorial
+  Tutorials
 
         </a>
       </li>
@@ -278,8 +277,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="pytom-match-pick" class="md-nav__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <img src="../images/60S_masked.png" alt="logo">
 
     </a>
     pytom-match-pick
@@ -705,7 +703,7 @@
             
   
   <span class="md-ellipsis">
-    Tutorial
+    Tutorials
   </span>
   
 
@@ -715,7 +713,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            Tutorial
+            Tutorials
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1032,13 +1030,15 @@
 <li>Merging annotations for export to other software</li>
 </ol>
 <h2 id="1-creating-a-template-and-mask">1. Creating a template and mask</h2>
-<p><strong>Important</strong>:
-- The template and mask need to have the same box size.
-- The template needs to have the same contrast as the tomogram (e.g. the particles 
+<p>Keep in mind:</p>
+<ul>
+<li>The template and mask need to have the same box size.</li>
+<li>The template needs to have the same contrast as the tomogram (e.g. the particles 
   are black in both the tomogram and template). Contrast can be adjusted with the 
-  <code>--invert</code> option.</p>
+  <code>--invert</code> option.</li>
+</ul>
 <h3 id="pytom_create_templatepy">pytom_create_template.py</h3>
-<p>Using an EM map as a reference structure generally leads to the best results. Alternatively a structure from the PDB can be converted in Chimera(X) using the molmap command to create an MRC file that models the electrostatic potential.</p>
+<p>Using an EM map as a reference structure generally leads to the best results. Alternatively a structure from the PDB can be converted in Chimera(X) using the molmap command to create an MRC file that models the electrostatic potential. A good ballpark for the box size of the template is 2 or 3 times the particle diameter (along its longest axis). </p>
 <div class="highlight"><pre><span></span><code>usage: pytom_create_template.py [-h] -i INPUT_MAP [-o OUTPUT_FILE]
                                 [--input-voxel-size-angstrom INPUT_VOXEL_SIZE_ANGSTROM]
                                 --output-voxel-size-angstrom
@@ -1526,7 +1526,7 @@ options:
       <div class="md-copyright">
   
     <div class="md-copyright__highlight">
-      Copyright &copy; 2024
+      Copyright &copy; 2024 Marten L. Chaillet
     </div>
   
   
