@@ -12,7 +12,7 @@ nav:
     - Timings: Timings.md
     - FAQ: Frequently-asked-questions-(FAQ).md
     - For developers: Developers.md
-  - Tutorial:
+  - Tutorials:
     - Ribosomes on ER microsomes: tutorials/Tutorial.md
   - Discussions: https://github.com/SBC-Utrecht/pytom-match-pick/discussions
   - Report a bug: https://github.com/SBC-Utrecht/pytom-match-pick/issues
