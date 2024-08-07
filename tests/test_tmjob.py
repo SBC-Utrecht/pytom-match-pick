@@ -708,7 +708,7 @@ class TestTMJob(unittest.TestCase):
                 job,
                 5,
                 100,
-                tomogram_mask=TEST_WRONG_SIZE_TOMO_MASK,
+                tomogram_mask_path=TEST_WRONG_SIZE_TOMO_MASK,
                 create_plot=False,
             )
 
