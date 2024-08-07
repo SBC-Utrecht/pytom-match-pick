@@ -148,6 +148,7 @@ def extract_particles(
     create_plot: bool = True,
     tophat_connectivity: int = 1,
     relion5_compat: bool = False,
+    ignore_tomogram_mask: bool = False,
 ) -> tuple[pd.DataFrame, list[float, ...]]:
     """
     Parameters
@@ -174,6 +175,10 @@ def extract_particles(
     relion5_compat: bool, default False
         relion5 compatibility writes coordinates relative to center and in Angstrom
         center definition should be: tomo_shape / 2 - 1
+    ignore_tomogram_mask: bool, default False
+        Debug option to force the code to ignore job.tomogram_mask and input mask.
+        Allows for re-exctraction without rerunning the TM job
+        (assuming the scores volume seems reasonable)
 
     Returns
     -------
@@ -203,7 +208,9 @@ def extract_particles(
 
     # apply tomogram mask if provided
     tomogram_mask = None
-    if tomogram_mask_path is not None:
+    if ignore_tomogram_mask:
+        logging.warn("Ignoring tomogram mask")
+    elif tomogram_mask_path is not None:
         tomogram_mask = read_mrc(tomogram_mask_path)
     elif job.tomogram_mask is not None:
         tomogram_mask = read_mrc(job.tomogram_mask)
