@@ -643,14 +643,22 @@ class TestTMJob(unittest.TestCase):
             msg="Length of returned list should be 0 after applying mask where the "
             "object is not in the region of interest.",
         )
-        # test if all masks are ignored if ignore_tomogram_mask=True
-        df, scores = extract_particles(
-            job,
-            5,
-            100,
-            tomogram_mask_path=TEST_EXTRACTION_MASK_OUTSIDE,
-            create_plot=False,
-        )
+        # test if all masks are ignored if ignore_tomogram_mask=True and that a warning is raised
+        with self.assertLogs(level="WARNING") as cm:
+            df, scores = extract_particles(
+                job,
+                5,
+                100,
+                tomogram_mask_path=TEST_EXTRACTION_MASK_OUTSIDE,
+                create_plot=False,
+            )
+        # Test if expected warning is logged
+        for o in cm.output:
+            if "Ignoring tomogram mask" in o:
+                break
+        else:
+            # break is not hit
+            self.fail("expected warning is not logged")
         self.assertNotEqual(
             len(scores),
             0,
