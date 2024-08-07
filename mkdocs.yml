@@ -25,7 +25,7 @@ theme:
     # - navigation.instant.progress  # possible progress bar, but site is too small to justify
     - navigation.tracking
     - navigation.tabs
-    # - navigation.tabs.sticky
+    - navigation.tabs.sticky
     - navigation.expand
     - toc.follow
     - content.code.copy
