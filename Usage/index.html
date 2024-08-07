@@ -1369,8 +1369,9 @@ which usually correspond to true positives. This will be described in a forthcom
 publication. For now, you can check out Marten's poster at CCPEM that shows some 
 preliminary results: <a href="https://doi.org/10.5281/zenodo.13165643">10.5281/zenodo.13165643</a>.</p>
 <div class="highlight"><pre><span></span><code>usage: pytom_extract_candidates.py [-h] -j JOB_FILE
-                                   [--tomogram-mask TOMOGRAM_MASK] -n
-                                   NUMBER_OF_PARTICLES
+                                   [--tomogram-mask TOMOGRAM_MASK]
+                                   [--ignore_tomogram_mask IGNORE_TOMOGRAM_MASK]
+                                   -n NUMBER_OF_PARTICLES
                                    [--number-of-false-positives NUMBER_OF_FALSE_POSITIVES]
                                    -r RADIUS_PX [-c CUT_OFF]
                                    [--tophat-filter TOPHAT_FILTER]
@@ -1395,6 +1396,10 @@ options:
                         within a specific cellular region.If the job was run
                         with a tomogram mask, this file will be used instead
                         of the job mask
+  --ignore_tomogram_mask IGNORE_TOMOGRAM_MASK
+                        Flag to ignore the input and TM job tomogram mask.
+                        Useful if the scores mrc looks reasonable, but this
+                        finds 0 particles to extract
   -n NUMBER_OF_PARTICLES, --number-of-particles NUMBER_OF_PARTICLES
                         Maximum number of particles to extract from tomogram.
   --number-of-false-positives NUMBER_OF_FALSE_POSITIVES
@@ -1437,6 +1442,7 @@ options:
                              [--gaussian-peak GAUSSIAN_PEAK]
                              [--force-peak FORCE_PEAK] [--crop-plot CROP_PLOT]
                              [--show-plot SHOW_PLOT] [--log LOG]
+                             [--ignore_tomogram_mask IGNORE_TOMOGRAM_MASK]
 
 Estimate ROC curve from TMJob file. -- Marten Chaillet (@McHaillet)
 
@@ -1467,6 +1473,10 @@ options:
                         Flag to use a pop-up window for the plot instead of
                         writing it to the location of the job file.
   --log LOG             Can be set to `info` or `debug`
+  --ignore_tomogram_mask IGNORE_TOMOGRAM_MASK
+                        Flag to ignore the TM job tomogram mask. Useful if the
+                        scores mrc looks reasonable, but this finds 0
+                        particles
 </code></pre></div>
 <h2 id="4-merging-annotations-for-export-to-other-software">4. Merging annotations for export to other software</h2>
 <p>After running template matching and candidate extraction on multiple tomograms, each tomogram will have an individual starfile with particle annotations. Each starfile will contain the <code>MicrographName</code> column which refers back to the tomogram name. Multiple starfiles can therefore be appended to results in a large list which can be used in other software (such as RELION, WarpM) to load annotations. These software will link the annotations to specific tilt-series using the <code>MicrographName</code> column.</p>
