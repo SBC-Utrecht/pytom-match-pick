@@ -17,15 +17,16 @@ Using template matching in this software consists of the following steps:
 
 ## 1. Creating a template and mask
 
-**Important**:
-- The template and mask need to have the same box size.
-- The template needs to have the same contrast as the tomogram (e.g. the particles 
+Keep in mind:
+
+* The template and mask need to have the same box size.
+* The template needs to have the same contrast as the tomogram (e.g. the particles 
   are black in both the tomogram and template). Contrast can be adjusted with the 
   `--invert` option.
 
 ### pytom_create_template.py
 
-Using an EM map as a reference structure generally leads to the best results. Alternatively a structure from the PDB can be converted in Chimera(X) using the molmap command to create an MRC file that models the electrostatic potential.
+Using an EM map as a reference structure generally leads to the best results. Alternatively a structure from the PDB can be converted in Chimera(X) using the molmap command to create an MRC file that models the electrostatic potential. A good ballpark for the box size of the template is 2 or 3 times the particle diameter (along its longest axis). 
 
 ```python exec="on" result="ansi" 
 import argparse
