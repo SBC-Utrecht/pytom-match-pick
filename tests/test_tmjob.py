@@ -659,7 +659,7 @@ class TestTMJob(unittest.TestCase):
                 break
         else:
             # break is not hit
-            self.fail("expected warning is not logged")
+            self.fail("expected warning is not logged")  # pargma: no cover
         self.assertNotEqual(
             len(scores),
             0,
