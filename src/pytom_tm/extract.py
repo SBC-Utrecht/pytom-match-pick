@@ -216,6 +216,11 @@ def extract_particles(
         tomogram_mask = read_mrc(job.tomogram_mask)
 
     if tomogram_mask is not None:
+        if tomogram_mask.shape != job.tomo_shape:
+            raise ValueError(
+                "Tomogram mask does not have the same number of pixels as the tomogram.\n"
+                f"Tomogram mask shape: {tomogram_mask.shape}, tomogram shape: {job.tomo_shape}"
+            )
         slices = [
             slice(origin, origin + size)
             for origin, size in zip(job.search_origin, job.search_size)
