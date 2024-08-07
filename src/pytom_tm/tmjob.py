@@ -371,6 +371,11 @@ class TMJob:
         self.tomogram_mask = tomogram_mask
         if tomogram_mask is not None:
             temp = read_mrc(tomogram_mask)
+            if temp.shape != self.tomo_shape:
+                raise ValueError(
+                    "Tomogram mask does not have the same number of pixels as the tomogram.\n"
+                    f"Tomogram mask shape: {temp.shape}, tomogram shape: {self.tomo_shape}"
+                )
             if np.all(temp <= 0):
                 raise ValueError(
                     f"No values larger than 0 found in the tomogram mask: {tomogram_mask}"
