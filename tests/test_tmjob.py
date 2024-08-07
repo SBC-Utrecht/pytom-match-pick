@@ -20,6 +20,7 @@ ANGULAR_SEARCH = "38.53"
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath("test_data")
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath("tomogram.mrc")
 TEST_BROKEN_TOMOGRAM_MASK = TEST_DATA_DIR.joinpath("broken_tomogram_mask.mrc")
+TEST_WRONG_SIZE_TOMO_MASK = TEST_DATA_DIR.joinpath("wrong_size_tomogram_mask.mrc")
 TEST_EXTRACTION_MASK_OUTSIDE = TEST_DATA_DIR.joinpath("extraction_mask_outside.mrc")
 TEST_EXTRACTION_MASK_INSIDE = TEST_DATA_DIR.joinpath("extraction_mask_inside.mrc")
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath("template.mrc")
@@ -124,10 +125,17 @@ class TestTMJob(unittest.TestCase):
         broken_tomogram_mask = np.zeros(TOMO_SHAPE, dtype=np.float32)
         write_mrc(TEST_BROKEN_TOMOGRAM_MASK, broken_tomogram_mask, 1.0)
 
+        # write wrong size tomogram mask
+        size = list(TOMO_SHAPE)
+        size[0] += 1
+        wrong_size_tomogram_mask = np.ones(tuple(size), dtype=np.float32)
+        write_mrc(TEST_WRONG_SIZE_TOMO_MASK, wrong_size_tomogram_mask, 1.0)
+
     @classmethod
     def tearDownClass(cls) -> None:
         TEST_MASK.unlink()
         TEST_BROKEN_TOMOGRAM_MASK.unlink()
+        TEST_WRONG_SIZE_TOMO_MASK.unlink()
         TEST_EXTRACTION_MASK_OUTSIDE.unlink()
         TEST_EXTRACTION_MASK_INSIDE.unlink()
         TEST_TEMPLATE.unlink()
@@ -250,6 +258,19 @@ class TestTMJob(unittest.TestCase):
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
                 tomogram_mask=TEST_BROKEN_TOMOGRAM_MASK,
+            )
+        # Test wrong size template mask
+        with self.assertRaisesRegex(ValueError, str(TOMO_SHAPE)):
+            TMJob(
+                "0",
+                10,
+                TEST_TOMOGRAM,
+                TEST_TEMPLATE,
+                TEST_MASK,
+                TEST_DATA_DIR,
+                angle_increment=ANGULAR_SEARCH,
+                voxel_size=1.0,
+                tomogram_mask=TEST_WRONG_SIZE_TOMO_MASK,
             )
 
     def test_tm_job_copy(self):
@@ -680,3 +701,24 @@ class TestTMJob(unittest.TestCase):
             msg="We expected a detected particle with a extraction mask that "
             "covers the object.",
         )
+
+        # test mask that is the wrong size raises an error
+        with self.assertRaisesRegex(ValueError, str(TOMO_SHAPE)):
+            _, _ = extract_particles(
+                job,
+                5,
+                100,
+                tomogram_mask=TEST_WRONG_SIZE_TOMO_MASK,
+                create_plot=False,
+            )
+
+        # Also test the raise if it somehow got attached to the job
+        job = self.job.copy()
+        job.tomogram_mask = TEST_WRONG_SIZE_TOMO_MASK
+        with self.assertRaisesRegex(ValueError, str(TOMO_SHAPE)):
+            _, _ = extract_particles(
+                job,
+                5,
+                100,
+                create_plot=False,
+            )
