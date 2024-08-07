@@ -436,7 +436,7 @@ def extract_candidates(argv=None):
         type=pathlib.Path,
         required=False,
         action=CheckFileExists,
-        help="Here you can provide a mask for the extraction with dimensions equal to "
+        help="Here you can provide a mask for the extraction with dimensions (in pixels) equal to "
         "the tomogram. All values in the mask that are smaller or equal to 0 will be "
         "removed, all values larger than 0 are considered regions of interest. It can "
         "be used to extract annotations only within a specific cellular region."
@@ -687,7 +687,7 @@ def match_template(argv=None):
         type=pathlib.Path,
         required=False,
         action=CheckFileExists,
-        help="Here you can provide a mask for matching with dimensions equal to "
+        help="Here you can provide a mask for matching with dimensions (in pixels) equal to "
         "the tomogram. If a subvolume only has values <= 0 for this mask it will be skipped.",
     )
 
