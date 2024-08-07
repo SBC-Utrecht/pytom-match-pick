@@ -364,6 +364,14 @@ def estimate_roc(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+    parser.add_argument(
+        "--ignore_tomogram_mask",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Flag to ignore the TM job tomogram mask. "
+        "Useful if the scores mrc looks reasonable, but this finds 0 particles",
+    )
 
     # ---8<--- [end:estimate_roc_usage]
 
@@ -378,6 +386,7 @@ def estimate_roc(argv=None):
         args.number_of_particles,
         cut_off=0,
         create_plot=False,
+        ignore_tomogram_mask=args.ignore_tomogram_mask,
     )
 
     score_volume = read_mrc(
@@ -432,6 +441,14 @@ def extract_candidates(argv=None):
         "removed, all values larger than 0 are considered regions of interest. It can "
         "be used to extract annotations only within a specific cellular region."
         "If the job was run with a tomogram mask, this file will be used instead of the job mask",
+    )
+    parser.add_argument(
+        "--ignore_tomogram_mask",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Flag to ignore the input and TM job tomogram mask. "
+        "Useful if the scores mrc looks reasonable, but this finds 0 particles to extract",
     )
     parser.add_argument(
         "-n",
@@ -525,6 +542,7 @@ def extract_candidates(argv=None):
         tophat_filter=args.tophat_filter,
         tophat_connectivity=args.tophat_connectivity,
         relion5_compat=args.relion5_compat,
+        ignore_tomogram_mask=args.ignore_tomogram_mask,
     )
 
     # write out as a RELION type starfile
