@@ -32,3 +32,7 @@ ax.set_ylabel('LCCmax')
 ax.legend()
 plt.show()
 ```
+
+## What tomogram reconstruction method should I use?
+
+Have a look at this thread on our Discussions page: <https://github.com/SBC-Utrecht/pytom-match-pick/discussions/206>! Feel free to join in with the disucssion if you have another opinion or questions.

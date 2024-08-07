@@ -3,7 +3,7 @@ site_url: https://SBC-Utrecht.github.io/pytom-match-pick
 site_author: Marten Chaillet
 repo_name: pytom-match-pick
 repo_url: https://github.com/SBC-Utrecht/pytom-match-pick
-copyright: Copyright &copy; 2024
+copyright: Copyright &copy; 2024 Marten L. Chaillet
 
 nav:
   - Home:
@@ -12,12 +12,13 @@ nav:
     - Timings: Timings.md
     - FAQ: Frequently-asked-questions-(FAQ).md
     - For developers: Developers.md
-  - Tutorial:
+  - Tutorials:
     - Ribosomes on ER microsomes: tutorials/Tutorial.md
   - Discussions: https://github.com/SBC-Utrecht/pytom-match-pick/discussions
   - Report a bug: https://github.com/SBC-Utrecht/pytom-match-pick/issues
 
 theme:
+  logo: images/60S_masked.png
   name: material
   features:
     - navigation.instant
