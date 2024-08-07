@@ -374,7 +374,7 @@ class TMJob:
             if temp.shape != self.tomo_shape:
                 raise ValueError(
                     "Tomogram mask does not have the same number of pixels as the tomogram.\n"
-                    "Tomogram mask shape: {temp.shape}, tomogram shape: {self.tomo_shape}"
+                    f"Tomogram mask shape: {temp.shape}, tomogram shape: {self.tomo_shape}"
                 )
             if np.all(temp <= 0):
                 raise ValueError(
