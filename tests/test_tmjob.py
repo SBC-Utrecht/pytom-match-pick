@@ -651,6 +651,7 @@ class TestTMJob(unittest.TestCase):
                 100,
                 tomogram_mask_path=TEST_EXTRACTION_MASK_OUTSIDE,
                 create_plot=False,
+                ignore_tomogram_mask=True,
             )
         # Test if expected warning is logged
         for o in cm.output:
