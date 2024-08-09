@@ -945,6 +945,7 @@ def match_template(argv=None):
         particle_diameter=args.particle_diameter,
         random_phase_correction=args.random_phase_correction,
         rng_seed=args.rng_seed,
+        defocus_handedness=args.defocus_handedness,
     )
 
     score_volume, angle_volume = run_job_parallel(
