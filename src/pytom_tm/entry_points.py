@@ -812,6 +812,22 @@ def match_template(argv=None):
         "novaCTF/3dctf.",
     )
     filter_group.add_argument(
+        "--defocus-handedness",
+        required=False,
+        type=int,
+        default=0,
+        help="Specify the defocus handedness for defocus gradient correction of the "
+        "CTF in each subvolumes. The more subvolumes in x and z, "
+        "the finer the defocus gradient will be corrected, at the cost of "
+        "increased computing time. It will only have effect for very clean and "
+        "high-resolution data, such as isolated macromolecules. IMPORTANT: only "
+        "works in combination with --volume-split ! "
+        "A value of 0 means no defocus gradient correction (default), 1 means "
+        "correction assuming correct handedness (as specified in Pyle and "
+        "Zianetti (2021), -1 means the handedness will be inverted. If uncertain "
+        "better to leave off as an inverted correction might hamper results.",
+    )
+    filter_group.add_argument(
         "--spectral-whitening",
         action="store_true",
         default=False,
