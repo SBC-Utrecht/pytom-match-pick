@@ -824,7 +824,7 @@ def match_template(argv=None):
         "works in combination with --volume-split ! "
         "A value of 0 means no defocus gradient correction (default), 1 means "
         "correction assuming correct handedness (as specified in Pyle and "
-        "Zianetti (2021), -1 means the handedness will be inverted. If uncertain "
+        "Zianetti (2021)), -1 means the handedness will be inverted. If uncertain "
         "better to leave off as an inverted correction might hamper results.",
     )
     filter_group.add_argument(
