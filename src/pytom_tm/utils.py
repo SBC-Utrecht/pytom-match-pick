@@ -37,6 +37,9 @@ def get_defocus_offsets(
     increases for positive tilt angles on the right side of the sample (positive X
     coordinate relative to the center).
 
+    The offset is calculated as follows:
+        z_offset = z_center * np.cos(tilt_angle) + x_center * np.sin(tilt_angle)
+
     Parameters
     ----------
     patch_center_x: float
