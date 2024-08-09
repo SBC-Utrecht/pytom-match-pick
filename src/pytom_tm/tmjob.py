@@ -75,6 +75,7 @@ def load_json_to_tmjob(
         particle_diameter=data.get("particle_diameter", None),
         random_phase_correction=data.get("random_phase_correction", False),
         rng_seed=data.get("rng_seed", 321),
+        defocus_handedness=data.get("defocus_handedness", 0),
     )
     # if the file originates from an old version set the phase shift for compatibility
     if (
@@ -231,6 +232,7 @@ class TMJob:
         particle_diameter: Optional[float] = None,
         random_phase_correction: bool = False,
         rng_seed: int = 321,
+        defocus_handedness: int = 0,
     ):
         """
         Parameters
@@ -296,6 +298,11 @@ class TMJob:
             scores for noise
         rng_seed: int, default 321
             set a seed for the rng for phase randomization
+        defocus_handedness: int, default 0
+            specify a defocus handedness:
+            -1 = inverted
+             0 = don't correct offsets (preferred if unknown)
+             1 = regular (as in Pyle & Zianetti (2021))
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -442,6 +449,7 @@ class TMJob:
         # set dose and ctf
         self.dose_accumulation = dose_accumulation
         self.ctf_data = ctf_data
+        self.defocus_handedness = defocus_handedness
         self.whiten_spectrum = whiten_spectrum
         self.whitening_filter = self.output_dir.joinpath(
             f"{self.tomo_id}_whitening_filter.npy"
@@ -804,7 +812,7 @@ class TMJob:
 
         # if tilt angles are provided we can create wedge filters
         if self.tilt_angles is not None:
-            if self.tilt_weighting and self.ctf_data is not None:
+            if self.tilt_weighting and self.defocus_handedness != 0:
                 # adjust ctf parameters for this specific patch in the tomogram
                 full_tomo_center = [s / 2 for s in self.tomo_shape]
                 patch_center = [
@@ -821,6 +829,8 @@ class TMJob:
                     relative_patch_center_um[0],
                     relative_patch_center_um[2],
                     self.tilt_angles,
+                    angles_in_degrees=True,
+                    invert_handedness=self.defocus_handedness < 0,
                 )
                 for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
                     ctf["defocus"] = ctf["defocus"] + defocus_shift * 1e-6
