@@ -20,7 +20,6 @@ from pytom_tm.weights import (
 )
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm import __version__ as PYTOM_TM_VERSION
-from pytom_tm.utils import get_defocus_offsets
 
 
 def load_json_to_tmjob(
@@ -92,6 +91,64 @@ def load_json_to_tmjob(
     job.steps_slice = data["steps_slice"]
     job.job_stats = data["job_stats"]
     return job
+
+
+def get_defocus_offsets(
+    patch_center_x: float,
+    patch_center_z: float,
+    tilt_angles: list[float, ...],
+    angles_in_degrees: bool = True,
+    invert_handedness: bool = False,
+) -> npt.NDArray[float]:
+    """Calculate the defocus offsets for a subvolume
+    based on the tilt geometry.
+
+    I used the definition from Pyle & Zianetti (https://doi.org/10.1042/BCJ20200715)
+    for the default setting of the defocus handedness. It assumes the defocus
+    increases for positive tilt angles on the right side of the sample (positive X
+    coordinate relative to the center).
+
+    The offset is calculated as follows:
+        z_offset = z_center * np.cos(tilt_angle) + x_center * np.sin(tilt_angle)
+
+    Parameters
+    ----------
+    patch_center_x: float
+        x center of subvolume relative to tomogram center
+    patch_center_z: float
+        z center of subvolume relative to tomogram center
+    tilt_angles: list[float, ...]
+        list of tilt angles
+    angles_in_degrees: bool, default True
+        whether tilt angles are in degrees or radians
+    invert_handedness: bool, default False
+        invert defocus handedness geometry
+
+    Returns
+    -------
+    z_offsets: npt.NDArray[float]
+        an array of defocus offsets for each tilt angle
+    """
+    n_tilts = len(tilt_angles)
+    x_centers = np.array(
+        [
+            patch_center_x,
+        ]
+        * n_tilts
+    )
+    z_centers = np.array(
+        [
+            patch_center_z,
+        ]
+        * n_tilts
+    )
+    ta_array = np.array(tilt_angles)
+    if angles_in_degrees:
+        ta_array = np.deg2rad(ta_array)
+    if invert_handedness:
+        ta_array *= -1
+    z_offsets = z_centers * np.cos(ta_array) + x_centers * np.sin(ta_array)
+    return z_offsets
 
 
 def _determine_1D_fft_splits(
@@ -814,17 +871,11 @@ class TMJob:
         if self.tilt_angles is not None:
             if self.tilt_weighting and self.defocus_handedness != 0:
                 # adjust ctf parameters for this specific patch in the tomogram
-                full_tomo_center = [s / 2 for s in self.tomo_shape]
-                patch_center = [
-                    o + s / 2 for o, s in zip(self.search_origin, self.search_size)
-                ]
-                relative_patch_center = [
-                    (pc - tc) for pc, tc in zip(patch_center, full_tomo_center)
-                ]
-                # express in um as the defocus is expressed in um
-                relative_patch_center_um = [
-                    x * self.voxel_size * 1e-4 for x in relative_patch_center
-                ]
+                full_tomo_center = np.array(self.tomo_shape) / 2
+                patch_center = (
+                    np.array(self.search_origin) + np.array(self.search_size) / 2
+                )
+                relative_patch_center_um = (patch_center - full_tomo_center) * 1e-4
                 defocus_offsets = get_defocus_offsets(
                     relative_patch_center_um[0],
                     relative_patch_center_um[2],
@@ -834,9 +885,10 @@ class TMJob:
                 )
                 for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
                     ctf["defocus"] = ctf["defocus"] + defocus_shift * 1e-6
-                logging.debug(f"Patch center: {relative_patch_center}")
+                logging.debug(f"Patch center: {relative_patch_center_um * 1e-4}")
                 logging.debug(
-                    f"Defocus values: {[ctf['defocus'] for ctf in self.ctf_data]}",
+                    f"Defocus values: "
+                    f"{[ctf['defocus'] * 1e6 for ctf in self.ctf_data]}",
                 )
 
             # for the tomogram a binary wedge is generated to explicitly set the missing wedge region to 0
