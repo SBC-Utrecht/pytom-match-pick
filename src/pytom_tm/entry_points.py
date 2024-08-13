@@ -814,6 +814,7 @@ def match_template(argv=None):
     filter_group.add_argument(
         "--defocus-handedness",
         required=False,
+        choices=[-1, 0, 1],
         type=int,
         default=0,
         help="Specify the defocus handedness for defocus gradient correction of the "
