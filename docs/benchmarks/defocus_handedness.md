@@ -12,24 +12,52 @@ to be the strongest for the images collected a high sample tilts. Considering th
 resolution in tomograms is generally not considered to be high due to alignment errors 
 and that the high tilt angles usually have an additional drop-off in resolution due to 
 beam damage, I wondered how much effect defocus gradient correction actually has 
-on the template matching scores.
+on the template matching scores. To test I tried to measure the defocus handedness 
+of a tomogram in this benchmark.
 
-To properly measure this effect, I selected a dataset of isolated ribosomes in thin ice 
+## Approach
+
+To properly measure the defocus handedness, I selected a dataset of isolated 
+ribosomes in thin ice 
 (EMPIAR-10985). Isolated macromolecules provide the highest resolution, while _in situ_ 
-data would be further limited in resolution. I used an approach, similar to Warp, 
+data would be more limited in resolution. I used an approach, similar to Warp, 
 that calculates the defocus offsets in each subvolume of a tomogram. To measure the 
 effects of defocus gradients, I 
-compared results that assume both a default and inverted defocus handedness of the 
+ran template matching assuming both a default and inverted defocus handedness of the 
 tilt-series. This inverted handedness comes down to 
 inverting the tilt angles during 
 calculation of the defocus offsets. Either one of these two handedness' should be 
 correct and hopefully influence the results sufficiently to see a difference. 
 
 <figure markdown="span">
+<figure markdown="span">
   ![annotations](defocus_handedness_figures/blik_view.png){ width="400" }
-  <figcaption>Initial view of the data: annotations made by 
+  <figcaption>Initial view of the data: annotations (turqoise sphere) made by 
 pytom-match-pick on tomogram 27 of EMPIAR-10985.</figcaption>
 </figure>
+
+## Results
+
+To assess the effects of the defocus offsets, I analyzed the results as a 
+function of the x-coordinate. As this tomogram had a very thin ice 
+layer (~50nm), the defocus offsets are primarily influenced by the position in x and 
+the tilt angle. 
+
+<figure markdown="span">
+  ![annotations](defocus_handedness_figures/x_vs_defocus.svg)
+  <figcaption>LCC<sub>max</sub> scores (normalized by the standard deviation from 
+template matching plotted as a function 
+of the x-coordinate. In blue the results are shown that assumes the default defocus 
+handedness, while orange shows the results of inverted defocus handedness. The left 
+figure shows a scatter plot, while the right shows fitted quadratic functions to 
+both sets of points. The gray areas indicate the 95% confidence interval of the fit.  
+</figcaption>
+</figure>
+
+Right now, the inverted handedness seems to be the correct one. However, if the tilt-axis angle would have been set to 180 for AreTomo, the template would not need to be mirrored and the defocus handedness would also not have to be inverted. I decided not to rerun this analysis with that setting as the point here was to examine the effect of the regular/inverted defocus handedness.
+
+
+If you found these results useful, please cite our repository: https://zenodo.org/records/12667665
 
 ## How-to-reproduce
 
@@ -37,12 +65,13 @@ pytom-match-pick on tomogram 27 of EMPIAR-10985.</figcaption>
 
 * AreTomo 1.3 
 * IMOD 4.11.24
-* pytom-match-pick >0.7.3
+* pytom-match-pick 0.7.3 (and should work with higher versions)
 
 ### Implementation of defocus gradient
 
-An implementation for the defocus gradient calculation is available in 
-`src/pytom_tm/TMJob.py` in our repository, see function `get_defocus_offsets()`. 
+An implementation for the defocus gradient calculation is available in our 
+repository in `src/pytom_tm/TMJob.py`, see function 
+`get_defocus_offsets()`. 
 
 ### Tilt series preprocessing
 
@@ -152,7 +181,7 @@ reproduce the plots shown here. In brief:
 
 ### (Optional) Visualization (with Blik)
 
-Using Blik version >0.9.
+Using Blik version 0.9.
 
 ```commandline
 napari -w blik -- tm_patch_def_inv/9x9_ts_27_particles.star tomogram/9x9_ts_27.mrc
@@ -172,23 +201,3 @@ Then do the following steps:
 
 Now you can scroll through the z-axis of the tomogram and the template matching 
 annotations with the slider on the bottom.
-
-## Results and conclusions
-
-
-
-<figure markdown="span">
-  ![annotations](defocus_handedness_figures/x_vs_defocus.svg)
-  <figcaption>LCC<sub>max</sub> scores (normalized by the standard deviation from 
-template matching plotted as a function 
-of the x-coordinate. In blue the results are shown that assumes the default defocus 
-handedness, while orange shows the results of inverted defocus handedness. The left 
-figure shows a scatter plot, while the right shows fitted quadratic functions to 
-both sets of points. The gray areas indicate the 95% confidence interval of the fit.  
-</figcaption>
-</figure>
-
-Right now, the inverted handedness seems to be the correct one. However, if the tilt-axis angle would have been set to 180 for AreTomo, the template would not need to be mirrored and the defocus handedness would also not have to be inverted. I decided not to rerun this analysis with that setting as the point here was to examine the effect of the regular/inverted defocus handedness.
-
-
-If you found these results useful, please cite our repository: https://zenodo.org/records/12667665
