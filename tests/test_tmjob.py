@@ -6,7 +6,7 @@ import mrcfile
 from tempfile import TemporaryDirectory
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import angle_to_angle_list
-from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob
+from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob, get_defocus_offsets
 from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm.extract import extract_particles
 from testing_utils import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES
@@ -736,3 +736,15 @@ class TestTMJob(unittest.TestCase):
                 100,
                 create_plot=False,
             )
+
+    def test_get_defocus_offsets(self):
+        tilt_angles = list(range(-51, 54, 3))
+        x_offset_um = 200 * 13.79 * 1e-4
+        z_offset_um = 100 * 13.79 * 1e-4
+        defocus_offsets = get_defocus_offsets(x_offset_um, z_offset_um, tilt_angles)
+        self.assertEqual(
+            len(defocus_offsets),
+            len(tilt_angles),
+            msg="get_defocus_offsets did not return a list with the same length as "
+            "the number of tilt_angles",
+        )
