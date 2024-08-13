@@ -1,6 +1,3 @@
-This benchmark investigates the effects of defocus gradient correction in template 
-matching. 
-
 Although it has been shown multiple times that correcting defocus gradients is very 
 important for subtomogram averaging in tilt-series data, the effects on particle 
 localization have not been investigated (to my knowledge). The software Warp 
@@ -13,14 +10,15 @@ gradient is a function of both the x- and z-coordinate in the tomogram (assuming
 tilt-axis is aligned with the y-axis). The defocus gradient are therefore expected 
 to be the strongest for the images collected a high sample tilts. Considering that the 
 resolution in tomograms is generally not considered to be high due to alignment errors 
-and that the high-tilt angles usually have an additional drop-off in resolution due to 
+and that the high tilt angles usually have an additional drop-off in resolution due to 
 beam damage, I wondered how much effect defocus gradient correction actually has 
 on the template matching scores.
 
-To properly measure this I selected a dataset of isolated ribosomes in thin ice 
-(EMPIAR-10985), as I expected defocus gradients would have less effect on _in situ_ 
-data. I used an approach, similar to Warp, that calculates the defocus offsets in 
-each subvolume of a tomogram. To measure the effects of defocus gradients, I 
+To properly measure this effect, I selected a dataset of isolated ribosomes in thin ice 
+(EMPIAR-10985). Isolated macromolecules provide the highest resolution, while _in situ_ 
+data would be further limited in resolution. I used an approach, similar to Warp, 
+that calculates the defocus offsets in each subvolume of a tomogram. To measure the 
+effects of defocus gradients, I 
 compared results that assume both a default and inverted defocus handedness of the 
 tilt-series. This inverted handedness comes down to 
 inverting the tilt angles during 
