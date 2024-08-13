@@ -20,31 +20,35 @@ class TemplateMatchingPlan:
         wedge: Optional[npt.NDArray[float]] = None,
         phase_randomized_template: Optional[npt.NDArray[float]] = None,
     ):
-        """Initialize a template matching plan. All the necessary cupy arrays will be allocated on the GPU.
+        """Initialize a template matching plan. All the necessary cupy arrays will be
+        allocated on the GPU.
 
         Parameters
         ----------
         volume: npt.NDArray[float]
             3D numpy array representing the search tomogram
         template: npt.NDArray[float]
-            3D numpy array representing the template for the search, a square box of size sx
+            3D numpy array representing the template for the search, a square box of
+            size sx
         mask: npt.NDArray[float]
-            3D numpy array representing the mask for the search, same dimensions as template
+            3D numpy array representing the mask for the search, same dimensions as
+            template
         device_id: int
             GPU device id to load arrays on
         wedge: Optional[npt.NDArray[float]], default None
-            3D numpy array that contains the Fourier space weighting for the template, it should be in Fourier
-            reduced form, with dimensions (sx, sx, sx // 2 + 1)
+            3D numpy array that contains the Fourier space weighting for the template,
+            it should be in Fourier reduced form, with dimensions (sx, sx, sx // 2 + 1)
         phase_randomized_template: Optional[npt.NDArray[float]], default None
-            initialize the plan with a phase randomized version of the template for noise correction
+            initialize the plan with a phase randomized version of the template for
+            noise correction
         """
         # Search volume + and fft transform plan for the volume
         volume_shape = volume.shape
         cp_vol = cp.asarray(volume, dtype=cp.float32, order="C")
         self.volume_rft_conj = rfftn(cp_vol).conj()
         self.volume_sq_rft_conj = rfftn(cp_vol**2).conj()
-        # Explicit fft plan is no longer necessary as cupy generates a plan behind the scene which leads to
-        # comparable timings
+        # Explicit fft plan is no longer necessary as cupy generates a plan behind the
+        # scene which leads to comparable timings
 
         # Array for storing local standard deviations
         self.std_volume = cp.zeros(volume_shape, dtype=cp.float32)
@@ -152,18 +156,21 @@ class TemplateMatchingGPU:
         angle_list: list[tuple[float, float, float]]
             list of tuples with 3 floats representing Euler angle rotations
         angle_ids: list[int]
-            list of indices for angle_list to actually search, this can be a subset of the full list
+            list of indices for angle_list to actually search, this can be a subset of
+            the full list
         mask_is_spherical: bool, default True
-            True (default) if mask is spherical, set to False for non-spherical mask which increases computation time
+            True (default) if mask is spherical, set to False for non-spherical mask
+            which increases computation time
         wedge: Optional[npt.NDArray[float]], default None
-            3D numpy array that contains the Fourier space weighting for the template, it should be in Fourier
-            reduced form, with dimensions (sx, sx, sx // 2 + 1)
+            3D numpy array that contains the Fourier space weighting for the template,
+            it should be in Fourier reduced form, with dimensions (sx, sx, sx // 2 + 1)
         stats_roi: Optional[tuple[slice, slice, slice]], default None
-            region of interest to calculate statistics on the search volume, default will just take the full search
-            volume
+            region of interest to calculate statistics on the search volume, default
+            will just take the full search volume
         noise_correction: bool, default False
-            initialize template matching with a phase randomized version of the template that is used to subtract
-            background noise from the score map; expense is more gpu memory and computation time
+            initialize template matching with a phase randomized version of the template
+            that is used to subtract background noise from the score map; expense is
+            more gpu memory and computation time
         rng_seed: int, default 321
             seed for rng in phase randomization
         """
@@ -204,11 +211,14 @@ class TemplateMatchingGPU:
         -------
         results: tuple[npt.NDArray[float], npt.NDArray[float], dict]
             results is a tuple with tree elements:
-                - score_map with the locally normalised maximum score over all the angles searched; a 3D numpy array
-                with same size as search volume
-                - angle_map with an index into the angle list corresponding to the maximum of the correlation scores;
-                a 3D numpy array with same size as search volume
-                - a dictionary with three floats of search statistics - 'search_space', 'variance', and 'std'
+                - score_map with the locally normalised maximum score over all the
+                angles searched;
+                    a 3D numpy array with same size as search volume
+                - angle_map with an index into the angle list corresponding to the
+                maximum of the correlation scores;
+                    a 3D numpy array with same size as search volume
+                - a dictionary with three floats of search statistics;
+                    'search_space', 'variance', and 'std'
         """
         print("Progress job_{} on device {:d}:".format(self.job_id, self.device_id))
 
@@ -260,7 +270,8 @@ class TemplateMatchingGPU:
                     rotation_units="rad",
                 )
                 self.plan.mask_padded[pad_index] = self.plan.mask
-                # Std volume needs to be recalculated for every rotation of the mask, expensive step
+                # Std volume needs to be recalculated for every rotation of the mask,
+                # expensive step
                 self.plan.std_volume = (
                     std_under_mask_convolution(
                         self.plan.volume_rft_conj,
@@ -366,8 +377,8 @@ class TemplateMatchingGPU:
         # Paste in center
         self.plan.template_padded[padding_index] = self.plan.template
 
-        # Fast local correlation function between volume and template, norm is the standard deviation at each
-        # point in the volume in the masked area
+        # Fast local correlation function between volume and template, norm is the
+        # standard deviation at each point in the volume in the masked area
         self.plan.ccc_map = (
             irfftn(
                 self.plan.volume_rft_conj * rfftn(self.plan.template_padded),
@@ -383,8 +394,9 @@ def std_under_mask_convolution(
     padded_mask: cpt.NDArray[float],
     mask_weight: float,
 ) -> cpt.NDArray[float]:
-    """Calculate the local standard deviation under the mask for each position in the volume. Calculation is done in
-    Fourier space as this is a convolution between volume and mask.
+    """Calculate the local standard deviation under the mask for each position in the
+    volume. Calculation is done in Fourier space as this is a convolution between volume
+    and mask.
 
     Parameters
     ----------
@@ -433,7 +445,8 @@ update_noise_template_results_kernel = cp.ElementwiseKernel(
 )
 
 
-"""Calculate the sum of squares in a volume. Mean is assumed to be 0 which makes this operation a lot faster."""
+"""Calculate the sum of squares in a volume. Mean is assumed to be 0 which makes this 
+operation a lot faster."""
 square_sum_kernel = cp.ReductionKernel(
     "T x",  # input params
     "T y",  # output params

@@ -436,19 +436,20 @@ def extract_candidates(argv=None):
         type=pathlib.Path,
         required=False,
         action=CheckFileExists,
-        help="Here you can provide a mask for the extraction with dimensions (in pixels) equal to "
-        "the tomogram. All values in the mask that are smaller or equal to 0 will be "
-        "removed, all values larger than 0 are considered regions of interest. It can "
-        "be used to extract annotations only within a specific cellular region."
-        "If the job was run with a tomogram mask, this file will be used instead of the job mask",
+        help="Here you can provide a mask for the extraction with dimensions "
+        "(in pixels) equal to the tomogram. All values in the mask that are smaller or "
+        "equal to 0 will be removed, all values larger than 0 are considered regions "
+        "of interest. It can be used to extract annotations only within a specific "
+        "cellular region. If the job was run with a tomogram mask, this file will be "
+        "used instead of the job mask",
     )
     parser.add_argument(
         "--ignore_tomogram_mask",
         action="store_true",
         default=False,
         required=False,
-        help="Flag to ignore the input and TM job tomogram mask. "
-        "Useful if the scores mrc looks reasonable, but this finds 0 particles to extract",
+        help="Flag to ignore the input and TM job tomogram mask. Useful if the scores "
+        "mrc looks reasonable, but this finds 0 particles to extract",
     )
     parser.add_argument(
         "-n",
@@ -687,8 +688,9 @@ def match_template(argv=None):
         type=pathlib.Path,
         required=False,
         action=CheckFileExists,
-        help="Here you can provide a mask for matching with dimensions (in pixels) equal to "
-        "the tomogram. If a subvolume only has values <= 0 for this mask it will be skipped.",
+        help="Here you can provide a mask for matching with dimensions (in pixels) "
+        "equal to the tomogram. If a subvolume only has values <= 0 for this mask it "
+        "will be skipped.",
     )
 
     filter_group = parser.add_argument_group("Filter control")

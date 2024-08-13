@@ -19,7 +19,8 @@ def angle_to_angle_list(
     angle_diff: float
         maximum difference (in degrees) for the angle list
     sort_angles: bool, default True
-        sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+        sort the list, using python default angle_list.sort(), sorts first on Z1,
+        then X, then Z2
     log_level: int, default logging.DEBUG
         the log level to use when generating logs
 
@@ -67,14 +68,17 @@ def load_angle_list(
     Parameters
     ----------
     file_name: pathlib.Path
-        path to text file containing angular search, each line should contain 3 floats of anti-clockwise ZXZ
+        path to text file containing angular search, each line should contain 3 floats
+        of anti-clockwise ZXZ
     sort_angles: bool, default True
-        sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+        sort the list, using python default angle_list.sort(), sorts first on Z1,
+        then X, then Z2
 
     Returns
     -------
     angle_list: list[tuple[float, float, float]]
-        a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in radians
+        a list where each element is a tuple of 3 floats containing an anti-clockwise
+        ZXZ Euler rotation in radians
     """
     with open(str(file_name)) as fstream:
         lines = fstream.readlines()
@@ -84,7 +88,8 @@ def load_angle_list(
             "Invalid angle file provided, each line should have 3 ZXZ Euler angles!"
         )
     if sort_angles:
-        angle_list.sort()  # angle list needs to be sorted otherwise symmetry reduction cannot be used!
+        # angle_list needs to be sorted otherwise symmetry reduction cannot be used!
+        angle_list.sort()
     return angle_list
 
 
@@ -104,7 +109,8 @@ def get_angle_list(
         or if a float:
           maximum difference (in degrees) for the angle list
     sort_angles: bool, default True
-        sort the list, using python default angle_list.sort(), sorts first on Z1, then X, then Z2
+        sort the list, using python default angle_list.sort(), sorts first on Z1,
+        then X, then Z2
     symmetry: int, default 1
         the returned list will only have Z2 angles [0, (2*pi/symmetry))
     log_level: str, default 'DEBUG'
@@ -113,7 +119,8 @@ def get_angle_list(
     Returns
     -------
     angle_list: list[tuple[float, float, float]]
-        a list where each element is a tuple of 3 floats containing an anti-clockwise ZXZ Euler rotation in radians
+        a list where each element is a tuple of 3 floats containing an anti-clockwise
+        ZXZ Euler rotation in radians
     """
     log_level = logging.getLevelNamesMapping()[log_level]
     out = None
@@ -134,7 +141,8 @@ def get_angle_list(
         if possible_file_path.exists() and possible_file_path.suffix == ".txt":
             logging.log(
                 log_level,
-                "Custom file provided for the angular search. Checking if it can be read...",
+                "Custom file provided for the angular search. "
+                "Checking if it can be read...",
             )
             out = load_angle_list(angle, sort_angles)
 
@@ -150,9 +158,10 @@ def convert_euler(
     degrees_in: bool = True,
     degrees_out: bool = True,
 ) -> tuple[float, float, float]:
-    """Convert a single set of Euler angles from one Euler notation to another. This function makes use of
-    scipy.spatial.transform.Rotation meaning that capital letters (i.e. ZXZ) specify intrinsic rotations (commonly
-    used in cryo-EM) and small letters (i.e. zxz) specific extrinsic rotations.
+    """Convert a single set of Euler angles from one Euler notation to another. This
+    function makes use of scipy.spatial.transform.Rotation meaning that capital letters
+    (i.e. ZXZ) specify intrinsic rotations (commonly used in cryo-EM) and small letters
+    (i.e. zxz) specific extrinsic rotations.
 
     Parameters
     ----------

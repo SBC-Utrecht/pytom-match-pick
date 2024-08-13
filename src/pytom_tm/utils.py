@@ -3,7 +3,8 @@ import sys
 
 
 class mute_stdout_stderr(object):
-    """Context manager to redirect stdout and stderr to devnull. Only used to prevent terminal flooding in unittests."""
+    """Context manager to redirect stdout and stderr to devnull. Only used to prevent
+    terminal flooding in unittests."""
 
     def __enter__(self):
         self.outnull = open(os.devnull, "w")

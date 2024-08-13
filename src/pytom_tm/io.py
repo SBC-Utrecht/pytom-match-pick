@@ -10,16 +10,16 @@ from typing import Optional, Union
 
 
 class ParseLogging(argparse.Action):
-    """argparse.Action subclass to parse logging parameter from input scripts. Users can set these to info/debug."""
+    """argparse.Action subclass to parse logging parameter from input scripts. Users can
+    set these to info/debug."""
 
     def __call__(
         self, parser, namespace, values: str, option_string: Optional[str] = None
     ):
         if values.upper() not in ["INFO", "DEBUG"]:
             parser.error(
-                "{0} log got an invalid option, set either to `info` or `debug` ".format(
-                    option_string
-                )
+                f"{option_string} log got an invalid option, "
+                "set either to `info` or `debug` "
             )
         else:
             numeric_level = getattr(logging, values.upper(), None)
@@ -79,7 +79,8 @@ class LargerThanZero(argparse.Action):
 
 
 class BetweenZeroAndOne(argparse.Action):
-    """argparse.Action subclass to constrain an input value to a fraction, i.e. between 0 and 1."""
+    """argparse.Action subclass to constrain an input value to a fraction, i.e. between
+    0 and 1."""
 
     def __call__(
         self, parser, namespace, values: float, option_string: Optional[str] = None
@@ -95,8 +96,9 @@ class BetweenZeroAndOne(argparse.Action):
 
 
 class ParseSearch(argparse.Action):
-    """argparse.Action subclass to restrict the search area of tomogram to these indices along an axis. Checks that
-    these value are larger than zero and that the second value is larger than the first."""
+    """argparse.Action subclass to restrict the search area of tomogram to these indices
+    along an axis. Checks that these value are larger than zero and that the second
+    value is larger than the first."""
 
     def __call__(
         self,
@@ -107,18 +109,18 @@ class ParseSearch(argparse.Action):
     ):
         if not (0 <= values[0] < values[1]):
             parser.error(
-                "{0} start and end indices must be larger than 0 and end must be larger than start".format(
-                    option_string
-                )
+                f"{option_string} start and end indices must be larger than 0 and end "
+                "must be larger than start"
             )
 
         setattr(namespace, self.dest, values)
 
 
 class ParseTiltAngles(argparse.Action):
-    """argparse.Action subclass to parse tilt_angle info. The input can either be two floats that specify the tilt
-    range for a continous wedge model. Alternatively can be a .tlt/.rawtlt file that specifies all the the tilt
-    angles of the tilt-series to use for more refined wedge models."""
+    """argparse.Action subclass to parse tilt_angle info. The input can either be two
+    floats that specify the tilt range for a continous wedge model. Alternatively can be
+    a .tlt/.rawtlt file that specifies all the the tilt angles of the tilt-series to use
+    for more refined wedge models."""
 
     def __call__(
         self,
@@ -133,17 +135,15 @@ class ParseTiltAngles(argparse.Action):
                 setattr(namespace, self.dest, values)
             except ValueError:
                 parser.error(
-                    "{0} the two arguments provided could not be parsed to floats".format(
-                        option_string
-                    )
+                    f"{option_string} the two arguments provided could not be parsed "
+                    "to floats"
                 )
         elif len(values) == 1:
             values = pathlib.Path(values[0])
             if not values.exists() or values.suffix not in [".tlt", ".rawtlt"]:
                 parser.error(
-                    "{0} provided tilt angle file does not exist or does not have the right format".format(
-                        option_string
-                    )
+                    f"{option_string} provided tilt angle file does not exist or does "
+                    "not have the right format"
                 )
             setattr(namespace, self.dest, read_tlt_file(values))
         else:
@@ -151,7 +151,8 @@ class ParseTiltAngles(argparse.Action):
 
 
 class ParseDoseFile(argparse.Action):
-    """argparse.Action subclass to parse a txt file contain information on accumulated dose per tilt."""
+    """argparse.Action subclass to parse a txt file contain information on accumulated
+    dose per tilt."""
 
     def __call__(
         self, parser, namespace, values: str, option_string: Optional[str] = None
@@ -195,8 +196,8 @@ class ParseDefocus(argparse.Action):
 
 
 class UnequalSpacingError(Exception):
-    """Exception for an mrc file that has unequal spacing along the xyz dimensions annotated in its voxel size
-    metadata."""
+    """Exception for an mrc file that has unequal spacing along the xyz dimensions
+    annotated in its voxel size metadata."""
 
     pass
 
@@ -206,8 +207,9 @@ def write_angle_list(
     file_name: pathlib.Path,
     order: tuple[int, int, int] = (0, 2, 1),
 ):
-    """Helper function to write angular search list from old PyTom to current module. Order had to be changed as old
-    PyTom always stored it as Z1, Z2, X, and here its Z1, X, Z2.
+    """Helper function to write angular search list from old PyTom to current module.
+    Order had to be changed as old PyTom always stored it as Z1, Z2, X, and here it's
+    Z1, X, Z2.
 
     @todo remove function
     """
@@ -220,7 +222,8 @@ def write_angle_list(
 
 @contextmanager
 def _wrap_mrcfile_readers(func, *args, **kwargs):
-    """Try to autorecover broken mrcfiles, assumes 'permissive' is a kwarg and not an arg"""
+    """Try to autorecover broken mrcfiles, assumes 'permissive' is a kwarg and not an
+    arg"""
     try:
         mrc = func(*args, **kwargs)
     except ValueError as err:
@@ -231,12 +234,14 @@ def _wrap_mrcfile_readers(func, *args, **kwargs):
         if mrc.data is not None:
             logging.warning(
                 f"Loading {args[0]} in strict mode gave an error. "
-                "However, loading with 'permissive=True' did generate data, make sure this is correct!"
+                "However, loading with 'permissive=True' did generate data, make sure "
+                "this is correct!"
             )
         else:
             logging.debug("Could not reasonably recover")
             raise ValueError(
-                f"{args[0]} header or data is too corrupt to recover, please fix the header or data"
+                f"{args[0]} header or data is too corrupt to recover, please fix the "
+                "header or data"
             ) from err
     yield mrc
     # this should only be called after the context exists
@@ -246,8 +251,9 @@ def _wrap_mrcfile_readers(func, *args, **kwargs):
 def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
     """Read the metadata of provided MRC file path (using mrcfile) and return as dict.
 
-    If the voxel size along the x,y,and z dimensions differs a lot (not within 3 decimals) the function will raise an
-    UnequalSpacingError as it could mean template matching on these volumes might not be consistent.
+    If the voxel size along the x, y, and z dimensions differs a lot (not within 3
+    decimals) the function will raise an UnequalSpacingError as it could mean template
+    matching on these volumes might not be consistent.
 
     Parameters
     ----------
@@ -257,13 +263,15 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
     Returns
     -------
     metadata: dict
-        a dictionary of the mrc metadata with key 'shape' containing the x,y,z dimensions of the file and key
-        'voxel_size' containing the voxel size along x,y,z and dimensions in A units
+        a dictionary of the mrc metadata with key 'shape' containing the x,y,z
+        dimensions of the file and key 'voxel_size' containing the voxel size along
+        x, y, and z and dimensions in Å units
     """
     meta_data = {}
     with _wrap_mrcfile_readers(mrcfile.mmap, file_name) as mrc:
         meta_data["shape"] = tuple(map(int, attrgetter("nx", "ny", "nz")(mrc.header)))
-        # allow small numerical inconsistencies in voxel size of MRC headers, sometimes seen in Warp
+        # allow small numerical inconsistencies in voxel size of MRC headers, sometimes
+        # seen in Warp
         if not all(
             [
                 np.round(mrc.voxel_size.x, 3) == np.round(s, 3)
@@ -278,9 +286,9 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
                 [mrc.voxel_size.x == s for s in attrgetter("y", "z")(mrc.voxel_size)]
             ):
                 logging.warning(
-                    f"Voxel size annotation in MRC is slightly different between dimensions, "
-                    f"namely {mrc.voxel_size}. It might be a tiny numerical inaccuracy, but "
-                    f"please ensure this is not problematic."
+                    "Voxel size annotation in MRC is slightly different between "
+                    f"dimensions, namely {mrc.voxel_size}. It might be a tiny "
+                    "numerical inaccuracy, but please ensure this is not problematic."
                 )
             meta_data["voxel_size"] = float(mrc.voxel_size.x)
     return meta_data
@@ -293,8 +301,8 @@ def write_mrc(
     overwrite: bool = True,
     transpose: bool = True,
 ) -> None:
-    """Write data to an MRC file. Data is transposed before writing as pytom internally uses xyz ordering and MRCs
-    use zyx.
+    """Write data to an MRC file. Data is transposed before writing as pytom internally
+    uses xyz ordering and MRCs use zyx.
 
     Parameters
     ----------
@@ -305,7 +313,8 @@ def write_mrc(
     voxel_size: float
         voxel size of array to annotate in MRC header
     overwrite: bool, default True
-        True (default) will overwrite current MRC on path, setting to False will error when writing to existing file
+        True (default) will overwrite current MRC on path, setting to False will error
+        when writing to existing file
     transpose: bool, default True
         True (default) transpose array before writing, setting to False prevents this
 
@@ -326,16 +335,16 @@ def write_mrc(
 
 
 def read_mrc(file_name: pathlib.Path, transpose: bool = True) -> npt.NDArray[float]:
-    """Read an MRC file from disk. Data is transposed after reading as pytom internally uses xyz ordering and MRCs
-    use zyx.
+    """Read an MRC file from disk. Data is transposed after reading as pytom internally
+    uses xyz ordering and MRCs use zyx.
 
     Parameters
     ----------
     file_name: pathlib.Path
         path to file on disk
     transpose: bool, default True
-        True (default) transposes the volume after reading, setting to False prevents transpose but probably not a
-        good idea when using the functions from this module
+        True (default) transposes the volume after reading, setting to False prevents
+        transpose but probably not a good idea when using the functions from this module
 
     Returns
     -------
@@ -366,7 +375,8 @@ def read_txt_file(file_name: pathlib.Path) -> list[float, ...]:
 
 
 def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
-    """Read a txt file from disk using read_txt_file(). File is expected to have tilt angles in degrees.
+    """Read a txt file from disk using read_txt_file(). File is expected to have tilt
+    angles in degrees.
 
     Parameters
     ----------
@@ -382,7 +392,8 @@ def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
 
 
 def read_dose_file(file_name: pathlib.Path) -> list[float, ...]:
-    """Read a txt file from disk using read_txt_file(). File is expected to have dose accumulation in e-/(A^2).
+    """Read a txt file from disk using read_txt_file(). File is expected to have dose
+    accumulation in e-/(Å^2).
 
     Parameters
     ----------
@@ -398,8 +409,10 @@ def read_dose_file(file_name: pathlib.Path) -> list[float, ...]:
 
 
 def read_imod_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
-    """Read an IMOD style defocus file. This function can read version 2 and 3 defocus files. For format
-    specification see: https://bio3d.colorado.edu/imod/doc/man/ctfphaseflip.html (section: Defocus File Format).
+    """Read an IMOD style defocus file. This function can read version 2 and 3 defocus
+    files. For format specification see:
+    https://bio3d.colorado.edu/imod/doc/man/ctfphaseflip.html
+    (section: Defocus File Format).
 
     Parameters
     ----------

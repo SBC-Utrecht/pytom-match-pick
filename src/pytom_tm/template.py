@@ -24,15 +24,18 @@ def generate_template_from_map(
     Parameters
     ----------
     input_map: npt.NDArray[float]
-        3D density to use for generating the template, if box is not square it will be padded to square
+        3D density to use for generating the template, if box is not square it will be
+        padded to square
     input_spacing: float
         voxel size of input map (in A)
     output_spacing: float
-        voxel size of output map (in A) the ratio of input to output will be used for downsampling
+        voxel size of output map (in A) the ratio of input to output will be used for
+        downsampling
     center: bool, default False
         set to True to center the template in the box by calculating the center of mass
     filter_to_resolution: Optional[float], default None
-        low-pass filter resolution to apply to template, if not provided will be set to 2 * output_spacing
+        low-pass filter resolution to apply to template, if not provided will be set to
+        2 * output_spacing
     output_box_size:  Optional[int], default None
         final box size of template
     display_filter: bool, default False
@@ -80,7 +83,8 @@ def generate_template_from_map(
     # extend volume to the desired output size before applying convolutions!
     if output_box_size is not None:
         logging.debug(
-            f"size check {output_box_size} > {(input_map.shape[0] * input_spacing) // output_spacing}"
+            f"size check {output_box_size} > "
+            f"{(input_map.shape[0] * input_spacing) // output_spacing}"
         )
         if output_box_size > (input_map.shape[0] * input_spacing) // output_spacing:
             pad = (
@@ -96,9 +100,9 @@ def generate_template_from_map(
             )
         elif output_box_size < (input_map.shape[0] * input_spacing) // output_spacing:
             logging.warning(
-                "Could not set specified box size as the map would need to be cut and this might "
-                "result in loss of information of the structure. Please decrease the box size of the map "
-                "by hand (e.g. chimera)"
+                "Could not set specified box size as the map would need to be cut and "
+                "this might result in loss of information of the structure. Please "
+                "decrease the box size of the map by hand (e.g. chimera)"
             )
 
     # create low pass filter

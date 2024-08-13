@@ -10,7 +10,8 @@ def spherical_mask(
     cutoff_sd: int = 3,
     center: Optional[float] = None,
 ) -> npt.NDArray[float]:
-    """Wrapper around ellipsoidal_mask() to create a spherical mask with just a single radius.
+    """Wrapper around ellipsoidal_mask() to create a spherical mask with just a single
+    radius.
 
     Parameters
     ----------
@@ -21,7 +22,8 @@ def spherical_mask(
     smooth: Optional[float], default None
         sigma (float relative to number of pixels) of gaussian falloff around mask
     cutoff_sd: int, default 3
-        how many standard deviations of the Gaussian falloff to include, default of 3 is a good choice
+        how many standard deviations of the Gaussian falloff to include, default of 3 is
+        a good choice
     center: Optional[float], default None
         alternative center for the mask, default is (size - 1) / 2
 
@@ -44,7 +46,8 @@ def ellipsoidal_mask(
     cutoff_sd: int = 3,
     center: Optional[float] = None,
 ) -> npt.NDArray[float]:
-    """Create an ellipsoidal mask in the specified square box. Ellipsoid is defined by 3 radius on x,y, and z axis.
+    """Create an ellipsoidal mask in the specified square box. Ellipsoid is defined by 3
+    radius on x,y, and z axis.
 
     Parameters
     ----------
@@ -59,7 +62,8 @@ def ellipsoidal_mask(
     smooth: Optional[float], default None
         sigma (float relative to number of pixels) of gaussian falloff around mask
     cutoff_sd: int, default 3
-        how many standard deviations of the Gaussian falloff to include, default of 3 is a good choice
+        how many standard deviations of the Gaussian falloff to include, default of 3 is
+        a good choice
     center: Optional[float], default None
         alternative center for the mask, default is (size - 1) / 2
 

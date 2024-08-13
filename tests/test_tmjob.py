@@ -145,8 +145,9 @@ class TestTMJob(unittest.TestCase):
         TEST_SCORES.unlink()
         TEST_ANGLES.unlink()
         TEST_CUSTOM_ANGULAR_SEARCH.unlink()
-        # the whitening filter might not exist if the job with spectrum whitening failed, so the unlinking needs to
-        # allow this (with missing_ok=True) to ensure clean up of the test directory
+        # the whitening filter might not exist if the job with spectrum whitening
+        # failed, so the unlinking needs to allow this (with missing_ok=True) to ensure
+        # clean up of the test directory
         TEST_WHITENING_FILTER.unlink(missing_ok=True)
         TEST_JOB_JSON.unlink()
         TEST_JOB_JSON_WHITENING.unlink()
@@ -308,7 +309,8 @@ class TestTMJob(unittest.TestCase):
             score.shape, job.tomo_shape, msg="TMJob with all options failed"
         )
 
-        # run with only tilt weighting (in test_weights different options are tested for create_wedge)
+        # run with only tilt weighting
+        # (in test_weights different options are tested for create_wedge)
         job = TMJob(
             "0",
             10,
@@ -346,7 +348,8 @@ class TestTMJob(unittest.TestCase):
             score.shape, job.tomo_shape, msg="TMJob with only band-pass failed"
         )
 
-        # run with only spectrum whitening (in test_weights the whitening filter is tested
+        # run with only spectrum whitening
+        # (in test_weights the whitening filter is tested)
         job = TMJob(
             "0",
             10,
@@ -381,17 +384,18 @@ class TestTMJob(unittest.TestCase):
         self.assertNotEqual(
             whitening_filter.shape,
             new_whitening_filter.shape,
-            msg="After reducing the search region along the largest dimension the whitening filter "
-            "should have less sampling points",
+            msg="After reducing the search region along the largest dimension the "
+            "whitening filter should have less sampling points",
         )
         self.assertEqual(
             new_whitening_filter.shape,
             (max(job.search_size) // 2 + 1,),
-            msg="The whitening filter does not have the expected size, it should be equal (x // 2) + 1, "
-            "where x is the largest dimension of the search box.",
+            msg="The whitening filter does not have the expected size, it should be "
+            "equal (x // 2) + 1, where x is the largest dimension of the search box.",
         )
 
-        # TMJob with none of these weighting options is tested in all other runs in this file.
+        # TMJob with none of these weighting options is tested in all other runs
+        # in this file.
 
     def test_load_json_to_tmjob(self):
         # check base job loading
@@ -449,11 +453,13 @@ class TestTMJob(unittest.TestCase):
             )
 
     def test_tm_job_split_volume(self):
-        # Splitting the volume into smaller boxes than the template should not raise an error
+        # Splitting the volume into smaller boxes than the template
+        # should not raise an error
         _ = self.job.split_volume_search((10, 3, 2))
         # Reset
         self.job.sub_jobs = []
-        # Make sure that asking for more splits than pixels results in just a pixel number of jobs
+        # Make sure that asking for more splits than pixels results in
+        # just a pixel number of jobs
         with self.assertWarnsRegex(RuntimeWarning, "More splits than pixels"):
             self.job.split_volume_search((TOMO_SHAPE[0] + 42, 1, 1))
         self.assertEqual(len(self.job.sub_jobs), TOMO_SHAPE[0])
@@ -481,10 +487,12 @@ class TestTMJob(unittest.TestCase):
         self.assertEqual(ANGLE_ID, angle[ind])
         self.assertSequenceEqual(LOCATION, ind)
 
-        # Small difference in the edge regions of the split dimension. This is because the cross correlation function
-        # is not well defined in the boundary area, only a small part of the template is correlated here (and we are
-        # not really interested in it). Probably the inaccuracy in this area becomes more apparent when splitting
-        # into subvolumes due to a smaller number of sampling points in Fourier space.
+        # Small difference in the edge regions of the split dimension. This is because
+        # the cross correlation function is not well defined in the boundary area, only
+        # a small part of the template is correlated here (and we are not really
+        # interested in it). Probably the inaccuracy in this area becomes more apparent
+        # when splitting into subvolumes due to a smaller number of sampling points in
+        # Fourier space.
         ok_region = slice(TEMPLATE_SIZE // 2, -TEMPLATE_SIZE // 2)
         score_diff = np.abs(
             score[ok_region, ok_region, ok_region]
@@ -494,7 +502,8 @@ class TestTMJob(unittest.TestCase):
         self.assertAlmostEqual(
             score_diff, 0, places=1, msg="score diff should not be larger than 0.01"
         )
-        # There is some race condition that sometimes gives a different angle for 1 specific point
+        # There is some race condition that sometimes gives
+        # a different angle for 1 specific point.
         # This point is deterministic but different per machine
         # We suspect it has something to do with the FFT padding
         # See https://github.com/SBC-Utrecht/pytom-match-pick/pull/163
@@ -504,7 +513,8 @@ class TestTMJob(unittest.TestCase):
         #    read_mrc(TEST_ANGLES)[ok_region, ok_region, ok_region]
         #    ).sum()
 
-        # self.assertAlmostEqual(angle_diff, 0, places=1, msg='angle diff should not change')
+        # self.assertAlmostEqual(angle_diff, 0, places=1,
+        #    msg='angle diff should not change')
 
         # get search statistics before and after splitting
         split_stats = self.job.job_stats
@@ -518,8 +528,8 @@ class TestTMJob(unittest.TestCase):
             split_stats["std"],
             reference_stats["std"],
             places=3,
-            msg="Standard deviation over template matching with subvolume splitting should be "
-            "almost identical.",
+            msg="Standard deviation over template matching with subvolume splitting "
+            "should be almost identical.",
         )
 
     def test_splitting_with_tomogram_mask(self):
@@ -529,7 +539,8 @@ class TestTMJob(unittest.TestCase):
         self.assertLess(len(job.sub_jobs), 10 * 10 * 10)
 
     def test_splitting_with_offsets(self):
-        # check if subjobs have correct offsets for the main job, the last sub job will have the largest errors
+        # check if subjobs have correct offsets for the main job,
+        # the last sub job will have the largest errors
         job = TMJob(
             "0",
             10,
@@ -545,7 +556,8 @@ class TestTMJob(unittest.TestCase):
         )
         # split along each dimension and get only the last sub job
         last_sub_job = job.split_volume_search((2, 3, 2))[-1]
-        # Make sure the start of the data + size of the last subjob result in the correct size
+        # Make sure the start of the data + size of the last subjob
+        # result in the correct size
         final_size = [
             i + j for i, j in zip(last_sub_job.whole_start, last_sub_job.sub_step)
         ]
@@ -597,8 +609,8 @@ class TestTMJob(unittest.TestCase):
             split_stats["std"],
             reference_stats["std"],
             places=6,
-            msg="Standard deviation of template matching with angular search split should be almost "
-            "identical.",
+            msg="Standard deviation of template matching with angular search split "
+            "should be almost identical.",
         )
 
     def test_extraction(self):
@@ -664,7 +676,8 @@ class TestTMJob(unittest.TestCase):
             msg="Length of returned list should be 0 after applying mask where the "
             "object is not in the region of interest.",
         )
-        # test if all masks are ignored if ignore_tomogram_mask=True and that a warning is raised
+        # test if all masks are ignored if ignore_tomogram_mask=True
+        # and that a warning is raised
         with self.assertLogs(level="WARNING") as cm:
             df, scores = extract_particles(
                 job,
@@ -687,7 +700,8 @@ class TestTMJob(unittest.TestCase):
             msg="We would expect some annotations if all tomogram masks are ignored",
         )
 
-        # test mask that covers the particle and should override the one now attached to the job
+        # test mask that covers the particle
+        # and should override the one now attached to the job
         df, scores = extract_particles(
             job,
             5,
