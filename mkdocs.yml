@@ -14,6 +14,8 @@ nav:
     - For developers: Developers.md
   - Tutorials:
     - Ribosomes on ER microsomes: tutorials/Tutorial.md
+  - Benchmarks:
+    - Measuring defocus handedness in EMPIAR-10985: benchmarks/defocus_handedness.md
   - Discussions: https://github.com/SBC-Utrecht/pytom-match-pick/discussions
   - Report a bug: https://github.com/SBC-Utrecht/pytom-match-pick/issues
 
