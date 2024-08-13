@@ -885,10 +885,35 @@ class TMJob:
                 )
                 for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
                     ctf["defocus"] = ctf["defocus"] + defocus_shift * 1e-6
-                logging.debug(f"Patch center: {relative_patch_center_um * 1e-4}")
+                logging.debug(
+                    f"Patch center: "
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f"{np.array_str(relative_patch_center_um * 1e4, precision=2)}"
+                )
                 logging.debug(
                     f"Defocus values: "
-                    f"{[ctf['defocus'] * 1e6 for ctf in self.ctf_data]}",
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f""
+                    f"{np.array_str([ctf['defocus'] * 1e6 for ctf in self.ctf_data], precision=2)}",
                 )
 
             # for the tomogram a binary wedge is generated to explicitly set the missing wedge region to 0
