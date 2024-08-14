@@ -303,6 +303,7 @@ class TestTMJob(unittest.TestCase):
             tilt_angles=TILT_ANGLES,
             whiten_spectrum=True,
             tilt_weighting=True,
+            defocus_handedness=-1,  # set to inverted to run all if statements
         )
         score, angle = job.start_job(0, return_volumes=True)
         self.assertEqual(
