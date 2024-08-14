@@ -4,6 +4,7 @@ import warnings
 import contextlib
 from tempfile import TemporaryDirectory
 import numpy as np
+import mrcfile
 
 from pytom_tm.io import read_mrc, read_mrc_meta_data, write_mrc
 
@@ -65,11 +66,13 @@ class TestBrokenMRC(unittest.TestCase):
         with self.assertNoLogs(level="WARNING"):
             write_mrc(fname, array, 1.0)
         # Make sure the file can be read back
-        mrc = read_mrc(fname)
         # make sure mode is as expected for float16
         # https://mrcfile.readthedocs.io/en/stable/source/mrcfile.html#mrcfile.utils.dtype_from_mode
+        mrc = mrcfile.open(fname)
         self.assertEqual(mrc.header.mode, 12)
+        mrc.close()
         # make sure dtype is expected
-        self.assertEqual(mrc.data.dtype, np.float16)
+        mrc = read_mrc(fname)
+        self.assertEqual(mrc.dtype, np.float16)
         # make sure data is identical
-        self.assertEqual(array, mrc.data)
+        self.assertEqual(array, mrc)
