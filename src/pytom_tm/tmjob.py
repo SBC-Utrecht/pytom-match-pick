@@ -869,7 +869,9 @@ class TMJob:
                 patch_center = (
                     np.array(self.search_origin) + np.array(self.search_size) / 2
                 )
-                relative_patch_center_um = (patch_center - full_tomo_center) * 1e-4
+                relative_patch_center_um = (
+                    (patch_center - full_tomo_center) * self.voxel_size
+                ) * 1e-4
                 defocus_offsets = get_defocus_offsets(
                     relative_patch_center_um[0],
                     relative_patch_center_um[2],
