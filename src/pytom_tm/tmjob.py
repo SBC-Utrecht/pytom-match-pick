@@ -869,21 +869,21 @@ class TMJob:
                 patch_center = (
                     np.array(self.search_origin) + np.array(self.search_size) / 2
                 )
-                relative_patch_center_um = (
-                    (patch_center - full_tomo_center) * self.voxel_size
-                ) * 1e-4
+                relative_patch_center_angstrom = (
+                    patch_center - full_tomo_center
+                ) * self.voxel_size
                 defocus_offsets = get_defocus_offsets(
-                    relative_patch_center_um[0],
-                    relative_patch_center_um[2],
+                    relative_patch_center_angstrom[0],
+                    relative_patch_center_angstrom[2],
                     self.tilt_angles,
                     angles_in_degrees=True,
                     invert_handedness=self.defocus_handedness < 0,
                 )
                 for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
-                    ctf["defocus"] = ctf["defocus"] + defocus_shift * 1e-6
+                    ctf["defocus"] = ctf["defocus"] + defocus_shift * 1e-10
                 logging.debug(
                     "Patch center (nr. of voxels): "
-                    f"{np.array_str(relative_patch_center_um * 1e4, precision=2)}"
+                    f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
                 )
                 logging.debug(
                     "Defocus values (um): "
