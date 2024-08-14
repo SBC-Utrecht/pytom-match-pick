@@ -873,8 +873,8 @@ class TMJob:
                     patch_center - full_tomo_center
                 ) * self.voxel_size
                 defocus_offsets = get_defocus_offsets(
-                    relative_patch_center_angstrom[0],
-                    relative_patch_center_angstrom[2],
+                    relative_patch_center_angstrom[0],  # x-coordinate
+                    relative_patch_center_angstrom[2],  # z-coordinate
                     self.tilt_angles,
                     angles_in_degrees=True,
                     invert_handedness=self.defocus_handedness < 0,

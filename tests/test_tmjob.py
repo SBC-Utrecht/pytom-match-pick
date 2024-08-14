@@ -303,7 +303,7 @@ class TestTMJob(unittest.TestCase):
             tilt_angles=TILT_ANGLES,
             whiten_spectrum=True,
             tilt_weighting=True,
-            defocus_handedness=-1,  # set to inverted to run all if statements
+            defocus_handedness=1,
         )
         score, angle = job.start_job(0, return_volumes=True)
         self.assertEqual(
@@ -749,4 +749,13 @@ class TestTMJob(unittest.TestCase):
             len(tilt_angles),
             msg="get_defocus_offsets did not return a list with the same length as "
             "the number of tilt_angles",
+        )
+        defocus_offsets_inverted = get_defocus_offsets(
+            x_offset_um, z_offset_um, tilt_angles, invert_handedness=True
+        )
+        # only the offset at the 0 degrees tilt is expected to be identical,
+        # so the test checks if exactly one element is the same
+        self.assertTrue(
+            (defocus_offsets == defocus_offsets_inverted).sum() == 1,
+            msg="inverted handedness should have one identical offset",
         )
