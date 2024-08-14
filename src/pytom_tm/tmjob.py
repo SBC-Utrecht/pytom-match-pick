@@ -488,7 +488,7 @@ class TMJob:
         self.pytom_tm_version_number = pytom_tm_version_number
 
         # output dtype
-        self.output_dype = output_dtype
+        self.output_dtype = output_dtype
 
     def copy(self) -> TMJob:
         """Create a copy of the TMJob
