@@ -59,7 +59,7 @@ class TestBrokenMRC(unittest.TestCase):
         self.assertIn("make sure this is correct", cm.output[0])
 
     def test_half_precision_read_write_cycle(self):
-        array = np.random.rand((3, 3, 3)).astype(np.float16)
+        array = np.random.rand(27).reshape((3, 3, 3)).astype(np.float16)
         fname = pathlib.Path(self.tempdirname) / "test_half.mrc"
         # Make sure no warnings are raised
         with self.assertNoLogs(level="WARNING"):
