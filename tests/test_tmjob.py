@@ -613,6 +613,22 @@ class TestTMJob(unittest.TestCase):
             "should be almost identical.",
         )
 
+    def test_tm_job_half_precision(self):
+        job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=1.0,
+            output_dtype=np.float16,
+        )
+        s, a = job.start_job(0, return_volumes=True)
+        self.assertEqual(s.dtype, np.float16)
+        self.assertEqual(a.dtype, np.float16)
+
     def test_extraction(self):
         _ = self.job.start_job(0, return_volumes=True)
 
