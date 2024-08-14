@@ -894,7 +894,8 @@ class TMJob:
                     f"{[round(ctf['defocus'] * 1e6, 2) for ctf in self.ctf_data]}",
                 )
 
-            # for the tomogram a binary wedge is generated to explicitly set the missing wedge region to 0
+            # for the tomogram a binary wedge is generated to explicitly set the missing
+            # wedge region to 0
             tomo_filter *= create_wedge(
                 search_volume.shape,
                 self.tilt_angles,
