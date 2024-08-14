@@ -1,7 +1,7 @@
 By Marten Chaillet ([@McHaillet](https://github.com/McHaillet)), August 2024. If you 
 found these 
 results useful, please cite our repository: 
-https://zenodo.org/records/12667665.
+https://doi.org/10.5281/zenodo.10728422.
 
 Although it has been shown multiple times that correcting defocus gradients is very 
 important for subtomogram averaging in tilt-series data, the effects on particle 
@@ -32,7 +32,7 @@ pytom-match-pick on tomogram 27 of EMPIAR-10985.</figcaption>
 
 To properly measure the defocus handedness, I selected a dataset of isolated 
 ribosomes in thin ice collected at a pixel size of 1.07 Å 
-(EMPIAR-10985; see figure above). Isolated macromolecules provide the highest 
+([EMPIAR-10985](https://www.ebi.ac.uk/empiar/EMPIAR-10985/); see figure above). Isolated macromolecules provide the highest 
 resolution (contrary
 to _in situ_ data). I used an approach, similar 
 to Warp, 
@@ -91,7 +91,7 @@ macromolecules.
 <figure markdown="span">
   ![annotations](defocus_handedness_figures/x_vs_defocus.svg)
   <figcaption>LCC<sub>max</sub> scores (normalized by the standard deviation from 
-template matching plotted as a function 
+template matching) plotted as a function 
 of the x-coordinate. In blue the results are shown that assumes the default defocus 
 handedness, while orange shows the results of inverted defocus handedness. The left 
 figure shows a scatter plot, while the right shows fitted quadratic functions to 
@@ -151,7 +151,7 @@ repository in `src/pytom_tm/TMJob.py`, see function
 
 ### Tilt series preprocessing
 
-Download tilt-series 27 from EMPIAR-10985:
+Download tilt-series 27 from [EMPIAR-10985](https://doi.org/10.6019/EMPIAR-10985):
 
 * 9x9_ts_27_sort.mrc
 * 9x9_ts_27_sort.mrc.mdoc
@@ -198,7 +198,7 @@ ctfplotter -input raw_data/9x9_ts_27_sort.mrc -angleFn metadata/9x9_ts_27_sort.r
 
 ### Creating a template and mask
 
-I downloaded the subtomogram average (EMD-33115) calculated for the EMPIAR dataset. NOTE: The reference is mirrored as I noticed in the first run without mirroring that the scores were unexpectedly poor. Mirroring fixes this issue.
+I downloaded the subtomogram average [EMD-33115](https://www.ebi.ac.uk/emdb/EMD-33115) calculated for the EMPIAR dataset. NOTE: The reference is mirrored as I noticed in the first run without mirroring that the scores were unexpectedly poor. Mirroring fixes this issue.
 
 ```commandline
 pytom_create_template.py -i templates/emd_33115.map -o templates/70S.mrc --output-voxel 8.56 -b 60 --invert --mirror

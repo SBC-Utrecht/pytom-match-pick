@@ -130,18 +130,8 @@ def get_defocus_offsets(
         an array of defocus offsets for each tilt angle
     """
     n_tilts = len(tilt_angles)
-    x_centers = np.array(
-        [
-            patch_center_x,
-        ]
-        * n_tilts
-    )
-    z_centers = np.array(
-        [
-            patch_center_z,
-        ]
-        * n_tilts
-    )
+    x_centers = np.full(n_tilts, patch_center_x)
+    z_centers = np.full(n_tilts, patch_center_z)
     ta_array = np.array(tilt_angles)
     if angles_in_degrees:
         ta_array = np.deg2rad(ta_array)
@@ -886,11 +876,11 @@ class TMJob:
                 for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
                     ctf["defocus"] = ctf["defocus"] + defocus_shift * 1e-6
                 logging.debug(
-                    f"Patch center (nr. of voxels): "
+                    "Patch center (nr. of voxels): "
                     f"{np.array_str(relative_patch_center_um * 1e4, precision=2)}"
                 )
                 logging.debug(
-                    f"Defocus values (um): "
+                    "Defocus values (um): "
                     f"{[round(ctf['defocus'] * 1e6, 2) for ctf in self.ctf_data]}",
                 )
 
