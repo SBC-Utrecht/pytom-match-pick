@@ -34,6 +34,8 @@ def pytom_create_mask(argv=None):
 
     argv = _parse_argv(argv)
 
+    # entry_point strings cannot use '\n' characters as this will break the website
+    # snippet that displays the CLI help message
     # ---8<--- [start:create_mask_usage]
 
     parser = argparse.ArgumentParser(
@@ -133,6 +135,8 @@ def pytom_create_template(argv=None):
 
     argv = _parse_argv(argv)
 
+    # entry_point strings cannot use '\n' characters as this will break the website
+    # snippet that displays the CLI help message
     # ---8<--- [start:create_template_usage]
 
     parser = argparse.ArgumentParser(
@@ -284,6 +288,8 @@ def estimate_roc(argv=None):
     argv = _parse_argv(argv)
     from pytom_tm.plotting import plist_quality_gaussian_fit
 
+    # entry_point strings cannot use '\n' characters as this will break the website
+    # snippet that displays the CLI help message
     # ---8<--- [start:estimate_roc_usage]
 
     parser = argparse.ArgumentParser(
@@ -416,6 +422,8 @@ def estimate_roc(argv=None):
 def extract_candidates(argv=None):
     argv = _parse_argv(argv)
 
+    # entry_point strings cannot use '\n' characters as this will break the website
+    # snippet that displays the CLI help message
     # ---8<--- [start:extract_candidates_usage]
 
     parser = argparse.ArgumentParser(
@@ -560,6 +568,8 @@ def match_template(argv=None):
 
     argv = _parse_argv(argv)
 
+    # entry_point strings cannot use '\n' characters as this will break the website
+    # snippet that displays the CLI help message
     # ---8<--- [start:match_template_usage]
 
     parser = argparse.ArgumentParser(
@@ -964,6 +974,8 @@ def match_template(argv=None):
 def merge_stars(argv=None):
     import pandas as pd
 
+    # entry_point strings cannot use '\n' characters as this will break the website
+    # snippet that displays the CLI help message
     # ---8<--- [start:merge_stars_usage]
 
     parser = argparse.ArgumentParser(
