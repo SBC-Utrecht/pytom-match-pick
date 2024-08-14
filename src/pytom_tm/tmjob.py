@@ -74,6 +74,7 @@ def load_json_to_tmjob(
         particle_diameter=data.get("particle_diameter", None),
         random_phase_correction=data.get("random_phase_correction", False),
         rng_seed=data.get("rng_seed", 321),
+        output_dtype=data.get("output_dtype", np.float32),
     )
     # if the file originates from an old version set the phase shift for compatibility
     if (
@@ -230,6 +231,7 @@ class TMJob:
         particle_diameter: Optional[float] = None,
         random_phase_correction: bool = False,
         rng_seed: int = 321,
+        output_dtype: np.dtype = np.float32,
     ):
         """
         Parameters
@@ -295,6 +297,8 @@ class TMJob:
             scores for noise
         rng_seed: int, default 321
             set a seed for the rng for phase randomization
+        output_dtype: np.dtype, default np.float32
+            output dtype, options are np.float32 and np.float16
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -482,6 +486,9 @@ class TMJob:
 
         # version number of the job
         self.pytom_tm_version_number = pytom_tm_version_number
+
+        # output dtype
+        self.output_dype = output_dtype
 
     def copy(self) -> TMJob:
         """Create a copy of the TMJob
@@ -738,7 +745,7 @@ class TMJob:
                     job.whole_start[1] : job.whole_start[1] + sub_scores.shape[1],
                     job.whole_start[2] : job.whole_start[2] + sub_scores.shape[2],
                 ] = sub_angles
-        return scores, angles
+        return scores.astype(self.output_dtype), angles.astype(self.output_dtype)
 
     def start_job(
         self, gpu_id: int, return_volumes: bool = False
@@ -893,6 +900,10 @@ class TMJob:
         self.job_stats = results[2]
 
         del tm  # delete the template matching plan
+
+        # cast to correct dtype
+        score_volume = score_volume.astype(self.output_dtype)
+        angle_volume = angle_volume.astype(self.output_dtype)
 
         if return_volumes:
             return score_volume, angle_volume
