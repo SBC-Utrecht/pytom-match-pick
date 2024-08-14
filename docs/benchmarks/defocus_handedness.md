@@ -141,7 +141,7 @@ negligible.
 
 * AreTomo 1.3 
 * IMOD 4.11.24
-* pytom-match-pick 0.7.3 (and should work with higher versions)
+* pytom-match-pick 0.7.2 (and should work with higher versions)
 
 ### Implementation of defocus gradient
 
