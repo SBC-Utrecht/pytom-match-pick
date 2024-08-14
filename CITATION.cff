@@ -110,3 +110,9 @@ preferred-citation:
     - GPU acceleration
     - volume registration
   license: CC-BY-4.0
+  journal: "International Journal of Molecular Sciences"
+  month: 8
+  start: 13375 # First page number
+  issue: 17
+  volume: 24
+  year: 2023
