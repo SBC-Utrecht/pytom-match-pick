@@ -70,10 +70,6 @@ preferred-citation:
       orcid: 'https://orcid.org/0000-0002-6044-2746'
   type: article
   title: Extensive Angular Sampling Enables the Sensitive Localization of Macromolecules in Electron Tomograms
-  identifiers:
-    - type: doi
-      value: 10.3390/ijms241713375
-      description: Associated research paper
   abstract: >-
     Cryo-electron tomography provides 3D images of
     macromolecules in their cellular context. To detect
@@ -113,6 +109,7 @@ preferred-citation:
   journal: "International Journal of Molecular Sciences"
   month: 8
   start: 13375 # First page number
+  doi: 10.3390/ijms241713375
   issue: 17
   volume: 24
   year: 2023
