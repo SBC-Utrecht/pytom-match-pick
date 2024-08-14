@@ -113,7 +113,7 @@ def get_angle_list(
         then X, then Z2
     symmetry: int, default 1
         the returned list will only have Z2 angles [0, (2*pi/symmetry))
-    log_level: int, default 'DEBUG'
+    log_level: int, default logging.DEBUG
         the log level to use when generating logs
 
     Returns
