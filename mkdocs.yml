@@ -54,3 +54,4 @@ extra_css:
 plugins:
   - search
   - markdown-exec
+  - glightbox
