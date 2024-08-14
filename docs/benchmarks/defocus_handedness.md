@@ -1,7 +1,7 @@
 By Marten Chaillet ([@McHaillet](https://github.com/McHaillet)), August 2024. If you 
 found these 
-results useful, please cite our repository: 
-https://doi.org/10.5281/zenodo.10728422.
+results useful, please cite our zenodo repository: 
+[10.5281/zenodo.10728422](https://doi.org/10.5281/zenodo.10728422).
 
 Although it has been shown multiple times that correcting defocus gradients is very 
 important for subtomogram averaging in tilt-series data, the effects on particle 
