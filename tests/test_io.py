@@ -30,7 +30,7 @@ class TestBrokenMRC(unittest.TestCase):
 
         # prep temporary directory
         tempdir = TemporaryDirectory()
-        self.dirname = tempdir.name
+        self.tempdirname = tempdir.name
         self.addCleanup(tempdir.cleanup)
 
     def test_read_mrc_minor_broken(self):
