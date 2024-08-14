@@ -75,4 +75,4 @@ class TestBrokenMRC(unittest.TestCase):
         mrc = read_mrc(fname)
         self.assertEqual(mrc.dtype, np.float16)
         # make sure data is identical
-        self.assertEqual(array, mrc)
+        np.testing.assert_equal(mrc, array)
