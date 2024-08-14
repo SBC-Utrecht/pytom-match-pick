@@ -346,6 +346,7 @@ def extract_particles(
             "rlnCoordinateY": "rlnCenteredCoordinateYAngst",
             "rlnCoordinateZ": "rlnCenteredCoordinateZAngst",
             "rlnMicrographName": "rlnTomoName",
+            "rlnDetectorPixelSize": "rlnTomoTiltSeriesPixelSize",
         }
         output = output.rename(columns=column_change)
 

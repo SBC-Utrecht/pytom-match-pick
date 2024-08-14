@@ -631,6 +631,7 @@ class TestTMJob(unittest.TestCase):
             "rlnCenteredCoordinateYAngst",
             "rlnCenteredCoordinateZAngst",
             "rlnTomoName",
+            "rlnTomoTiltSeriesPixelSize",
         ):
             self.assertTrue(
                 column in df_rel5.columns,
