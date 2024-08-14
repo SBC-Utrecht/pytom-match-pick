@@ -32,8 +32,9 @@ def load_json_to_tmjob(
     file_name: pathlib.Path
         path to TMJob json file
     load_for_extraction: bool, default True
-        whether a finished job is loaded form disk for extraction, default is True as this function is currently only
-        called for pytom_extract_candidates and pytom_estimate_roc which run on previously finished jobs
+        whether a finished job is loaded form disk for extraction, default is True as
+        this function is currently only called for pytom_extract_candidates and
+        pytom_estimate_roc which run on previously finished jobs
 
     Returns
     -------
@@ -115,7 +116,8 @@ def _determine_1D_fft_splits(
         either the split with the most data or the left one if both
         splits have the same size
     """
-    # Everything in this code assumes default slices of [x,y) so including x but excluding y
+    # Everything in this code assumes default slices of [x,y) so including x but
+    # excluding y
     data_slices = []
     valid_data_slices = []
     sub_len = []
@@ -249,10 +251,11 @@ class TMJob:
         mask_is_spherical: bool, default True
             whether template mask is spherical, reduces computation complexity
         tilt_angles: Optional[list[float, ...]], default None
-            tilt angles of tilt-series used to reconstruct tomogram, if only two floats will be used to generate a
-            continuous wedge model
+            tilt angles of tilt-series used to reconstruct tomogram, if only two floats
+            will be used to generate a continuous wedge model
         tilt_weighting: bool, default False
-            use advanced tilt weighting options, can be supplemented with CTF parameters and accumulated dose
+            use advanced tilt weighting options, can be supplemented with CTF parameters
+            and accumulated dose
         search_x: Optional[list[int, int]], default None
             restrict tomogram search region along the x-axis
         search_y: Optional[list[int, int]], default None
@@ -260,31 +263,36 @@ class TMJob:
         search_z: Optional[list[int, int]], default None
             restrict tomogram search region along the z-axis
         tomogram_mask: Optional[pathlib.Path], default None
-            when volume splitting tomograms, only subjobs where any(mask > 0) will be generated
+            when volume splitting tomograms, only subjobs where any(mask > 0) will be
+            generated
         voxel_size: Optional[float], default None
-            voxel size of tomogram and template (in A) if not provided will be read from template/tomogram MRCs
+            voxel size of tomogram and template (in A) if not provided will be read from
+            template/tomogram MRCs
         low_pass: Optional[float], default None
             optional low-pass filter (resolution in A) to apply to tomogram and template
         high_pass: Optional[float], default None
-            optional high-pass filter (resolution in A) to apply to tomogram and template
+            optional high-pass filter (resolution in A) to apply to tomogram and
+            template
         dose_accumulation: Optional[list[float, ...]], default None
             list with dose accumulation per tilt image
         ctf_data: Optional[list[dict, ...]], default None
-            list of dictionaries with CTF parameters per tilt image, see pytom_tm.weight.create_ctf() for parameter
-            definition
+            list of dictionaries with CTF parameters per tilt image, see
+            pytom_tm.weight.create_ctf() for parameter definition
         whiten_spectrum: bool, default False
             whether to apply spectrum whitening
         rotational_symmetry: int, default 1
-            specify a rotational symmetry around the z-axis, is only valid if the symmetry axis of the template is
-            aligned with the z-axis
+            specify a rotational symmetry around the z-axis, is only valid if the
+            symmetry axis of the template is aligned with the z-axis
         pytom_tm_version_number: str, default current version
             a string with the version number of pytom_tm for backward compatibility
         job_loaded_for_extraction: bool, default False
-            flag to set for finished template matching jobs that are loaded back for extraction, it prevents
+            flag to set for finished template matching jobs that are loaded back for
+            extraction, it prevents recomputation of the whitening filter
         particle_diameter: Optional[float], default None
             particle diameter (in Angstrom) to calculate angular search
         random_phase_correction: bool, default False,
-            run matching with a phase randomized version of the template to correct scores for noise
+            run matching with a phase randomized version of the template to correct
+            scores for noise
         rng_seed: int, default 321
             set a seed for the rng for phase randomization
         """
@@ -319,17 +327,20 @@ class TMJob:
                     "Invalid voxel size provided, smaller or equal to zero."
                 )
             self.voxel_size = voxel_size
-            if (  # allow tiny numerical differences that are not relevant for template matching
+            if (  # allow tiny numerical differences that are not relevant for
+                # template matching
                 round(self.voxel_size, 3) != round(meta_data_tomo["voxel_size"], 3)
                 or round(self.voxel_size, 3)
                 != round(meta_data_template["voxel_size"], 3)
             ):
                 logging.debug(
-                    f"provided {self.voxel_size} tomogram {meta_data_tomo['voxel_size']} "
+                    f"provided {self.voxel_size} tomogram "
+                    f"{meta_data_tomo['voxel_size']} "
                     f"template {meta_data_template['voxel_size']}"
                 )
                 print(
-                    "WARNING: Provided voxel size does not match voxel size annotated in tomogram/template mrc."
+                    "WARNING: Provided voxel size does not match voxel size annotated "
+                    "in tomogram/template mrc."
                 )
         elif (
             round(meta_data_tomo["voxel_size"], 3)
@@ -339,8 +350,8 @@ class TMJob:
             self.voxel_size = round(meta_data_tomo["voxel_size"], 3)
         else:
             raise ValueError(
-                "Voxel size could not be assigned, either a mismatch between tomogram and template or"
-                " annotated as 0."
+                "Voxel size could not be assigned, either a mismatch between tomogram "
+                "and template or annotated as 0."
             )
 
         search_origin = [
@@ -358,7 +369,8 @@ class TMJob:
             if x is not None:
                 if not x[1] <= s:
                     raise ValueError(
-                        "One of search end indices is larger than the tomogram dimension."
+                        "One of search end indices is larger than the tomogram "
+                        "dimension."
                     )
                 search_end.append(x[1])
             else:
@@ -373,18 +385,23 @@ class TMJob:
             temp = read_mrc(tomogram_mask)
             if temp.shape != self.tomo_shape:
                 raise ValueError(
-                    "Tomogram mask does not have the same number of pixels as the tomogram.\n"
-                    f"Tomogram mask shape: {temp.shape}, tomogram shape: {self.tomo_shape}"
+                    "Tomogram mask does not have the same number of pixels as the "
+                    "tomogram.\n"
+                    f"Tomogram mask shape: {temp.shape}, "
+                    f"tomogram shape: {self.tomo_shape}"
                 )
             if np.all(temp <= 0):
                 raise ValueError(
-                    f"No values larger than 0 found in the tomogram mask: {tomogram_mask}"
+                    "No values larger than 0 found in the tomogram mask: "
+                    f"{tomogram_mask}"
                 )
 
         self.whole_start = None
-        # For the main job these are always [0,0,0] and self.search_size, for sub_jobs these will differ from
-        # self.search_origin and self.search_size. The main job only uses them to calculate the search_volume_roi for
-        # statistics. Sub jobs also use these to extract and place back the relevant region in the master job.
+        # For the main job these are always [0,0,0] and self.search_size, for sub_jobs
+        # these will differ from self.search_origin and self.search_size. The main job
+        # only uses them to calculate the search_volume_roi for statistics. Sub jobs
+        # also use these to extract and place back the relevant region in the master
+        # job.
         self.sub_start, self.sub_step = [0, 0, 0], self.search_size.copy()
 
         # Rotation parameters
@@ -507,8 +524,8 @@ class TMJob:
             json.dump(d, fstream, indent=4)
 
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
-        """Split the search into sub_jobs by dividing the rotations. Sub jobs will obtain the key
-        self.job_key + str(i) when looping over range(n).
+        """Split the search into sub_jobs by dividing the rotations. Sub jobs will
+        obtain the key self.job_key + str(i) when looping over range(n).
 
         Parameters
         ----------
@@ -518,7 +535,8 @@ class TMJob:
         Returns
         -------
         sub_jobs: list[TMJob, ...]
-            a list of TMJobs that were split from self, the jobs are also assigned as the TMJob.sub_jobs attribute
+            a list of TMJobs that were split from self, the jobs are also assigned as
+            the TMJob.sub_jobs attribute
         """
         if len(self.sub_jobs) > 0:
             raise TMJobError(
@@ -539,30 +557,35 @@ class TMJob:
         return self.sub_jobs
 
     def split_volume_search(self, split: tuple[int, int, int]) -> list[TMJob, ...]:
-        """Split the search into sub_jobs by dividing into subvolumes. Final number of subvolumes is obtained by
-        multiplying all the split together, e.g. (2, 2, 1) results in 4 subvolumes. Sub jobs will obtain the key
-        self.job_key + str(i) when looping over range(n).
+        """Split the search into sub_jobs by dividing into subvolumes. Final number of
+        subvolumes is obtained by multiplying all the split together, e.g. (2, 2, 1)
+        results in 4 subvolumes. Sub jobs will obtain the key self.job_key + str(i) when
+        looping over range(n).
 
-        The sub jobs search area of the full tomogram is defined by: new_job.search_origin and new_job.search_size.
+        The sub jobs search area of the full tomogram is defined by:
+        new_job.search_origin and new_job.search_size.
         They are used when loading the search volume from the full tomogram.
 
-        The attribute new_job.whole_start defines how the volume maps back to the score volume of the parent job
-        (which can be a different size than the tomogram when the search is restricted along x, y or z).
+        The attribute new_job.whole_start defines how the volume maps back to the score
+        volume of the parent job (which can be a different size than the tomogram when
+        the search is restricted along x, y or z).
 
-        Finally, new_job.sub_start and new_job.sub_step, extract the score and angle map without the template
-        overhang from the subvolume.
+        Finally, new_job.sub_start and new_job.sub_step, extract the score and angle map
+        without the template overhang from the subvolume.
 
         If self.tomogram_mask is set, we will skip subjobs where all(mask <= 0).
 
         Parameters
         ----------
         split: tuple[int, int, int]
-            tuple that defines how many times the search volume should be split into subvolumes along each axis
+            tuple that defines how many times the search volume should be split into
+            subvolumes along each axis
 
         Returns
         -------
         sub_jobs: list[TMJob, ...]
-            a list of TMJobs that were split from self, the jobs are also assigned as the TMJob.sub_jobs attribute
+            a list of TMJobs that were split from self, the jobs are also assigned as
+            the TMJob.sub_jobs attribute
         """
         if len(self.sub_jobs) > 0:
             raise TMJobError(
@@ -588,7 +611,8 @@ class TMJob:
         for i, data_3D in enumerate(itt.product(x_splits, y_splits, z_splits)):
             # each data point for each dim is slice(left, right) of the search space
             # and slice(left,right) of the unique data point in the search space
-            # Look at the comments in the new_job.attribute for the meaning of each attribute
+            # Look at the comments in the new_job.attribute for the meaning of each
+            # attribute
 
             search_origin = tuple(
                 data_3D[d][0][0] + self.search_origin[d] for d in range(3)
@@ -598,7 +622,8 @@ class TMJob:
             sub_start = tuple(dim_data[1][0] - dim_data[0][0] for dim_data in data_3D)
             sub_step = tuple(dim_data[1][1] - dim_data[1][0] for dim_data in data_3D)
 
-            # check if this contains any of the unique data points are where tomo_mask>=0
+            # check if this contains any of the unique data points are where
+            # tomo_mask > 0
             if tomogram_mask is not None:
                 slices = [
                     slice(origin, origin + step)
@@ -616,11 +641,13 @@ class TMJob:
             # search size TODO: should be combined with the origin into slices
             new_job.search_size = search_size
 
-            # whole start is the start of the unique data within the complete searched array
+            # whole start is the start of the unique data within the complete searched
+            # array
             new_job.whole_start = whole_start
             # sub_start is where the unique data starts inside the split array
             new_job.sub_start = sub_start
-            # sub_step is the step of unique data inside the split array. TODO: should be slices instead
+            # sub_step is the step of unique data inside the split array.
+            # TODO: should be slices instead
             new_job.sub_step = sub_step
             sub_jobs.append(new_job)
 
@@ -631,7 +658,8 @@ class TMJob:
     def merge_sub_jobs(
         self, stats: Optional[list[dict, ...]] = None
     ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
-        """Merge the sub jobs present in self.sub_jobs together to create the final output score and angle maps.
+        """Merge the sub jobs present in self.sub_jobs together to create the final
+        output score and angle maps.
 
         Parameters
         ----------
@@ -698,7 +726,8 @@ class TMJob:
                     job.sub_start[1] : job.sub_start[1] + job.sub_step[1],
                     job.sub_start[2] : job.sub_start[2] + job.sub_step[2],
                 ]
-                # Then the corrected sub part needs to be placed back into the full volume
+                # Then the corrected sub part needs to be placed back into the full
+                # volume
                 scores[
                     job.whole_start[0] : job.whole_start[0] + sub_scores.shape[0],
                     job.whole_start[1] : job.whole_start[1] + sub_scores.shape[1],
@@ -714,26 +743,28 @@ class TMJob:
     def start_job(
         self, gpu_id: int, return_volumes: bool = False
     ) -> Union[tuple[npt.NDArray[float], npt.NDArray[float]], dict]:
-        """Run this template matching job on the specified GPU. Search statistics of the job will always be assigned
-        to the self.job_stats.
+        """Run this template matching job on the specified GPU. Search statistics of the
+        job will always be assigned to the self.job_stats.
 
         Parameters
         ----------
         gpu_id: int
             index of the GPU to run the job on
         return_volumes: bool, default False
-            False (default) does not return volumes but instead writes them to disk, set to True to instead directly
-            return the score and angle volumes
+            False (default) does not return volumes but instead writes them to disk, set
+            to True to instead directly return the score and angle volumes
 
         Returns
         -------
         output: Union[tuple[npt.NDArray[float], npt.NDArray[float]], dict]
-            when volumes are returned the output consists of two numpy arrays (score and angle map), when no volumes
-            are returned the output consists of a dictionary with search statistics
+            when volumes are returned the output consists of two numpy arrays (score and
+            angle map), when no volumes are returned the output consists of a dictionary
+            with search statistics
         """
         # next fast fft len
         logging.debug(
-            f"Next fast fft shape: {tuple([next_fast_len(s, real=True) for s in self.search_size])}"
+            "Next fast fft shape: "
+            f"{tuple([next_fast_len(s, real=True) for s in self.search_size])}"
         )
         search_volume = np.zeros(
             tuple([next_fast_len(s, real=True) for s in self.search_size]),
@@ -778,7 +809,8 @@ class TMJob:
 
         # if tilt angles are provided we can create wedge filters
         if self.tilt_angles is not None:
-            # for the tomogram a binary wedge is generated to explicitly set the missing wedge region to 0
+            # for the tomogram a binary wedge is generated to explicitly set the
+            # missing wedge region to 0
             tomo_filter *= create_wedge(
                 search_volume.shape,
                 self.tilt_angles,
@@ -787,7 +819,8 @@ class TMJob:
                 angles_in_degrees=True,
                 tilt_weighting=False,
             ).astype(np.float32)
-            # for the template a binary or per-tilt-weighted wedge is generated depending on the options
+            # for the template a binary or per-tilt-weighted wedge is generated
+            # depending on the options
             template_wedge *= create_wedge(
                 self.template_shape,
                 self.tilt_angles,

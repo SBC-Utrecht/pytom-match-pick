@@ -33,24 +33,28 @@ def predict_tophat_mask(
     create_plot: bool = True,
     tophat_connectivity: int = 1,
 ) -> npt.NDArray[bool]:
-    """This function gets as input a score map and returns a peak mask as determined with a tophat transform.
+    """This function gets as input a score map and returns a peak mask as determined
+    with a tophat transform.
 
     It does the following things:
      - calculate a tophat transform using scipy.ndimage.white_tophat() and a kernel
      ndimage.generate_binary_structure(rank=3, connectivity=1).
-     - calculate a histogram of the transformed score map and take its log to focus more on small values
-     - take second derivative of log(histogram) to find the region for fitting a Gaussian, where the second derivative
-     switches from negative to positive the background noise likely breaks
-     - use formula from excellent work of Rickgauer et al. (2017, eLife) which uses the error function to find the
-     likelihood of false positives on the background Gaussian distribution:
-            N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
+     - calculate a histogram of the transformed score map and take its log to focus more
+        on small values
+     - take second derivative of log(histogram) to find the region for fitting a
+        Gaussian, where the second derivative switches from negative to positive the
+        background noise likely breaks
+     - use formula from excellent work of Rickgauer et al. (2017, eLife) which uses the
+        error function to find the likelihood of false positives on the background
+        Gaussian distribution: N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
 
     Parameters
     ----------
     score_volume: npt.NDArray[float]
         template matching score map
     output_path: Optional[pathlib.Path], default None
-        if provided (and plotting is available), write a figure of the fit to the output folder
+        if provided (and plotting is available), write a figure of the fit to the output
+        folder
     n_false_positives: float, default 1.0
         number of false positive for error function cutoff calculation
     create_plot: bool, default True
@@ -111,7 +115,8 @@ def predict_tophat_mask(
         0
     ]  # now go for accurate fit to log of gauss
     search_space = coeff_log[0] / (coeff_log[2] * np.sqrt(2 * np.pi))
-    # formula Rickgauer et al. (2017, eLife): N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
+    # formula Rickgauer et al. (2017, eLife):
+    # N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
     # we need to find theta (i.e. the cut-off)
     cut_off = (
         erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * coeff_log[2]
@@ -162,10 +167,11 @@ def extract_particles(
     cut_off: Optional[float]
         manually override the automated score cut-off estimation, value between 0 and 1
     n_false_positives: float, default 1.0
-        tune the number of false positives to be included for automated error function cut-off estimation:
-        should be a float > 0
+        tune the number of false positives to be included for automated error function
+        cut-off estimation: should be a float > 0
     tomogram_mask_path: Optional[pathlib.Path]
-        path to a tomographic binary mask for extraction, will override job.tomogram_mask
+        path to a tomographic binary mask for extraction, will override
+        job.tomogram_mask
     tophat_filter: bool
         attempt to only select sharp peaks with the tophat filter
     create_plot: bool, default True
@@ -183,7 +189,8 @@ def extract_particles(
     Returns
     -------
     dataframe, scores: tuple[pd.DataFrame, list[float, ...]]
-        dataframe with annotations that can be written out as a STAR file and a list of the selected scores
+        dataframe with annotations that can be written out as a STAR file and a list of
+        the selected scores
     """
 
     score_volume = read_mrc(job.output_dir.joinpath(f"{job.tomo_id}_scores.mrc"))
@@ -218,8 +225,9 @@ def extract_particles(
     if tomogram_mask is not None:
         if tomogram_mask.shape != job.tomo_shape:
             raise ValueError(
-                "Tomogram mask does not have the same number of pixels as the tomogram.\n"
-                f"Tomogram mask shape: {tomogram_mask.shape}, tomogram shape: {job.tomo_shape}"
+                "Tomogram mask does not have the same number of pixels as the "
+                f"tomogram.\n Tomogram mask shape: {tomogram_mask.shape}, "
+                f"tomogram shape: {job.tomo_shape}"
             )
         slices = [
             slice(origin, origin + size)
@@ -240,14 +248,15 @@ def extract_particles(
     sigma = job.job_stats["std"]
     search_space = job.job_stats["search_space"]
     if cut_off is None:
-        # formula Rickgauer et al. (2017, eLife): N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
+        # formula Rickgauer et al. (2017, eLife):
+        # N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
         # we need to find theta (i.e. the cut off)
         cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
         logging.info(f"cut off for particle extraction: {cut_off}")
     elif cut_off < 0:
         logging.warning(
-            "Provided extraction score cut-off is smaller than 0. Changing to 0 as that is smallest "
-            "allowed value."
+            "Provided extraction score cut-off is smaller than 0. Changing to 0 as "
+            "that is smallest allowed value."
         )
         cut_off = 0
 
@@ -293,7 +302,7 @@ def extract_particles(
                 rotation[2],  # AnglePsi
                 lcc_max,  # LCCmax
                 cut_off,  # Extraction cut off
-                sigma,  # Add sigma of template matching search, LCCmax can be divided by sigma to obtain SNR
+                sigma,  # Add sigma of template matching search, LCCmax/sigma = SNR
                 pixel_size,  # DetectorPixelSize
                 tomogram_id,  # MicrographName
             )

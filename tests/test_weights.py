@@ -308,7 +308,8 @@ class TestWeights(unittest.TestCase):
         )
         self.assertTrue(
             np.sum((ctf_raw != ctf_cut) * 1) != 0,
-            msg="CTF should be different when cutting it off after the first zero crossing",
+            msg="CTF should be different when cutting it off after the first zero "
+            "crossing",
         )
 
     def test_radial_average(self):
@@ -363,9 +364,9 @@ class TestWeights(unittest.TestCase):
         self.assertEqual(
             profile.shape,
             (max(self.volume_shape_irregular) // 2 + 1,),
-            msg="Power spectrum profile output shape should be a 1-dimensional array with "
-            "length equal to max(input_shape) // 2 + 1, corresponding to largest sampling component "
-            "in Fourier space.",
+            msg="Power spectrum profile output shape should be a 1-dimensional array "
+            "with length equal to max(input_shape) // 2 + 1, corresponding to largest "
+            "sampling component in Fourier space.",
         )
 
     def test_profile_to_weighting(self):

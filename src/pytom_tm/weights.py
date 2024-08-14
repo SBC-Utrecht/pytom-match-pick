@@ -26,7 +26,8 @@ constants = {
 
 
 def hwhm_to_sigma(hwhm: float) -> float:
-    """Convert half width of half maximum of a Gaussian to sigma by dividing by sqrt(2 * ln(2)).
+    """Convert half width of half maximum of a Gaussian to sigma by dividing by
+    sqrt(2 * ln(2)).
 
     Parameters
     ----------
@@ -42,7 +43,8 @@ def hwhm_to_sigma(hwhm: float) -> float:
 
 
 def sigma_to_hwhm(sigma: float) -> float:
-    """Convert sigma to half width of half maximum of a Gaussian by multiplying with sqrt(2 * ln(2)).
+    """Convert sigma to half width of half maximum of a Gaussian by multiplying with
+    sqrt(2 * ln(2)).
 
     Parameters
     ----------
@@ -83,13 +85,15 @@ def wavelength_ev2m(voltage: float) -> float:
 def radial_reduced_grid(
     shape: Union[tuple[int, int, int], tuple[int, int]], shape_is_reduced: bool = False
 ) -> npt.NDArray[float]:
-    """Calculates a Fourier space radial reduced grid for the given input shape, with the 0 frequency in the center
-    of the output image. Values range from 0 in the center to 1 at Nyquist frequency.
+    """Calculates a Fourier space radial reduced grid for the given input shape, with
+    the 0 frequency in the center of the output image. Values range from 0 in the
+    center to 1 at Nyquist frequency.
 
-    By default, it is assumed shape belongs to a real space array, which causes the function to return a
-    grid with the last dimension reduced, i.e. shape[-1] // 2 + 1 (ideal for creating frequency
-    dependent filters). However, setting radial_reduced_grid(..., shape_is_reduced=True) the shape is assumed to
-    already be in a reduced form.
+    By default, it is assumed shape belongs to a real space array, which causes the
+    function to return a grid with the last dimension reduced, i.e. shape[-1] // 2 + 1
+    (ideal for creating frequency dependent filters). However, setting
+    radial_reduced_grid(..., shape_is_reduced=True) the shape is assumed to already be
+    in a reduced form.
 
     Parameters
     ----------
@@ -143,7 +147,8 @@ def create_gaussian_low_pass(
     spacing: float,
     resolution: float,
 ) -> npt.NDArray[float]:
-    """Create a 3D Gaussian low-pass filter with cutoff (or HWHM) that is reduced in fourier space.
+    """Create a 3D Gaussian low-pass filter with cutoff (or HWHM) that is reduced in
+    fourier space.
 
     Parameters
     ----------
@@ -173,7 +178,8 @@ def create_gaussian_high_pass(
     spacing: float,
     resolution: float,
 ) -> npt.NDArray[float]:
-    """Create a 3D Gaussian high-pass filter with cutoff (or HWHM) that is reduced in fourier space.
+    """Create a 3D Gaussian high-pass filter with cutoff (or HWHM) that is reduced in
+    fourier space.
 
     Parameters
     ----------
@@ -204,9 +210,10 @@ def create_gaussian_band_pass(
     low_pass: Optional[float] = None,
     high_pass: Optional[float] = None,
 ) -> npt.NDArray[float]:
-    """Resolution bands presents the resolution shells where information needs to be maintained. For example the bands
-    might be (150A, 40A). For a spacing of 15A (nyquist resolution is 30A) this is a mild low pass filter. However,
-    quite some low spatial frequencies will be cut by it.
+    """Resolution bands presents the resolution shells where information needs to be
+    maintained. For example the bands might be (150A, 40A). For a spacing of 15A
+    (nyquist resolution is 30A) this is a mild low pass filter. However, quite some low
+    spatial frequencies will be cut by it.
 
     Parameters
     ----------
@@ -262,7 +269,8 @@ def create_wedge(
     accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
     ctf_params_per_tilt: Optional[list[dict]] = None,
 ) -> npt.NDArray[float]:
-    """This function returns a wedge volume that is either symmetric or asymmetric depending on wedge angle input.
+    """This function returns a wedge volume that is either symmetric or asymmetric
+    depending on wedge angle input.
 
     Parameters
     ----------
@@ -285,7 +293,8 @@ def create_wedge(
     accumulated_dose_per_tilt: Optional[list[float, ...]], default None
         accumulated dose for each tilt for dose weighting
     ctf_params_per_tilt: Optional[list[dict]], default None
-        ctf parameters for each tilt (see _create_tilt_weighted_wedge() for dict specification)
+        ctf parameters for each tilt (see _create_tilt_weighted_wedge() for dict
+        specification)
 
     Returns
     -------
@@ -297,12 +306,14 @@ def create_wedge(
 
     if voxel_size <= 0.0:
         raise ValueError(
-            "Voxel size in create wedge is smaller or equal to 0, which is an invalid voxel spacing."
+            "Voxel size in create wedge is smaller or equal to 0, which is an invalid "
+            "voxel spacing."
         )
 
     if cut_off_radius > 1:
         print(
-            "Warning: wedge cutoff needs to be defined as a fraction of nyquist 0 < c <= 1. Setting value to 1.0."
+            "Warning: wedge cutoff needs to be defined as a fraction of nyquist "
+            "0 < c <= 1. Setting value to 1.0."
         )
         cut_off_radius = 1.0
     elif cut_off_radius <= 0:
@@ -359,8 +370,8 @@ def create_wedge(
 def _create_symmetric_wedge(
     shape: tuple[int, int, int], wedge_angle: float, cut_off_radius: float
 ) -> npt.NDArray[float]:
-    """This function returns a symmetric wedge object. Function should not be imported, user should call
-    create_wedge().
+    """This function returns a symmetric wedge object.
+    Function should not be imported, user should call create_wedge().
 
     Parameters
     ----------
@@ -406,7 +417,8 @@ def _create_asymmetric_wedge(
     wedge_angles: tuple[float, float],
     cut_off_radius: float,
 ) -> npt.NDArray[float]:
-    """This function returns an asymmetric wedge object. Function should not be imported, user should call create_wedge().
+    """This function returns an asymmetric wedge object.
+    Function should not be imported, user should call create_wedge().
 
     Parameters
     ----------
@@ -477,8 +489,10 @@ def _create_tilt_weighted_wedge(
     ctf_params_per_tilt: Optional[list[dict]] = None,
 ) -> npt.NDArray[float]:
     """
-    The following B-factor heuristic is used (as mentioned in the M paper, and introduced in RELION 1.4):
-        "The B factor is increased by 4Å2 per 1e− Å−2 of exposure, and each tilt is weighted as cos θ."
+    The following B-factor heuristic is used (as mentioned in the M paper, and
+    introduced in RELION 1.4):
+        "The B factor is increased by 4Å2 per 1e− Å−2 of exposure, and each tilt
+        is weighted as cos θ."
 
     Relation between B-factor and the sigma of a gaussian:
 
@@ -501,7 +515,8 @@ def _create_tilt_weighted_wedge(
     accumulated_dose_per_tilt: list[float, ...], default None
         the accumulated dose in e− Å−2
     ctf_params_per_tilt: list[dict, ...], default None
-        the ctf parameters per tilt angle, list of dicts where each dict has the following keys:
+        the ctf parameters per tilt angle, list of dicts
+        where each dict has the following keys:
         - 'defocus'; in um
         - 'amplitude'; fraction of amplitude contrast between 0 and 1
         - 'voltage'; in keV
@@ -511,24 +526,26 @@ def _create_tilt_weighted_wedge(
     Returns
     -------
     wedge: npt.NDArray[float]
-        structured wedge mask in fourier reduced form, i.e. output shape is (shape[0], shape[1], shape[2] // 2 + 1)
+        structured wedge mask in fourier reduced form, i.e. output shape is
+        (shape[0], shape[1], shape[2] // 2 + 1)
     """
     if accumulated_dose_per_tilt is not None and len(accumulated_dose_per_tilt) != len(
         tilt_angles
     ):
         raise ValueError(
-            "in _create_tilt_weighted_wedge the list of accumulated dose per tilt does not have the same "
-            "length as the tilt angle list!"
+            "in _create_tilt_weighted_wedge the list of accumulated dose per tilt does "
+            "not have the same length as the tilt angle list!"
         )
     if ctf_params_per_tilt is not None and len(ctf_params_per_tilt) != len(tilt_angles):
         raise ValueError(
-            "in _create_tilt_weighted_wedge the list of CTF parameters per tilt does not have the same "
-            "length as the tilt angle list!"
+            "in _create_tilt_weighted_wedge the list of CTF parameters per tilt does "
+            "not have the same length as the tilt angle list!"
         )
     if not all([shape[0] == s for s in shape[1:]]):
         raise UnequalSpacingError(
             "Input shape for structured wedge needs to be a square box. "
-            "Otherwise the frequencies in fourier space are not equal across dimensions."
+            "Otherwise the frequencies in fourier space are not equal across "
+            "dimensions."
         )
 
     image_size = shape[0]  # assign to size variable as all dimensions are equal size
@@ -567,7 +584,8 @@ def _create_tilt_weighted_wedge(
             )
             tilt[:, :, image_size // 2] = (
                 np.concatenate(
-                    (  # duplicate and flip the CTF around the 0 frequency; then concatenate to make it non-reduced
+                    (  # duplicate and flip the CTF around the 0 frequency;
+                        # then concatenate to make it non-reduced
                         np.flip(ctf[:, 1 : 1 + image_size - ctf.shape[1]], axis=1),
                         ctf,
                     ),
@@ -687,7 +705,8 @@ def create_ctf(
         values = ctf_1d(k_range)
         zero_crossings = np.where(np.diff(np.sign(values)))[0]
 
-        # for overfocus the first crossing needs to be skipped, for example see: Yonekura et al. 2006 JSB
+        # for overfocus the first crossing needs to be skipped,
+        # for example see: Yonekura et al. 2006 JSB
         k_cutoff = (
             k_range[zero_crossings[0]] if defocus > 0 else k_range[zero_crossings[1]]
         )
@@ -713,12 +732,14 @@ def radial_average(
     Parameters
     ----------
     weights: npt.NDArray[float]
-        3D array to be radially averaged: in fourier reduced form and with the origin in the corner.
+        3D array to be radially averaged: in fourier reduced form and with the origin
+        in the corner.
 
     Returns
     -------
     (q, mean): tuple[npt.NDArray[float], npt.NDArray[float]]
-        A tuple of two 1d numpy arrays. Their length equals half of largest input dimension.
+        A tuple of two 1d numpy arrays. Their length equals half of largest
+        input dimension.
     """
     if len(weights.shape) not in [2, 3]:
         raise ValueError("Radial average calculation only works for 2d/3d arrays")
@@ -729,7 +750,8 @@ def radial_average(
 
     q = np.arange(sampling_points)
     q_grid = np.floor(
-        # convert to radial indices in the fourier power spectrum, 0.5 is added to obtain the correct ring
+        # convert to radial indices in the fourier power spectrum,
+        # 0.5 is added to obtain the correct ring
         radial_reduced_grid(weights.shape, shape_is_reduced=True)
         * (sampling_points - 1)
         + 0.5
@@ -744,12 +766,14 @@ def radial_average(
 
 
 def power_spectrum_profile(image: npt.NDArray[float]) -> npt.NDArray[float]:
-    """Calculate the power spectrum for a real space array and then find the profile (radial average).
+    """Calculate the power spectrum for a real space array and then find the profile
+    (radial average).
 
     Parameters
     ----------
     image: npt.NDArray[float]
-        2D/3D array in real space for which the power spectrum profile needs to be calculated
+        2D/3D array in real space for which the power spectrum profile needs to be
+        calculated
 
     Returns
     -------
@@ -774,9 +798,11 @@ def profile_to_weighting(
     Parameters
     ----------
     profile: npt.NDArray[float]
-        power spectrum profile (or other 1d profile) to transform in a fourier space filter
+        power spectrum profile (or other 1d profile) to transform in a fourier space
+        filter
     shape: Union[tuple[int, int], tuple[int, int, int]]
-        2D/3D array shape in real space for which the fourier reduced weights are calculated
+        2D/3D array shape in real space for which the fourier reduced weights are
+        calculated
 
     Returns
     -------

@@ -22,9 +22,10 @@ def gpu_runner(
     log_level: int,
     unittest_mute: bool,
 ) -> None:
-    """Start a GPU runner, each runner should be initialized to a multiprocessing.Process() and manage running jobs
-    on a single GPU. Each runner will grab jobs from the task_queue and assign jobs to the result_queue once they
-    finish. When the task_queue is empty the gpu_runner will stop.
+    """Start a GPU runner, each runner should be initialized to a
+    multiprocessing.Process() and manage running jobs on a single GPU. Each runner will
+    grab jobs from the task_queue and assign jobs to the result_queue once they finish.
+    When the task_queue is empty the gpu_runner will stop.
 
     Parameters
     ----------
@@ -37,7 +38,8 @@ def gpu_runner(
     log_level: int
         log level for logging
     unittest_mute: Bool
-        optional muting of runner to prevent unittests flooding the terminal, only use for development
+        optional muting of runner to prevent unittests flooding the terminal, only use
+        for development
     """
     if unittest_mute:
         mute_context = mute_stdout_stderr
@@ -59,9 +61,10 @@ def run_job_parallel(
     gpu_ids: list[int, ...],
     unittest_mute: bool = False,
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
-    """Run a job in parallel over a single or multiple GPUs. If no volume_splits are given the search is parallelized
-    by splitting the angular search. If volume_splits are provided the job will first be split by volume,
-    if there are still more GPUs available, the subvolume jobs are still further split by angular search.
+    """Run a job in parallel over a single or multiple GPUs. If no volume_splits are
+    given the search is parallelized by splitting the angular search. If volume_splits
+    are provided the job will first be split by volume, if there are still more GPUs
+    available, the subvolume jobs are still further split by angular search.
 
     Parameters
     ----------
@@ -72,7 +75,8 @@ def run_job_parallel(
     gpu_ids: list[int, ...]
         list of gpu indices to spread jobs over
     unittest_mute: bool, default False
-        boolean to mute spawned process terminal output, only set to True for unittesting
+        boolean to mute spawned process terminal output, only set to True for
+        unittesting
 
     Returns
     -------
@@ -149,7 +153,9 @@ def run_job_parallel(
                     logging.debug("Got all results from the child processes")
                     break
 
-                for p in procs:  # if one of the processes is no longer alive and has a failed exit we should error
+                for p in procs:
+                    # if one of the processes is no longer alive and has a failed exit
+                    # we should error
                     if not p.is_alive() and p.exitcode == 1:  # to prevent a deadlock
                         [
                             x.terminate() for x in procs
@@ -168,5 +174,6 @@ def run_job_parallel(
 
     else:
         ValueError(
-            "For some reason there are more gpu_ids than split job, this should never happen."
+            "For some reason there are more gpu_ids than split job, this should never "
+            "happen."
         )
