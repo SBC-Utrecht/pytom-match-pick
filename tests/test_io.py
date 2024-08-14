@@ -76,3 +76,12 @@ class TestBrokenMRC(unittest.TestCase):
         self.assertEqual(mrc.dtype, np.float16)
         # make sure data is identical
         np.testing.assert_equal(mrc, array)
+
+    def test_cast_warning(self):
+        # make sure a warning is raised when writing an integer based array
+        array = np.random.rand(27).reshape((3, 3, 3)).astype(np.int32)
+        fname = pathlib.Path(self.tempdirname) / "test_cast.mrc"
+        with self.assertLogs(level="WARNING") as cm:
+            write_mrc(fname, array, 1.0)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn("np.float32", cm.output[0])
