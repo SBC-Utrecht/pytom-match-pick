@@ -1,0 +1,115 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: pytom-match-pick
+message: >-
+  If you use this software, please cite both the article
+  from preferred-citation and the software itself.
+type: software
+authors:
+  - given-names: Marten L.
+    family-names: Chaillet
+    email: m.l.chaillet@uu.nl
+    orcid: 'https://orcid.org/0000-0001-7231-7742'
+    affiliation: Utrecht University
+  - given-names: Sander
+    family-names: Roet
+    email: s.j.s.roet@uu.nl
+    affiliation: Utrecht University
+    orcid: 'https://orcid.org/0000-0003-0732-545X'
+  - given-names: Friedrich
+    family-names: Förster
+    email: f.g.forster@uu.nl
+    affiliation: Utrecht University
+    orcid: 'https://orcid.org/0000-0002-6044-2746'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.10728422
+    description: zenodo DOI for the code
+repository-code: 'https://github.com/SBC-Utrecht/pytom-match-pick'
+abstract: >-
+  GPU-accelerated template matching for cryo-electron tomography, originally developed in PyTom, as a standalone Python package that is run from the command line.
+keywords:
+  - electron cryo-tomography
+  - particle localization and identification
+  - template matching
+  - GPU acceleration
+  - volume registration
+license: GPL-2.0
+preferred-citation:
+  authors:
+    - given-names: Marten L.
+      family-names: Chaillet
+      email: m.l.chaillet@uu.nl
+      orcid: 'https://orcid.org/0000-0001-7231-7742'
+      affiliation: Utrecht University
+    - given-names: Gijs
+      name-particle: van der
+      family-names: Schot
+      email: gijsschot@gmail.com
+      affiliation: Utrecht University
+    - given-names: Ilja
+      family-names: Gubins
+      email: i.gubins@uu.nl
+      affiliation: Utrecht University
+    - given-names: Sander
+      family-names: Roet
+      email: s.j.s.roet@uu.nl
+      affiliation: Utrecht University
+      orcid: 'https://orcid.org/0000-0003-0732-545X'
+    - given-names: Remco C.
+      family-names: Veltkamp
+      email: r.c.veltkamp@uu.nl
+      affiliation: Utrecht University
+      orcid: 'https://orcid.org/0000-0003-1934-7170'
+    - given-names: Friedrich
+      family-names: Förster
+      email: f.g.forster@uu.nl
+      affiliation: Utrecht University
+      orcid: 'https://orcid.org/0000-0002-6044-2746'
+  type: article
+  title: Extensive Angular Sampling Enables the Sensitive Localization of Macromolecules in Electron Tomograms
+  abstract: >-
+    Cryo-electron tomography provides 3D images of
+    macromolecules in their cellular context. To detect
+    macromolecules in tomograms, template matching (TM) is
+    often used, which uses 3D models that are often reliable
+    for substantial parts of the macromolecules. However, the
+    extent of rotational searches in particle detection has
+    not been investigated due to computational limitations.
+    Here, we provide a GPU implementation of TM as part of the
+    PyTOM software package, which drastically speeds up the
+    orientational search and allows for sampling beyond the
+    Crowther criterion within a feasible timeframe. We
+    quantify the improvements in sensitivity and
+    false-discovery rate for the examples of ribosome
+    identification and detection. Sampling at the Crowther
+    criterion, which was effectively impossible with CPU
+    implementations due to the extensive computation times,
+    allows for automated extraction with high sensitivity.
+    Consequently, we also show that an extensive angular
+    sample renders 3D TM sensitive to the local alignment of
+    tilt series and damage induced by focused ion beam
+    milling. With this new release of PyTOM, we focused on
+    integration with other software packages that support more
+    refined subtomogram-averaging workflows. The automated
+    classification of ribosomes by TM with appropriate angular
+    sampling on locally corrected tomograms has a sufficiently
+    low false-discovery rate, allowing for it to be directly
+    used for high-resolution averaging and adequate
+    sensitivity to reveal polysome organization.
+  keywords:
+    - electron cryo-tomography
+    - particle localization and identification
+    - template matching
+    - GPU acceleration
+    - volume registration
+  license: CC-BY-4.0
+  journal: "International Journal of Molecular Sciences"
+  month: 8
+  start: 13375 # First page number
+  doi: 10.3390/ijms241713375
+  issue: 17
+  volume: 24
+  year: 2023

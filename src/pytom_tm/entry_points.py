@@ -556,7 +556,9 @@ def extract_candidates(argv=None):
 
     # write out as a RELION type starfile
     starfile.write(
-        df, job.output_dir.joinpath(f"{job.tomo_id}_particles.star"), overwrite=True
+        {"particles": df},
+        job.output_dir.joinpath(f"{job.tomo_id}_particles.star"),
+        overwrite=True,
     )
 
 
@@ -1019,5 +1021,7 @@ def merge_stars(argv=None):
     dataframes = [starfile.read(f) for f in files]
 
     starfile.write(
-        pd.concat(dataframes, ignore_index=True), args.output_file, overwrite=True
+        {"particles": pd.concat(dataframes, ignore_index=True)},
+        args.output_file,
+        overwrite=True,
     )
