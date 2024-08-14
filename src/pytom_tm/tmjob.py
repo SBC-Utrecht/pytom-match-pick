@@ -479,7 +479,11 @@ class TMJob:
                 angle_increment,
                 sort_angles=False,
                 symmetry=rotational_symmetry,
-                log_level=log_level,
+                # This log_level is different from self.log_level that is
+                # assigned later. The TMJob.log_level refers to the user provided
+                # logging setting, while the log_level here is to control the output
+                # of the job during candidate extraction/template matching.
+                log_level=logging.DEBUG if job_loaded_for_extraction else logging.INFO,
             )
         except ValueError:
             raise TMJobError("Invalid angular search provided.")
