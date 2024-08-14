@@ -216,7 +216,7 @@ def extract_particles(
     # apply tomogram mask if provided
     tomogram_mask = None
     if ignore_tomogram_mask:
-        logging.warn("Ignoring tomogram mask")
+        logging.warning("Ignoring tomogram mask")
     elif tomogram_mask_path is not None:
         tomogram_mask = read_mrc(tomogram_mask_path)
     elif job.tomogram_mask is not None:
