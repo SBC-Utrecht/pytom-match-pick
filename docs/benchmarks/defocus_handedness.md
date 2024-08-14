@@ -1,3 +1,8 @@
+By Marten Chaillet ([@McHaillet](https://github.com/McHaillet)), August 2024. If you 
+found these 
+results useful, please cite our repository: 
+https://zenodo.org/records/12667665.
+
 Although it has been shown multiple times that correcting defocus gradients is very 
 important for subtomogram averaging in tilt-series data, the effects on particle 
 localization have not been investigated (to my knowledge). The software Warp 
@@ -6,42 +11,82 @@ splitting the tomogram into many small sub-boxes where the template can be corre
 by tilt-dependent defocus offsets 
 that adhere to the sample geometry. For an untilted image these 
 offsets are a function of the z-coordinate in the tomogram, while for tilted image the 
-gradient is a function of both the x- and z-coordinate in the tomogram (assuming the 
+defocus gradient is a function of both the x- and z-coordinate in the tomogram 
+(assuming the 
 tilt-axis is aligned with the y-axis). The defocus gradient are therefore expected 
 to be the strongest for the images collected a high sample tilts. Considering that the 
 resolution in tomograms is generally not considered to be high due to alignment errors 
 and that the high tilt angles usually have an additional drop-off in resolution due to 
 beam damage, I wondered how much effect defocus gradient correction actually has 
-on the template matching scores. To test I tried to measure the defocus handedness 
-of a tomogram in this benchmark.
+on the template matching scores. To test this in this benchmark, I here try to measure 
+the defocus 
+handedness of a tomogram.
 
 ## Approach
 
-To properly measure the defocus handedness, I selected a dataset of isolated 
-ribosomes in thin ice 
-(EMPIAR-10985). Isolated macromolecules provide the highest resolution, while _in situ_ 
-data would be more limited in resolution. I used an approach, similar to Warp, 
-that calculates the defocus offsets in each subvolume of a tomogram. To measure the 
-effects of defocus gradients, I 
-ran template matching assuming both a default and inverted defocus handedness of the 
-tilt-series. This inverted handedness comes down to 
-inverting the tilt angles during 
-calculation of the defocus offsets. Either one of these two handedness' should be 
-correct and hopefully influence the results sufficiently to see a difference. 
-
-<figure markdown="span">
 <figure markdown="span">
   ![annotations](defocus_handedness_figures/blik_view.png){ width="400" }
   <figcaption>Initial view of the data: annotations (turqoise sphere) made by 
 pytom-match-pick on tomogram 27 of EMPIAR-10985.</figcaption>
 </figure>
 
+To properly measure the defocus handedness, I selected a dataset of isolated 
+ribosomes in thin ice collected at a pixel size of 1.07 Å 
+(EMPIAR-10985; see figure above). Isolated macromolecules provide the highest 
+resolution (contrary
+to _in situ_ data). I used an approach, similar 
+to Warp, 
+that calculates the defocus offsets in each subvolume of a tomogram. To measure the 
+effects of correcting for defocus gradients, I 
+ran template matching assuming both a default and inverted defocus handedness of the 
+tilt-series. This inverted handedness comes down to 
+inverting the tilt angles during 
+calculation of the defocus offsets. Either one of these two handedness' should be 
+correct and hopefully influence the results sufficiently to see a difference. 
+
+The defocus offsets are calculated as
+
+```python
+z_offset = z_coordinate * cos(tilt_angle) + x_coordinate * sin(tilt_angle) 
+```
+
+where `z_coordinate` and `x_coordinate` are the center of the subvolume relative to 
+the center of the tomogram. A similar calculation could be applied for calculating 
+the defocus offsets of a subtomogram centered on a particle in the dataset. The 
+`z_offset` is then scaled to the correct units (μm).  
+
+I do not apply phase flipping to the tilt series prior (or during) reconstruction, 
+instead I modulate the template with oscillating CTF's that should match the CTF's 
+of each tilt image.
+
+The resolution of sampling defocus offsets is in this dataset primarily defined by the 
+number of subvolumes along the x-axis of the tomogram. As the ice layer is very thin,
+there will not be much variation along the z-axis. Therefore, I chose here to sample 
+3 subvolumes along the x-axis. More subvolumes should improve the model of the 
+defocus gradient, however, I assumed that this would be sufficient to measure a 
+difference 
+between regular and inverted defocus handedness. 
+
 ## Results
 
-To assess the effects of the defocus offsets, I analyzed the results as a 
-function of the x-coordinate. As this tomogram had a very thin ice 
-layer (~50nm), the defocus offsets are primarily influenced by the position in x and 
-the tilt angle. 
+To assess the effects of the defocus handedness on the template matching scores, I 
+analyzed the results as a function of the x-coordinate (see figure below). As the 
+scores are normalized by the standard deviation (σ) during the full template matching 
+search, it is of note that on average they are ~20 times σ. 
+
+Looking at the expected false alarm rate compared to the background, gives a
+better sense of the background separation. With a 
+tomogram of size 510x720x74 and 248,400 rotations (angular increment of 3.9°), the 
+full search space is 6,749,723,520,000. Calculating the σ cut-off of the background 
+for a false alarm rate of 1 with the inverse complementary error function, 
+
+```python
+erfcinv(2 / search_space) * sqrt(2)
+```
+
+results in a cut-off of 7.30 σ. This indicates the ribosomes correlate well 
+above the expected background noise, likely owing to the thin ice layer with isolated 
+macromolecules.
 
 <figure markdown="span">
   ![annotations](defocus_handedness_figures/x_vs_defocus.svg)
@@ -54,10 +99,41 @@ both sets of points. The gray areas indicate the 95% confidence interval of the 
 </figcaption>
 </figure>
 
-Right now, the inverted handedness seems to be the correct one. However, if the tilt-axis angle would have been set to 180 for AreTomo, the template would not need to be mirrored and the defocus handedness would also not have to be inverted. I decided not to rerun this analysis with that setting as the point here was to examine the effect of the regular/inverted defocus handedness.
+Looking at the effects of the defocus handedness, the scatter plot (left side 
+of figure) seems to display a very minor effect of the defocus handedness on the 
+normalized 
+LCC<sub>max</sub> scores (download or open in new tab to zoom in). Around the center 
+of the tomogram (x=0) the scattered points seems to overlap, which should be the 
+case as the central subvolume does not have defocus offsets. Only on the left and 
+right side of the plot, there appears a tiny increase in LCC<sub>max</sub> scores 
+for the inverted defocus handedness. To better assess the effect, I fitted a quadratic 
+function to both sets of 
+LCC<sub>max</sub> scores as a function of the x-coordinate (right side of figure). 
+This visualization makes it more easily discernible that there is an increase in 
+LCC<sub>max</sub> values on both the left and right side for the inverted defocus 
+handedness. (It is of note, that I had to adjust the y-axis limits on the right side 
+to visualize this effect.) It appears the inverted defocus handedness is correct for 
+this tilt-series. 
 
+Small side note: _The inverted handedness seems to be the correct one. However, if the 
+tilt-axis angle 
+were set to 180 for AreTomo, the template would not need to be mirrored 
+and (probably) neither the defocus handedness. I decided not to rerun 
+this analysis with that setting as the point was to discern the effect of 
+regular/inverted defocus handedness on the scores._
 
-If you found these results useful, please cite our repository: https://zenodo.org/records/12667665
+## Conclusion
+Overall, the effects of defocus gradient correction seem minor. I attempted to 
+measure the effect of defocus gradient correction by applying both a regular and 
+inverted defocus handedness to subvolumes of tomograms during template matching. The 
+tomogram used here has very high contrast due to a thin ice layer and isolated 
+ribosomes. The images were additionally recorded at a pixel size of 1.07 Å. Template 
+matching was performed at a voxel size of 8.56 Å, providing a maximal resolution of 
+1/(17.12) Å<sup>-1</sup> in the tomogram which is generally considered a small pixel 
+size for tomograms. As the effects of defocus handedness in this dataset 
+were already difficult to discern, I expect the contribution of defocus gradient 
+correction during template matching for _in situ_ datasets to be 
+negligible.
 
 ## How-to-reproduce
 
@@ -122,7 +198,7 @@ ctfplotter -input raw_data/9x9_ts_27_sort.mrc -angleFn metadata/9x9_ts_27_sort.r
 
 ### Creating a template and mask
 
-Prepare the template and mask. I downloaded the subtomogram average (EMD-33115) calculated for the EMPIAR dataset. NOTE: The reference is mirrored as I noticed in the first run without mirroring that the scores were unexpectedly poor. Mirroring fixes this issue.
+I downloaded the subtomogram average (EMD-33115) calculated for the EMPIAR dataset. NOTE: The reference is mirrored as I noticed in the first run without mirroring that the scores were unexpectedly poor. Mirroring fixes this issue.
 
 ```commandline
 pytom_create_template.py -i templates/emd_33115.map -o templates/70S.mrc --output-voxel 8.56 -b 60 --invert --mirror
