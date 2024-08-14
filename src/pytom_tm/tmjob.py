@@ -531,8 +531,8 @@ class TMJob:
         for key, value in d.items():
             if isinstance(value, pathlib.Path):
                 d[key] = str(value)
-        # hardcode tpe conversion
-        d["output_dtype"] = str(d["output_dtype"])
+        # wrangle dtype conversion
+        d["output_dtype"] = str(np.dtype(d["output_dtype"]))
         with open(file_name, "w") as fstream:
             json.dump(d, fstream, indent=4)
 
