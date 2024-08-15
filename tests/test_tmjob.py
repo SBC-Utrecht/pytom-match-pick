@@ -627,7 +627,7 @@ class TestTMJob(unittest.TestCase):
         )
         s, a = job.start_job(0, return_volumes=True)
         self.assertEqual(s.dtype, np.float16)
-        self.assertEqual(a.dtype, np.float16)
+        self.assertEqual(a.dtype, np.float32)
 
     def test_extraction(self):
         _ = self.job.start_job(0, return_volumes=True)

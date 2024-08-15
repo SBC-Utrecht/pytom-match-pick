@@ -302,7 +302,7 @@ class TMJob:
         rng_seed: int, default 321
             set a seed for the rng for phase randomization
         output_dtype: np.dtype, default np.float32
-            output dtype, options are np.float32 and np.float16
+            output score volume dtype, options are np.float32 and np.float16
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -751,7 +751,7 @@ class TMJob:
                     job.whole_start[1] : job.whole_start[1] + sub_scores.shape[1],
                     job.whole_start[2] : job.whole_start[2] + sub_scores.shape[2],
                 ] = sub_angles
-        return scores.astype(self.output_dtype), angles.astype(self.output_dtype)
+        return scores.astype(self.output_dtype), angles
 
     def start_job(
         self, gpu_id: int, return_volumes: bool = False
@@ -909,7 +909,7 @@ class TMJob:
 
         # cast to correct dtype
         score_volume = score_volume.astype(self.output_dtype)
-        angle_volume = angle_volume.astype(self.output_dtype)
+        angle_volume = angle_volume
 
         if return_volumes:
             return score_volume, angle_volume
