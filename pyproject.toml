@@ -39,7 +39,7 @@ dependencies = [
 
 [project.optional-dependencies]
 plotting = ["matplotlib", "seaborn"]
-dev = ["ruff", "pre-commit", "mkdocs", "mkdocs-material", "markdown-exec"]
+dev = ["ruff", "pre-commit", "mkdocs", "mkdocs-material", "markdown-exec", "mkdocs-glightbox"]
 all = ["pytom-match-pick[plotting]", "pytom-match-pick[dev]"]
 
 
