@@ -16,6 +16,8 @@
         <link rel="prev" href="../../Developers/">
       
       
+        <link rel="next" href="../../benchmarks/defocus_handedness/">
+      
       
       <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
@@ -56,7 +58,16 @@
     
     
     
-  </head>
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
   
   
     <body dir="ltr">
@@ -204,6 +215,24 @@
           
   
   Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../benchmarks/defocus_handedness/" class="md-tabs__link">
+          
+  
+  Benchmarks
 
         </a>
       </li>
@@ -668,6 +697,74 @@
   
   
   
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Benchmarks
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Benchmarks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../benchmarks/defocus_handedness/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Measuring defocus handedness in EMPIAR-10985
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions" class="md-nav__link">
         
@@ -904,7 +1001,7 @@
 </code></pre></div>
 <p>The <code>--voxel-size</code> is not really required for the mask, but in case you want to open the mask and template in ChimeraX (or napari) they are automatically scaled to the right size. If you have ChimeraX/napari/3dmod available its anyway a good idea to open the mask and template at this point to get a feel for the data. The mask should always be 1 in the center and 0 outside with a smooth fall-off. The template should have contrast matching your tomogram (i.e. black if the tomogram has black objects, and white vice versa).</p>
 <figure>
-  <img alt="template_and_mask" src="../images/0_template_mask.png" width="400" />
+  <a class="glightbox" href="../images/0_template_mask.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="template_and_mask" src="../images/0_template_mask.png" width="400" /></a>
   <figcaption>Template and mask slice</figcaption>
 </figure>
 <p>The large template and mask box sizes might seem surprising, but they are needed for proper weighting during template matching. Similar to large box size during downstream high-resolution averaging, the overhang here also provides better sampling of weighting functions in Fourier space. The larger size increases the number of sampling points for CTFs and tomographic point spread functions.</p>
@@ -929,7 +1026,7 @@
 <p><strong>Out of memory!</strong> Although unlikely to happen during the tutorial, in later usage of the software your GPUs might run out of memory. This is especially likely for 4x or lower binned tomograms. If this happens, you can use the <code>--split</code> option to tile the tomogram into multiple sections. You need to specify the number of splits along each dimension, for example <code>--split 2 1 1</code> will split into 2 sections along the x-axis, <code>--split 2 2 1</code> will split once in x and once in y, resulting in 4 subvolumes!</p>
 <p>To visualize the results it can be very informative to open the tomogram and score map side-by-side in Napari. Which should look like this:</p>
 <figure>
-  <img alt="part1_score_map" src="../images/1_tomo200528_100_slice69_comb.png" width="800" />
+  <a class="glightbox" href="../images/1_tomo200528_100_slice69_comb.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_score_map" src="../images/1_tomo200528_100_slice69_comb.png" width="800" /></a>
   <figcaption>Slice 69 of dataset/tomo200528_100.mrc and results_80S/tomo200528_100_scores.mrc (in Napari)</figcaption>
 </figure>
 <p>Then we calculate the receiver operator curve (ROC) to estimate true positives using:</p>
@@ -942,7 +1039,7 @@
 </code></pre></div>
 <p>This will automatically write a file to the folder where the job file is located (<code>tomo200528_100_roc.svg</code>). Additionally, here the terminal output is also written to the file <code>results_80S/tomo200528_100_roc.log</code> as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (<code>cat results_80S/tomo200528_100_roc.log</code>), the estimated number of total true positives is approx. 180 ribosomes.</p>
 <figure>
-  <img alt="part1_roc" src="../images/1_tomo200528_100_roc_80S.svg" width="800" />
+  <a class="glightbox" href="../images/1_tomo200528_100_roc_80S.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_100_roc_80S.svg" width="800" /></a>
   <figcaption>ROC curve (results_80S/tomo200528_100_roc.svg)</figcaption>
 </figure>
 <p>In this case the result is quite good: the Rectangle Under the Curve (RUC) is around 0.9 (1 is optimal). Also the fit of the gaussians seems very appropriate for the histogram, so we can use the estimated cut-off value (<code>0.194</code>) to extract particle coordinates and rotations into a STAR file: </p>
@@ -1006,7 +1103,7 @@ using the method introduced by STOPGAP.</p>
 </code></pre></div>
 <p>Again, the slice and score map can be visualized in Napari:</p>
 <figure>
-  <img alt="part2_score_map" src="../images/2_tomo200528_100_slice69_simple.png" width="800" />
+  <a class="glightbox" href="../images/2_tomo200528_100_slice69_simple.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part2_score_map" src="../images/2_tomo200528_100_slice69_simple.png" width="800" /></a>
   <figcaption>Slice 69 of dataset/tomo200528_100.mrc and results_60S/tomo200528_100_scores.mrc (in Napari)</figcaption>
 </figure>
 <p>Matching only with the 60S subunit greatly reduces the peak height at the actual ribosome locations. Instead gold markers now start correlating heavily with the template and get higher values than the particles of interest. The reason is two-fold: (1) the size of the template has become smaller and (2) the switch from an EM-map to a PDB based model usually reduces correlation. The second point (2) can be caused by the electrostatic potential modelling with the simplistic molmap, which does not consider atom number and solvent embedding, but also because EM-maps might contain some additional heterogeneous densities.</p>
@@ -1019,7 +1116,7 @@ using the method introduced by STOPGAP.</p>
 <span class="w"> </span>--crop-plot<span class="w">  </span>&gt;<span class="w"> </span>results_60S/tomo200528_100_roc.log
 </code></pre></div>
 <figure>
-  <img alt="part2_roc" src="../images/2_tomo200528_100_roc_simple.svg" width="800" />
+  <a class="glightbox" href="../images/2_tomo200528_100_roc_simple.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part2_roc" src="../images/2_tomo200528_100_roc_simple.svg" width="800" /></a>
   <figcaption>ROC curve (results_60S/tomo200528_100_roc.svg)</figcaption>
 </figure>
 <p>The loss of quality is mainly visible from the gaussian fit (left plot). Even though the reported quality is still quite good (RUC), it is clear that the curve fit is not proper. This is due to the three mixed distributions that now appear: the left-most correctly fitted background noise (blue curve), the middle peak is from 60S subunits and the right-most peak from gold markers. The particle of interest and gold markers are both fitted as true positives (orange curve).</p>
@@ -1099,5 +1196,7 @@ cryo-ET! If you ran into any issues during the tutorial please let us know on ou
         <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
       
     
-  </body>
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
 </html>

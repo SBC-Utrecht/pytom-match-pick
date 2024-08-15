@@ -56,7 +56,16 @@
     
     
     
-  </head>
+   <link href="assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="assets/javascripts/glightbox.min.js"></script></head>
   
   
     <body dir="ltr">
@@ -204,6 +213,24 @@
           
   
   Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="benchmarks/defocus_handedness/" class="md-tabs__link">
+          
+  
+  Benchmarks
 
         </a>
       </li>
@@ -651,6 +678,74 @@
   
   
   
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Benchmarks
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Benchmarks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="benchmarks/defocus_handedness/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Measuring defocus handedness in EMPIAR-10985
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions" class="md-nav__link">
         
@@ -819,7 +914,7 @@
 <h1 id="pytom-match-pick">pytom-match-pick</h1>
 <p>GPU-accelerated template matching for cryo-electron tomography, originally developed in <a href="https://github.com/SBC-Utrecht/PyTom">PyTom</a>, as a standalone Python package that is run from the command line. </p>
 <p>This software is developed by Marten L. Chaillet (<a href="https://github.com/McHaillet">@McHaillet</a>) and Sander Roet (<a href="https://github.com/sroet">@sroet</a>) in the group of Friedrich Förster at Utrecht University.</p>
-<p><img alt="cover_image" src="images/tomo200528_100_illustration.png" /></p>
+<p><a class="glightbox" href="images/tomo200528_100_illustration.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="cover_image" src="images/tomo200528_100_illustration.png" /></a></p>
 <h2 id="requires">Requires</h2>
 <div class="highlight"><pre><span></span><code>miniconda3
 nvidia-cuda-toolkit
@@ -973,5 +1068,7 @@ This ends the block for the website
         <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
       
     
-  </body>
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
 </html>

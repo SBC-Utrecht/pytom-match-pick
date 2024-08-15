@@ -58,7 +58,16 @@
     
     
     
-  </head>
+   <link href="../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../assets/javascripts/glightbox.min.js"></script></head>
   
   
     <body dir="ltr">
@@ -206,6 +215,24 @@
           
   
   Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../benchmarks/defocus_handedness/" class="md-tabs__link">
+          
+  
+  Benchmarks
 
         </a>
       </li>
@@ -751,6 +778,74 @@
   
   
   
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Benchmarks
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Benchmarks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/defocus_handedness/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Measuring defocus handedness in EMPIAR-10985
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions" class="md-nav__link">
         
@@ -1180,6 +1275,7 @@ never seemed to clearly improve results.</p>
                                [--spherical-aberration SPHERICAL_ABERRATION]
                                [--voltage VOLTAGE] [--phase-shift PHASE_SHIFT]
                                [--tomogram-ctf-model {phase-flip}]
+                               [--defocus-handedness {-1,0,1}]
                                [--spectral-whitening SPECTRAL_WHITENING]
                                [-r RANDOM_PHASE_CORRECTION]
                                [--rng-seed RNG_SEED] -g GPU_IDS [GPU_IDS ...]
@@ -1320,6 +1416,20 @@ Filter control:
                         tomogram. Option &#39;phase-flip&#39; : appropriate for IMOD&#39;s
                         strip-based phase flipping or reconstructions
                         generated with novaCTF/3dctf.
+  --defocus-handedness {-1,0,1}
+                        Specify the defocus handedness for defocus gradient
+                        correction of the CTF in each subvolumes. The more
+                        subvolumes in x and z, the finer the defocus gradient
+                        will be corrected, at the cost of increased computing
+                        time. It will only have effect for very clean and
+                        high-resolution data, such as isolated macromolecules.
+                        IMPORTANT: only works in combination with --volume-
+                        split ! A value of 0 means no defocus gradient
+                        correction (default), 1 means correction assuming
+                        correct handedness (as specified in Pyle and Zianetti
+                        (2021)), -1 means the handedness will be inverted. If
+                        uncertain better to leave off as an inverted
+                        correction might hamper results.
   --spectral-whitening SPECTRAL_WHITENING
                         Calculate a whitening filtering from the power
                         spectrum of the tomogram; apply it to the tomogram
@@ -1561,5 +1671,7 @@ options:
         <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
       
     
-  </body>
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
 </html>

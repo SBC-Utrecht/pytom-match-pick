@@ -1,0 +1,1227 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="Marten Chaillet">
+      
+      
+        <link rel="canonical" href="https://SBC-Utrecht.github.io/pytom-match-pick/benchmarks/defocus_handedness/">
+      
+      
+        <link rel="prev" href="../../tutorials/Tutorial/">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
+    
+    
+      
+        <title>Measuring defocus handedness in EMPIAR-10985 - pytom-match-pick</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.3cba04c6.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#approach" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="pytom-match-pick" class="md-header__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
+      
+  <img src="../../images/60S_masked.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pytom-match-pick
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Measuring defocus handedness in EMPIAR-10985
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SBC-Utrecht/pytom-match-pick" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pytom-match-pick
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/Tutorial/" class="md-tabs__link">
+          
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  Benchmarks
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions" class="md-tabs__link">
+        
+  
+    
+  
+  Discussions
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/issues" class="md-tabs__link">
+        
+  
+    
+  
+  Report a bug
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="pytom-match-pick" class="md-nav__button md-logo" aria-label="pytom-match-pick" data-md-component="logo">
+      
+  <img src="../../images/60S_masked.png" alt="logo">
+
+    </a>
+    pytom-match-pick
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pytom-match-pick
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Home
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Usage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Timings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Frequently-asked-questions-%28FAQ%29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    FAQ
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Developers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    For developers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/Tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ribosomes on ER microsomes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Benchmarks
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Benchmarks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Measuring defocus handedness in EMPIAR-10985
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Measuring defocus handedness in EMPIAR-10985
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Approach
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Results
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-reproduce" class="md-nav__link">
+    <span class="md-ellipsis">
+      How-to-reproduce
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How-to-reproduce">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-of-defocus-gradient" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation of defocus gradient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tilt-series-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tilt series preprocessing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-template-and-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating a template and mask
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-template-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running template matching
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotting-the-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plotting the results
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-visualization-with-blik" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Visualization (with Blik)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/discussions" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Discussions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/SBC-Utrecht/pytom-match-pick/issues" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Report a bug
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Approach
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Results
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-reproduce" class="md-nav__link">
+    <span class="md-ellipsis">
+      How-to-reproduce
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How-to-reproduce">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-of-defocus-gradient" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation of defocus gradient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tilt-series-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tilt series preprocessing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-template-and-mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating a template and mask
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-template-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running template matching
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotting-the-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plotting the results
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-visualization-with-blik" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Visualization (with Blik)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Measuring defocus handedness in EMPIAR-10985</h1>
+
+<p>By Marten Chaillet (<a href="https://github.com/McHaillet">@McHaillet</a>), August 2024. If you 
+found these 
+results useful, please cite our zenodo repository: 
+<a href="https://doi.org/10.5281/zenodo.10728422">10.5281/zenodo.10728422</a>.</p>
+<p>Although it has been shown multiple times that correcting defocus gradients is very 
+important for subtomogram averaging in tilt-series data, the effects on particle 
+localization have not been clearly illustrated (to my knowledge). The software Warp 
+introduced a detailed correction of defocus gradients during template matching by 
+splitting the tomogram into many small sub-boxes where the template can be corrected 
+by tilt-dependent defocus offsets 
+that adhere to the sample geometry. For an untilted image these 
+offsets are a function of the z-coordinate in the tomogram, while for tilted image the 
+defocus gradient is a function of both the x- and z-coordinate in the tomogram 
+(assuming the 
+tilt-axis is aligned with the y-axis). The defocus gradient are therefore expected 
+to be the strongest for the images collected a high sample tilts. Considering that the 
+resolution in tomograms is generally not considered to be high due to alignment errors 
+and that the high tilt angles usually have an additional drop-off in resolution due to 
+beam damage, I wondered how much effect defocus gradient correction actually has 
+on the template matching scores. To test this in this benchmark, I here try to measure 
+the defocus 
+handedness of a tomogram.</p>
+<h2 id="approach">Approach</h2>
+<figure>
+  <a class="glightbox" href="../defocus_handedness_figures/blik_view.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="annotations" src="../defocus_handedness_figures/blik_view.png" width="400" /></a>
+  <figcaption>Initial view of the data: annotations (turqoise sphere) made by 
+pytom-match-pick on tomogram 27 of EMPIAR-10985.</figcaption>
+</figure>
+<p>To properly measure the defocus handedness, I selected a dataset of isolated 
+ribosomes in thin ice collected at a pixel size of 1.07 Å 
+(<a href="https://www.ebi.ac.uk/empiar/EMPIAR-10985/">EMPIAR-10985</a>; see figure above). Isolated macromolecules provide the highest 
+resolution (contrary
+to <em>in situ</em> data). I used an approach, similar 
+to Warp, 
+that calculates the defocus offsets in each subvolume of a tomogram. To measure the 
+effects of correcting for defocus gradients, I 
+ran template matching assuming both a default and inverted defocus handedness of the 
+tilt-series. This inverted handedness comes down to 
+inverting the tilt angles during 
+calculation of the defocus offsets. Either one of these two handedness' should be 
+correct and hopefully influence the results sufficiently to see a difference. </p>
+<p>The defocus offsets are calculated as</p>
+<div class="highlight"><pre><span></span><code><span class="n">z_offset</span> <span class="o">=</span> <span class="n">z_coordinate</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">tilt_angle</span><span class="p">)</span> <span class="o">+</span> <span class="n">x_coordinate</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">tilt_angle</span><span class="p">)</span> 
+</code></pre></div>
+<p>where <code>z_coordinate</code> and <code>x_coordinate</code> are the center of the subvolume relative to 
+the center of the tomogram. A similar calculation could be applied for calculating 
+the defocus offsets of a subtomogram centered on a particle in the dataset. The 
+<code>z_offset</code> is then scaled to the correct units (μm).  </p>
+<p>I do not apply phase flipping to the tilt series prior (or during) reconstruction, 
+instead I modulate the template with oscillating CTF's that should match the CTF's 
+of each tilt image.</p>
+<p>The resolution of sampling defocus offsets is in this dataset primarily defined by the 
+number of subvolumes along the x-axis of the tomogram. As the ice layer is very thin,
+there will not be much variation along the z-axis. Therefore, I chose here to sample 
+3 subvolumes along the x-axis. More subvolumes should improve the model of the 
+defocus gradient, however, I assumed that this would be sufficient to measure a 
+difference 
+between regular and inverted defocus handedness. </p>
+<h2 id="results">Results</h2>
+<p>To assess the effects of the defocus handedness on the template matching scores, I 
+analyzed the results as a function of the x-coordinate (see figure below). As the 
+scores are normalized by the standard deviation (σ) during the full template matching 
+search, it is of note that on average they are ~20 times σ. </p>
+<p>Looking at the expected false alarm rate compared to the background, gives a
+better sense of the background separation. With a 
+tomogram of size 510x720x74 and 248,400 rotations (angular increment of 3.9°), the 
+full search space is 6,749,723,520,000. Calculating the σ cut-off of the background 
+for a false alarm rate of 1 with the inverse complementary error function, </p>
+<div class="highlight"><pre><span></span><code><span class="n">erfcinv</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">search_space</span><span class="p">)</span> <span class="o">*</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<p>results in a cut-off of 7.30 σ. This indicates the ribosomes correlate well 
+above the expected background noise, likely owing to the thin ice layer with isolated 
+macromolecules.</p>
+<figure>
+  <a class="glightbox" href="../defocus_handedness_figures/x_vs_defocus.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="annotations" src="../defocus_handedness_figures/x_vs_defocus.svg" /></a>
+  <figcaption>LCC<sub>max</sub> scores (normalized by the standard deviation from 
+template matching) plotted as a function 
+of the x-coordinate. In blue the results are shown that assumes the default defocus 
+handedness, while orange shows the results of inverted defocus handedness. The left 
+figure shows a scatter plot, while the right shows fitted quadratic functions to 
+both sets of points. The gray areas indicate the 95% confidence interval of the fit.  
+</figcaption>
+</figure>
+<p>Looking at the effects of the defocus handedness, the scatter plot (left side 
+of figure) seems to display a very minor effect of the defocus handedness on the 
+normalized 
+LCC<sub>max</sub> scores (download or open in new tab to zoom in). Around the center 
+of the tomogram (x=0) the scattered points seems to overlap, which should be the 
+case as the central subvolume does not have defocus offsets. Only on the left and 
+right side of the plot, there appears a tiny increase in LCC<sub>max</sub> scores 
+for the inverted defocus handedness. To better assess the effect, I fitted a quadratic 
+function to both sets of 
+LCC<sub>max</sub> scores as a function of the x-coordinate (right side of figure). 
+This visualization makes it more easily discernible that there is an increase in 
+LCC<sub>max</sub> values on both the left and right side for the inverted defocus 
+handedness. (It is of note, that I had to adjust the y-axis limits on the right side 
+to visualize this effect.) It appears the inverted defocus handedness is correct for 
+this tilt-series. </p>
+<p>Small side note: <em>The inverted handedness seems to be the correct one. However, if the 
+tilt-axis angle 
+were set to 180 for AreTomo, the template would not need to be mirrored 
+and (probably) neither the defocus handedness. I decided not to rerun 
+this analysis with that setting as the point was to discern the effect of 
+regular/inverted defocus handedness on the scores.</em></p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Overall, the effects of defocus gradient correction seem minor. I attempted to 
+measure the effect of defocus gradient correction by applying both a regular and 
+inverted defocus handedness to subvolumes of tomograms during template matching. The 
+tomogram used here has very high contrast due to a thin ice layer and isolated 
+ribosomes. The images were additionally recorded at a pixel size of 1.07 Å. Template 
+matching was performed at a voxel size of 8.56 Å, providing a maximal resolution of 
+1/(17.12) Å<sup>-1</sup> in the tomogram which is generally considered a small pixel 
+size for tomograms. As the effects of defocus handedness in this dataset 
+were already difficult to discern, I expect the contribution of defocus gradient 
+correction during template matching for <em>in situ</em> datasets to be 
+negligible.</p>
+<h2 id="how-to-reproduce">How-to-reproduce</h2>
+<h3 id="requirements">Requirements</h3>
+<ul>
+<li>AreTomo 1.3 </li>
+<li>IMOD 4.11.24</li>
+<li>pytom-match-pick 0.7.2 (and should work with higher versions)</li>
+</ul>
+<h3 id="implementation-of-defocus-gradient">Implementation of defocus gradient</h3>
+<p>An implementation for the defocus gradient calculation is available in our 
+repository in <code>src/pytom_tm/TMJob.py</code>, see function 
+<code>get_defocus_offsets()</code>. </p>
+<h3 id="tilt-series-preprocessing">Tilt series preprocessing</h3>
+<p>Download tilt-series 27 from <a href="https://doi.org/10.6019/EMPIAR-10985">EMPIAR-10985</a>:</p>
+<ul>
+<li>9x9_ts_27_sort.mrc</li>
+<li>9x9_ts_27_sort.mrc.mdoc</li>
+<li>9x9_ts_27_sort_dose.txt</li>
+</ul>
+<p>I put the data in the following directory structure:</p>
+<div class="highlight"><pre><span></span><code>empiar-10985/
++- raw_data/
+¦  +- 9x9_ts_27_sort.mrc
+¦  +- 9x9_ts_27_sort.mrc.mdoc
+¦  +- 9x9_ts_27_sort_dose.txt
++- templates/
++- metadata/
++- tomogram/
++- tm_init/
++- tm_patch_def_reg/
++- tm_patch_def_inv/
+</code></pre></div>
+<p>Create a file with accumulated dose and a rawtlt file:</p>
+<div class="highlight"><pre><span></span><code>grep &#39;^TiltAngle&#39; raw_data/9x9_ts_27_sort.mrc.mdoc | awk -F&#39;=&#39; &#39;{print $2}&#39; &gt; metadata/9x9_ts_27_sort.rawtlt
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>awk &#39;{print $1}&#39; raw_data/9x9_ts_27_sort_dose.txt &gt; metadata/9x9_ts_27_sort_accumulated_dose.txt
+</code></pre></div>
+<p>Use AreTomo (1.3) to align and reconstruct the tilt-series. The .mdoc file does not specify a tilt-axis angle, so I let AreTomo find it.</p>
+<div class="highlight"><pre><span></span><code>aretomo -InMrc raw_data/9x9_ts_27_sort.mrc -OutMrc tomogram/9x9_ts_27.mrc -AngFile metadata/9x9_ts_27_sort.rawtlt -AlignZ 400 -VolZ 600 -OutBin 8  -Gpu 0  -Wbp 1 -FlipVol 1
+</code></pre></div>
+<p>Fit ctf with IMOD; in the GUI select <code>fit each view separately</code> and then <code>autofit all 
+views</code>. Tilt-axis angle is set to '-3.2323' as optimized by AreTomo (check the .aln file).</p>
+<div class="highlight"><pre><span></span><code>ctfplotter -input raw_data/9x9_ts_27_sort.mrc -angleFn metadata/9x9_ts_27_sort.rawtlt -aAngle -3.2323 -defFn metadata/9x9_ts_27_sort.defocus -pixelSize 0.107 -volt 300 -cs 2.7  -expDef 3000 -range -60,60
+</code></pre></div>
+<h3 id="creating-a-template-and-mask">Creating a template and mask</h3>
+<p>I downloaded the subtomogram average <a href="https://www.ebi.ac.uk/emdb/EMD-33115">EMD-33115</a> calculated for the EMPIAR dataset. NOTE: The reference is mirrored as I noticed in the first run without mirroring that the scores were unexpectedly poor. Mirroring fixes this issue.</p>
+<div class="highlight"><pre><span></span><code>pytom_create_template.py -i templates/emd_33115.map -o templates/70S.mrc --output-voxel 8.56 -b 60 --invert --mirror
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>pytom_create_mask.py -b 60 -o templates/mask.mrc --voxel-size 8.56 -r 14 -s 1
+</code></pre></div>
+<h3 id="running-template-matching">Running template matching</h3>
+<p>(Optional) Run a simple job with low-pass to confirm if localization is working. Low-pass filtering reduces available resolution and therefore the angular search.</p>
+<div class="highlight"><pre><span></span><code>pytom_match_template.py -t templates/70S.mrc -m templates/mask.mrc -v tomogram/9x9_ts_27.mrc -d tm_init --particle-diameter 250 -a metadata/9x9_ts_27_sort.rawtlt --per-tilt-weighting --voxel-size 8.56 --dose metadata/9x9_ts_27_sort_accumulated_dose.txt --defocus metadata/9x9_ts_27_sort.defocus  --amplitude 0.07 --spherical 2.7 --voltage 300 -g 0 --log debug --low-pass 30
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py -j tm_init/9x9_ts_27_job.json -n 1000 -r 5 --cut-off 0.4
+</code></pre></div>
+<p>Run with default defocus handedness and a full rotation search. NOTE: defocus 
+handedness is calculated for subvolumes so 
+the <code>-s</code> option needs to be used to split the tomogram into multiple subvolumes. Only the splits along the x-axis influence the defocus values in this case as that is perpendicular to the tilt axis.</p>
+<div class="highlight"><pre><span></span><code>pytom_match_template.py -t templates/70S.mrc -m templates/mask.mrc -v tomogram/9x9_ts_27.mrc -d tm_patch_def_reg --particle-diameter 250 -a metadata/9x9_ts_27_sort.rawtlt --per-tilt-weighting --voxel-size 8.56 --dose metadata/9x9_ts_27_sort_accumulated_dose.txt --defocus metadata/9x9_ts_27_sort.defocus  --amplitude 0.07 --spherical 2.7 --voltage 300 -g 0 -s 3 1 1 --defocus-handedness 1
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py -j tm_patch_def_reg/9x9_ts_27_job.json -n 1000 -r 5 --cut-off 0.3
+</code></pre></div>
+<p>Run with inverted defocus handedness.</p>
+<div class="highlight"><pre><span></span><code>pytom_match_template.py -t templates/70S.mrc -m templates/mask.mrc -v tomogram/9x9_ts_27.mrc -d tm_patch_def_inv --particle-diameter 250 -a metadata/9x9_ts_27_sort.rawtlt --per-tilt-weighting --voxel-size 8.56 --dose metadata/9x9_ts_27_sort_accumulated_dose.txt --defocus metadata/9x9_ts_27_sort.defocus  --amplitude 0.07 --spherical 2.7 --voltage 300 -g 0 -s 3 1 1 --defocus-handedness -1
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py -j tm_patch_def_inv/9x9_ts_27_job.json -n 1000 -r 5 --cut-off 0.3
+</code></pre></div>
+<h3 id="plotting-the-results">Plotting the results</h3>
+<p>Our repository contains the file<br />
+docs/benchmarks/defocus_gradient_analysis.ipynb that contains the exact code to 
+reproduce the plots shown here. In brief:</p>
+<ul>
+<li>The notebook reads the starfiles containing the regular and inverted defocus 
+  handedness template matching annotations.</li>
+<li>A check is made that the set of coordinates overlaps between the two jobs is the same.</li>
+<li>The results are plotted as x-coordinate versus the score (after normalizing by the 
+  standard deviation).</li>
+<li>A quadratic curve is fit to both these sets of points to better visualize any 
+  changes between them.</li>
+</ul>
+<h3 id="optional-visualization-with-blik">(Optional) Visualization (with Blik)</h3>
+<p>Using Blik version 0.9.</p>
+<div class="highlight"><pre><span></span><code>napari -w blik -- tm_patch_def_inv/9x9_ts_27_particles.star tomogram/9x9_ts_27.mrc
+</code></pre></div>
+<p>Then do the following steps:</p>
+<ul>
+<li>Set the <code>Slice thickness A</code> on the right to 40</li>
+<li>From the <code>Experiment</code> dropdown menu on the right select the tomogram</li>
+<li>Click in the center</li>
+<li>Then do <code>Ctrl + Y</code> to toggle 3D view</li>
+<li>Select the points layer (ends with <code>- particle positions</code>)</li>
+<li>In layer controls select the icon <code>Select points</code> </li>
+<li>Do <code>Ctrl + A</code> and then set the <code>Point size</code> to 10</li>
+<li>Click in the center (not on a point) to deselect the points</li>
+<li>Press <code>Ctrl + Y</code> again to switch back to 2D view</li>
+</ul>
+<p>Now you can scroll through the z-axis of the tomogram and the template matching 
+annotations with the slider on the bottom.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024 Marten L. Chaillet
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.expand", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.fe8b6f2b.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
+    
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
+</html>
