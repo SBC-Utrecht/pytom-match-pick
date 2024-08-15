@@ -1278,6 +1278,7 @@ never seemed to clearly improve results.</p>
                                [--defocus-handedness {-1,0,1}]
                                [--spectral-whitening SPECTRAL_WHITENING]
                                [-r RANDOM_PHASE_CORRECTION]
+                               [--half-precision HALF_PRECISION]
                                [--rng-seed RNG_SEED] -g GPU_IDS [GPU_IDS ...]
                                [--log LOG]
 
@@ -1444,6 +1445,9 @@ Additional options:
                         &#39;noise&#39; map from the final score map. For this method
                         please see STOPGAP as a reference:
                         https://doi.org/10.1107/S205979832400295X .
+  --half-precision HALF_PRECISION
+                        Return and save all output in float16 instead of the
+                        default float32
   --rng-seed RNG_SEED   Specify a seed for the random number generator used
                         for phase randomization for consistent results!
 
