@@ -743,7 +743,7 @@ class TMJob:
         if len(self.sub_jobs) == 0:
             # read the volumes, remove them and return them
             score_file, angle_file = (
-                self.output_dir.joinpath(f"{self.tomo_id}_scores_{self.job_key}.mrc"),ands will be answered during the test with 
+                self.output_dir.joinpath(f"{self.tomo_id}_scores_{self.job_key}.mrc"),
                 self.output_dir.joinpath(f"{self.tomo_id}_angles_{self.job_key}.mrc"),
             )
             result = (read_mrc(score_file), read_mrc(angle_file))
