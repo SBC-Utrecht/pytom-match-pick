@@ -5,7 +5,7 @@ results useful, please cite our zenodo repository:
 
 Although it has been shown multiple times that correcting defocus gradients is very 
 important for subtomogram averaging in tilt-series data, the effects on particle 
-localization have not been investigated (to my knowledge). The software Warp 
+localization have not been clearly illustrated (to my knowledge). The software Warp 
 introduced a detailed correction of defocus gradients during template matching by 
 splitting the tomogram into many small sub-boxes where the template can be corrected 
 by tilt-dependent defocus offsets 
@@ -221,7 +221,7 @@ pytom_extract_candidates.py -j tm_init/9x9_ts_27_job.json -n 1000 -r 5 --cut-off
 
 Run with default defocus handedness and a full rotation search. NOTE: defocus 
 handedness is calculated for subvolumes so 
-the `-s` option needs to be used to split the tomogram into multiple subvolumes. Only the splits along the x-axis influence the defocus values in this case as that is perpendicular to the tilt axis. (i.e. `-s 3 1 1` should produce the same results.).
+the `-s` option needs to be used to split the tomogram into multiple subvolumes. Only the splits along the x-axis influence the defocus values in this case as that is perpendicular to the tilt axis.
 
 ```commandline
 pytom_match_template.py -t templates/70S.mrc -m templates/mask.mrc -v tomogram/9x9_ts_27.mrc -d tm_patch_def_reg --particle-diameter 250 -a metadata/9x9_ts_27_sort.rawtlt --per-tilt-weighting --voxel-size 8.56 --dose metadata/9x9_ts_27_sort_accumulated_dose.txt --defocus metadata/9x9_ts_27_sort.defocus  --amplitude 0.07 --spherical 2.7 --voltage 300 -g 0 -s 3 1 1 --defocus-handedness 1
