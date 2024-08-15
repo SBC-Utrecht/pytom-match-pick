@@ -78,6 +78,7 @@ def load_json_to_tmjob(
         particle_diameter=data.get("particle_diameter", None),
         random_phase_correction=data.get("random_phase_correction", False),
         rng_seed=data.get("rng_seed", 321),
+        defocus_handedness=data.get("defocus_handedness", 0),
         output_dtype=output_dtype,
     )
     # if the file originates from an old version set the phase shift for compatibility
@@ -95,6 +96,54 @@ def load_json_to_tmjob(
     job.steps_slice = data["steps_slice"]
     job.job_stats = data["job_stats"]
     return job
+
+
+def get_defocus_offsets(
+    patch_center_x: float,
+    patch_center_z: float,
+    tilt_angles: list[float, ...],
+    angles_in_degrees: bool = True,
+    invert_handedness: bool = False,
+) -> npt.NDArray[float]:
+    """Calculate the defocus offsets for a subvolume
+    based on the tilt geometry.
+
+    I used the definition from Pyle & Zianetti (https://doi.org/10.1042/BCJ20200715)
+    for the default setting of the defocus handedness. It assumes the defocus
+    increases for positive tilt angles on the right side of the sample (positive X
+    coordinate relative to the center).
+
+    The offset is calculated as follows:
+        z_offset = z_center * np.cos(tilt_angle) + x_center * np.sin(tilt_angle)
+
+    Parameters
+    ----------
+    patch_center_x: float
+        x center of subvolume relative to tomogram center
+    patch_center_z: float
+        z center of subvolume relative to tomogram center
+    tilt_angles: list[float, ...]
+        list of tilt angles
+    angles_in_degrees: bool, default True
+        whether tilt angles are in degrees or radians
+    invert_handedness: bool, default False
+        invert defocus handedness geometry
+
+    Returns
+    -------
+    z_offsets: npt.NDArray[float]
+        an array of defocus offsets for each tilt angle
+    """
+    n_tilts = len(tilt_angles)
+    x_centers = np.full(n_tilts, patch_center_x)
+    z_centers = np.full(n_tilts, patch_center_z)
+    ta_array = np.array(tilt_angles)
+    if angles_in_degrees:
+        ta_array = np.deg2rad(ta_array)
+    if invert_handedness:
+        ta_array *= -1
+    z_offsets = z_centers * np.cos(ta_array) + x_centers * np.sin(ta_array)
+    return z_offsets
 
 
 def _determine_1D_fft_splits(
@@ -235,6 +284,7 @@ class TMJob:
         particle_diameter: Optional[float] = None,
         random_phase_correction: bool = False,
         rng_seed: int = 321,
+        defocus_handedness: int = 0,
         output_dtype: np.dtype = np.float32,
     ):
         """
@@ -301,6 +351,11 @@ class TMJob:
             scores for noise
         rng_seed: int, default 321
             set a seed for the rng for phase randomization
+        defocus_handedness: int, default 0
+            specify a defocus handedness:
+            -1 = inverted
+             0 = don't correct offsets (preferred if unknown)
+             1 = regular (as in Pyle & Zianetti (2021))
         output_dtype: np.dtype, default np.float32
             output score volume dtype, options are np.float32 and np.float16
         """
@@ -427,16 +482,16 @@ class TMJob:
             else:
                 angle_increment = 7.0
         self.rotation_file = angle_increment
-        if job_loaded_for_extraction:
-            log_level = "DEBUG"
-        else:
-            log_level = "INFO"
         try:
             angle_list = get_angle_list(
                 angle_increment,
                 sort_angles=False,
                 symmetry=rotational_symmetry,
-                log_level=log_level,
+                # This log_level is different from self.log_level that is
+                # assigned later. The TMJob.log_level refers to the user provided
+                # logging setting, while the log_level here is to control the output
+                # of the job during candidate extraction/template matching.
+                log_level=logging.DEBUG if job_loaded_for_extraction else logging.INFO,
             )
         except ValueError:
             raise TMJobError("Invalid angular search provided.")
@@ -453,6 +508,7 @@ class TMJob:
         # set dose and ctf
         self.dose_accumulation = dose_accumulation
         self.ctf_data = ctf_data
+        self.defocus_handedness = defocus_handedness
         self.whiten_spectrum = whiten_spectrum
         self.whitening_filter = self.output_dir.joinpath(
             f"{self.tomo_id}_whitening_filter.npy"
@@ -687,7 +743,7 @@ class TMJob:
         if len(self.sub_jobs) == 0:
             # read the volumes, remove them and return them
             score_file, angle_file = (
-                self.output_dir.joinpath(f"{self.tomo_id}_scores_{self.job_key}.mrc"),
+                self.output_dir.joinpath(f"{self.tomo_id}_scores_{self.job_key}.mrc"),ands will be answered during the test with 
                 self.output_dir.joinpath(f"{self.tomo_id}_angles_{self.job_key}.mrc"),
             )
             result = (read_mrc(score_file), read_mrc(angle_file))
@@ -797,8 +853,6 @@ class TMJob:
 
         # load template and mask
         template, mask = (read_mrc(self.template), read_mrc(self.mask))
-        # apply mask directly to prevent any wedge convolution with weird edges
-        template *= mask
 
         # init tomogram and template weighting
         tomo_filter, template_wedge = 1, 1
@@ -822,8 +876,35 @@ class TMJob:
 
         # if tilt angles are provided we can create wedge filters
         if self.tilt_angles is not None:
-            # for the tomogram a binary wedge is generated to explicitly set the
-            # missing wedge region to 0
+            if self.tilt_weighting and self.defocus_handedness != 0:
+                # adjust ctf parameters for this specific patch in the tomogram
+                full_tomo_center = np.array(self.tomo_shape) / 2
+                patch_center = (
+                    np.array(self.search_origin) + np.array(self.search_size) / 2
+                )
+                relative_patch_center_angstrom = (
+                    patch_center - full_tomo_center
+                ) * self.voxel_size
+                defocus_offsets = get_defocus_offsets(
+                    relative_patch_center_angstrom[0],  # x-coordinate
+                    relative_patch_center_angstrom[2],  # z-coordinate
+                    self.tilt_angles,
+                    angles_in_degrees=True,
+                    invert_handedness=self.defocus_handedness < 0,
+                )
+                for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
+                    ctf["defocus"] = ctf["defocus"] + defocus_shift * 1e-10
+                logging.debug(
+                    "Patch center (nr. of voxels): "
+                    f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
+                )
+                logging.debug(
+                    "Defocus values (um): "
+                    f"{[round(ctf['defocus'] * 1e6, 2) for ctf in self.ctf_data]}",
+                )
+
+            # for the tomogram a binary wedge is generated to explicitly set the missing
+            # wedge region to 0
             tomo_filter *= create_wedge(
                 search_volume.shape,
                 self.tilt_angles,

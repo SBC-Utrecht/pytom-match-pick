@@ -97,7 +97,7 @@ def get_angle_list(
     angle: Union[pathlib.Path, float],
     sort_angles: bool = True,
     symmetry: int = 1,
-    log_level: str = "DEBUG",
+    log_level: int = logging.DEBUG,
 ):
     """Either get an angular search file from disk or generate one from a float
 
@@ -113,7 +113,7 @@ def get_angle_list(
         then X, then Z2
     symmetry: int, default 1
         the returned list will only have Z2 angles [0, (2*pi/symmetry))
-    log_level: str, default 'DEBUG'
+    log_level: int, default logging.DEBUG
         the log level to use when generating logs
 
     Returns
@@ -122,7 +122,6 @@ def get_angle_list(
         a list where each element is a tuple of 3 floats containing an anti-clockwise
         ZXZ Euler rotation in radians
     """
-    log_level = logging.getLevelNamesMapping()[log_level]
     out = None
     max_z2 = 2 * np.pi / symmetry
     try:

@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install mkdocs mkdocs-material markdown-exec
+          pip install mkdocs mkdocs-material markdown-exec mkdocs-glightbox
 
       # Build the book
       - name: Build the book
