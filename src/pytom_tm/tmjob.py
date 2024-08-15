@@ -44,6 +44,10 @@ def load_json_to_tmjob(
     with open(file_name, "r") as fstream:
         data = json.load(fstream)
 
+    # wrangle dtypes
+    output_dtype = data.get("output_dtype", "float32")
+    output_dtype = np.dtype(output_dtype)
+
     job = TMJob(
         data["job_key"],
         data["log_level"],
@@ -75,6 +79,7 @@ def load_json_to_tmjob(
         random_phase_correction=data.get("random_phase_correction", False),
         rng_seed=data.get("rng_seed", 321),
         defocus_handedness=data.get("defocus_handedness", 0),
+        output_dtype=output_dtype,
     )
     # if the file originates from an old version set the phase shift for compatibility
     if (
@@ -280,6 +285,7 @@ class TMJob:
         random_phase_correction: bool = False,
         rng_seed: int = 321,
         defocus_handedness: int = 0,
+        output_dtype: np.dtype = np.float32,
     ):
         """
         Parameters
@@ -350,6 +356,8 @@ class TMJob:
             -1 = inverted
              0 = don't correct offsets (preferred if unknown)
              1 = regular (as in Pyle & Zianetti (2021))
+        output_dtype: np.dtype, default np.float32
+            output score volume dtype, options are np.float32 and np.float16
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -539,6 +547,9 @@ class TMJob:
         # version number of the job
         self.pytom_tm_version_number = pytom_tm_version_number
 
+        # output dtype
+        self.output_dtype = output_dtype
+
     def copy(self) -> TMJob:
         """Create a copy of the TMJob
 
@@ -576,6 +587,8 @@ class TMJob:
         for key, value in d.items():
             if isinstance(value, pathlib.Path):
                 d[key] = str(value)
+        # wrangle dtype conversion
+        d["output_dtype"] = str(np.dtype(d["output_dtype"]))
         with open(file_name, "w") as fstream:
             json.dump(d, fstream, indent=4)
 
@@ -794,7 +807,7 @@ class TMJob:
                     job.whole_start[1] : job.whole_start[1] + sub_scores.shape[1],
                     job.whole_start[2] : job.whole_start[2] + sub_scores.shape[2],
                 ] = sub_angles
-        return scores, angles
+        return scores.astype(self.output_dtype), angles
 
     def start_job(
         self, gpu_id: int, return_volumes: bool = False
@@ -974,6 +987,10 @@ class TMJob:
         self.job_stats = results[2]
 
         del tm  # delete the template matching plan
+
+        # cast to correct dtype
+        score_volume = score_volume.astype(self.output_dtype)
+        angle_volume = angle_volume
 
         if return_volumes:
             return score_volume, angle_volume

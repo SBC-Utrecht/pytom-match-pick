@@ -321,9 +321,10 @@ def write_mrc(
     Returns
     -------
     """
-    if data.dtype != np.float32:
+    if data.dtype not in [np.float32, np.float16]:
         logging.warning(
-            "data for mrc writing is not np.float32 will convert to np.float32"
+            "data for mrc writing is not np.float32 or np.float16, will convert to "
+            "np.float32"
         )
         data = data.astype(np.float32)
     mrcfile.write(

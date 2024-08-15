@@ -862,6 +862,13 @@ def match_template(argv=None):
         "https://doi.org/10.1107/S205979832400295X .",
     )
     additional_group.add_argument(
+        "--half-precision",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Return and save all output in float16 instead of the default float32",
+    )
+    additional_group.add_argument(
         "--rng-seed",
         type=int,
         action=LargerThanZero,
@@ -959,6 +966,7 @@ def match_template(argv=None):
         random_phase_correction=args.random_phase_correction,
         rng_seed=args.rng_seed,
         defocus_handedness=args.defocus_handedness,
+        output_dtype=np.float16 if args.half_precision else np.float32,
     )
 
     score_volume, angle_volume = run_job_parallel(
