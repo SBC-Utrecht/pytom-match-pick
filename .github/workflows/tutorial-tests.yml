@@ -22,7 +22,7 @@ jobs:
           python -m pip install .[dev]
           conda list
       - name: Goto directory
-      - run: |
+        run: |
           cd docs/tutorials
       - name: Grab files needed for tests
         run: |
