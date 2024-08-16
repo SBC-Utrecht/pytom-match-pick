@@ -40,11 +40,13 @@ jobs:
           cd ../dataset
           curl -L -O -J -H "X-Dataverse-key:${{ secrets.DATAVERSE_API_TOKEN }}" https://dataverse.nl/api/access/datafiles/384731,384724,384706,384718
           unzip dataverse_files.zip
+          # this inflates into a 'tutorial' folder, moving everything out
+          mv tutorial/* .
       - name: Run Tutorial test
         run: |
           # DEBUG; TODO REMOVE
           ls -l dataset/*
           
-          # Hardcode the conversion line for the one tomogram
-          python -c "import mrcfile; mrc = mrcfile.mmap('dataset/tomo200528_100.mrc', 'r+'); mrc.voxel_size = 13.79"
+          # Hardcode the conversion line
+          for x in dataset/*.mrc; do python -c "import mrcfile; mrc = mrcfile.mmap('$x', 'r+'); mrc.voxel_size = 13.79"; done
           python tests/test_tutorial.py
