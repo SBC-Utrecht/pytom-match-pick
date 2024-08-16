@@ -12,6 +12,9 @@ jobs:
     container:
       image: continuumio/miniconda3
       options: --runtime=nvidia --gpus all
+    defaults:
+      run:
+        working-directory: ./docs/tutorials
     steps:
       - name: Pull code
         uses: actions/checkout@v4
@@ -21,9 +24,6 @@ jobs:
           python -m pip install coverage mdextractor #mdextractor is new and might need to be replaced later
           python -m pip install .[dev]
           conda list
-      - name: Goto directory
-        run: |
-          cd docs/tutorials
       - name: Grab files needed for tests
         run: |
           mkdir dataset
@@ -38,7 +38,6 @@ jobs:
           cd ../dataset
           curl -L -O -J -H "X-Dataverse-key:${{ secrets.DATAVERSE_API_TOKEN }}" https://dataverse.nl/api/access/datafiles/384731,384724,384706,384718
           unzip dataverse_files.zip
-          cd ../
       - name: Run Tutorial test
         run: |
           # Hardcode the conversion line
