@@ -36,7 +36,6 @@ jobs:
           cp ../data/6qzp_60S.mrc .
           curl https://files.wwpdb.org/pub/emdb/structures/EMD-2938/map/emd_2938.map.gz -o emd_2938.map.gz
           gunzip emd_2938.map.gz
-          mv emd_2938.map emd_2938.mrc
           cd ../dataset
           curl -L -O -J -H "X-Dataverse-key:${{ secrets.DATAVERSE_API_TOKEN }}" https://dataverse.nl/api/access/datafiles/384731,384724,384706,384718
           unzip dataverse_files.zip
