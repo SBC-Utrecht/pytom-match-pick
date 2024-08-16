@@ -12,7 +12,7 @@ if n_blocks == 0:
     raise ValueError("Did not find any code blocks")
 for block in blocks:
     # DEBUG: TODO: REMOVE
-    print(f"{block=}")
+    print(f"{block.split()=}")
     if block.split()[0].endswith(".py"):
         print(f"Running: {block}")
         subprocess.run(block)
