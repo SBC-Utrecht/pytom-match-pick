@@ -22,4 +22,9 @@ for block in blocks:
     if block.split()[0].endswith(".py"):
         print(f"Running: {block}")
         # Check=True makes sure this code returns early
-        subprocess.run(sanitize_block(block), check=True)
+        block = sanitize_block(block)
+        outfile = None
+        if block[-2] == ">":
+            outfile = block[-1]
+            block = block[:-2]
+        subprocess.run(block, check=True, stdout=outfile)
