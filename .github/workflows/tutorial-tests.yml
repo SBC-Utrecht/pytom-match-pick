@@ -41,6 +41,8 @@ jobs:
           unzip dataverse_files.zip
           # this inflates into a 'tutorial' folder, moving everything out
           mv tutorial/* .
+      - name: Set TQDM_MININTERVAL
+        run: echo "TQDM_MININTERVAL=10" >> "$GITHUB_ENV"
       - name: Run Tutorial test
         run: |
           # DEBUG; TODO REMOVE
