@@ -1,60 +1,43 @@
 name: Test Tutorial
 # following example: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 on:
-  workflow_run:
-    workflows: ["Unit tests"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
+
 
 jobs:
   test-tutorial:
-    if: >
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux, x64, gpu]
     container:
       image: continuumio/miniconda3
       options: --runtime=nvidia --gpus all
-    permissions:
-      # Read the action that triggered this one
-      actions: read
-      # Allow to write check runs
-      checks: write
-      # Read and update commit statuses
-      statuses: write
     steps:
       - name: Pull code
         uses: actions/checkout@v4
-        with:
-          repository: github.event.workflow_run.head_repository
-          ref: github.event.workflow_run.head_sha
-      - name: Pull wiki
-        uses: actions/checkout@v4
-        with:
-          # Only check the wiki of the calling repo
-          repository: ${{github.repository}}.wiki 
-          path: wiki
       - name: Install dependencies, code, and list everything
         run: |
           conda install -y -c conda-forge python=3 cupy cuda-version=11.8
           python -m pip install coverage mdextractor #mdextractor is new and might need to be replaced later
           python -m pip install .[dev]
           conda list
+      - name: Goto directory
+        run: |
+          cd docs/tutorials
       - name: Grab files needed for tests
         run: |
-          mkdir wiki/dataset
-          mkdir wiki/templates
-          mkdir wiki/results_80S
-          mkdir wiki/results_60S
-          cd wiki/templates
-          cp ../data/6qzp_60S wiki/templates/
+          mkdir dataset
+          mkdir templates
+          mkdir results_80S
+          mkdir results_60S
+          cd templates
+          cp ../data/6qzp_60S.mrc .
           curl https://files.wwpdb.org/pub/emdb/structures/EMD-2938/map/emd_2938.map.gz -o emd_2938.map.gz
           gunzip emd_2938.map.gz
           mv emd_2938.map emd_2938.mrc
           cd ../dataset
           curl -L -O -J -H "X-Dataverse-key:${{ secrets.DATAVERSE_API_TOKEN }}" https://dataverse.nl/api/access/datafiles/384731,384724,384706,384718
           unzip dataverse_files.zip
-          mv tutorial/* .
           cd ../
       - name: Run Tutorial test
         run: |
