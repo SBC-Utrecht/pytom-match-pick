@@ -38,7 +38,6 @@ jobs:
           cd ../dataset
           curl -L -O -J -H "X-Dataverse-key:${{ secrets.DATAVERSE_API_TOKEN }}" https://dataverse.nl/api/access/datafiles/384731,384724,384706,384718
           unzip dataverse_files.zip
-          cd ../
       - name: Run Tutorial test
         run: |
           # Hardcode the conversion line
