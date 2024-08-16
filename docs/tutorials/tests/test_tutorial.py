@@ -21,10 +21,14 @@ for block in blocks:
     print(f"{block.split()=}")
     if block.split()[0].endswith(".py"):
         print(f"Running: {block}")
-        # Check=True makes sure this code returns early
+
         block = sanitize_block(block)
         outfile = None
+        # Deal with stdout redirect 
         if block[-2] == ">":
-            outfile = block[-1]
+            outfile = open(block[-1])
             block = block[:-2]
+        # Check=True makes sure this code returns early
         subprocess.run(block, check=True, stdout=outfile)
+        if outfile is not None:
+            outfile.close()
