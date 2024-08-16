@@ -45,6 +45,6 @@ jobs:
           # DEBUG; TODO REMOVE
           ls -l dataset/*
           
-          # Hardcode the conversion line
-          for x in dataset/*.mrc; do python -c "import mrcfile; mrc = mrcfile.mmap('$x', 'r+'); mrc.voxel_size = 13.79"; done
+          # Hardcode the conversion line for the one tomogram
+          python -c "import mrcfile; mrc = mrcfile.mmap('dataset/tomo200528_100.mrc', 'r+'); mrc.voxel_size = 13.79"
           python tests/test_tutorial.py
