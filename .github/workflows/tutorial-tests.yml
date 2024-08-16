@@ -24,7 +24,7 @@ jobs:
         run: |
           conda install -y -c conda-forge python=3 cupy cuda-version=11.8 curl unzip
           python -m pip install coverage mdextractor #mdextractor is new and might need to be replaced later
-          python -m pip install .[dev]
+          python -m pip install .[all]
           conda list
       - name: Grab files needed for tests
         run: |
