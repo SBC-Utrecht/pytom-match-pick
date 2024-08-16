@@ -26,7 +26,7 @@ for block in blocks:
         outfile = None
         # Deal with stdout redirect 
         if block[-2] == ">":
-            outfile = open(block[-1])
+            outfile = open(block[-1], 'a+')
             block = block[:-2]
         # Check=True makes sure this code returns early
         subprocess.run(block, check=True, stdout=outfile)
