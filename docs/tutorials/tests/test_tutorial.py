@@ -2,6 +2,11 @@
 import subprocess
 from mdextractor import extract_md_blocks
 
+def sanitize_block(block):
+    block = block.split()
+    out = [i for i in block if i and i != '\\']
+    return out
+
 print("Doing tutorial tests")
 lines = "".join(open("Tutorial.md").readlines())
 blocks = extract_md_blocks(lines)
@@ -16,4 +21,4 @@ for block in blocks:
     print(f"{block.split()=}")
     if block.split()[0].endswith(".py"):
         print(f"Running: {block}")
-        subprocess.run(block)
+        subprocess.run(sanitize_block(block))
