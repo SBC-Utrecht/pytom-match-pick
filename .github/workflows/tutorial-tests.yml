@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+  schedule:
+    # Weekly on saturday 23:59
+    - cron: "59 23 * * 6"
 
 
 jobs:
@@ -19,10 +24,11 @@ jobs:
       - name: Pull code
         uses: actions/checkout@v4
       - name: Install dependencies, code, and list everything
+        working-directory: ./
         run: |
-          conda install -y -c conda-forge python=3 cupy cuda-version=11.8
+          conda install -y -c conda-forge python=3 cupy cuda-version=11.8 curl unzip
           python -m pip install coverage mdextractor #mdextractor is new and might need to be replaced later
-          python -m pip install .[dev]
+          python -m pip install .[all]
           conda list
       - name: Grab files needed for tests
         run: |
@@ -34,12 +40,15 @@ jobs:
           cp ../data/6qzp_60S.mrc .
           curl https://files.wwpdb.org/pub/emdb/structures/EMD-2938/map/emd_2938.map.gz -o emd_2938.map.gz
           gunzip emd_2938.map.gz
-          mv emd_2938.map emd_2938.mrc
           cd ../dataset
           curl -L -O -J -H "X-Dataverse-key:${{ secrets.DATAVERSE_API_TOKEN }}" https://dataverse.nl/api/access/datafiles/384731,384724,384706,384718
           unzip dataverse_files.zip
+          # this inflates into a 'tutorial' folder, moving everything out
+          mv tutorial/* .
+      - name: Set TQDM_MININTERVAL
+        run: echo "TQDM_MININTERVAL=10" >> "$GITHUB_ENV"
       - name: Run Tutorial test
         run: |
           # Hardcode the conversion line
           for x in dataset/*.mrc; do python -c "import mrcfile; mrc = mrcfile.mmap('$x', 'r+'); mrc.voxel_size = 13.79"; done
-          python tests/test_tutorial.py
+          python -u tests/test_tutorial.py

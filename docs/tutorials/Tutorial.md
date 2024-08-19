@@ -25,7 +25,7 @@ tm_tutorial/
 ¦  +- ...
 +- templates/
 ¦  +- 6qzp_60S.mrc
-¦  +- emd_2938.mrc
+¦  +- emd_2938.map
 +- results_80S/
 +- results_60S/
 ```
