@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies, code, and list everything
         working-directory: ./
         run: |
-          conda install -y -c conda-forge python=3 curl unzip
+          conda install -y -c conda-forge python=3 curl unzip gcc
           python -m pip install coverage mdextractor #mdextractor is new and might need to be replaced later
           python -m pip install .[all]
           conda list
