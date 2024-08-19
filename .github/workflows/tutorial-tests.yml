@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - sroet-patch-1
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
   schedule:
@@ -26,7 +27,7 @@ jobs:
       - name: Install dependencies, code, and list everything
         working-directory: ./
         run: |
-          conda install -y -c conda-forge python=3 cupy cuda-version=11.8 curl unzip
+          conda install -y -c conda-forge python=3 curl unzip
           python -m pip install coverage mdextractor #mdextractor is new and might need to be replaced later
           python -m pip install .[all]
           conda list
