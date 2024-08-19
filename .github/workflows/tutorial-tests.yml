@@ -3,8 +3,12 @@ name: Test Tutorial
 on:
   push:
     branches:
-      # - main
-      - sroet-patch-1
+      - main
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+  schedule:
+    # Weekly on saturday 23:59
+    - cron: "59 23 * * 6"
 
 
 jobs:
@@ -45,9 +49,6 @@ jobs:
         run: echo "TQDM_MININTERVAL=10" >> "$GITHUB_ENV"
       - name: Run Tutorial test
         run: |
-          # DEBUG; TODO REMOVE
-          ls -l dataset/*
-          
           # Hardcode the conversion line
           for x in dataset/*.mrc; do python -c "import mrcfile; mrc = mrcfile.mmap('$x', 'r+'); mrc.voxel_size = 13.79"; done
           python -u tests/test_tutorial.py
