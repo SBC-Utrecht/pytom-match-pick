@@ -630,7 +630,7 @@ class TestTMJob(unittest.TestCase):
         self.assertEqual(s.dtype, np.float16)
         self.assertEqual(a.dtype, np.float32)
 
-    def test_extraction(self):
+    def test_extractions(self):
         _ = self.job.start_job(0, return_volumes=True)
 
         # extract particles after running the job
@@ -754,6 +754,23 @@ class TestTMJob(unittest.TestCase):
                 100,
                 create_plot=False,
             )
+
+        # Test exraction with tophat filter and plotting
+        df, scores = extract_particles(
+            job,
+            5,
+            100,
+            tomogram_mask_path=TEST_EXTRACTION_MASK_INSIDE,
+            create_plot=True,
+            tophat_filter=True,
+        )
+        self.assertNotEqual(
+            len(scores),
+            0,
+            msg="We expected a detected particle with a extraction mask that "
+            "covers the object.",
+        )
+        # We don't look for the plots, they might be skipped if no plotting is available
 
     def test_get_defocus_offsets(self):
         tilt_angles = list(range(-51, 54, 3))
