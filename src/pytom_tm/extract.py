@@ -32,6 +32,7 @@ def predict_tophat_mask(
     n_false_positives: float = 1.0,
     create_plot: bool = True,
     tophat_connectivity: int = 1,
+    bins: int = 50,
 ) -> npt.NDArray[bool]:
     """This function gets as input a score map and returns a peak mask as determined
     with a tophat transform.
@@ -61,7 +62,8 @@ def predict_tophat_mask(
         whether to plot the gaussian fit and cut-off estimation
     tophat_connectivity: int, default 1
         connectivity of binary structure
-
+    bins: int, default 50
+        number of bins to use for the historgram for estimation and plotting
     Returns
     -------
     peak_mask: npt.NDArray[bool]
@@ -73,7 +75,7 @@ def predict_tophat_mask(
             rank=3, connectivity=tophat_connectivity
         ),
     )
-    y, bins = np.histogram(tophat.flatten(), bins=50)
+    y, bins = np.histogram(tophat.flatten(), bins=bins)
     bin_centers = (bins[:-1] + bins[1:]) / 2
     x_raw, y_raw = (
         bin_centers[2:],
@@ -154,6 +156,8 @@ def extract_particles(
     tophat_connectivity: int = 1,
     relion5_compat: bool = False,
     ignore_tomogram_mask: bool = False,
+    tophat_bins: int = 50,
+    plot_bins: int = 20,
 ) -> tuple[pd.DataFrame, list[float, ...]]:
     """
     Parameters
@@ -185,6 +189,10 @@ def extract_particles(
         Debug option to force the code to ignore job.tomogram_mask and input mask.
         Allows for re-exctraction without rerunning the TM job
         (assuming the scores volume seems reasonable)
+    tophat_bins: int, default 50
+        The numbers of bins to use in the tophat histogram
+    plot_bins: int, default 20
+        The numbers of bins to use for the plot histogram of occurences
 
     Returns
     -------
@@ -208,6 +216,7 @@ def extract_particles(
             n_false_positives=n_false_positives,
             create_plot=create_plot,
             tophat_connectivity=tophat_connectivity,
+            bins=tophat_bins,
         )
         score_volume *= (
             predicted_peaks  # multiply with predicted peaks to keep only those
@@ -351,7 +360,7 @@ def extract_particles(
         output = output.rename(columns=column_change)
 
     if plotting_available and create_plot:
-        y, bins = np.histogram(scores, bins=20)
+        y, bins = np.histogram(scores, bins=plot_bins)
         x = (bins[1:] + bins[:-1]) / 2
         hist_step = bins[1] - bins[0]
         # add more starting values for background Gaussian
