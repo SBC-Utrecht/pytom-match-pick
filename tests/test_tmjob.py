@@ -10,7 +10,6 @@ from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob, get_defocus_of
 from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm.extract import extract_particles
 from testing_utils import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES
-from importlib import reload
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -757,8 +756,6 @@ class TestTMJob(unittest.TestCase):
             )
 
         # Test exraction with tophat filter and plotting
-        # reload is needed for plotting_available caching
-        reload(extract_particles)
         df, scores = extract_particles(
             job,
             5,
