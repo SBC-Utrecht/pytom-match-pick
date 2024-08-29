@@ -150,6 +150,31 @@ class ParseTiltAngles(argparse.Action):
             parser.error("{0} can only take one or two arguments".format(option_string))
 
 
+class ParseGPUIndices(argparse.Action):
+    """argparse.Action subclass to parse gpu indices. The input can either be an int or
+    a list of ints that specify the gpu indices to be used.
+    """
+
+    def __call__(
+        self,
+        parser,
+        namespace,
+        values: list[int, ...],
+        option_string: Optional[str] = None,
+    ):
+        import cupy
+
+        max_value = cupy.cuda.runtime.getDeviceCount()
+        for val in values:
+            if val < 0 or val >= max_value:
+                parser.error(
+                    f"{option_string} all gpu indices should be between 0 "
+                    "and {max_value-1}"
+                )
+
+        setattr(namespace, self.dest, values)
+
+
 class ParseDoseFile(argparse.Action):
     """argparse.Action subclass to parse a txt file contain information on accumulated
     dose per tilt."""

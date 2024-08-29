@@ -18,6 +18,7 @@ from pytom_tm.io import (
     ParseDoseFile,
     ParseDefocus,
     BetweenZeroAndOne,
+    ParseGPUIndices,
 )
 from pytom_tm.tmjob import load_json_to_tmjob
 from os import urandom
@@ -902,6 +903,7 @@ def match_template(argv=None):
         "--gpu-ids",
         nargs="+",
         type=int,
+        action=ParseGPUIndices,
         required=True,
         help="GPU indices to run the program on.",
     )
