@@ -533,6 +533,23 @@ def extract_candidates(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+    parser.add_argument(
+        "--tophat-bins",
+        type=int,
+        required=False,
+        default=50,
+        action=LargerThanZero,
+        help="Number of bins to use in the histogram of occurences in the "
+        "tophat transform code (for both the estimation and the plotting).",
+    )
+    parser.add_argument(
+        "--plot-bins",
+        type=int,
+        required=False,
+        default=20,
+        action=LargerThanZero,
+        help="Number of bins to use for the occurences vs LCC_max plot.",
+    )
 
     # ---8<--- [end:extract_candidates_usage]
 
@@ -552,6 +569,8 @@ def extract_candidates(argv=None):
         tophat_connectivity=args.tophat_connectivity,
         relion5_compat=args.relion5_compat,
         ignore_tomogram_mask=args.ignore_tomogram_mask,
+        tophat_bins=args.tophat_bins,
+        plot_bins=args.plot_bins,
     )
 
     # write out as a RELION type starfile

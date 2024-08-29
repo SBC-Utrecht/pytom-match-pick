@@ -17,7 +17,8 @@ TEMPLATE_SIZE = 13
 LOCATION = (77, 26, 40)
 ANGLE_ID = 100
 ANGULAR_SEARCH = "38.53"
-TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath("test_data")
+TEMP_DIR = TemporaryDirectory()
+TEST_DATA_DIR = pathlib.Path(TEMP_DIR.name)
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath("tomogram.mrc")
 TEST_BROKEN_TOMOGRAM_MASK = TEST_DATA_DIR.joinpath("broken_tomogram_mask.mrc")
 TEST_WRONG_SIZE_TOMO_MASK = TEST_DATA_DIR.joinpath("wrong_size_tomogram_mask.mrc")
@@ -133,26 +134,7 @@ class TestTMJob(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        TEST_MASK.unlink()
-        TEST_BROKEN_TOMOGRAM_MASK.unlink()
-        TEST_WRONG_SIZE_TOMO_MASK.unlink()
-        TEST_EXTRACTION_MASK_OUTSIDE.unlink()
-        TEST_EXTRACTION_MASK_INSIDE.unlink()
-        TEST_TEMPLATE.unlink()
-        TEST_TEMPLATE_UNEQUAL_SPACING.unlink()
-        TEST_TEMPLATE_WRONG_VOXEL_SIZE.unlink()
-        TEST_TOMOGRAM.unlink()
-        TEST_SCORES.unlink()
-        TEST_ANGLES.unlink()
-        TEST_CUSTOM_ANGULAR_SEARCH.unlink()
-        # the whitening filter might not exist if the job with spectrum whitening
-        # failed, so the unlinking needs to allow this (with missing_ok=True) to ensure
-        # clean up of the test directory
-        TEST_WHITENING_FILTER.unlink(missing_ok=True)
-        TEST_JOB_JSON.unlink()
-        TEST_JOB_JSON_WHITENING.unlink()
-        TEST_JOB_OLD_VERSION.unlink()
-        TEST_DATA_DIR.rmdir()
+        TEMP_DIR.cleanup()
 
     def setUp(self):
         self.job = TMJob(
@@ -630,7 +612,7 @@ class TestTMJob(unittest.TestCase):
         self.assertEqual(s.dtype, np.float16)
         self.assertEqual(a.dtype, np.float32)
 
-    def test_extraction(self):
+    def test_extractions(self):
         _ = self.job.start_job(0, return_volumes=True)
 
         # extract particles after running the job
@@ -754,6 +736,23 @@ class TestTMJob(unittest.TestCase):
                 100,
                 create_plot=False,
             )
+
+        # Test exraction with tophat filter and plotting
+        df, scores = extract_particles(
+            job,
+            5,
+            100,
+            tomogram_mask_path=TEST_EXTRACTION_MASK_INSIDE,
+            create_plot=True,
+            tophat_filter=True,
+        )
+        self.assertNotEqual(
+            len(scores),
+            0,
+            msg="We expected a detected particle with a extraction mask that "
+            "covers the object.",
+        )
+        # We don't look for the plots, they might be skipped if no plotting is available
 
     def test_get_defocus_offsets(self):
         tilt_angles = list(range(-51, 54, 3))

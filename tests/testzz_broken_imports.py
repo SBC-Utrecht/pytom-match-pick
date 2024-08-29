@@ -1,3 +1,5 @@
+# This file is named testzz_* as it should run last,
+# because it permanently destroys the imports
 # No imports of pytom_tm outside of the methods
 import unittest
 from importlib import reload
