@@ -184,7 +184,6 @@ class TestEntryPoints(unittest.TestCase):
         logging.basicConfig(level=LOG_LEVEL, force=True)
 
         # test providing invalid gpu indices
-        # negative indices can't be tested as argparse parses them as flags...
         n_devices = cp.cuda.runtime.getDeviceCount()
         for indices in ["-1", f"0 {n_devices}"]:
             dump = StringIO()
