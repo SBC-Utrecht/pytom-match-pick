@@ -159,14 +159,12 @@ class ParseGPUIndices(argparse.Action):
         self,
         parser,
         namespace,
-        values: Union[list[int, ...], int],
+        values: list[int, ...],
         option_string: Optional[str] = None,
     ):
         import cupy
 
         max_value = cupy.cuda.runtime.getDeviceCount()
-        if isinstance(values, int):
-            values = [values]
         for val in values:
             if val < 0 or val >= max_value:
                 parser.error(
