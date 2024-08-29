@@ -186,7 +186,9 @@ class TestEntryPoints(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "gpu indices"):
             arguments = defaults.copy()
             arguments["-g"] = f"{n_devices}"
+            start(arguments)
         # negative index (and test list input)
         with self.assertRaisesRegex(ValueError, "gpu indices"):
             arguments = defaults.copy()
             arguments["-g"] = "0 -1"
+            start(arguments)
