@@ -44,7 +44,10 @@ LOG_LEVEL = logging.getLogger().level
 
 def prep_argv(arg_dict):
     argv = []
-    [argv.extend([k, v]) if v != "" else argv.append(k) for k, v in arg_dict.items()]
+    [
+        argv.extend([k] + v.split()) if v != "" else argv.append(k)
+        for k, v in arg_dict.items()
+    ]
     return argv
 
 
