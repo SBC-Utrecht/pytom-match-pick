@@ -17,7 +17,8 @@ TEMPLATE_SIZE = 13
 LOCATION = (77, 26, 40)
 ANGLE_ID = 100
 ANGULAR_SEARCH = "38.53"
-TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath("test_data")
+TEMP_DIR = TemporaryDirectory()
+TEST_DATA_DIR = TEMP_DIR.name
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath("tomogram.mrc")
 TEST_BROKEN_TOMOGRAM_MASK = TEST_DATA_DIR.joinpath("broken_tomogram_mask.mrc")
 TEST_WRONG_SIZE_TOMO_MASK = TEST_DATA_DIR.joinpath("wrong_size_tomogram_mask.mrc")
@@ -133,26 +134,7 @@ class TestTMJob(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        TEST_MASK.unlink()
-        TEST_BROKEN_TOMOGRAM_MASK.unlink()
-        TEST_WRONG_SIZE_TOMO_MASK.unlink()
-        TEST_EXTRACTION_MASK_OUTSIDE.unlink()
-        TEST_EXTRACTION_MASK_INSIDE.unlink()
-        TEST_TEMPLATE.unlink()
-        TEST_TEMPLATE_UNEQUAL_SPACING.unlink()
-        TEST_TEMPLATE_WRONG_VOXEL_SIZE.unlink()
-        TEST_TOMOGRAM.unlink()
-        TEST_SCORES.unlink()
-        TEST_ANGLES.unlink()
-        TEST_CUSTOM_ANGULAR_SEARCH.unlink()
-        # the whitening filter might not exist if the job with spectrum whitening
-        # failed, so the unlinking needs to allow this (with missing_ok=True) to ensure
-        # clean up of the test directory
-        TEST_WHITENING_FILTER.unlink(missing_ok=True)
-        TEST_JOB_JSON.unlink()
-        TEST_JOB_JSON_WHITENING.unlink()
-        TEST_JOB_OLD_VERSION.unlink()
-        TEST_DATA_DIR.rmdir()
+        TEMP_DIR.cleanup()
 
     def setUp(self):
         self.job = TMJob(
