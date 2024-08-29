@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.33">
     
     
       
@@ -1492,7 +1492,8 @@ preliminary results: <a href="https://doi.org/10.5281/zenodo.13165643">10.5281/z
                                    [--tophat-filter TOPHAT_FILTER]
                                    [--tophat-connectivity TOPHAT_CONNECTIVITY]
                                    [--relion5-compat RELION5_COMPAT]
-                                   [--log LOG]
+                                   [--log LOG] [--tophat-bins TOPHAT_BINS]
+                                   [--plot-bins PLOT_BINS]
 
 Run candidate extraction. -- Marten Chaillet (@McHaillet)
 
@@ -1549,6 +1550,13 @@ options:
                         Write out centered coordinates in Angstrom for
                         RELION5.
   --log LOG             Can be set to `info` or `debug`
+  --tophat-bins TOPHAT_BINS
+                        Number of bins to use in the histogram of occurences
+                        in the tophat transform code (for both the estimation
+                        and the plotting).
+  --plot-bins PLOT_BINS
+                        Number of bins to use for the occurences vs LCC_max
+                        plot.
 </code></pre></div>
 <h3 id="pytom_estimate_rocpy">pytom_estimate_roc.py</h3>
 <p>This script runs the Gaussian fit as described in the <a href="https://www.mdpi.com/1422-0067/24/17/13375">IJMS publication</a>. It requires installation with plotting dependencies as it writes out or displays a figure showing the Gaussian fit and estimated ROC curve. The benefit is that it estimates some classification statistics (such as false discovery rate and sensitivity). You can use it to esimate an extraction threshold for a representative tomogram and then supply this threshold as the <code>[-c, --cut-off]</code> parameter for <code>pytom_extract_candidates.py</code>.</p>
@@ -1664,7 +1672,7 @@ options:
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.expand", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.471ce7a9.min.js"></script>
+      <script src="../assets/javascripts/bundle.af256bd8.min.js"></script>
       
         <script src="../assets/_markdown_exec_pyodide.js"></script>
       
