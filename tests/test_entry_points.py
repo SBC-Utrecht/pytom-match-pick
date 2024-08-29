@@ -1,6 +1,7 @@
 import unittest
 import pathlib
 import numpy as np
+import cupy as cp
 import logging
 from shutil import which
 from contextlib import redirect_stdout, redirect_stderr
@@ -176,5 +177,16 @@ class TestEntryPoints(unittest.TestCase):
             msg="File should exist in debug mode",
         )
 
-        # rest the log level after the entry point modified it
+        # reset the log level after the entry point modified it
         logging.basicConfig(level=LOG_LEVEL, force=True)
+
+        # test providing invalid gpu indices
+        n_devices = cp.cuda.runtime.getDeviceCount()
+        # too high index
+        with self.assertRaisesRegex(ValueError, "gpu indices"):
+            arguments = defaults.copy()
+            arguments["-g"] = f"{n_devices}"
+        # negative index (and test list input)
+        with self.assertRaisesRegex(ValueError, "gpu indices"):
+            arguments = defaults.copy()
+            arguments["-g"] = "0 -1"
