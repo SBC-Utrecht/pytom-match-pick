@@ -186,13 +186,15 @@ class TestEntryPoints(unittest.TestCase):
         # test providing invalid gpu indices
         # negative indices can't be tested as argparse parses them as flags...
         n_devices = cp.cuda.runtime.getDeviceCount()
-        # too high index
-        with self.assertRaisesRegex(ValueError, "gpu indices"):
-            arguments = defaults.copy()
-            arguments["-g"] = f"{n_devices}"
-            start(arguments)
-        # test list input and a too high index
-        with self.assertRaisesRegex(ValueError, "gpu indices"):
-            arguments = defaults.copy()
-            arguments["-g"] = f"0 {n_devices}"
-            start(arguments)
+        for indices in ["-1", f"0 {n_devices}"]:
+            dump = StringIO()
+            with (
+                self.assertRaises(SystemExit) as ex,
+                redirect_stdout(dump),
+                redirect_stderr(dump),
+            ):
+                arguments = defaults.copy()
+                arguments["-g"] = indices
+                start(arguments)
+            self.assertIn("gpu indices", dump.getvalue())
+            dump.close()
