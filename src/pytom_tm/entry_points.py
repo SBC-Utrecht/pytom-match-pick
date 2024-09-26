@@ -971,7 +971,7 @@ def match_template(argv=None):
         )
         per_tilt_weighting = True
     else:
-        voxel_size = args.voxel_size
+        voxel_size = args.voxel_size_angstrom
         tilt_angles = args.tilt_angles
         dose_accumulation = args.dose_accumulation
         per_tilt_weighting = args.per_tilt_weighting
