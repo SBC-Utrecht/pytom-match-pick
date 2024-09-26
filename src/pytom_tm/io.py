@@ -8,6 +8,9 @@ from contextlib import contextmanager
 from operator import attrgetter
 from typing import Optional, Union
 
+# new imports
+import starfile
+
 
 class ParseLogging(argparse.Action):
     """argparse.Action subclass to parse logging parameter from input scripts. Users can
@@ -490,3 +493,99 @@ def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
         return read_txt_file(file_name)
     else:
         raise ValueError("Defocus file needs to have format .defocus or .txt")
+
+
+def parse_relion5_star_data(
+    tomograms_star_path: pathlib.Path,
+    tomogram_path: pathlib.Path,
+    phase_flip_correction: bool = False,
+    phase_shift: float = 0.0,
+) -> tuple[float, list[float, ...], list[float, ...], dict]:
+    """Read RELION5 metadata from a project directory.
+
+    Parameters
+    ----------
+    tomograms_star_path: pathlib.Path
+        the tomograms.star from a RELION5 reconstruct job contains invariable metadata
+        and points to a tilt series star file with fitted values
+    tomogram_path: pathlib.Path
+        path to the tomogram for template matching; we use the name to pattern match in
+        the RELION5 star file
+    phase_flip_correction: bool, default False
+    phase_shift: float, default 0.0
+
+    Returns
+    -------
+    tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params:
+        tuple[float, list[float, ...], list[float, ...], list[dict, ...]]
+    """
+    tomogram_id = tomogram_path.stem
+    tomograms_star_data = starfile.read(tomograms_star_path)
+
+    # match the tomo_id and check if viable
+    matches = [
+        (i, x)
+        for i, x in enumerate(tomograms_star_data["rlnTomoName"])
+        if x in tomogram_id
+    ]
+    if len(matches) > 1:
+        raise ValueError(
+            "Multiple matches of tomogram id in RELION5 STAR file. " "Aborting..."
+        )
+    elif len(matches) == 0:
+        raise ValueError("No match of tomogram id in RELION5 STAR file. Aborting...")
+    else:
+        tomogram_meta_data = tomograms_star_data.loc[matches[0][0]]
+
+    # grab the path to tilt series star where tilt angles, defocus and dose are
+    # annotated
+    tilt_series_star_path = pathlib.Path(
+        tomogram_meta_data["rlnTomoTiltSeriesStarFile"]
+    )
+    # update the path to a location we can actually find from CD
+    tilt_series_star_path = tomograms_star_path.parent.joinpath("tilt_series").joinpath(
+        tilt_series_star_path.name
+    )
+    tilt_series_star_data = starfile.read(tilt_series_star_path)
+
+    # we extract tilt angles, dose accumulation and ctf params
+    # TODO We need to have an internal structure for tilt series meta data
+    tilt_angles = list(tilt_series_star_data["rlnTomoNominalStageTiltAngle"])
+    dose_accumulation = list(tilt_series_star_data["rlnMicrographPreExposure"])
+
+    # _rlnTomoName  # 1
+    # _rlnVoltage  # 2
+    # _rlnSphericalAberration  # 3
+    # _rlnAmplitudeContrast  # 4
+    # _rlnMicrographOriginalPixelSize  # 5
+    # _rlnTomoHand  # 6
+    # _rlnTomoTiltSeriesPixelSize  # 7
+    # _rlnTomoTiltSeriesStarFile  # 8
+    # _rlnTomoTomogramBinning  # 9
+    # _rlnTomoSizeX  # 10
+    # _rlnTomoSizeY  # 11
+    # _rlnTomoSizeZ  # 12
+    # _rlnTomoReconstructedTomogram  # 13
+    tomogram_voxel_size = (
+        tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
+        * tomogram_meta_data["rlnTomoTomogramBinning"]
+    )
+
+    ctf_params = [
+        {
+            "defocus": defocus * 1e-6,
+            "amplitude_contrast": tomogram_meta_data["rlnAmplitudeContrast"],
+            "voltage": tomogram_meta_data["rlnVoltage"] * 1e3,
+            "spherical_aberration": tomogram_meta_data["rlnSphericalAberration"] * 1e-3,
+            "flip_phase": phase_flip_correction,
+            "phase_shift_deg": phase_shift,  # Unclear to me where the phase
+            # shifts are annotated in RELION5 tilt series file
+        }
+        for defocus in (
+            tilt_series_star_data.rlnDefocusV + tilt_series_star_data.rlnDefocusU
+        )
+        / 2
+        * 1e-4
+    ]
+
+    return tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params
