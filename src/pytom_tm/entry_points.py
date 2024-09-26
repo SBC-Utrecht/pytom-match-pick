@@ -964,7 +964,7 @@ def match_template(argv=None):
         voxel_size, tilt_angles, dose_accumulation, ctf_params = (
             parse_relion5_star_data(
                 args.relion5_tomograms_star,
-                args.tomograms,
+                args.tomogram,
                 phase_flip_correction=phase_flip_correction,
                 phase_shift=args.phase_shift,
             )
