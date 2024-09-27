@@ -183,8 +183,8 @@ class ParseDoseFile(argparse.Action):
         allowed_suffixes = [".txt"]
         if file_path.suffix not in allowed_suffixes:
             parser.error(
-                "{0}  provided dose accumulation file does not have the right suffix, "
-                "allowed are: {1}".format(option_string, ", ".join(allowed_suffixes))
+                f"{option_string}  provided dose accumulation file does not have the "
+                f"right suffix, allowed are: {', '.join(allowed_suffixes)}"
             )
         setattr(namespace, self.dest, read_dose_file(file_path))
 
