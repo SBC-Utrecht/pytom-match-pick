@@ -2,7 +2,7 @@ import os
 import sys
 
 
-class mute_stdout_stderr(object):
+class mute_stdout_stderr:
     """Context manager to redirect stdout and stderr to devnull. Only used to prevent
     terminal flooding in unittests."""
 

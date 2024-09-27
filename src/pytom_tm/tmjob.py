@@ -8,7 +8,6 @@ import numpy as np
 import numpy.typing as npt
 import json
 import logging
-from typing import Optional, Union
 from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import get_angle_list
 from pytom_tm.matching import TemplateMatchingGPU
@@ -41,7 +40,7 @@ def load_json_to_tmjob(
     job: TMJob
         initialized TMJob
     """
-    with open(file_name, "r") as fstream:
+    with open(file_name) as fstream:
         data = json.load(fstream)
 
     # wrangle dtypes
@@ -264,24 +263,24 @@ class TMJob:
         template: pathlib.Path,
         mask: pathlib.Path,
         output_dir: pathlib.Path,
-        angle_increment: Optional[Union[str, float]] = None,
+        angle_increment: str | float | None = None,
         mask_is_spherical: bool = True,
-        tilt_angles: Optional[list[float, ...]] = None,
+        tilt_angles: list[float, ...] | None = None,
         tilt_weighting: bool = False,
-        search_x: Optional[list[int, int]] = None,
-        search_y: Optional[list[int, int]] = None,
-        search_z: Optional[list[int, int]] = None,
-        tomogram_mask: Optional[pathlib.Path] = None,
-        voxel_size: Optional[float] = None,
-        low_pass: Optional[float] = None,
-        high_pass: Optional[float] = None,
-        dose_accumulation: Optional[list[float, ...]] = None,
-        ctf_data: Optional[list[dict, ...]] = None,
+        search_x: list[int, int] | None = None,
+        search_y: list[int, int] | None = None,
+        search_z: list[int, int] | None = None,
+        tomogram_mask: pathlib.Path | None = None,
+        voxel_size: float | None = None,
+        low_pass: float | None = None,
+        high_pass: float | None = None,
+        dose_accumulation: list[float, ...] | None = None,
+        ctf_data: list[dict, ...] | None = None,
         whiten_spectrum: bool = False,
         rotational_symmetry: int = 1,
         pytom_tm_version_number: str = PYTOM_TM_VERSION,
         job_loaded_for_extraction: bool = False,
-        particle_diameter: Optional[float] = None,
+        particle_diameter: float | None = None,
         random_phase_correction: bool = False,
         rng_seed: int = 321,
         defocus_handedness: int = 0,
@@ -725,7 +724,7 @@ class TMJob:
         return self.sub_jobs
 
     def merge_sub_jobs(
-        self, stats: Optional[list[dict, ...]] = None
+        self, stats: list[dict, ...] | None = None
     ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
         """Merge the sub jobs present in self.sub_jobs together to create the final
         output score and angle maps.
@@ -811,7 +810,7 @@ class TMJob:
 
     def start_job(
         self, gpu_id: int, return_volumes: bool = False
-    ) -> Union[tuple[npt.NDArray[float], npt.NDArray[float]], dict]:
+    ) -> tuple[npt.NDArray[float], npt.NDArray[float]] | dict:
         """Run this template matching job on the specified GPU. Search statistics of the
         job will always be assigned to the self.job_stats.
 

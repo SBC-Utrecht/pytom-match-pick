@@ -6,7 +6,6 @@ import numpy.typing as npt
 import numpy as np
 from contextlib import contextmanager
 from operator import attrgetter
-from typing import Optional, Union
 
 
 class ParseLogging(argparse.Action):
@@ -14,7 +13,7 @@ class ParseLogging(argparse.Action):
     set these to info/debug."""
 
     def __call__(
-        self, parser, namespace, values: str, option_string: Optional[str] = None
+        self, parser, namespace, values: str, option_string: str | None = None
     ):
         if values.upper() not in ["INFO", "DEBUG"]:
             parser.error(
@@ -34,12 +33,10 @@ class CheckDirExists(argparse.Action):
         parser,
         namespace,
         values: pathlib.Path,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ):
         if not values.is_dir():
-            parser.error(
-                "{0} got a file path that does not exist ".format(option_string)
-            )
+            parser.error(f"{option_string} got a file path that does not exist ")
 
         setattr(namespace, self.dest, values)
 
@@ -52,12 +49,10 @@ class CheckFileExists(argparse.Action):
         parser,
         namespace,
         values: pathlib.Path,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ):
         if not values.exists():
-            parser.error(
-                "{0} got a file path that does not exist ".format(option_string)
-            )
+            parser.error(f"{option_string} got a file path that does not exist ")
 
         setattr(namespace, self.dest, values)
 
@@ -69,11 +64,11 @@ class LargerThanZero(argparse.Action):
         self,
         parser,
         namespace,
-        values: Union[int, float],
-        option_string: Optional[str] = None,
+        values: int | float,
+        option_string: str | None = None,
     ):
         if values <= 0.0:
-            parser.error("{0} must be larger than 0".format(option_string))
+            parser.error(f"{option_string} must be larger than 0")
 
         setattr(namespace, self.dest, values)
 
@@ -83,13 +78,11 @@ class BetweenZeroAndOne(argparse.Action):
     0 and 1."""
 
     def __call__(
-        self, parser, namespace, values: float, option_string: Optional[str] = None
+        self, parser, namespace, values: float, option_string: str | None = None
     ):
         if 1.0 <= values <= 0.0:
             parser.error(
-                "{0} is a fraction and can only range between 0 and 1".format(
-                    option_string
-                )
+                f"{option_string} is a fraction and can only range between 0 and 1"
             )
 
         setattr(namespace, self.dest, values)
@@ -105,7 +98,7 @@ class ParseSearch(argparse.Action):
         parser,
         namespace,
         values: list[int, int],
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ):
         if not (0 <= values[0] < values[1]):
             parser.error(
@@ -126,8 +119,8 @@ class ParseTiltAngles(argparse.Action):
         self,
         parser,
         namespace,
-        values: Union[list[str, str], str],
-        option_string: Optional[str] = None,
+        values: list[str, str] | str,
+        option_string: str | None = None,
     ):
         if len(values) == 2:  # two wedge angles provided the min and max
             try:
@@ -147,7 +140,7 @@ class ParseTiltAngles(argparse.Action):
                 )
             setattr(namespace, self.dest, read_tlt_file(values))
         else:
-            parser.error("{0} can only take one or two arguments".format(option_string))
+            parser.error(f"{option_string} can only take one or two arguments")
 
 
 class ParseGPUIndices(argparse.Action):
@@ -160,7 +153,7 @@ class ParseGPUIndices(argparse.Action):
         parser,
         namespace,
         values: list[int, ...],
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ):
         import cupy
 
@@ -180,14 +173,12 @@ class ParseDoseFile(argparse.Action):
     dose per tilt."""
 
     def __call__(
-        self, parser, namespace, values: str, option_string: Optional[str] = None
+        self, parser, namespace, values: str, option_string: str | None = None
     ):
         file_path = pathlib.Path(values)
         if not file_path.exists():
             parser.error(
-                "{0} provided dose accumulation file does not exist".format(
-                    option_string
-                )
+                f"{option_string} provided dose accumulation file does not exist"
             )
         allowed_suffixes = [".txt"]
         if file_path.suffix not in allowed_suffixes:
@@ -203,7 +194,7 @@ class ParseDefocus(argparse.Action):
     to their file format, or a txt file containing per line the defocus of each tilt."""
 
     def __call__(
-        self, parser, namespace, values: str, option_string: Optional[str] = None
+        self, parser, namespace, values: str, option_string: str | None = None
     ):
         if values.endswith((".defocus", ".txt")):
             file_path = pathlib.Path(values)
@@ -395,7 +386,7 @@ def read_txt_file(file_name: pathlib.Path) -> list[float, ...]:
     output: list[float, ...]
         list of floats
     """
-    with open(file_name, "r") as fstream:
+    with open(file_name) as fstream:
         lines = fstream.readlines()
     return list(map(float, [x.strip() for x in lines if not x.isspace()]))
 
@@ -450,7 +441,7 @@ def read_imod_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
     output: list[float, ...]
         list of floats with defocus (in μm)
     """
-    with open(file_name, "r") as fstream:
+    with open(file_name) as fstream:
         lines = fstream.readlines()
     imod_defocus_version = float(lines[0].strip().split()[5])
     # imod defocus files have the values specified in nm:

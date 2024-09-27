@@ -1,14 +1,13 @@
 import numpy as np
 import numpy.typing as npt
-from typing import Optional
 
 
 def spherical_mask(
     box_size: int,
     radius: float,
-    smooth: Optional[float] = None,
+    smooth: float | None = None,
     cutoff_sd: int = 3,
-    center: Optional[float] = None,
+    center: float | None = None,
 ) -> npt.NDArray[float]:
     """Wrapper around ellipsoidal_mask() to create a spherical mask with just a single
     radius.
@@ -42,9 +41,9 @@ def ellipsoidal_mask(
     major: float,
     minor1: float,
     minor2: float,
-    smooth: Optional[float] = None,
+    smooth: float | None = None,
     cutoff_sd: int = 3,
-    center: Optional[float] = None,
+    center: float | None = None,
 ) -> npt.NDArray[float]:
     """Create an ellipsoidal mask in the specified square box. Ellipsoid is defined by 3
     radius on x,y, and z axis.

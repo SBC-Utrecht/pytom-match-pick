@@ -1,6 +1,5 @@
 import pathlib
 import os
-from typing import Union
 from scipy.spatial.transform import Rotation
 import numpy as np
 import healpix as hp
@@ -94,7 +93,7 @@ def load_angle_list(
 
 
 def get_angle_list(
-    angle: Union[pathlib.Path, float],
+    angle: pathlib.Path | float,
     sort_angles: bool = True,
     symmetry: int = 1,
     log_level: int = logging.DEBUG,
