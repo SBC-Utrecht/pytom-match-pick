@@ -4,14 +4,13 @@ Functions in this file are cpu/gpu agnostic.
 
 import numpy.typing as npt
 import cupy.typing as cpt
-from typing import Optional, Union
 
 
 def mean_under_mask(
-    data: Union[npt.NDArray[float], cpt.NDArray[float]],
-    mask: Union[npt.NDArray[float], cpt.NDArray[float]],
-    mask_weight: Optional[float] = None,
-) -> Union[float, cpt.NDArray[float]]:
+    data: npt.NDArray[float] | cpt.NDArray[float],
+    mask: npt.NDArray[float] | cpt.NDArray[float],
+    mask_weight: float | None = None,
+) -> float | cpt.NDArray[float]:
     """Calculate mean of array in the mask region.
 
     data and mask can be cupy or numpy arrays.
@@ -37,11 +36,11 @@ def mean_under_mask(
 
 
 def std_under_mask(
-    data: Union[npt.NDArray[float], cpt.NDArray[float]],
-    mask: Union[npt.NDArray[float], cpt.NDArray[float]],
+    data: npt.NDArray[float] | cpt.NDArray[float],
+    mask: npt.NDArray[float] | cpt.NDArray[float],
     mean: float,
-    mask_weight: Optional[float] = None,
-) -> Union[float, cpt.NDArray[float]]:
+    mask_weight: float | None = None,
+) -> float | cpt.NDArray[float]:
     """Calculate standard deviation of array in the mask region. Uses mean_under_mask()
     to calculate the mean of data**2 within the mask.
 
@@ -68,10 +67,10 @@ def std_under_mask(
 
 
 def normalise(
-    data: Union[npt.NDArray[float], cpt.NDArray[float]],
-    mask: Optional[Union[npt.NDArray[float], cpt.NDArray[float]]] = None,
-    mask_weight: Optional[float] = None,
-) -> Union[npt.NDArray[float], cpt.NDArray[float]]:
+    data: npt.NDArray[float] | cpt.NDArray[float],
+    mask: npt.NDArray[float] | cpt.NDArray[float] | None = None,
+    mask_weight: float | None = None,
+) -> npt.NDArray[float] | cpt.NDArray[float]:
     """Normalise array by subtracting mean and dividing by standard deviation. If a mask
     is provided the array is normalised with the mean and std calculated within the
     mask.
@@ -102,10 +101,10 @@ def normalise(
 
 
 def normalised_cross_correlation(
-    data1: Union[npt.NDArray[float], cpt.NDArray[float]],
-    data2: Union[npt.NDArray[float], cpt.NDArray[float]],
-    mask: Optional[Union[npt.NDArray[float], cpt.NDArray[float]]] = None,
-) -> Union[float, cpt.NDArray[float]]:
+    data1: npt.NDArray[float] | cpt.NDArray[float],
+    data2: npt.NDArray[float] | cpt.NDArray[float],
+    mask: npt.NDArray[float] | cpt.NDArray[float] | None = None,
+) -> float | cpt.NDArray[float]:
     """Calculate normalised cross correlation between two arrays. Optionally only in a
     masked region.
 

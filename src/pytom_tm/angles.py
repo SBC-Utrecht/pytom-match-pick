@@ -1,6 +1,5 @@
 import pathlib
 import os
-from typing import Union
 from scipy.spatial.transform import Rotation
 import numpy as np
 import healpix as hp
@@ -94,7 +93,7 @@ def load_angle_list(
 
 
 def get_angle_list(
-    angle: Union[pathlib.Path, float],
+    angle: pathlib.Path | float,
     sort_angles: bool = True,
     symmetry: int = 1,
     log_level: int = logging.DEBUG,
@@ -135,7 +134,7 @@ def get_angle_list(
             f"Will generate an angle list with a maximum increment of {angle}",
         )
         out = angle_to_angle_list(angle, sort_angles, log_level)
-    elif isinstance(angle, (str, os.PathLike)):
+    elif isinstance(angle, str | os.PathLike):
         possible_file_path = pathlib.Path(angle)
         if possible_file_path.exists() and possible_file_path.suffix == ".txt":
             logging.log(

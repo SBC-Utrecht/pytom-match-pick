@@ -2,7 +2,6 @@ import numpy as np
 import numpy.typing as npt
 import scipy.ndimage as ndimage
 import voltools as vt
-from typing import Optional, Union
 from pytom_tm.io import UnequalSpacingError
 from itertools import pairwise
 
@@ -83,7 +82,7 @@ def wavelength_ev2m(voltage: float) -> float:
 
 
 def radial_reduced_grid(
-    shape: Union[tuple[int, int, int], tuple[int, int]], shape_is_reduced: bool = False
+    shape: tuple[int, int, int] | tuple[int, int], shape_is_reduced: bool = False
 ) -> npt.NDArray[float]:
     """Calculates a Fourier space radial reduced grid for the given input shape, with
     the 0 frequency in the center of the output image. Values range from 0 in the
@@ -143,7 +142,7 @@ def radial_reduced_grid(
 
 
 def create_gaussian_low_pass(
-    shape: Union[tuple[int, int, int], tuple[int, int]],
+    shape: tuple[int, int, int] | tuple[int, int],
     spacing: float,
     resolution: float,
 ) -> npt.NDArray[float]:
@@ -174,7 +173,7 @@ def create_gaussian_low_pass(
 
 
 def create_gaussian_high_pass(
-    shape: Union[tuple[int, int, int], tuple[int, int]],
+    shape: tuple[int, int, int] | tuple[int, int],
     spacing: float,
     resolution: float,
 ) -> npt.NDArray[float]:
@@ -205,10 +204,10 @@ def create_gaussian_high_pass(
 
 
 def create_gaussian_band_pass(
-    shape: Union[tuple[int, int, int], tuple[int, int]],
+    shape: tuple[int, int, int] | tuple[int, int],
     spacing: float,
-    low_pass: Optional[float] = None,
-    high_pass: Optional[float] = None,
+    low_pass: float | None = None,
+    high_pass: float | None = None,
 ) -> npt.NDArray[float]:
     """Resolution bands presents the resolution shells where information needs to be
     maintained. For example the bands might be (150A, 40A). For a spacing of 15A
@@ -263,11 +262,11 @@ def create_wedge(
     voxel_size: float,
     cut_off_radius: float = 1.0,
     angles_in_degrees: bool = True,
-    low_pass: Optional[float] = None,
-    high_pass: Optional[float] = None,
+    low_pass: float | None = None,
+    high_pass: float | None = None,
     tilt_weighting: bool = False,
-    accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
-    ctf_params_per_tilt: Optional[list[dict]] = None,
+    accumulated_dose_per_tilt: list[float, ...] | None = None,
+    ctf_params_per_tilt: list[dict] | None = None,
 ) -> npt.NDArray[float]:
     """This function returns a wedge volume that is either symmetric or asymmetric
     depending on wedge angle input.
@@ -485,8 +484,8 @@ def _create_tilt_weighted_wedge(
     tilt_angles: list[float, ...],
     cut_off_radius: float,
     pixel_size_angstrom: float,
-    accumulated_dose_per_tilt: Optional[list[float, ...]] = None,
-    ctf_params_per_tilt: Optional[list[dict]] = None,
+    accumulated_dose_per_tilt: list[float, ...] | None = None,
+    ctf_params_per_tilt: list[dict] | None = None,
 ) -> npt.NDArray[float]:
     """
     The following B-factor heuristic is used (as mentioned in the M paper, and
@@ -634,7 +633,7 @@ def _create_tilt_weighted_wedge(
 
 
 def create_ctf(
-    shape: Union[tuple[int, int, int], tuple[int, int]],
+    shape: tuple[int, int, int] | tuple[int, int],
     pixel_size: float,
     defocus: float,
     amplitude_contrast: float,
@@ -791,7 +790,7 @@ def power_spectrum_profile(image: npt.NDArray[float]) -> npt.NDArray[float]:
 
 
 def profile_to_weighting(
-    profile: npt.NDArray[float], shape: Union[tuple[int, int], tuple[int, int, int]]
+    profile: npt.NDArray[float], shape: tuple[int, int] | tuple[int, int, int]
 ) -> npt.NDArray[float]:
     """Calculate a radial weighing (filter) from a spectrum profile.
 

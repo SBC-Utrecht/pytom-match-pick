@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Typing :: Typed"
 ]
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 dependencies = [
     "numpy",
     "cupy!=13.0.*", #see https://github.com/SBC-Utrecht/pytom-match-pick/issues/106

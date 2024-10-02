@@ -3,7 +3,6 @@ import cupy.typing as cpt
 import numpy.typing as npt
 import voltools as vt
 import gc
-from typing import Optional
 from cupyx.scipy.fft import rfftn, irfftn
 from tqdm import tqdm
 from pytom_tm.correlation import mean_under_mask, std_under_mask
@@ -17,8 +16,8 @@ class TemplateMatchingPlan:
         template: npt.NDArray[float],
         mask: npt.NDArray[float],
         device_id: int,
-        wedge: Optional[npt.NDArray[float]] = None,
-        phase_randomized_template: Optional[npt.NDArray[float]] = None,
+        wedge: npt.NDArray[float] | None = None,
+        phase_randomized_template: npt.NDArray[float] | None = None,
     ):
         """Initialize a template matching plan. All the necessary cupy arrays will be
         allocated on the GPU.
@@ -126,8 +125,8 @@ class TemplateMatchingGPU:
         angle_list: list[tuple[float, float, float]],
         angle_ids: list[int],
         mask_is_spherical: bool = True,
-        wedge: Optional[npt.NDArray[float]] = None,
-        stats_roi: Optional[tuple[slice, slice, slice]] = None,
+        wedge: npt.NDArray[float] | None = None,
+        stats_roi: tuple[slice, slice, slice] | None = None,
         noise_correction: bool = False,
         rng_seed: int = 321,
     ):
@@ -220,7 +219,7 @@ class TemplateMatchingGPU:
                 - a dictionary with three floats of search statistics;
                     'search_space', 'variance', and 'std'
         """
-        print("Progress job_{} on device {:d}:".format(self.job_id, self.device_id))
+        print(f"Progress job_{self.job_id} on device {self.device_id:d}:")
 
         # Size x template (sxz) and center x template (cxt)
         sxt, syt, szt = self.plan.template.shape

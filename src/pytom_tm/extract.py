@@ -5,7 +5,6 @@ import numpy.typing as npt
 import logging
 import scipy.ndimage as ndimage
 import pathlib
-from typing import Optional
 from pytom_tm.tmjob import TMJob
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import get_angle_list, convert_euler
@@ -28,7 +27,7 @@ except ModuleNotFoundError:
 
 def predict_tophat_mask(
     score_volume: npt.NDArray[float],
-    output_path: Optional[pathlib.Path] = None,
+    output_path: pathlib.Path | None = None,
     n_false_positives: float = 1.0,
     create_plot: bool = True,
     tophat_connectivity: int = 1,
@@ -148,9 +147,9 @@ def extract_particles(
     job: TMJob,
     particle_radius_px: int,
     n_particles: int,
-    cut_off: Optional[float] = None,
+    cut_off: float | None = None,
     n_false_positives: float = 1.0,
-    tomogram_mask_path: Optional[pathlib.Path] = None,
+    tomogram_mask_path: pathlib.Path | None = None,
     tophat_filter: bool = False,
     create_plot: bool = True,
     tophat_connectivity: int = 1,
