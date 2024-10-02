@@ -276,6 +276,11 @@ def extract_particles(
     pixel_size = job.voxel_size
     tomogram_id = job.tomo_id
 
+    # remove relion5 reconstructed tomogram name as it messes with linking the tilt
+    # series id when extracting subtomos
+    if relion5_compat and tomogram_id.startswith("rec_"):
+        tomogram_id = tomogram_id[4:]
+
     data = []
     scores = []
 
