@@ -102,6 +102,6 @@ class TestBrokenMRC(unittest.TestCase):
         # test name mismatch
         tomogram = pathlib.Path("tomogram.mrc")
         with self.assertRaises(
-            ValueError, msg="Unmatching tomograms name should " "raise an error."
+            ValueError, msg="Unmatching tomograms name should raise an error."
         ):
             parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)
