@@ -4,12 +4,10 @@ import argparse
 import logging
 import numpy.typing as npt
 import numpy as np
+import starfile
 from contextlib import contextmanager
 from operator import attrgetter
 from typing import Optional, Union
-
-# new imports
-import starfile
 
 
 class ParseLogging(argparse.Action):
