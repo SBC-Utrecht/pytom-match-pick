@@ -4,7 +4,6 @@ import voltools as vt
 import logging
 from scipy.ndimage import center_of_mass, zoom
 from scipy.fft import rfftn, irfftn
-from typing import Optional
 from pytom_tm.weights import (
     create_gaussian_low_pass,
     radial_reduced_grid,
@@ -16,8 +15,8 @@ def generate_template_from_map(
     input_spacing: float,
     output_spacing: float,
     center: bool = False,
-    filter_to_resolution: Optional[float] = None,
-    output_box_size: Optional[int] = None,
+    filter_to_resolution: float | None = None,
+    output_box_size: int | None = None,
 ) -> npt.NDArray[float]:
     """Generate a template from a density map.
 
