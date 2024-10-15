@@ -526,14 +526,12 @@ def parse_relion5_star_data(
         for i, x in enumerate(tomograms_star_data["rlnTomoName"])
         if x in tomogram_id
     ]
-    if len(matches) > 1:
-        raise ValueError(
-            "Multiple matches of tomogram id in RELION5 STAR file. " "Aborting..."
-        )
-    elif len(matches) == 0:
-        raise ValueError("No match of tomogram id in RELION5 STAR file. Aborting...")
-    else:
+    if len(matches) == 1:
         tomogram_meta_data = tomograms_star_data.loc[matches[0][0]]
+    else:
+        raise ValueError(
+            "Multiple or zero matches of tomogram id in RELION5 STAR file. Aborting..."
+        )
 
     # grab the path to tilt series star where tilt angles, defocus and dose are
     # annotated

@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import mrcfile
 
-from pytom_tm.io import read_mrc, read_mrc_meta_data, write_mrc
+from pytom_tm.io import read_mrc, read_mrc_meta_data, write_mrc, parse_relion5_star_data
 
 FAILING_MRC = pathlib.Path(__file__).parent.joinpath(
     pathlib.Path("Data/human_ribo_mask_32_8_5.mrc")
@@ -14,6 +14,9 @@ FAILING_MRC = pathlib.Path(__file__).parent.joinpath(
 # The below file was made with head -c 1024 human_ribo_mask_32_8_5.mrc > header_only.mrc
 CORRUPT_MRC = pathlib.Path(__file__).parent.joinpath(
     pathlib.Path("Data/header_only.mrc")
+)
+RELION5_TOMOGRAMS_STAR = pathlib.Path(__file__).parent.joinpath(
+    "Data/relion5_project_example/Tomograms/job009/tomograms.star"
 )
 
 
@@ -85,3 +88,20 @@ class TestBrokenMRC(unittest.TestCase):
             write_mrc(fname, array, 1.0)
         self.assertEqual(len(cm.output), 1)
         self.assertIn("np.float32", cm.output[0])
+
+    def test_parse_relion5_star_data(self):
+        tomogram = pathlib.Path("rec_tomo200528_107.mrc")
+        meta_data = parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)
+        self.assertEqual(len(meta_data), 4)
+        self.assertIsInstance(meta_data[0], float)
+        self.assertIsInstance(meta_data[1], list)
+        self.assertIsInstance(meta_data[2], list)
+        self.assertIsInstance(meta_data[3], list)
+        self.assertIsInstance(meta_data[3][0], dict)
+
+        # test name mismatch
+        tomogram = pathlib.Path("tomogram.mrc")
+        with self.assertRaises(
+            ValueError, msg="Unmatching tomograms name should " "raise an error."
+        ):
+            parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)
