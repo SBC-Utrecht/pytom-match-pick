@@ -498,7 +498,7 @@ def parse_relion5_star_data(
     tomogram_path: pathlib.Path,
     phase_flip_correction: bool = False,
     phase_shift: float = 0.0,
-) -> tuple[float, list[float, ...], list[float, ...], dict]:
+) -> tuple[float, list[float, ...], list[float, ...], dict, int]:
     """Read RELION5 metadata from a project directory.
 
     Parameters
@@ -514,8 +514,8 @@ def parse_relion5_star_data(
 
     Returns
     -------
-    tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params:
-        tuple[float, list[float, ...], list[float, ...], list[dict, ...]]
+    tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params, defocus_handedness:
+        tuple[float, list[float, ...], list[float, ...], list[dict, ...], int]
     """
     tomogram_id = tomogram_path.stem
     tomograms_star_data = starfile.read(tomograms_star_path)
@@ -566,6 +566,7 @@ def parse_relion5_star_data(
         tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
         * tomogram_meta_data["rlnTomoTomogramBinning"]
     )
+    defocus_handedness = int(tomogram_meta_data["rlnTomoHand"])
 
     ctf_params = [
         {
@@ -584,4 +585,10 @@ def parse_relion5_star_data(
         * 1e-4
     ]
 
-    return tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params
+    return (
+        tomogram_voxel_size,
+        tilt_angles,
+        dose_accumulation,
+        ctf_params,
+        defocus_handedness,
+    )

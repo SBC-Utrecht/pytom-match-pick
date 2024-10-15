@@ -961,7 +961,7 @@ def match_template(argv=None):
         ]
 
     if args.relion5_tomograms_star is not None:
-        voxel_size, tilt_angles, dose_accumulation, ctf_params = (
+        voxel_size, tilt_angles, dose_accumulation, ctf_params, defocus_handedness = (
             parse_relion5_star_data(
                 args.relion5_tomograms_star,
                 args.tomogram,
@@ -977,6 +977,7 @@ def match_template(argv=None):
                 "minimal run requires tilt angles."
             )
         voxel_size = args.voxel_size_angstrom
+        defocus_handedness = args.defocus_handedness
         tilt_angles = args.tilt_angles
         dose_accumulation = args.dose_accumulation
         per_tilt_weighting = args.per_tilt_weighting
@@ -1014,7 +1015,7 @@ def match_template(argv=None):
         particle_diameter=args.particle_diameter,
         random_phase_correction=args.random_phase_correction,
         rng_seed=args.rng_seed,
-        defocus_handedness=args.defocus_handedness,
+        defocus_handedness=defocus_handedness,
         output_dtype=np.float16 if args.half_precision else np.float32,
     )
 
