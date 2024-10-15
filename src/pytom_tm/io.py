@@ -498,7 +498,7 @@ def parse_relion5_star_data(
     tomogram_path: pathlib.Path,
     phase_flip_correction: bool = False,
     phase_shift: float = 0.0,
-) -> tuple[float, list[float, ...], list[float, ...], dict, int]:
+) -> tuple[float, list[float, ...], list[float, ...], list[dict, ...], int]:
     """Read RELION5 metadata from a project directory.
 
     Parameters
@@ -562,7 +562,7 @@ def parse_relion5_star_data(
     # _rlnTomoSizeY  # 11
     # _rlnTomoSizeZ  # 12
     # _rlnTomoReconstructedTomogram  # 13
-    tomogram_voxel_size = (
+    tomogram_voxel_size = float(
         tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
         * tomogram_meta_data["rlnTomoTomogramBinning"]
     )
