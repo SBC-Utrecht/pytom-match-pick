@@ -903,7 +903,11 @@ def match_template(argv=None):
         type=pathlib.Path,
         action=CheckFileExists,
         required=False,
-        help="TO-DO",
+        help="Here, you can provide a path to a RELION5 tomograms.star file (for "
+        "example "
+        "from a tomogram reconstruction job). pytom-match-pick will fetch all "
+        "the tilt-series metadata from this file and overwrite all other "
+        "metadata options.",
     )
     device_group = parser.add_argument_group("Device control")
     device_group.add_argument(
