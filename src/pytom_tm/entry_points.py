@@ -971,6 +971,11 @@ def match_template(argv=None):
         )
         per_tilt_weighting = True
     else:
+        if args.tilt_angles is None:
+            raise ValueError(
+                "Without tilt angles the missing wedge cannot be calculated. A "
+                "minimal run requires tilt angles."
+            )
         voxel_size = args.voxel_size_angstrom
         tilt_angles = args.tilt_angles
         dose_accumulation = args.dose_accumulation
