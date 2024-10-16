@@ -550,19 +550,17 @@ def parse_relion5_star_data(
 
     ctf_params = [
         {
-            "defocus": defocus * 1e-6,
+            "defocus": defocus * 1e-10,
             "amplitude_contrast": tomogram_meta_data["rlnAmplitudeContrast"],
             "voltage": tomogram_meta_data["rlnVoltage"] * 1e3,
             "spherical_aberration": tomogram_meta_data["rlnSphericalAberration"] * 1e-3,
             "flip_phase": phase_flip_correction,
-            "phase_shift_deg": phase_shift,  # Unclear to me where the phase
-            # shifts are annotated in RELION5 tilt series file
+            "phase_shift_deg": phase_shift,  # RELION5 does not seem to store this
         }
         for defocus in (
             tilt_series_star_data.rlnDefocusV + tilt_series_star_data.rlnDefocusU
         )
         / 2
-        * 1e-4
     ]
 
     return (
