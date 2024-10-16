@@ -37,6 +37,10 @@ DEFOCUS = TEST_DATA.joinpath("defocus.txt")
 DEFOCUS_IMOD = (
     pathlib.Path(__file__).parent.joinpath("Data").joinpath("test_imod.defocus")
 )
+RELION5_TOMOGRAMS_STAR = pathlib.Path(__file__).parent.joinpath(
+    "Data/relion5_project_example/Tomograms/job009/tomograms.star"
+)
+RELION5_TOMOGRAM = TEST_DATA.joinpath("rec_tomo200528_107.mrc")
 
 # Initial logging level
 LOG_LEVEL = logging.getLogger().level
@@ -58,6 +62,7 @@ class TestEntryPoints(unittest.TestCase):
         io.write_mrc(TEMPLATE, np.zeros((5, 5, 5), dtype=np.float32), 1)
         io.write_mrc(MASK, np.zeros((5, 5, 5), dtype=np.float32), 1)
         io.write_mrc(TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
+        io.write_mrc(RELION5_TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
         np.savetxt(TILT_ANGLES, np.linspace(-50, 50, 35))
         np.savetxt(DOSE, np.linspace(0, 100, 35))
         np.savetxt(DEFOCUS, np.ones(35) * 3000)
@@ -67,6 +72,7 @@ class TestEntryPoints(unittest.TestCase):
         TEMPLATE.unlink()
         MASK.unlink()
         TOMOGRAM.unlink()
+        RELION5_TOMOGRAM.unlink()
         TILT_ANGLES.unlink()
         DOSE.unlink()
         DEFOCUS.unlink()
@@ -197,3 +203,27 @@ class TestEntryPoints(unittest.TestCase):
                 start(arguments)
             self.assertIn("gpu indices", dump.getvalue())
             dump.close()
+
+        # test relion5 metadata reading
+        arguments = defaults.copy()
+        [
+            arguments.pop(x)
+            for x in [
+                "--tilt-angles",
+                "--per-tilt-weighting",
+                "--dose-accumulation",
+                "--defocus",
+                "--amplitude-contrast",
+                "--spherical-aberration",
+                "--voltage",
+            ]
+        ]
+        arguments["-v"] = str(RELION5_TOMOGRAM)
+        arguments["--relion5-tomograms-star"] = str(RELION5_TOMOGRAMS_STAR)
+        start(arguments)
+
+        with self.assertRaises(
+            ValueError, msg="Missing tilt angles should raise an error."
+        ):
+            arguments.pop("--relion5-tomograms-star")
+            start(arguments)

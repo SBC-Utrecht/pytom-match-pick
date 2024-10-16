@@ -4,6 +4,7 @@ import argparse
 import logging
 import numpy.typing as npt
 import numpy as np
+import starfile
 from contextlib import contextmanager
 from operator import attrgetter
 
@@ -481,3 +482,91 @@ def read_defocus_file(file_name: pathlib.Path) -> list[float, ...]:
         return read_txt_file(file_name)
     else:
         raise ValueError("Defocus file needs to have format .defocus or .txt")
+
+
+def parse_relion5_star_data(
+    tomograms_star_path: pathlib.Path,
+    tomogram_path: pathlib.Path,
+    phase_flip_correction: bool = False,
+    phase_shift: float = 0.0,
+) -> tuple[float, list[float, ...], list[float, ...], list[dict, ...], int]:
+    """Read RELION5 metadata from a project directory.
+
+    Parameters
+    ----------
+    tomograms_star_path: pathlib.Path
+        the tomograms.star from a RELION5 reconstruct job contains invariable metadata
+        and points to a tilt series star file with fitted values
+    tomogram_path: pathlib.Path
+        path to the tomogram for template matching; we use the name to pattern match in
+        the RELION5 star file
+    phase_flip_correction: bool, default False
+    phase_shift: float, default 0.0
+
+    Returns
+    -------
+    tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params, defocus_handedness:
+        tuple[float, list[float, ...], list[float, ...], list[dict, ...], int]
+    """
+    tomogram_id = tomogram_path.stem
+    tomograms_star_data = starfile.read(tomograms_star_path)
+
+    # match the tomo_id and check if viable
+    matches = [
+        i
+        for i, x in enumerate(tomograms_star_data["rlnTomoName"])
+        if tomogram_id.endswith(x)
+    ]
+    if len(matches) == 1:
+        tomogram_meta_data = tomograms_star_data.loc[matches[0]]
+    else:
+        raise ValueError(
+            f"{'Multiple' if len(matches) > 1 else 'Zero'} matches "
+            f"of tomogram id: {tomogram_id}, "
+            f"in RELION5 STAR file: {tomograms_star_path}. "
+            "Aborting..."
+        )
+
+    # grab the path to tilt series star for tilt angles, defocus and dose
+    tilt_series_star_path = pathlib.Path(
+        tomogram_meta_data["rlnTomoTiltSeriesStarFile"]
+    )
+    # update the path to a location we can actually find from CD
+    tilt_series_star_path = tomograms_star_path.parent.joinpath("tilt_series").joinpath(
+        tilt_series_star_path.name
+    )
+    tilt_series_star_data = starfile.read(tilt_series_star_path)
+
+    # we extract tilt angles, dose accumulation and ctf params
+    # TODO We need to have an internal structure for tilt series meta data
+    tilt_angles = list(tilt_series_star_data["rlnTomoNominalStageTiltAngle"])
+    dose_accumulation = list(tilt_series_star_data["rlnMicrographPreExposure"])
+
+    tomogram_voxel_size = float(
+        tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
+        * tomogram_meta_data["rlnTomoTomogramBinning"]
+    )
+    defocus_handedness = int(tomogram_meta_data["rlnTomoHand"])
+
+    ctf_params = [
+        {
+            "defocus": defocus * 1e-10,
+            "amplitude_contrast": tomogram_meta_data["rlnAmplitudeContrast"],
+            "voltage": tomogram_meta_data["rlnVoltage"] * 1e3,
+            "spherical_aberration": tomogram_meta_data["rlnSphericalAberration"] * 1e-3,
+            "flip_phase": phase_flip_correction,
+            "phase_shift_deg": phase_shift,  # RELION5 does not seem to store this
+        }
+        for defocus in (
+            tilt_series_star_data.rlnDefocusV + tilt_series_star_data.rlnDefocusU
+        )
+        / 2
+    ]
+
+    return (
+        tomogram_voxel_size,
+        tilt_angles,
+        dose_accumulation,
+        ctf_params,
+        defocus_handedness,
+    )
