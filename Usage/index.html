@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.41">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.8c3ca2c6.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.0253249f.min.css">
       
       
 
@@ -1264,8 +1264,8 @@ never seemed to clearly improve results.</p>
                                [--search-x SEARCH_X SEARCH_X]
                                [--search-y SEARCH_Y SEARCH_Y]
                                [--search-z SEARCH_Z SEARCH_Z]
-                               [--tomogram-mask TOMOGRAM_MASK] -a TILT_ANGLES
-                               [TILT_ANGLES ...]
+                               [--tomogram-mask TOMOGRAM_MASK]
+                               [-a TILT_ANGLES [TILT_ANGLES ...]]
                                [--per-tilt-weighting PER_TILT_WEIGHTING]
                                [--voxel-size-angstrom VOXEL_SIZE_ANGSTROM]
                                [--low-pass LOW_PASS] [--high-pass HIGH_PASS]
@@ -1279,8 +1279,9 @@ never seemed to clearly improve results.</p>
                                [--spectral-whitening SPECTRAL_WHITENING]
                                [-r RANDOM_PHASE_CORRECTION]
                                [--half-precision HALF_PRECISION]
-                               [--rng-seed RNG_SEED] -g GPU_IDS [GPU_IDS ...]
-                               [--log LOG]
+                               [--rng-seed RNG_SEED]
+                               [--relion5-tomograms-star RELION5_TOMOGRAMS_STAR]
+                               -g GPU_IDS [GPU_IDS ...] [--log LOG]
 
 Run template matching. -- Marten Chaillet (@McHaillet)
 
@@ -1450,6 +1451,12 @@ Additional options:
                         default float32
   --rng-seed RNG_SEED   Specify a seed for the random number generator used
                         for phase randomization for consistent results!
+  --relion5-tomograms-star RELION5_TOMOGRAMS_STAR
+                        Here, you can provide a path to a RELION5
+                        tomograms.star file (for example from a tomogram
+                        reconstruction job). pytom-match-pick will fetch all
+                        the tilt-series metadata from this file and overwrite
+                        all other metadata options.
 
 Device control:
   -g GPU_IDS [GPU_IDS ...], --gpu-ids GPU_IDS [GPU_IDS ...]
@@ -1672,7 +1679,7 @@ options:
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.expand", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.525ec568.min.js"></script>
+      <script src="../assets/javascripts/bundle.83f73b43.min.js"></script>
       
         <script src="../assets/_markdown_exec_pyodide.js"></script>
       
