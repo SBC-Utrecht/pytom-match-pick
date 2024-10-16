@@ -100,9 +100,21 @@ class TestBrokenMRC(unittest.TestCase):
         self.assertIsInstance(meta_data[3][0], dict)
         self.assertIsInstance(meta_data[4], int)
 
-        # test name mismatch
         tomogram = pathlib.Path("tomogram.mrc")
         with self.assertRaises(
             ValueError, msg="Unmatching tomograms name should raise an error."
+        ):
+            parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)
+
+        tomogram = pathlib.Path("rec_tomogram200528_1077.mrc")
+        with self.assertRaises(
+            ValueError, msg="Partially matching tomogram name should raise an error."
+        ):
+            parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)
+
+
+        tomogram = pathlib.Path("rec_tomogram200528_10.mrc")
+        with self.assertRaises(
+            ValueError, msg="Partially matching tomogram name should raise an error."
         ):
             parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)

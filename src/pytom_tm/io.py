@@ -513,15 +513,18 @@ def parse_relion5_star_data(
 
     # match the tomo_id and check if viable
     matches = [
-        (i, x)
+        i
         for i, x in enumerate(tomograms_star_data["rlnTomoName"])
-        if x in tomogram_id
+        if tomogram_id.endswith(x)
     ]
     if len(matches) == 1:
-        tomogram_meta_data = tomograms_star_data.loc[matches[0][0]]
+        tomogram_meta_data = tomograms_star_data.loc[matches[0]]
     else:
         raise ValueError(
-            "Multiple or zero matches of tomogram id in RELION5 STAR file. Aborting..."
+            f"{'Multiple' if len(matches) > 1 else 'Zero'} matches "
+            f"of tomogram id: {tomogram_id}, "
+            f"in RELION5 STAR file: {tomograms_star_path}. "
+            "Aborting..."
         )
 
     # grab the path to tilt series star for tilt angles, defocus and dose
@@ -539,19 +542,6 @@ def parse_relion5_star_data(
     tilt_angles = list(tilt_series_star_data["rlnTomoNominalStageTiltAngle"])
     dose_accumulation = list(tilt_series_star_data["rlnMicrographPreExposure"])
 
-    # _rlnTomoName  # 1
-    # _rlnVoltage  # 2
-    # _rlnSphericalAberration  # 3
-    # _rlnAmplitudeContrast  # 4
-    # _rlnMicrographOriginalPixelSize  # 5
-    # _rlnTomoHand  # 6
-    # _rlnTomoTiltSeriesPixelSize  # 7
-    # _rlnTomoTiltSeriesStarFile  # 8
-    # _rlnTomoTomogramBinning  # 9
-    # _rlnTomoSizeX  # 10
-    # _rlnTomoSizeY  # 11
-    # _rlnTomoSizeZ  # 12
-    # _rlnTomoReconstructedTomogram  # 13
     tomogram_voxel_size = float(
         tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
         * tomogram_meta_data["rlnTomoTomogramBinning"]
