@@ -112,7 +112,6 @@ class TestBrokenMRC(unittest.TestCase):
         ):
             parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)
 
-
         tomogram = pathlib.Path("rec_tomogram200528_10.mrc")
         with self.assertRaises(
             ValueError, msg="Partially matching tomogram name should raise an error."
