@@ -613,7 +613,19 @@ class TestTMJob(unittest.TestCase):
         self.assertEqual(a.dtype, np.float32)
 
     def test_extractions(self):
-        _ = self.job.start_job(0, return_volumes=True)
+        self.job.tomo_id = "rec_" + self.job.tomo_id
+        scores, angles = self.job.start_job(0, return_volumes=True)
+        # set the appropriate headers when writing!
+        write_mrc(
+            TEST_DATA_DIR.joinpath(f"{self.job.tomo_id}_scores.mrc"),
+            scores,
+            self.job.voxel_size,
+        )
+        write_mrc(
+            TEST_DATA_DIR.joinpath(f"{self.job.tomo_id}_angles.mrc"),
+            angles,
+            self.job.voxel_size,
+        )
 
         # extract particles after running the job
         df, scores = extract_particles(self.job, 5, 100, create_plot=False)
@@ -646,6 +658,7 @@ class TestTMJob(unittest.TestCase):
             msg="relion5 compat mode should return a centered "
             "location of the object",
         )
+        self.assertNotIn("rec_", df_rel5["rlnTomoName"][0])
 
         # test extraction mask that does not cover the particle
         df, scores = extract_particles(
