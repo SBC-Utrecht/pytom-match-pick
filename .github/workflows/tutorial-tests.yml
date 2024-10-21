@@ -17,7 +17,7 @@ jobs:
     runs-on: [self-hosted, linux, x64, gpu]
     container:
       image: continuumio/miniconda3
-      options: --runtime=nvidia --gpus all
+      options: --runtime=nvidia --gpus all --memory=60G --oom-kill-disable
     defaults:
       run:
         working-directory: ./docs/tutorials
