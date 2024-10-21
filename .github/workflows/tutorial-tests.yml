@@ -48,6 +48,10 @@ jobs:
           mv tutorial/* .
       - name: Set TQDM_MININTERVAL
         run: echo "TQDM_MININTERVAL=10" >> "$GITHUB_ENV"
+      - name: see ENV and nvidia-smi
+        run: |
+          env
+          nvidia-smi
       - name: Run Tutorial test
         run: |
           # Hardcode the conversion line
