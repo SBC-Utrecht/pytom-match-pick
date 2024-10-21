@@ -111,10 +111,20 @@ def generate_template_from_map(
     ).astype(np.float32)
 
     logging.info("Convoluting volume with filter and then downsampling.")
-    return zoom(
-        irfftn(rfftn(input_map) * lpf, s=input_map.shape),
-        input_spacing / output_spacing,
-    )
+    logging.debug("starting with rfftn")
+    temp = rfftn(input_map)
+    logging.debug("applying filter")
+    temp = temp * lpf
+    logging.debug("inverting rfftn")
+    temp = itfftn(temp, s=input_map.shape)
+    logging.debug("zooming")
+    temp = zoom(temp, input_spacing / output_spacing)
+    logging.debug("done")
+    return temp
+    #return zoom(
+    #    irfftn(rfftn(input_map) * lpf, s=input_map.shape),
+    #    input_spacing / output_spacing,
+    #)
 
 
 def phase_randomize_template(
