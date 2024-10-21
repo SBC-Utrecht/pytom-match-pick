@@ -56,5 +56,5 @@ jobs:
         run: |
           # Hardcode the conversion line
           for x in dataset/*.mrc; do python -c "import mrcfile; mrc = mrcfile.mmap('$x', 'r+'); mrc.voxel_size = 13.79"; done
-          python -u pytom_create_template.py -i templates/emd_2938.map -o templates/80S.mrc --input-voxel 1.1 --output-voxel 13.79 --center --invert -b 60
+          python -u $(which pytom_create_template.py) -i templates/emd_2938.map -o templates/80S.mrc --input-voxel 1.1 --output-voxel 13.79 --center --invert -b 60
           # python -u tests/test_tutorial.py
