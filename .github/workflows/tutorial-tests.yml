@@ -27,8 +27,9 @@ jobs:
       - name: Install dependencies, code, and list everything
         working-directory: ./
         run: |
-          conda install -y -c conda-forge python=3 cupy cuda-version=11.8 curl unzip
-          python -m pip install coverage mdextractor #mdextractor is new and might need to be replaced later
+          conda install -y -c conda-forge python=3 cupy=13.3.0=py312h8e83189_0 cupy-core=13.3.0=py312h53955ab_0 libgcc=14.1 numpy=2.1.1 c-ares=1.33.1 cuda-version=11.8 curl unzip
+          python -m pip install markupsafe==2.1.5 distlib==0.3.8 coverage==7.6.1
+          python -m pip install coverage  mdextractor #mdextractor is new and might need to be replaced later
           python -m pip install .[all]
           conda list
       - name: Grab files needed for tests
