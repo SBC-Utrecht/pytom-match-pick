@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - test_tutorial
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
   schedule:
@@ -16,7 +17,7 @@ jobs:
     runs-on: [self-hosted, linux, x64, gpu]
     container:
       image: continuumio/miniconda3
-      options: --runtime=nvidia --gpus all
+      options: --runtime=nvidia --gpus all --oom-kill-disable
     defaults:
       run:
         working-directory: ./docs/tutorials
@@ -26,8 +27,9 @@ jobs:
       - name: Install dependencies, code, and list everything
         working-directory: ./
         run: |
-          conda install -y -c conda-forge python=3 cupy cuda-version=11.8 curl unzip
-          python -m pip install coverage mdextractor #mdextractor is new and might need to be replaced later
+          conda install -y -c conda-forge python=3 cupy=13.3.0=py312h8e83189_0 cupy-core=13.3.0=py312h53955ab_0 libgcc=14.1 numpy=2.1.1 c-ares=1.33.1 libnghttp2=1.58.0 libsqlite=3.46.1 sqlite=3.46.1 conda=24.9.1 cuda-version=11.8 curl unzip
+          python -m pip install markupsafe==2.1.5 distlib==0.3.8 coverage==7.6.1 mkdocs-material==9.5.39 pillow==10.4.0 pyparsing==3.1.4 virtualenv==20.26.6 ruff==0.6.9 pre-commit==4.0.0
+          python -m pip install coverage  mdextractor #mdextractor is new and might need to be replaced later
           python -m pip install .[all]
           conda list
       - name: Grab files needed for tests
@@ -47,8 +49,13 @@ jobs:
           mv tutorial/* .
       - name: Set TQDM_MININTERVAL
         run: echo "TQDM_MININTERVAL=10" >> "$GITHUB_ENV"
+      - name: see ENV and nvidia-smi
+        run: |
+          env
+          nvidia-smi
       - name: Run Tutorial test
         run: |
           # Hardcode the conversion line
           for x in dataset/*.mrc; do python -c "import mrcfile; mrc = mrcfile.mmap('$x', 'r+'); mrc.voxel_size = 13.79"; done
-          python -u tests/test_tutorial.py
+          python -u $(which pytom_create_template.py) -i templates/emd_2938.map -o templates/80S.mrc --input-voxel 1.1 --output-voxel 13.79 --center --invert -b 60 --log debug
+          # python -u tests/test_tutorial.py
