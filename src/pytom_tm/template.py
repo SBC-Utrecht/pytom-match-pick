@@ -116,7 +116,7 @@ def generate_template_from_map(
     logging.debug("applying filter")
     temp = temp * lpf
     logging.debug("inverting rfftn")
-    temp = itfftn(temp, s=input_map.shape)
+    temp = irfftn(temp, s=input_map.shape)
     logging.debug("zooming")
     temp = zoom(temp, input_spacing / output_spacing)
     logging.debug("done")
