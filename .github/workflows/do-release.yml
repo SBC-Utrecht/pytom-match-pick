@@ -27,7 +27,7 @@ jobs:
         run: |
           python -m twine check dist/*
       - name: Publish package distributions to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.12
+        uses: pypa/gh-action-pypi-publish@release/v1.11  # temporary workaround for issue #236
         with:
           repository-url: https://test.pypi.org/legacy/
       - name: Download conda dependencies 
@@ -40,4 +40,4 @@ jobs:
         run: |
           python -m unittest discover tests/
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@release/v1.11  # temporary workaround for issue #236
