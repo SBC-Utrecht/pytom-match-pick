@@ -30,6 +30,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1.11  # temporary workaround for issue #236
         with:
           repository-url: https://test.pypi.org/legacy/
+          attestations: false
       - name: Download conda dependencies 
         run: |
           conda install -y -c conda-forge python=3 cupy cuda-version=11.8
@@ -41,3 +42,5 @@ jobs:
           python -m unittest discover tests/
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1.11  # temporary workaround for issue #236
+        with:
+           attestations: false
