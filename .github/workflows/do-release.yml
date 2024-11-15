@@ -31,7 +31,7 @@ jobs:
           python -m twine check dist/*
       - name: debug code 
         run: |
-          ls /home/githubrunner/actions-runner/_work/_actions/
+          ls /home
           ls /__w/_actions
       - name: Publish package distributions to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
