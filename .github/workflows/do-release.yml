@@ -32,6 +32,8 @@ jobs:
       - name: debug code 
         run: |
           ls /home
+      - name: debug part 2
+        run: |
           ls /__w/_actions
       - name: Publish package distributions to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
