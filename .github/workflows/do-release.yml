@@ -1,5 +1,8 @@
 name: "PyPI release"
 on:
+  push:
+    branches:
+      - sroet-patch-1
   release:
     types:
       - published
