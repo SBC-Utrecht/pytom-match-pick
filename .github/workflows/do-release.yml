@@ -5,15 +5,13 @@ on:
       - published
 
 # Following: https://docs.pypi.org/trusted-publishers/using-a-publisher/
+# and https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 jobs:
-  publish_release:
+  build-release:
     runs-on: [self-hosted, linux, x64, gpu]
     container:
       image: continuumio/miniconda3
       options: --runtime=nvidia --gpus all
-    environment: release
-    permissions:
-      id-token: write
     steps:
       - name: Pull code
         uses: actions/checkout@v4
@@ -26,21 +24,64 @@ jobs:
       - name: twine check distributions
         run: |
           python -m twine check dist/*
-      - name: Publish package distributions to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.11  # temporary workaround for issue #236
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
         with:
+          name: match-pick-distributions
+          path: dist/
+  
+  publish-to-testpypi:
+    name: publish to test-pypi
+    needs: build-release
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: match-pick-distributions
+        path: dist/
+    - name: Publish package distributions to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
           repository-url: https://test.pypi.org/legacy/
-          attestations: false
+  
+  test-testpypi:
+     name: test testpypi deployment
+     needs: publish-to-testpypi
+     runs-on: [self-hosted, linux, x64, gpu]
+     container:
+       image: continuumio/miniconda3
+       options: --runtime=nvidia --gpus all
+     steps:
       - name: Download conda dependencies 
         run: |
           conda install -y -c conda-forge python=3 cupy cuda-version=11.8
       - name: Install from testPyPi
         run: |
           python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pytom-match-pick[plotting]
+      - name: Pull test code
+        uses: actions/checkout@v4
       - name: Run tests on the installed package
         run: |
           python -m unittest discover tests/
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.11  # temporary workaround for issue #236
-        with:
-           attestations: false
+  
+  publish-to-pypi:
+    name: publish to pypi
+    needs: [build-release, test-testpypi]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: match-pick-distributions
+        path: dist/
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+            
+      
