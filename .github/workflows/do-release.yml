@@ -1,8 +1,5 @@
 name: "PyPI release"
 on:
-  push:
-    branches:
-      - sroet-patch-1
   release:
     types:
       - published
@@ -37,7 +34,7 @@ jobs:
     name: publish to test-pypi
     needs: build-release
     runs-on: ubuntu-latest
-    #environment: release
+    environment: release
     permissions:
       id-token: write
     steps:
@@ -73,7 +70,7 @@ jobs:
     name: publish to pypi
     needs: [build-release, test-testpypi]
     runs-on: ubuntu-latest
-    #environment: release
+    environment: release
     permissions:
       id-token: write
     steps:
