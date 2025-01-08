@@ -649,7 +649,7 @@ class TestTMJob(unittest.TestCase):
                 msg=f"Expected {column} in relion5 dataframe.",
             )
         centered_location = (
-            np.array(LOCATION) - (np.array(TOMO_SHAPE) / 2 - 1)
+            np.array(LOCATION) - (np.array(TOMO_SHAPE) / 2)
         ) * self.job.voxel_size
         diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()
         self.assertEqual(
