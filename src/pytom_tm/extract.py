@@ -348,7 +348,7 @@ def extract_particles(
 
     if relion5_compat:
         dims = np.array(job.tomo_shape)
-        center = dims / 2.
+        center = dims / 2
         output["rlnCoordinateX"], output["rlnCoordinateY"], output["rlnCoordinateZ"] = (
             (output["rlnCoordinateX"] - center[0]) * job.voxel_size,
             (output["rlnCoordinateY"] - center[1]) * job.voxel_size,
