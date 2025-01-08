@@ -348,8 +348,8 @@ def extract_particles(
 
     if relion5_compat:
         dims = np.array(job.tomo_shape)
-        center = dims / 2  # we approximate the center, the correct way is to use the
-        # relion5's unbinned dimensions and calculate: center = (ubinned_dims / 2) - 1 
+        center = dims / 2  # we approximate the center, the correct way is to use
+        # relion5's unbinned dimensions and calculate: center = (ubinned_dims / 2) - 1
         output["rlnCoordinateX"], output["rlnCoordinateY"], output["rlnCoordinateZ"] = (
             (output["rlnCoordinateX"] - center[0]) * job.voxel_size,
             (output["rlnCoordinateY"] - center[1]) * job.voxel_size,
