@@ -179,7 +179,7 @@ def _determine_1D_fft_splits(
         return [((0, length), (0, length))]
     if splits > length:
         warnings.warn(
-            "More splits than pixels where asked, will default to 1 split per pixel",
+            "More splits than pixels were asked, will default to 1 split per pixel",
             RuntimeWarning,
         )
         splits = length
