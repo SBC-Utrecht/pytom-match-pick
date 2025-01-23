@@ -143,7 +143,7 @@ class TestEntryPoints(unittest.TestCase):
         start(arguments)
 
         with self.assertRaises(
-            ValueError, msg="Missing CTF params should produce " "error"
+            ValueError, msg="Missing CTF params should produce error"
         ):
             arguments = defaults.copy()
             arguments.pop("--voltage")
@@ -151,7 +151,7 @@ class TestEntryPoints(unittest.TestCase):
 
         # test angular search and particle diameter options
         with self.assertRaises(
-            ValueError, msg="Missing angular search should raise " "an error."
+            ValueError, msg="Missing angular search should raise an error."
         ):
             arguments = defaults.copy()
             arguments.pop("--angular-search")

@@ -41,7 +41,7 @@ class TestTemplate(unittest.TestCase):
         square_sum = np.square(new_template - self.template).sum()
         self.assertTrue(
             square_sum < 10,
-            msg="Template should not change strongly " "without recentering.",
+            msg="Template should not change strongly without recentering.",
         )
         new_template = generate_template_from_map(
             self.template,

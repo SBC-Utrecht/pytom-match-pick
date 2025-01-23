@@ -76,7 +76,7 @@ def generate_template_from_map(
         logging.debug(
             f"center of mass, before was "
             f"{np.round(input_center_of_mass, 2)} "
-            f"and after {np.round(center_of_mass(input_map ** 2), 2)}"
+            f"and after {np.round(center_of_mass(input_map**2), 2)}"
         )
 
     # extend volume to the desired output size before applying convolutions!

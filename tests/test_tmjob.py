@@ -655,8 +655,7 @@ class TestTMJob(unittest.TestCase):
         self.assertEqual(
             diff,
             0,
-            msg="relion5 compat mode should return a centered "
-            "location of the object",
+            msg="relion5 compat mode should return a centered location of the object",
         )
         self.assertNotIn("rec_", df_rel5["rlnTomoName"][0])
 
