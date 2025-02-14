@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.a40c8224.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.8608ea7d.min.css">
       
       
 
@@ -354,6 +354,7 @@
   
   <span class="md-ellipsis">
     Home
+    
   </span>
   
 
@@ -379,6 +380,7 @@
   
   <span class="md-ellipsis">
     Overview
+    
   </span>
   
 
@@ -407,6 +409,7 @@
   
   <span class="md-ellipsis">
     Usage
+    
   </span>
   
 
@@ -418,6 +421,7 @@
   
   <span class="md-ellipsis">
     Usage
+    
   </span>
   
 
@@ -646,6 +650,7 @@
   
   <span class="md-ellipsis">
     Timings
+    
   </span>
   
 
@@ -667,6 +672,7 @@
   
   <span class="md-ellipsis">
     FAQ
+    
   </span>
   
 
@@ -688,6 +694,7 @@
   
   <span class="md-ellipsis">
     For developers
+    
   </span>
   
 
@@ -731,6 +738,7 @@
   
   <span class="md-ellipsis">
     Tutorials
+    
   </span>
   
 
@@ -756,6 +764,7 @@
   
   <span class="md-ellipsis">
     Ribosomes on ER microsomes
+    
   </span>
   
 
@@ -799,6 +808,7 @@
   
   <span class="md-ellipsis">
     Benchmarks
+    
   </span>
   
 
@@ -824,6 +834,7 @@
   
   <span class="md-ellipsis">
     Measuring defocus handedness in EMPIAR-10985
+    
   </span>
   
 
@@ -852,6 +863,7 @@
   
   <span class="md-ellipsis">
     Discussions
+    
   </span>
   
 
@@ -872,6 +884,7 @@
   
   <span class="md-ellipsis">
     Report a bug
+    
   </span>
   
 
@@ -1107,6 +1120,7 @@
                 
                   
 
+
   
   
 
@@ -1136,18 +1150,18 @@
 <p>Using an EM map as a reference structure generally leads to the best results. Alternatively a structure from the PDB can be converted in Chimera(X) using the molmap command to create an MRC file that models the electrostatic potential. A good ballpark for the box size of the template is 2 or 3 times the particle diameter (along its longest axis). </p>
 <div class="highlight"><pre><span></span><code>usage: pytom_create_template.py [-h] -i INPUT_MAP [-o OUTPUT_FILE]
                                 [--input-voxel-size-angstrom INPUT_VOXEL_SIZE_ANGSTROM]
-                                --output-voxel-size-angstrom
-                                OUTPUT_VOXEL_SIZE_ANGSTROM [--center CENTER]
-                                [--low-pass LOW_PASS] [-b BOX_SIZE]
-                                [--invert INVERT] [-m MIRROR] [--log LOG]
+                                --output-voxel-size-angstrom OUTPUT_VOXEL_SIZE_ANGSTROM
+                                [--center CENTER] [--low-pass LOW_PASS]
+                                [-b BOX_SIZE] [--invert INVERT] [-m MIRROR]
+                                [--log LOG]
 
 Generate template from MRC density. -- Marten Chaillet (@McHaillet)
 
 options:
   -h, --help            show this help message and exit
-  -i INPUT_MAP, --input-map INPUT_MAP
+  -i, --input-map INPUT_MAP
                         Map to generate template from; MRC file.
-  -o OUTPUT_FILE, --output-file OUTPUT_FILE
+  -o, --output-file OUTPUT_FILE
                         Provide path to write output, needs to end in .mrc .
                         If not provided file is written to current directory
                         in the following format:
@@ -1167,14 +1181,13 @@ options:
                         Angstrom. By default a low pass filter is applied to a
                         resolution of (2 * output_spacing_angstrom) before
                         downsampling the input volume.
-  -b BOX_SIZE, --box-size BOX_SIZE
+  -b, --box-size BOX_SIZE
                         Specify a desired size for the output box of the
                         template. Only works if it is larger than the
                         downsampled box size of the input.
   --invert INVERT       Multiply template by -1. WARNING: not needed if ctf
                         with defocus is already applied!
-  -m MIRROR, --mirror MIRROR
-                        Mirror the final template before writing to disk.
+  -m, --mirror MIRROR   Mirror the final template before writing to disk.
   --log LOG             Can be set to `info` or `debug`
 </code></pre></div>
 <h3 id="pytom_create_maskpy">pytom_create_mask.py</h3>
@@ -1188,9 +1201,9 @@ Create a mask for template matching. -- Marten Chaillet (@McHaillet)
 
 options:
   -h, --help            show this help message and exit
-  -b BOX_SIZE, --box-size BOX_SIZE
+  -b, --box-size BOX_SIZE
                         Shape of square box for the mask.
-  -o OUTPUT_FILE, --output-file OUTPUT_FILE
+  -o, --output-file OUTPUT_FILE
                         Provide path to write output, needs to end in .mrc .If
                         not provided file is written to current directory in
                         the following format:
@@ -1198,8 +1211,7 @@ options:
   --voxel-size VOXEL_SIZE
                         Provide a voxel size to annotate the MRC (currently
                         not used for any mask calculation).
-  -r RADIUS, --radius RADIUS
-                        Radius of the spherical mask in number of pixels. In
+  -r, --radius RADIUS   Radius of the spherical mask in number of pixels. In
                         case minor1 and minor2 are provided, this will be the
                         radius of the ellipsoidal mask along the x-axis.
   --radius-minor1 RADIUS_MINOR1
@@ -1208,8 +1220,7 @@ options:
   --radius-minor2 RADIUS_MINOR2
                         Radius of the ellipsoidal mask along the z-axis in
                         number of pixels.
-  -s SIGMA, --sigma SIGMA
-                        Sigma of gaussian drop-off around the mask edges in
+  -s, --sigma SIGMA     Sigma of gaussian drop-off around the mask edges in
                         number of pixels. Values in the range from 0.5-1.0 are
                         usually sufficient for tomograms with 20A-10A voxel
                         sizes.
@@ -1289,20 +1300,20 @@ options:
   -h, --help            show this help message and exit
 
 Template, search volume, and output:
-  -t TEMPLATE, --template TEMPLATE
+  -t, --template TEMPLATE
                         Template; MRC file. Object should match the contrast
                         of the tomogram: if the tomogram has black ribosomes,
                         the reference should be black.
                         (pytom_create_template.py has an option to invert
                         contrast)
-  -v TOMOGRAM, --tomogram TOMOGRAM
+  -v, --tomogram TOMOGRAM
                         Tomographic volume; MRC file.
-  -d DESTINATION, --destination DESTINATION
+  -d, --destination DESTINATION
                         Folder to store the files produced by template
                         matching.
 
 Mask:
-  -m MASK, --mask MASK  Mask with same box size as template; MRC file.
+  -m, --mask MASK       Mask with same box size as template; MRC file.
   --non-spherical-mask NON_SPHERICAL_MASK
                         Flag to set when the mask is not spherical. It adds
                         the required computations for non-spherical masks and
@@ -1336,7 +1347,7 @@ Angular search:
                         the z-axis.
 
 Volume control:
-  -s VOLUME_SPLIT VOLUME_SPLIT VOLUME_SPLIT, --volume-split VOLUME_SPLIT VOLUME_SPLIT VOLUME_SPLIT
+  -s, --volume-split VOLUME_SPLIT VOLUME_SPLIT VOLUME_SPLIT
                         Split the volume into smaller parts for the search,
                         can be relevant if the volume does not fit into GPU
                         memory. Format is x y z, e.g. --volume-split 1 2 1
@@ -1356,7 +1367,7 @@ Volume control:
                         be skipped.
 
 Filter control:
-  -a TILT_ANGLES [TILT_ANGLES ...], --tilt-angles TILT_ANGLES [TILT_ANGLES ...]
+  -a, --tilt-angles TILT_ANGLES [TILT_ANGLES ...]
                         Tilt angles of the tilt-series, either the minimum and
                         maximum values of the tilts (e.g. --tilt-angles -59.1
                         60.1) or a .rawtlt/.tlt file with all the angles (e.g.
@@ -1440,7 +1451,7 @@ Filter control:
                         peaks.
 
 Additional options:
-  -r RANDOM_PHASE_CORRECTION, --random-phase-correction RANDOM_PHASE_CORRECTION
+  -r, --random-phase-correction RANDOM_PHASE_CORRECTION
                         Run template matching simultaneously with a phase
                         randomized version of the template, and subtract this
                         &#39;noise&#39; map from the final score map. For this method
@@ -1459,7 +1470,7 @@ Additional options:
                         all other metadata options.
 
 Device control:
-  -g GPU_IDS [GPU_IDS ...], --gpu-ids GPU_IDS [GPU_IDS ...]
+  -g, --gpu-ids GPU_IDS [GPU_IDS ...]
                         GPU indices to run the program on.
 
 Logging/debugging:
@@ -1506,7 +1517,7 @@ Run candidate extraction. -- Marten Chaillet (@McHaillet)
 
 options:
   -h, --help            show this help message and exit
-  -j JOB_FILE, --job-file JOB_FILE
+  -j, --job-file JOB_FILE
                         JSON file that contain all data on the template
                         matching job, written out by pytom_match_template.py
                         in the destination path.
@@ -1523,7 +1534,7 @@ options:
                         Flag to ignore the input and TM job tomogram mask.
                         Useful if the scores mrc looks reasonable, but this
                         finds 0 particles to extract
-  -n NUMBER_OF_PARTICLES, --number-of-particles NUMBER_OF_PARTICLES
+  -n, --number-of-particles NUMBER_OF_PARTICLES
                         Maximum number of particles to extract from tomogram.
   --number-of-false-positives NUMBER_OF_FALSE_POSITIVES
                         Number of false positives to determine the false alarm
@@ -1533,11 +1544,11 @@ options:
                         that can be distinguished well from the background
                         (high specificity). The value can also be set between
                         0 and 1 to make the cut-off more restrictive.
-  -r RADIUS_PX, --radius-px RADIUS_PX
+  -r, --radius-px RADIUS_PX
                         Particle radius in pixels in the tomogram. It is used
                         during extraction to remove areas around peaks
                         preventing double extraction.
-  -c CUT_OFF, --cut-off CUT_OFF
+  -c, --cut-off CUT_OFF
                         Override automated extraction cutoff estimation and
                         instead extract the number-of-particles down to this
                         LCCmax value. Setting to 0 will keep extracting until
@@ -1567,8 +1578,8 @@ options:
 </code></pre></div>
 <h3 id="pytom_estimate_rocpy">pytom_estimate_roc.py</h3>
 <p>This script runs the Gaussian fit as described in the <a href="https://www.mdpi.com/1422-0067/24/17/13375">IJMS publication</a>. It requires installation with plotting dependencies as it writes out or displays a figure showing the Gaussian fit and estimated ROC curve. The benefit is that it estimates some classification statistics (such as false discovery rate and sensitivity). You can use it to esimate an extraction threshold for a representative tomogram and then supply this threshold as the <code>[-c, --cut-off]</code> parameter for <code>pytom_extract_candidates.py</code>.</p>
-<div class="highlight"><pre><span></span><code>usage: pytom_estimate_roc.py [-h] -j JOB_FILE -n NUMBER_OF_PARTICLES -r
-                             RADIUS_PX [--bins BINS]
+<div class="highlight"><pre><span></span><code>usage: pytom_estimate_roc.py [-h] -j JOB_FILE -n NUMBER_OF_PARTICLES
+                             -r RADIUS_PX [--bins BINS]
                              [--gaussian-peak GAUSSIAN_PEAK]
                              [--force-peak FORCE_PEAK] [--crop-plot CROP_PLOT]
                              [--show-plot SHOW_PLOT] [--log LOG]
@@ -1578,15 +1589,15 @@ Estimate ROC curve from TMJob file. -- Marten Chaillet (@McHaillet)
 
 options:
   -h, --help            show this help message and exit
-  -j JOB_FILE, --job-file JOB_FILE
+  -j, --job-file JOB_FILE
                         JSON file that contain all data on the template
                         matching job, written out by pytom_match_template.py
                         in the destination path.
-  -n NUMBER_OF_PARTICLES, --number-of-particles NUMBER_OF_PARTICLES
+  -n, --number-of-particles NUMBER_OF_PARTICLES
                         The number of particles to extract and estimate the
                         ROC on, recommended is to multiply the expected number
                         of particles by 3.
-  -r RADIUS_PX, --radius-px RADIUS_PX
+  -r, --radius-px RADIUS_PX
                         Particle radius in pixels in the tomogram. It is used
                         during extraction to remove areas around peaks
                         preventing double extraction.
@@ -1619,10 +1630,10 @@ Merge multiple star files in the same directory. -- Marten Chaillet
 
 options:
   -h, --help            show this help message and exit
-  -i INPUT_DIR, --input-dir INPUT_DIR
+  -i, --input-dir INPUT_DIR
                         Directory with star files, script will try to merge
                         all files that end in &#39;.star&#39;.
-  -o OUTPUT_FILE, --output-file OUTPUT_FILE
+  -o, --output-file OUTPUT_FILE
                         Output star file name.
   --log LOG             Can be set to `info` or `debug`
 </code></pre></div>
@@ -1679,7 +1690,7 @@ options:
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.expand", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.60a45f97.min.js"></script>
+      <script src="../assets/javascripts/bundle.f1b6f286.min.js"></script>
       
         <script src="../assets/_markdown_exec_pyodide.js"></script>
       
