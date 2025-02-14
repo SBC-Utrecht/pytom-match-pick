@@ -1,5 +1,11 @@
 In this tutorial we are going to use template matching to detect human 80S ribosomes in a sample of ER-derived microsomes. As the tutorial dataset imaged isolated ER-derived vesicles with a 200 keV microscope, and the ice layer thickness is on the order of ~180 nm, the contrast is quite good. So, to make it more challenging, we are also going to test matching with only the 60S subunit. This way we can demonstrate some optimizations that can be made to maximize correlation. Besides, using [baited reconstruction](https://elifesciences.org/reviewed-preprints/90486) can also be a good way to prevent bias in the template search. 
 
+### Note on visualization
+
+Although not required, I strongly recommend using blik to visualize the results 
+in this tutorial: https://brisvag.github.io/blik/index.html. Blik is a Napari-based 
+tool for interacting with tomograms and annotations.
+
 ## Preparing the dataset and template
 
 The tutorial dataset can be downloaded from DataverseNL: <https://doi.org/10.34894/TLGJCM>. The raw tilt-series can also be found on DataverseNL: <https://doi.org/10.34894/OLYEFI>. Tilt-series were collected identically to [EMPIAR-11751](https://www.ebi.ac.uk/empiar/EMPIAR-11751/). A quick overview of the preprocessing workflow: (1) MotionCor2 was used to correct the motion in raw movie frames, (2) ctfplotter from IMOD was used to estimate defocus values, (3) ctfphaseflip from IMOD was used to do strip-based phaseflipping, and (4) AreTomo was used for reconstructing tomograms (weighted-back-projection) with 5x5 local patch alignment. Besides the tomograms (in MRC format), we provide for each tomogram a `.rawtlt` file with tilt angles, a `_dose.txt` file with accumulated dose per frame, and a `.defocus` file with per tilt defocus values.
@@ -145,43 +151,66 @@ To visualize the results it can be very informative to open the tomogram and sco
 results_80S/tomo200528_107_scores.mrc (in Napari)</figcaption>
 </figure>
 
-Then we calculate the receiver operator curve (ROC) to estimate true positives using:
+We will then use `pytom_extract_candidates.py` to extract annotations from the 
+template matching results. 
 
 ``` bash
-pytom_estimate_roc.py \
- -j results_80S/tomo200528_100_job.json \
- -n 800 \
- -r 8 \
- --bins 16 \
- --crop-plot  > results_80S/tomo200528_100_roc.log
+pytom_extract_candidates.py \
+ -j results_80S/tomo200528_107_job.json \
+ -n 200 \
+ -r 5
 ```
 
-This will automatically write a file to the folder where the job file is located (`tomo200528_100_roc.svg`). Additionally, here the terminal output is also written to the file `results_80S/tomo200528_100_roc.log` as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (`cat results_80S/tomo200528_100_roc.log`), the estimated number of total true positives is approx. 180 ribosomes.
+This produces the following two files:
+
+* a particle list: `results_80S/tomo200528_107_particles.star`
+* a graph of the cut-off and score 
+  distribution: `results_80S/tomo200528_107_extraction_graph.svg` (but only if the software was installed with plotting dependencies)
+
+pytom-match-pick has a default cut-off estimation 
+built-in and only extracts results above this threshold, but up to the limit of 200 
+that was specified (`-n 200`). In this we get 169 annotations. This program also by 
+default generates a plot that visualizes the estimated background and annotations. 
 
 <figure markdown="span">
-  ![part1_roc](images/1_tomo200528_100_roc_80S.svg){ width="800" }
-  <figcaption>ROC curve (results_80S/tomo200528_100_roc.svg)</figcaption>
+  ![part1_roc](images/1_tomo200528_107_extraction_graph.svg){ width="400" }
+  <figcaption>Extraction graph (results_80S/tomo200528_107_extraction_graph.svg)
+</figcaption>
 </figure>
 
-In this case the result is quite good: the Rectangle Under the Curve (RUC) is around 0.9 (1 is optimal). Also the fit of the gaussians seems very appropriate for the histogram, so we can use the estimated cut-off value (`0.194`) to extract particle coordinates and rotations into a STAR file: 
+The blue dots are a histogram of the extracted scores, while the orange line shows 
+the background with the estimated cut-off (the dashed vertical line). The blue dots 
+form a Gaussian-like curve, which shows that the scores of the particles are well 
+separated from the background.
 
-``` bash
-pytom_extract_candidates.py -j results_80S/tomo200528_100_job.json -n 300 -r 8 -c 0.194
+#### (Optional) Visualization (with Blik)
+
+Using Blik version 0.9.
+
+```commandline
+napari -w blik -- results_80S/tomo200528_107_particles.star dataset/tomo200528_107.mrc
 ```
 
-This will extract ~160 particles and save their annotations to the file `results_80S/tomo200528_100_particles.star`.
+Then do the following steps:
 
-Alternatively, `pytom_extract_candidates.py` also has a default extraction cut-off estimation that can work well. Run the command without the `-c` parameter:
+* Set the `Slice thickness A` on the right to 40
+* From the `Experiment` dropdown menu on the right select the tomogram
+* Click in the center
+* Then do `Ctrl + Y` to toggle 3D view
+* Select the points layer (ends with `- particle positions`)
+* In layer controls select the icon `Select points` 
+* Do `Ctrl + A` and then set the `Point size` to 2
+* Click in the center (not on a point) to deselect the points
+* Press `Ctrl + Y` again to switch back to 2D view
 
-``` bash
-pytom_extract_candidates.py -j results_80S/tomo200528_100_job.json -n 300 -r 8
-```
+Now you can scroll through the z-axis of the tomogram and the template matching 
+annotations with the slider on the bottom.
 
-It produces a very similar result: the script prints the estimated cut-off to the terminal (`0.197`) (very similar to the ROC estimated cut-off) and it also extracts ~160 particles. (Take care: the previous STAR file is overwritten.)
 
 ### Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF
 
-Now, let's apply the same base method using only the 60S subunit.
+Now, let's apply the same base method using only the 60S subunit and a more accurate 
+weighting for the template.
 
 #### Preparing the template and mask
 
@@ -273,6 +302,29 @@ The loss of quality is mainly visible from the gaussian fit (left plot). Even th
 
 Sadly, gold markers (but also carbon film, and ice) can quite often interfere with 
 template matching because of their high scattering potential leading to edges with very high signal-to-noise ratio (SNR). One way of dealing with this, is gold marker removal for which their are tools in IMOD, and also deep-learning based tools (e.g. [fidder](https://teamtomo.org/fidder/)), that remove gold markers on the tilt-image level before tomographic reconstruction. 
+
+## ROC estimation
+
+Then we calculate the receiver operator curve (ROC) to estimate true positives using:
+
+``` bash
+pytom_estimate_roc.py \
+ -j results_80S/tomo200528_100_job.json \
+ -n 800 \
+ -r 8 \
+ --bins 16 \
+ --crop-plot  > results_80S/tomo200528_100_roc.log
+```
+
+This will automatically write a file to the folder where the job file is located (`tomo200528_100_roc.svg`). Additionally, here the terminal output is also written to the file `results_80S/tomo200528_100_roc.log` as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (`cat results_80S/tomo200528_100_roc.log`), the estimated number of total true positives is approx. 180 ribosomes.
+
+<figure markdown="span">
+  ![part1_roc](images/1_tomo200528_100_roc_80S.svg){ width="800" }
+  <figcaption>ROC curve (results_80S/tomo200528_100_roc.svg)</figcaption>
+</figure>
+
+In this case the result is quite good: the Rectangle Under the Curve (RUC) is around 0.9 (1 is optimal). Also the fit of the gaussians seems very appropriate for the histogram, so we can use the estimated cut-off value (`0.194`) to extract particle coordinates and rotations into a STAR file: 
+
 
 ## Increasing the angular sampling
 
