@@ -2,7 +2,7 @@ In this tutorial we are going to use template matching to detect human 80S ribos
 
 ### Note on visualization
 
-Although not required, I strongly recommend using blik to visualize the results 
+Although not required, I strongly recommend using Blik to visualize the results 
 in this tutorial: https://brisvag.github.io/blik/index.html. Blik is a Napari-based 
 tool for interacting with tomograms and annotations.
 
@@ -193,15 +193,14 @@ napari -w blik -- results_80S/tomo200528_107_particles.star dataset/tomo200528_1
 
 Then do the following steps:
 
-* Set the `Slice thickness A` on the right to 40
+* Set the `Slice thickness A` on the right to 100
 * From the `Experiment` dropdown menu on the right select the tomogram
-* Click in the center
-* Then do `Ctrl + Y` to toggle 3D view
-* Select the points layer (ends with `- particle positions`)
-* In layer controls select the icon `Select points` 
-* Do `Ctrl + A` and then set the `Point size` to 2
-* Click in the center (not on a point) to deselect the points
-* Press `Ctrl + Y` again to switch back to 2D view
+
+<figure markdown="span">
+  ![part1_roc](images/1_tomo200528_107_slice101_blik.png){ width="400" }
+  <figcaption>Visualization of annotations with Blik.
+</figcaption>
+</figure>
 
 Now you can scroll through the z-axis of the tomogram and the template matching 
 annotations with the slider on the bottom.
