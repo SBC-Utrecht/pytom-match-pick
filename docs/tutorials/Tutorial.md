@@ -35,7 +35,8 @@ tm_tutorial/
 I made the mistake to not annotate the voxel size in the tomograms correctly (thanks to @jinxsfe for pointing this out!). Please run the following command to fix the voxel size in the MRC headers:
 
 ``` bash
-for x in dataset/.mrc; do python -c "import mrcfile; mrc = mrcfile.mmap('$x', 'r+'); mrc.voxel_size = 13.79"; done
+for x in dataset/*.mrc; do python -c "import mrcfile; mrc = mrcfile.mmap('$x', 'r+');
+ mrc.voxel_size = 13.79"; done
 ```
 
 ## Part 1: Matching the 80S ribosome with a binary wedge and simple CTF
