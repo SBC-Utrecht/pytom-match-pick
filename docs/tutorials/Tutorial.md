@@ -256,18 +256,18 @@ using the method introduced by STOPGAP.
 pytom_match_template.py \
  -t templates/60S.mrc \
  -m templates/mask_60S.mrc \
- -v dataset/tomo200528_100.mrc \
+ -v dataset/tomo200528_107.mrc \
  -d results_60S/ \
  --particle-diameter 300 \
- -a dataset/tomo200528_100.rawtlt \
+ -a dataset/tomo200528_107.rawtlt \
  --per-tilt-weighting \
  --low-pass 35 \
- --defocus dataset/tomo200528_100.defocus \
+ --defocus dataset/tomo200528_107.defocus \
  --amplitude 0.08 \
  --spherical 2.7 \
  --voltage 200 \
  --tomogram-ctf-model phase-flip \
- --dose-accumulation dataset/tomo200528_100_dose.txt \
+ --dose-accumulation dataset/tomo200528_107_dose.txt \
  --random-phase \
  -g 0
 ```
@@ -275,36 +275,57 @@ pytom_match_template.py \
 Again, the slice and score map can be visualized in Napari:
 
 <figure markdown="span">
-  ![part2_score_map](images/2_tomo200528_100_slice69_simple.png){ width="800" }
-  <figcaption>Slice 69 of dataset/tomo200528_100.mrc and results_60S/tomo200528_100_scores.mrc (in Napari)</figcaption>
+  ![part2_score_map](images/2_tomo200528_107_slice101_60S.png){ width="800" }
+  <figcaption>Slice 101 of dataset/tomo200528_107.mrc and 
+results_60S/tomo200528_107_scores.mrc (in Napari)</figcaption>
 </figure>
 
 Matching only with the 60S subunit greatly reduces the peak height at the actual ribosome locations. Instead gold markers now start correlating heavily with the template and get higher values than the particles of interest. The reason is two-fold: (1) the size of the template has become smaller and (2) the switch from an EM-map to a PDB based model usually reduces correlation. The second point (2) can be caused by the electrostatic potential modelling with the simplistic molmap, which does not consider atom number and solvent embedding, but also because EM-maps might contain some additional heterogeneous densities.
 
-The ROC curve is now estimated with: 
+Similar to part 1, we extract particles from the results:
 
 ``` bash
-pytom_estimate_roc.py \
- -j results_60S/tomo200528_100_job.json \
- -n 800 \
- -r 8 \
- --bins 16 \
- --crop-plot  > results_60S/tomo200528_100_roc.log
+pytom_extract_candidates.py \
+ -j results_60S/tomo200528_107_job.json \
+ -n 200 \
+ -r 5
 ```
 
 <figure markdown="span">
-  ![part2_roc](images/2_tomo200528_100_roc_simple.svg){ width="800" }
-  <figcaption>ROC curve (results_60S/tomo200528_100_roc.svg)</figcaption>
-</figure> 
+  ![part1_roc](images/2_tomo200528_107_extraction_graph.svg){ width="400" }
+  <figcaption>Extraction graph (results_60S/tomo200528_107_extraction_graph.svg)
+</figcaption>
+</figure>
 
-The loss of quality is mainly visible from the gaussian fit (left plot). Even though the reported quality is still quite good (RUC), it is clear that the curve fit is not proper. This is due to the three mixed distributions that now appear: the left-most correctly fitted background noise (blue curve), the middle peak is from 60S subunits and the right-most peak from gold markers. The particle of interest and gold markers are both fitted as true positives (orange curve).
+The graph show poorer separation. At this point can we also activate the 
+tophat-transform constraint to potentially remove some false positives:
+
+``` bash
+pytom_extract_candidates.py \
+ -j results_60S/tomo200528_107_job.json \
+ -n 200 \
+ -r 5 \
+ --tophat-filter
+```
+
+This creates a second plot that visualizes the estimated second contraint.
+
+Produces the following plots:
+
+<figure markdown="span">
+  ![part1_roc](images/2_tomo200528_107_extraction_graph.svg){ width="400" }
+  <figcaption>Extraction graph (results_60S/tomo200528_107_extraction_graph.svg)
+</figcaption>
+</figure>
+
 
 Sadly, gold markers (but also carbon film, and ice) can quite often interfere with 
 template matching because of their high scattering potential leading to edges with very high signal-to-noise ratio (SNR). One way of dealing with this, is gold marker removal for which their are tools in IMOD, and also deep-learning based tools (e.g. [fidder](https://teamtomo.org/fidder/)), that remove gold markers on the tilt-image level before tomographic reconstruction. 
 
 ## ROC estimation
 
-Then we calculate the receiver operator curve (ROC) to estimate true positives using:
+Alternatively we could try to estimate a receiver operator curve (ROC) from the 
+annotations:
 
 ``` bash
 pytom_estimate_roc.py \
