@@ -17,11 +17,12 @@ Finally, we assume the following folder structure for this tutorial, with the cu
 ```
 tm_tutorial/
 +- dataset/
-¦  +- tomo200528_100.mrc
-¦  +- tomo200528_100.rawtlt
-¦  +- tomo200528_100.defocus
-¦  +- tomo200528_100_dose.txt
-¦  +- tomo200528_101.mrc
+¦  +- ...
+¦  +- tomo200528_107.mrc
+¦  +- tomo200528_107.rawtlt
+¦  +- tomo200528_107.defocus
+¦  +- tomo200528_107_dose.txt
+¦  +- tomo200528_108.mrc
 ¦  +- ...
 +- templates/
 ¦  +- 6qzp_60S.mrc
@@ -39,13 +40,24 @@ for x in dataset/*.mrc; do python -c "import mrcfile; mrc = mrcfile.mmap('$x', '
  mrc.voxel_size = 13.79"; done
 ```
 
-## Part 1: Matching the 80S ribosome with a binary wedge and simple CTF
+## Template matching
 
-This section corresponds to the base method where the template is prepared by convolution with a single CTF and is adjusted with a binary wedge during the template matching run.
+In this tutorial the template matching workflow is demonstrated on 
+`tomo200528_107.mrc`. We recommend to follow along with this one to ensure you get 
+correct results. You can afterwards try matching on any of the others, but specifically
+`tomo200528_100.mrc` is interesting for comparison: this tilt-series has much 
+poorer alignment than 107 and this strongly reflects in the correlation. 
 
-### Preparing the template and mask
+### Part 1: Matching the 80S ribosome with a binary wedge and simple CTF
 
-Let's generate a template for the template matching run:
+This section corresponds to a stripped down method where the template is weighted 
+during template matching with a binary wedge (to model the missing wedge) and a CTF 
+with a single defocus value.
+
+#### Preparing the template and mask
+
+Let's generate a template for the template matching run by downsampling the 
+downloaded EM map:
 
 ``` bash
 pytom_create_template.py \
@@ -55,10 +67,12 @@ pytom_create_template.py \
  --output-voxel 13.79 \
  --center \
  --invert \
- -b 60
+ --box-size 60
 ```
 
-The `--ctf-correction` option convolutes the template with a single 3D-CTF with the specified defocus to roughly match the appearance of the particles in the tomograms. Even though each tilt-series will have different defocus values, for full ribosomes this is usually sufficient. The `--flip-phase` option takes the `absolute()` of the CTF before applying it. This is because the tomograms have been CTF-corrected which is done through phase-flipping. Since the `absolute()` operation makes all the values positive and our input map is white, we get back a white template. However, the tomograms of the dataset have black contrast (veryify by opening a tomogram), so finally the `--invert` flag needs to be set to make the template black.
+The downloaded map has density in white, while the tomograms of the dataset have black 
+contrast (veryify by opening a tomogram), so the `--invert` flag needs to be set to 
+make the template match the contrast.
 
 Secondly, we need a mask with the same box size as the template and a radius that fully encompasses our ribosome structure. The diameter of a ribosome is roughly 300 Å, which means we need at least (300 Å / 13.79 Å =) 22 pixels to cover the ribosome. With some overhang we extend it to 24 pixels diameter, and therefore set the mask radius (`--radius`) to 12 pixels. The mask will also need a smooth fall-off to prevent aliasing artifacts, which we set with `--sigma`:
 
@@ -78,9 +92,11 @@ The `--voxel-size` is not really required for the mask, but in case you want to 
   <figcaption>Template and mask slice</figcaption>
 </figure>
 
-The large template and mask box sizes might seem surprising, but they are needed for proper weighting during template matching. Similar to large box size during downstream high-resolution averaging, the overhang here also provides better sampling of weighting functions in Fourier space. The larger size increases the number of sampling points for CTFs and tomographic point spread functions.
+The box size of the template and mask might seem a bit large, but we give it some 
+overhang on purpose to ensure sufficient sampling in Fourier space of the weighting 
+functions for the template.
 
-### Running template matching
+#### Running template matching
 
 The template matching for the 80S ribosome can be started as follows:
 
@@ -88,10 +104,10 @@ The template matching for the 80S ribosome can be started as follows:
 pytom_match_template.py \
  -t templates/80S.mrc \
  -m templates/mask.mrc \
- -v dataset/tomo200528_100.mrc \
+ -v dataset/tomo200528_107.mrc \
  -d results_80S/ \
  --particle-diameter 300 \
- -a dataset/tomo200528_100.rawtlt \
+ -a dataset/tomo200528_107.rawtlt \
  --low-pass 40 \
  --defocus 3 \
  --amplitude 0.08 \
@@ -101,7 +117,22 @@ pytom_match_template.py \
  -g 0
 ```
 
-A low-pass filter of 40 Å is set to prevent bias. Then, the angular search is calculated from the Crowther criterion using a diameter $d$ of 300 Å and a $r_{max}$ of 1/(40 Å) (due to the low-pass filter), which results in a roughly 7° increment. Here, the program was started on the system GPU with index 0. If you have more GPU's available for the tutorial you can simply add them and pytom-match-pick will automatically distribute the angular search, e.g. `-g 0 1 2 3` will run on the first 4 GPU's in the system.
+First, some notes on the CTF parameters! Even though each tilt-series will have 
+different defocus values, we only specify an approximate value here as this is usually 
+sufficient for ribosomes. The amplitude contrast, spherical abberation, and voltage 
+are necessary parameters to model the CTF. The `--tomogram-ctf-model phase-flip` 
+option takes the `absolute()` of the CTF before applying it. This is because the 
+tomograms have been CTF-corrected which is done through phase-flipping.
+
+Then, we specify a low-pass filter of 40 Å which can be used to avoid bias. However, 
+it also influences the angular sampling. This sampling is calculated from the Crowther 
+criterion using a diameter $d$ of 300 Å and a $r_{max}$ of 1/(40 Å) (due to the 
+low-pass filter), which results in a roughly 7° increment. 
+
+Finally, the program was started on the system GPU with index 0. If you have more GPU's 
+available for the tutorial you can simply add them and pytom-match-pick will 
+automatically distribute the angular search, e.g. `-g 0 1 2 3` will run on 
+the first 4 GPU's in the system.
 
 **Out of memory!** Although unlikely to happen during the tutorial, in later usage of the software your GPUs might run out of memory. This is especially likely for 4x or lower binned tomograms. If this happens, you can use the `--split` option to tile the tomogram into multiple sections. You need to specify the number of splits along each dimension, for example `--split 2 1 1` will split into 2 sections along the x-axis, `--split 2 2 1` will split once in x and once in y, resulting in 4 subvolumes!
 
@@ -146,11 +177,11 @@ pytom_extract_candidates.py -j results_80S/tomo200528_100_job.json -n 300 -r 8
 
 It produces a very similar result: the script prints the estimated cut-off to the terminal (`0.197`) (very similar to the ROC estimated cut-off) and it also extracts ~160 particles. (Take care: the previous STAR file is overwritten.)
 
-## Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF
+### Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF
 
 Now, let's apply the same base method using only the 60S subunit.
 
-### Preparing the template and mask
+#### Preparing the template and mask
 
 The 60S template can be generated with this command:
 
@@ -176,7 +207,7 @@ pytom_create_mask.py \
  --sigma 1
 ```
 
-### Running template matching
+#### Running template matching
 
 Template matching is run for the 60S subunit, where the low-pass filter is now set 
 to 35 Å to include more high-resolution information in the template matching. This 
