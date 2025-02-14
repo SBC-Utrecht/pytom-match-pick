@@ -68,6 +68,11 @@ def predict_tophat_mask(
     peak_mask: npt.NDArray[bool]
         boolean mask with tophat filtered peak locations
     """
+    # convert float16 to float32 otherwise ndimage.white_tophat() fails and
+    # score_volume.std() might produce np.inf
+    if score_volume.dtype == np.float16:
+        score_volume = score_volume.astype(np.float32)
+
     tophat = ndimage.white_tophat(
         score_volume,
         structure=ndimage.generate_binary_structure(
