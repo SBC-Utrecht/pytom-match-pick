@@ -140,8 +140,9 @@ the first 4 GPU's in the system.
 To visualize the results it can be very informative to open the tomogram and score map side-by-side in Napari. Which should look like this:
 
 <figure markdown="span">
-  ![part1_score_map](images/1_tomo200528_100_slice69_comb.png){ width="800" }
-  <figcaption>Slice 69 of dataset/tomo200528_100.mrc and results_80S/tomo200528_100_scores.mrc (in Napari)</figcaption>
+  ![part1_score_map](images/1_tomo200528_107_slice101_comb.png){ width="800" }
+  <figcaption>Slice 101 of dataset/tomo200528_107.mrc and 
+results_80S/tomo200528_107_scores.mrc (in Napari)</figcaption>
 </figure>
 
 Then we calculate the receiver operator curve (ROC) to estimate true positives using:
