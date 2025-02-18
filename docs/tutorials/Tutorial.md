@@ -3,7 +3,7 @@ In this tutorial we are going to use template matching to detect human 80S ribos
 ### Note on visualization
 
 Although not required, I strongly recommend using Blik to visualize the results 
-in this tutorial: https://brisvag.github.io/blik/index.html. Blik is a Napari-based 
+in this tutorial: <https://brisvag.github.io/blik/index.html>. Blik is a Napari-based 
 tool for interacting with tomograms and annotations.
 
 ## Preparing the dataset and template
@@ -208,8 +208,8 @@ annotations with the slider on the bottom.
 
 ### Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF
 
-Now, let's apply the same base method using only the 60S subunit and a more accurate 
-weighting for the template.
+Now, let's apply template matching with the 60S subunit of the ribosome while 
+improving the weighting function.
 
 #### Preparing the template and mask
 
@@ -280,9 +280,14 @@ Again, the slice and score map can be visualized in Napari:
 results_60S/tomo200528_107_scores.mrc (in Napari)</figcaption>
 </figure>
 
-Matching only with the 60S subunit greatly reduces the peak height at the actual ribosome locations. Instead gold markers now start correlating heavily with the template and get higher values than the particles of interest. The reason is two-fold: (1) the size of the template has become smaller and (2) the switch from an EM-map to a PDB based model usually reduces correlation. The second point (2) can be caused by the electrostatic potential modelling with the simplistic molmap, which does not consider atom number and solvent embedding, but also because EM-maps might contain some additional heterogeneous densities.
+Matching only with the 60S subunit reduces the peak height at the actual ribosome 
+locations. Gold markers also start interfering with the detection. The reason is 
+two-fold: (1) the size of the template has become smaller and (2) the switch from an 
+EM-map to a PDB based model usually reduces correlation. The second point (2) might 
+be because of the simplistic model created by `molmap`, which does not consider atom 
+number or solvent embedding.
 
-Similar to part 1, we extract particles from the results:
+Similar to part 1, we extract particles and look at the histogram of extracted scores:
 
 ``` bash
 pytom_extract_candidates.py \
@@ -311,7 +316,7 @@ we see that we lost some ribosome annotations and also have some hits on gold be
   </figcaption>
 </figure>
 
-Although the phase randomization helps a bit with removing it gold beads, it still 
+Although the phase randomization helps a bit with removing gold bead hits, it still 
 leaves some in the annotation. Now, let's activate the 
 tophat-transform constraint to hopefully remove more false positives:
 
