@@ -297,8 +297,23 @@ pytom_extract_candidates.py \
 </figcaption>
 </figure>
 
-The graph show poorer separation. At this point can we also activate the 
-tophat-transform constraint to potentially remove some false positives:
+Inspecting the locations with blik,
+
+``` bash
+napari -w blik -- results_60S/tomo200528_107_particles.star dataset/tomo200528_107.mrc
+```
+
+we see that we lost some ribosome annotations and also have some hits on gold beads. 
+
+<figure markdown="span">
+  ![part1_roc](images/2_tomo200528_107_slice101_blik.png){ width="400" }
+  <figcaption>Visualization of 60S annotations with Blik.
+  </figcaption>
+</figure>
+
+Although the phase randomization helps a bit with removing it gold beads, it still 
+leaves some in the annotation. Now, let's activate the 
+tophat-transform constraint to hopefully remove more false positives:
 
 ``` bash
 pytom_extract_candidates.py \
@@ -308,24 +323,25 @@ pytom_extract_candidates.py \
  --tophat-filter
 ```
 
-This creates a second plot that visualizes the estimated second contraint.
-
-Produces the following plots:
+Running the extraction with this option, produces a second plot that 
+can be inspected in the folder (`results_60S/tomo200528_107_tophat_filter.svg`). The 
+number of annotations went down from 121 to 69, so we definitely lost some hits. 
 
 <figure markdown="span">
-  ![part1_roc](images/2_tomo200528_107_extraction_graph.svg){ width="400" }
-  <figcaption>Extraction graph (results_60S/tomo200528_107_extraction_graph.svg)
-</figcaption>
+  ![part1_roc](images/2_tomo200528_107_slice101_blik_tophat.png){ width="400" }
+  <figcaption>Visualization of 60S annotations with the tophat-transform contraint 
+in Blik.
+  </figcaption>
 </figure>
 
-
-Sadly, gold markers (but also carbon film, and ice) can quite often interfere with 
-template matching because of their high scattering potential leading to edges with very high signal-to-noise ratio (SNR). One way of dealing with this, is gold marker removal for which their are tools in IMOD, and also deep-learning based tools (e.g. [fidder](https://teamtomo.org/fidder/)), that remove gold markers on the tilt-image level before tomographic reconstruction. 
+Inspecting the annotations in the tomogram, the annotations are strongly filtered: 
+we lost all the gold marker annotations, and only a few ribosomes.
 
 ## ROC estimation
 
-Alternatively we could try to estimate a receiver operator curve (ROC) from the 
-annotations:
+pytom-match-pick also has an option for ROC estimation, but its not 
+always robust and only works for high-abundance particles. As an example, we show 
+how to use it here:
 
 ``` bash
 pytom_estimate_roc.py \
