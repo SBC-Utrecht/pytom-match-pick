@@ -483,13 +483,18 @@ def extract_candidates(argv=None):
         "the cut-off more restrictive.",
     )
     parser.add_argument(
-        "-r",
-        "--radius-px",
-        type=int,
-        required=True,
+        "--particle-diameter",
+        type=float,
+        required=False,
         action=LargerThanZero,
-        help="Particle radius in pixels in the tomogram. It is used during extraction "
-        "to remove areas around peaks preventing double extraction.",
+        help="Particle diameter of the template in Angstrom. It is used during "
+        "extraction to remove areas around peaks to prevent double extraction. "
+        "If not previously specified, this option is required. If "
+        "specified in pytom_match_template, this is optional and "
+        "can be used to overwrite it, which might be relevant for strongly "
+        "elongated particles--where the angular sampling should be "
+        "determined using its long axis but the extraction mask should use its "
+        "short axis.",
     )
     parser.add_argument(
         "-c",
