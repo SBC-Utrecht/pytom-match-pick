@@ -430,7 +430,9 @@ class TestTMJob(unittest.TestCase):
             scores, angles = job.start_job(0, return_volumes=True)
             write_mrc(data_dir / "tomogram_scores.mrc", scores, job.voxel_size)
             write_mrc(data_dir / "tomogram_angles.mrc", angles, job.voxel_size)
-            df, scores = extract_particles(job, 5, 100, create_plot=False)
+            df, scores = extract_particles(
+                job, 100, particle_diameter=10, create_plot=False
+            )
             self.assertNotEqual(
                 len(scores), 0, msg="Here we expect to get some annotations."
             )
@@ -628,14 +630,19 @@ class TestTMJob(unittest.TestCase):
         )
 
         # extract particles after running the job
-        df, scores = extract_particles(self.job, 5, 100, create_plot=False)
+        df, scores = extract_particles(
+            self.job, 100, particle_diameter=5, create_plot=False
+        )
         self.assertNotEqual(
             len(scores), 0, msg="Here we expect to get some annotations."
         )
 
+        with self.assertRaisesRegex(ValueError, "particle diameter"):
+            _ = extract_particles(self.job, 100, create_plot=False)
+
         # extract particles in relion5 style
         df_rel5, scores = extract_particles(
-            self.job, 5, 100, create_plot=False, relion5_compat=True
+            self.job, 100, particle_diameter=10, create_plot=False, relion5_compat=True
         )
         for column in (
             "rlnCenteredCoordinateXAngst",
@@ -678,8 +685,8 @@ class TestTMJob(unittest.TestCase):
         job.tomogram_mask = TEST_EXTRACTION_MASK_OUTSIDE
         df, scores = extract_particles(
             job,
-            5,
             100,
+            particle_diameter=10,
             create_plot=False,
         )
         self.assertEqual(
@@ -693,8 +700,8 @@ class TestTMJob(unittest.TestCase):
         with self.assertLogs(level="WARNING") as cm:
             df, scores = extract_particles(
                 job,
-                5,
                 100,
+                particle_diameter=10,
                 tomogram_mask_path=TEST_EXTRACTION_MASK_OUTSIDE,
                 create_plot=False,
                 ignore_tomogram_mask=True,
@@ -716,8 +723,8 @@ class TestTMJob(unittest.TestCase):
         # and should override the one now attached to the job
         df, scores = extract_particles(
             job,
-            5,
             100,
+            particle_diameter=5,
             tomogram_mask_path=TEST_EXTRACTION_MASK_INSIDE,
             create_plot=False,
         )
@@ -732,8 +739,8 @@ class TestTMJob(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, str(TOMO_SHAPE)):
             _, _ = extract_particles(
                 job,
-                5,
                 100,
+                particle_diameter=5,
                 tomogram_mask_path=TEST_WRONG_SIZE_TOMO_MASK,
                 create_plot=False,
             )
@@ -752,8 +759,8 @@ class TestTMJob(unittest.TestCase):
         # Test exraction with tophat filter and plotting
         df, scores = extract_particles(
             job,
-            5,
             100,
+            particle_diameter=5,
             tomogram_mask_path=TEST_EXTRACTION_MASK_INSIDE,
             create_plot=True,
             tophat_filter=True,
