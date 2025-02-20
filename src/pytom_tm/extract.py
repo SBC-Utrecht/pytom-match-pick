@@ -257,8 +257,8 @@ def extract_particles(
         logging.info(
             "No particle diameter was provided, so using the diameter "
             "specified previously to mask out areas around peaks. Take care for "
-            "elongated particles (i.e. very non-spherical) as it might remove "
-            "annotations when they arrange parallel to each other and close together."
+            "strongly elongated particles as it might prevent correct "
+            "annotation when they arrange parallel to each other and close together."
         )
     else:
         raise ValueError(
