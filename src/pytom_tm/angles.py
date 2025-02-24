@@ -122,7 +122,7 @@ def get_angle_list(
         ZXZ Euler rotation in radians
     """
     out = None
-    max_z2 = 2 * np.pi / symmetry
+    max_z1 = 2 * np.pi / symmetry
     try:
         angle = float(angle)
         angle_is_float = True
@@ -146,7 +146,7 @@ def get_angle_list(
 
     if out is None:  # If no angles by now, error out
         raise ValueError("Invalid angle input provided")
-    return [i for i in out if i[2] < max_z2]
+    return [i for i in out if i[0] < max_z1]
 
 
 def convert_euler(
