@@ -299,7 +299,9 @@ def extract_particles(
 
         scores.append(lcc_max)
 
-        # assumed that here also need to multiply with -1
+        # According to https://www.ccpem.ac.uk/user_help/rotation_conventions.php
+        # relion uses clockwise ZYZ. The -1 multiplication is needed because we use
+        # anti-clockwise angles.,
         rotation = convert_euler(
             [-1 * a for a in angle_list[int(angle_volume[ind])]],
             order_in="ZXZ",
