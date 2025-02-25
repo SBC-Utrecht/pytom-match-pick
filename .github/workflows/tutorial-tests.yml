@@ -41,7 +41,7 @@ jobs:
           curl https://files.wwpdb.org/pub/emdb/structures/EMD-2938/map/emd_2938.map.gz -o emd_2938.map.gz
           gunzip emd_2938.map.gz
           cd ../dataset
-          curl -L -O -J -H "X-Dataverse-key:${{ secrets.DATAVERSE_API_TOKEN }}" https://dataverse.nl/api/access/datafiles/384731,384724,384706,384718
+          curl -L -O -J -H "X-Dataverse-key:${{ secrets.DATAVERSE_API_TOKEN }}" https://dataverse.nl/api/access/datafiles/384727,384717,384726,384720
           unzip dataverse_files.zip
           # this inflates into a 'tutorial' folder, moving everything out
           mv tutorial/* .
