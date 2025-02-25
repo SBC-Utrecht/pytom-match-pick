@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
     
     
       
@@ -79,7 +79,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#preparing-the-dataset-and-template" class="md-skip">
+        <a href="#note-on-visualization" class="md-skip">
           Skip to content
         </a>
       
@@ -577,6 +577,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#note-on-visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Note on visualization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#preparing-the-dataset-and-template" class="md-nav__link">
     <span class="md-ellipsis">
       Preparing the dataset and template
@@ -601,6 +610,16 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#template-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template matching
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template matching">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#part-1-matching-the-80s-ribosome-with-a-binary-wedge-and-simple-ctf" class="md-nav__link">
     <span class="md-ellipsis">
       Part 1: Matching the 80S ribosome with a binary wedge and simple CTF
@@ -628,12 +647,21 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#optional-visualization-with-blik" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Visualization (with Blik)
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#part-2-matching-the-60s-ribosomal-subunit-with-a-tilt-weighted-psf" class="md-nav__link">
     <span class="md-ellipsis">
       Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF
@@ -663,6 +691,20 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#roc-estimation" class="md-nav__link">
+    <span class="md-ellipsis">
+      ROC estimation
+    </span>
+  </a>
   
 </li>
       
@@ -837,6 +879,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#note-on-visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Note on visualization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#preparing-the-dataset-and-template" class="md-nav__link">
     <span class="md-ellipsis">
       Preparing the dataset and template
@@ -861,6 +912,16 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#template-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template matching
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template matching">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#part-1-matching-the-80s-ribosome-with-a-binary-wedge-and-simple-ctf" class="md-nav__link">
     <span class="md-ellipsis">
       Part 1: Matching the 80S ribosome with a binary wedge and simple CTF
@@ -888,12 +949,21 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#optional-visualization-with-blik" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Visualization (with Blik)
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#part-2-matching-the-60s-ribosomal-subunit-with-a-tilt-weighted-psf" class="md-nav__link">
     <span class="md-ellipsis">
       Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF
@@ -923,6 +993,20 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#roc-estimation" class="md-nav__link">
+    <span class="md-ellipsis">
+      ROC estimation
+    </span>
+  </a>
   
 </li>
       
@@ -966,6 +1050,10 @@
   <h1>Ribosomes on ER microsomes</h1>
 
 <p>In this tutorial we are going to use template matching to detect human 80S ribosomes in a sample of ER-derived microsomes. As the tutorial dataset imaged isolated ER-derived vesicles with a 200 keV microscope, and the ice layer thickness is on the order of ~180 nm, the contrast is quite good. So, to make it more challenging, we are also going to test matching with only the 60S subunit. This way we can demonstrate some optimizations that can be made to maximize correlation. Besides, using <a href="https://elifesciences.org/reviewed-preprints/90486">baited reconstruction</a> can also be a good way to prevent bias in the template search. </p>
+<h3 id="note-on-visualization">Note on visualization</h3>
+<p>Although not required, I strongly recommend using Blik to visualize the results 
+in this tutorial: <a href="https://brisvag.github.io/blik/index.html">https://brisvag.github.io/blik/index.html</a>. Blik is a Napari-based 
+tool for interacting with tomograms and annotations.</p>
 <h2 id="preparing-the-dataset-and-template">Preparing the dataset and template</h2>
 <p>The tutorial dataset can be downloaded from DataverseNL: <a href="https://doi.org/10.34894/TLGJCM">https://doi.org/10.34894/TLGJCM</a>. The raw tilt-series can also be found on DataverseNL: <a href="https://doi.org/10.34894/OLYEFI">https://doi.org/10.34894/OLYEFI</a>. Tilt-series were collected identically to <a href="https://www.ebi.ac.uk/empiar/EMPIAR-11751/">EMPIAR-11751</a>. A quick overview of the preprocessing workflow: (1) MotionCor2 was used to correct the motion in raw movie frames, (2) ctfplotter from IMOD was used to estimate defocus values, (3) ctfphaseflip from IMOD was used to do strip-based phaseflipping, and (4) AreTomo was used for reconstructing tomograms (weighted-back-projection) with 5x5 local patch alignment. Besides the tomograms (in MRC format), we provide for each tomogram a <code>.rawtlt</code> file with tilt angles, a <code>_dose.txt</code> file with accumulated dose per frame, and a <code>.defocus</code> file with per tilt defocus values.</p>
 <p>We will initially use a cryo-EM reconstruction of the human 80S ribosome, which you will need to download from the EMDB: <a href="https://www.emdataresource.org/EMD-2938">https://www.emdataresource.org/EMD-2938</a>.</p>
@@ -975,11 +1063,12 @@
 <p>Finally, we assume the following folder structure for this tutorial, with the current working directory <code>tm_tutorial</code> :</p>
 <div class="highlight"><pre><span></span><code>tm_tutorial/
 +- dataset/
-¦  +- tomo200528_100.mrc
-¦  +- tomo200528_100.rawtlt
-¦  +- tomo200528_100.defocus
-¦  +- tomo200528_100_dose.txt
-¦  +- tomo200528_101.mrc
+¦  +- ...
+¦  +- tomo200528_107.mrc
+¦  +- tomo200528_107.rawtlt
+¦  +- tomo200528_107.defocus
+¦  +- tomo200528_107_dose.txt
+¦  +- tomo200528_108.mrc
 ¦  +- ...
 +- templates/
 ¦  +- 6qzp_60S.mrc
@@ -989,12 +1078,23 @@
 </code></pre></div>
 <h3 id="tomogram-voxel-size-fix">Tomogram voxel size fix</h3>
 <p>I made the mistake to not annotate the voxel size in the tomograms correctly (thanks to @jinxsfe for pointing this out!). Please run the following command to fix the voxel size in the MRC headers:</p>
-<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span>x<span class="w"> </span><span class="k">in</span><span class="w"> </span>dataset/.mrc<span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import mrcfile; mrc = mrcfile.mmap(&#39;</span><span class="nv">$x</span><span class="s2">&#39;, &#39;r+&#39;); mrc.voxel_size = 13.79&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">done</span>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span>x<span class="w"> </span><span class="k">in</span><span class="w"> </span>dataset/*.mrc<span class="p">;</span><span class="w"> </span>
+<span class="k">do</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import mrcfile; mrc = mrcfile.mmap(&#39;</span><span class="nv">$x</span><span class="s2">&#39;, &#39;r+&#39;); mrc.voxel_size = 13.79&quot;</span><span class="p">;</span><span class="w"> </span>
+<span class="k">done</span>
 </code></pre></div>
-<h2 id="part-1-matching-the-80s-ribosome-with-a-binary-wedge-and-simple-ctf">Part 1: Matching the 80S ribosome with a binary wedge and simple CTF</h2>
-<p>This section corresponds to the base method where the template is prepared by convolution with a single CTF and is adjusted with a binary wedge during the template matching run.</p>
-<h3 id="preparing-the-template-and-mask">Preparing the template and mask</h3>
-<p>Let's generate a template for the template matching run:</p>
+<h2 id="template-matching">Template matching</h2>
+<p>In this tutorial the template matching workflow is demonstrated on 
+<code>tomo200528_107.mrc</code>. We recommend to follow along with this one to ensure you get 
+correct results. You can afterwards try matching on any of the others, but specifically
+<code>tomo200528_100.mrc</code> is interesting for comparison: this tilt-series has much 
+poorer alignment than 107 and this strongly reflects in the correlation. </p>
+<h3 id="part-1-matching-the-80s-ribosome-with-a-binary-wedge-and-simple-ctf">Part 1: Matching the 80S ribosome with a binary wedge and simple CTF</h3>
+<p>This section corresponds to a stripped down method where the template is weighted 
+during template matching with a binary wedge (to model the missing wedge) and a CTF 
+with a single defocus value.</p>
+<h4 id="preparing-the-template-and-mask">Preparing the template and mask</h4>
+<p>Let's generate a template for the template matching run by downsampling the 
+downloaded EM map:</p>
 <div class="highlight"><pre><span></span><code>pytom_create_template.py<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-i<span class="w"> </span>templates/emd_2938.map<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-o<span class="w"> </span>templates/80S.mrc<span class="w"> </span><span class="se">\</span>
@@ -1002,9 +1102,11 @@
 <span class="w"> </span>--output-voxel<span class="w"> </span><span class="m">13</span>.79<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--center<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--invert<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-b<span class="w"> </span><span class="m">60</span>
+<span class="w"> </span>--box-size<span class="w"> </span><span class="m">60</span>
 </code></pre></div>
-<p>The <code>--ctf-correction</code> option convolutes the template with a single 3D-CTF with the specified defocus to roughly match the appearance of the particles in the tomograms. Even though each tilt-series will have different defocus values, for full ribosomes this is usually sufficient. The <code>--flip-phase</code> option takes the <code>absolute()</code> of the CTF before applying it. This is because the tomograms have been CTF-corrected which is done through phase-flipping. Since the <code>absolute()</code> operation makes all the values positive and our input map is white, we get back a white template. However, the tomograms of the dataset have black contrast (veryify by opening a tomogram), so finally the <code>--invert</code> flag needs to be set to make the template black.</p>
+<p>The downloaded map has density in white, while the tomograms of the dataset have black 
+contrast (veryify by opening a tomogram), so the <code>--invert</code> flag needs to be set to 
+make the template match the contrast.</p>
 <p>Secondly, we need a mask with the same box size as the template and a radius that fully encompasses our ribosome structure. The diameter of a ribosome is roughly 300 Å, which means we need at least (300 Å / 13.79 Å =) 22 pixels to cover the ribosome. With some overhang we extend it to 24 pixels diameter, and therefore set the mask radius (<code>--radius</code>) to 12 pixels. The mask will also need a smooth fall-off to prevent aliasing artifacts, which we set with <code>--sigma</code>:</p>
 <div class="highlight"><pre><span></span><code>pytom_create_mask.py<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-b<span class="w"> </span><span class="m">60</span><span class="w"> </span><span class="se">\</span>
@@ -1018,16 +1120,18 @@
   <a class="glightbox" href="../images/0_template_mask.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="template_and_mask" src="../images/0_template_mask.png" width="400" /></a>
   <figcaption>Template and mask slice</figcaption>
 </figure>
-<p>The large template and mask box sizes might seem surprising, but they are needed for proper weighting during template matching. Similar to large box size during downstream high-resolution averaging, the overhang here also provides better sampling of weighting functions in Fourier space. The larger size increases the number of sampling points for CTFs and tomographic point spread functions.</p>
-<h3 id="running-template-matching">Running template matching</h3>
+<p>The box size of the template and mask might seem a bit large, but we give it some 
+overhang on purpose to ensure sufficient sampling in Fourier space of the weighting 
+functions for the template.</p>
+<h4 id="running-template-matching">Running template matching</h4>
 <p>The template matching for the 80S ribosome can be started as follows:</p>
 <div class="highlight"><pre><span></span><code>pytom_match_template.py<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-t<span class="w"> </span>templates/80S.mrc<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-m<span class="w"> </span>templates/mask.mrc<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-v<span class="w"> </span>dataset/tomo200528_100.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-v<span class="w"> </span>dataset/tomo200528_107.mrc<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-d<span class="w"> </span>results_80S/<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--particle-diameter<span class="w"> </span><span class="m">300</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-a<span class="w"> </span>dataset/tomo200528_100.rawtlt<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-a<span class="w"> </span>dataset/tomo200528_107.rawtlt<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--low-pass<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--defocus<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--amplitude<span class="w"> </span><span class="m">0</span>.08<span class="w"> </span><span class="se">\</span>
@@ -1036,37 +1140,73 @@
 <span class="w"> </span>--tomogram-ctf-model<span class="w"> </span>phase-flip<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-g<span class="w"> </span><span class="m">0</span>
 </code></pre></div>
-<p>A low-pass filter of 40 Å is set to prevent bias. Then, the angular search is calculated from the Crowther criterion using a diameter <span class="arithmatex">\(d\)</span> of 300 Å and a <span class="arithmatex">\(r_{max}\)</span> of 1/(40 Å) (due to the low-pass filter), which results in a roughly 7° increment. Here, the program was started on the system GPU with index 0. If you have more GPU's available for the tutorial you can simply add them and pytom-match-pick will automatically distribute the angular search, e.g. <code>-g 0 1 2 3</code> will run on the first 4 GPU's in the system.</p>
+<p>First, some notes on the CTF parameters! Even though each tilt-series will have 
+different defocus values, we only specify an approximate value here as this is usually 
+sufficient for ribosomes. The amplitude contrast, spherical abberation, and voltage 
+are necessary parameters to model the CTF. The <code>--tomogram-ctf-model phase-flip</code> 
+option takes the <code>absolute()</code> of the CTF before applying it. This is because the 
+tomograms have been CTF-corrected which is done through phase-flipping.</p>
+<p>Then, we specify a low-pass filter of 40 Å which can be used to avoid bias. However, 
+it also influences the angular sampling. This sampling is calculated from the Crowther 
+criterion using a diameter <span class="arithmatex">\(d\)</span> of 300 Å and a <span class="arithmatex">\(r_{max}\)</span> of 1/(40 Å) (due to the 
+low-pass filter), which results in a roughly 7° increment. </p>
+<p>Finally, the program was started on the system GPU with index 0. If you have more GPU's 
+available for the tutorial you can simply add them and pytom-match-pick will 
+automatically distribute the angular search, e.g. <code>-g 0 1 2 3</code> will run on 
+the first 4 GPU's in the system.</p>
 <p><strong>Out of memory!</strong> Although unlikely to happen during the tutorial, in later usage of the software your GPUs might run out of memory. This is especially likely for 4x or lower binned tomograms. If this happens, you can use the <code>--split</code> option to tile the tomogram into multiple sections. You need to specify the number of splits along each dimension, for example <code>--split 2 1 1</code> will split into 2 sections along the x-axis, <code>--split 2 2 1</code> will split once in x and once in y, resulting in 4 subvolumes!</p>
 <p>To visualize the results it can be very informative to open the tomogram and score map side-by-side in Napari. Which should look like this:</p>
 <figure>
-  <a class="glightbox" href="../images/1_tomo200528_100_slice69_comb.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_score_map" src="../images/1_tomo200528_100_slice69_comb.png" width="800" /></a>
-  <figcaption>Slice 69 of dataset/tomo200528_100.mrc and results_80S/tomo200528_100_scores.mrc (in Napari)</figcaption>
+  <a class="glightbox" href="../images/1_tomo200528_107_slice101_comb.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_score_map" src="../images/1_tomo200528_107_slice101_comb.png" width="800" /></a>
+  <figcaption>Slice 101 of dataset/tomo200528_107.mrc and 
+results_80S/tomo200528_107_scores.mrc (in Napari)</figcaption>
 </figure>
-<p>Then we calculate the receiver operator curve (ROC) to estimate true positives using:</p>
-<div class="highlight"><pre><span></span><code>pytom_estimate_roc.py<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_100_job.json<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-n<span class="w"> </span><span class="m">800</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-r<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>--bins<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>--crop-plot<span class="w">  </span>&gt;<span class="w"> </span>results_80S/tomo200528_100_roc.log
+<p>We will then use <code>pytom_extract_candidates.py</code> to extract annotations from the 
+template matching results. </p>
+<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_107_job.json<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-n<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-r<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
-<p>This will automatically write a file to the folder where the job file is located (<code>tomo200528_100_roc.svg</code>). Additionally, here the terminal output is also written to the file <code>results_80S/tomo200528_100_roc.log</code> as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (<code>cat results_80S/tomo200528_100_roc.log</code>), the estimated number of total true positives is approx. 180 ribosomes.</p>
+<p>This produces the following two files:</p>
+<ul>
+<li>a particle list: <code>results_80S/tomo200528_107_particles.star</code></li>
+<li>a graph of the cut-off and score 
+  distribution: <code>results_80S/tomo200528_107_extraction_graph.svg</code> (but only if the software was installed with plotting dependencies)</li>
+</ul>
+<p>pytom-match-pick has a default cut-off estimation 
+built-in and only extracts results above this threshold, but up to the limit of 200 
+that was specified (<code>-n 200</code>). In this we get 169 annotations. This program also by 
+default generates a plot that visualizes the estimated background and annotations. </p>
 <figure>
-  <a class="glightbox" href="../images/1_tomo200528_100_roc_80S.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_100_roc_80S.svg" width="800" /></a>
-  <figcaption>ROC curve (results_80S/tomo200528_100_roc.svg)</figcaption>
+  <a class="glightbox" href="../images/1_tomo200528_107_extraction_graph.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_107_extraction_graph.svg" width="400" /></a>
+  <figcaption>Extraction graph (results_80S/tomo200528_107_extraction_graph.svg)
+</figcaption>
 </figure>
-<p>In this case the result is quite good: the Rectangle Under the Curve (RUC) is around 0.9 (1 is optimal). Also the fit of the gaussians seems very appropriate for the histogram, so we can use the estimated cut-off value (<code>0.194</code>) to extract particle coordinates and rotations into a STAR file: </p>
-<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_100_job.json<span class="w"> </span>-n<span class="w"> </span><span class="m">300</span><span class="w"> </span>-r<span class="w"> </span><span class="m">8</span><span class="w"> </span>-c<span class="w"> </span><span class="m">0</span>.194
+<p>The blue dots are a histogram of the extracted scores, while the orange line shows 
+the background with the estimated cut-off (the dashed vertical line). The blue dots 
+form a Gaussian-like curve, which shows that the scores of the particles are well 
+separated from the background.</p>
+<h4 id="optional-visualization-with-blik">(Optional) Visualization (with Blik)</h4>
+<p>Using Blik version 0.9.</p>
+<div class="highlight"><pre><span></span><code>napari -w blik -- results_80S/tomo200528_107_particles.star dataset/tomo200528_107.mrc
 </code></pre></div>
-<p>This will extract ~160 particles and save their annotations to the file <code>results_80S/tomo200528_100_particles.star</code>.</p>
-<p>Alternatively, <code>pytom_extract_candidates.py</code> also has a default extraction cut-off estimation that can work well. Run the command without the <code>-c</code> parameter:</p>
-<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_100_job.json<span class="w"> </span>-n<span class="w"> </span><span class="m">300</span><span class="w"> </span>-r<span class="w"> </span><span class="m">8</span>
-</code></pre></div>
-<p>It produces a very similar result: the script prints the estimated cut-off to the terminal (<code>0.197</code>) (very similar to the ROC estimated cut-off) and it also extracts ~160 particles. (Take care: the previous STAR file is overwritten.)</p>
-<h2 id="part-2-matching-the-60s-ribosomal-subunit-with-a-tilt-weighted-psf">Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF</h2>
-<p>Now, let's apply the same base method using only the 60S subunit.</p>
-<h3 id="preparing-the-template-and-mask_1">Preparing the template and mask</h3>
+<p>Then do the following steps:</p>
+<ul>
+<li>Set the <code>Slice thickness A</code> on the right to 100</li>
+<li>From the <code>Experiment</code> dropdown menu on the right select the tomogram</li>
+</ul>
+<figure>
+  <a class="glightbox" href="../images/1_tomo200528_107_slice101_blik.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_107_slice101_blik.png" width="400" /></a>
+  <figcaption>Visualization of annotations with Blik.
+</figcaption>
+</figure>
+<p>Now you can scroll through the z-axis of the tomogram and the template matching 
+annotations with the slider on the bottom.</p>
+<h3 id="part-2-matching-the-60s-ribosomal-subunit-with-a-tilt-weighted-psf">Part 2: Matching the 60S ribosomal subunit with a tilt-weighted PSF</h3>
+<p>Now, let's apply template matching with the 60S subunit of the ribosome while 
+improving the weighting function.</p>
+<h4 id="preparing-the-template-and-mask_1">Preparing the template and mask</h4>
 <p>The 60S template can be generated with this command:</p>
 <div class="highlight"><pre><span></span><code>pytom_create_template.py<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-i<span class="w"> </span>templates/6qzp_60S.mrc<span class="w"> </span><span class="se">\</span>
@@ -1085,7 +1225,7 @@
 <span class="w"> </span>--radius<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--sigma<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
-<h3 id="running-template-matching_1">Running template matching</h3>
+<h4 id="running-template-matching_1">Running template matching</h4>
 <p>Template matching is run for the 60S subunit, where the low-pass filter is now set 
 to 35 Å to include more high-resolution information in the template matching. This 
 results in an angular sampling ~6.5°. We 
@@ -1100,42 +1240,90 @@ using the method introduced by STOPGAP.</p>
 <div class="highlight"><pre><span></span><code>pytom_match_template.py<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-t<span class="w"> </span>templates/60S.mrc<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-m<span class="w"> </span>templates/mask_60S.mrc<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-v<span class="w"> </span>dataset/tomo200528_100.mrc<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-v<span class="w"> </span>dataset/tomo200528_107.mrc<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-d<span class="w"> </span>results_60S/<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--particle-diameter<span class="w"> </span><span class="m">300</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-a<span class="w"> </span>dataset/tomo200528_100.rawtlt<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-a<span class="w"> </span>dataset/tomo200528_107.rawtlt<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--per-tilt-weighting<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--low-pass<span class="w"> </span><span class="m">35</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>--defocus<span class="w"> </span>dataset/tomo200528_100.defocus<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--defocus<span class="w"> </span>dataset/tomo200528_107.defocus<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--amplitude<span class="w"> </span><span class="m">0</span>.08<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--spherical<span class="w"> </span><span class="m">2</span>.7<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--voltage<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--tomogram-ctf-model<span class="w"> </span>phase-flip<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>--dose-accumulation<span class="w"> </span>dataset/tomo200528_100_dose.txt<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--dose-accumulation<span class="w"> </span>dataset/tomo200528_107_dose.txt<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--random-phase<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-g<span class="w"> </span><span class="m">0</span>
 </code></pre></div>
 <p>Again, the slice and score map can be visualized in Napari:</p>
 <figure>
-  <a class="glightbox" href="../images/2_tomo200528_100_slice69_simple.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part2_score_map" src="../images/2_tomo200528_100_slice69_simple.png" width="800" /></a>
-  <figcaption>Slice 69 of dataset/tomo200528_100.mrc and results_60S/tomo200528_100_scores.mrc (in Napari)</figcaption>
+  <a class="glightbox" href="../images/2_tomo200528_107_slice101_60S.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part2_score_map" src="../images/2_tomo200528_107_slice101_60S.png" width="800" /></a>
+  <figcaption>Slice 101 of dataset/tomo200528_107.mrc and 
+results_60S/tomo200528_107_scores.mrc (in Napari)</figcaption>
 </figure>
-<p>Matching only with the 60S subunit greatly reduces the peak height at the actual ribosome locations. Instead gold markers now start correlating heavily with the template and get higher values than the particles of interest. The reason is two-fold: (1) the size of the template has become smaller and (2) the switch from an EM-map to a PDB based model usually reduces correlation. The second point (2) can be caused by the electrostatic potential modelling with the simplistic molmap, which does not consider atom number and solvent embedding, but also because EM-maps might contain some additional heterogeneous densities.</p>
-<p>The ROC curve is now estimated with: </p>
+<p>Matching only with the 60S subunit reduces the peak height at the actual ribosome 
+locations. Gold markers also start interfering with the detection. The reason is 
+two-fold: (1) the size of the template has become smaller and (2) the switch from an 
+EM-map to a PDB based model usually reduces correlation. The second point (2) might 
+be because of the simplistic model created by <code>molmap</code>, which does not consider atom 
+number or solvent embedding.</p>
+<p>Similar to part 1, we extract particles and look at the histogram of extracted scores:</p>
+<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-j<span class="w"> </span>results_60S/tomo200528_107_job.json<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-n<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-r<span class="w"> </span><span class="m">5</span>
+</code></pre></div>
+<figure>
+  <a class="glightbox" href="../images/2_tomo200528_107_extraction_graph.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/2_tomo200528_107_extraction_graph.svg" width="400" /></a>
+  <figcaption>Extraction graph (results_60S/tomo200528_107_extraction_graph.svg)
+</figcaption>
+</figure>
+<p>Inspecting the locations with blik,</p>
+<div class="highlight"><pre><span></span><code>napari<span class="w"> </span>-w<span class="w"> </span>blik<span class="w"> </span>--<span class="w"> </span>results_60S/tomo200528_107_particles.star<span class="w"> </span>dataset/tomo200528_107.mrc
+</code></pre></div>
+<p>we see that we lost some ribosome annotations and also have some hits on gold beads. </p>
+<figure>
+  <a class="glightbox" href="../images/2_tomo200528_107_slice101_blik.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/2_tomo200528_107_slice101_blik.png" width="400" /></a>
+  <figcaption>Visualization of 60S annotations with Blik.
+  </figcaption>
+</figure>
+<p>Although the phase randomization helps a bit with removing gold bead hits, it still 
+leaves some in the annotation. Now, let's activate the 
+tophat-transform constraint to hopefully remove more false positives:</p>
+<div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-j<span class="w"> </span>results_60S/tomo200528_107_job.json<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-n<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-r<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--tophat-filter
+</code></pre></div>
+<p>Running the extraction with this option, produces a second plot that 
+can be inspected in the folder (<code>results_60S/tomo200528_107_tophat_filter.svg</code>). The 
+number of annotations went down from 121 to 69, so we definitely lost some hits. </p>
+<figure>
+  <a class="glightbox" href="../images/2_tomo200528_107_slice101_blik_tophat.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/2_tomo200528_107_slice101_blik_tophat.png" width="400" /></a>
+  <figcaption>Visualization of 60S annotations with the tophat-transform contraint 
+in Blik.
+  </figcaption>
+</figure>
+<p>Inspecting the annotations in the tomogram, the annotations are strongly filtered: 
+we lost all the gold marker annotations, and only a few ribosomes.</p>
+<h2 id="roc-estimation">ROC estimation</h2>
+<p>pytom-match-pick also has an option for ROC estimation, but its not 
+always robust and only works for high-abundance particles. As an example, we show 
+how to use it here:</p>
 <div class="highlight"><pre><span></span><code>pytom_estimate_roc.py<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-j<span class="w"> </span>results_60S/tomo200528_100_job.json<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_100_job.json<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-n<span class="w"> </span><span class="m">800</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-r<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--bins<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>--crop-plot<span class="w">  </span>&gt;<span class="w"> </span>results_60S/tomo200528_100_roc.log
+<span class="w"> </span>--crop-plot<span class="w">  </span>&gt;<span class="w"> </span>results_80S/tomo200528_100_roc.log
 </code></pre></div>
+<p>This will automatically write a file to the folder where the job file is located (<code>tomo200528_100_roc.svg</code>). Additionally, here the terminal output is also written to the file <code>results_80S/tomo200528_100_roc.log</code> as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (<code>cat results_80S/tomo200528_100_roc.log</code>), the estimated number of total true positives is approx. 180 ribosomes.</p>
 <figure>
-  <a class="glightbox" href="../images/2_tomo200528_100_roc_simple.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part2_roc" src="../images/2_tomo200528_100_roc_simple.svg" width="800" /></a>
-  <figcaption>ROC curve (results_60S/tomo200528_100_roc.svg)</figcaption>
+  <a class="glightbox" href="../images/1_tomo200528_100_roc_80S.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_100_roc_80S.svg" width="800" /></a>
+  <figcaption>ROC curve (results_80S/tomo200528_100_roc.svg)</figcaption>
 </figure>
-<p>The loss of quality is mainly visible from the gaussian fit (left plot). Even though the reported quality is still quite good (RUC), it is clear that the curve fit is not proper. This is due to the three mixed distributions that now appear: the left-most correctly fitted background noise (blue curve), the middle peak is from 60S subunits and the right-most peak from gold markers. The particle of interest and gold markers are both fitted as true positives (orange curve).</p>
-<p>Sadly, gold markers (but also carbon film, and ice) can quite often interfere with 
-template matching because of their high scattering potential leading to edges with very high signal-to-noise ratio (SNR). One way of dealing with this, is gold marker removal for which their are tools in IMOD, and also deep-learning based tools (e.g. <a href="https://teamtomo.org/fidder/">fidder</a>), that remove gold markers on the tilt-image level before tomographic reconstruction. </p>
+<p>In this case the result is quite good: the Rectangle Under the Curve (RUC) is around 0.9 (1 is optimal). Also the fit of the gaussians seems very appropriate for the histogram, so we can use the estimated cut-off value (<code>0.194</code>) to extract particle coordinates and rotations into a STAR file: </p>
 <h2 id="increasing-the-angular-sampling">Increasing the angular sampling</h2>
 <p>To improve the results, the angular sampling needs to be increased. For 
 part 2 of this tutorial, we set the low-pass filter to 35 Å. This means template 
