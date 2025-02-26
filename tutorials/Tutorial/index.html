@@ -1312,13 +1312,13 @@ we lost all the gold marker annotations, and only a few ribosomes.</p>
 always robust and only works for high-abundance particles. As an example, we show 
 how to use it here:</p>
 <div class="highlight"><pre><span></span><code>pytom_estimate_roc.py<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_100_job.json<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_107_job.json<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-n<span class="w"> </span><span class="m">800</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-r<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--bins<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>--crop-plot<span class="w">  </span>&gt;<span class="w"> </span>results_80S/tomo200528_100_roc.log
+<span class="w"> </span>--crop-plot<span class="w">  </span>&gt;<span class="w"> </span>results_80S/tomo200528_107_roc.log
 </code></pre></div>
-<p>This will automatically write a file to the folder where the job file is located (<code>tomo200528_100_roc.svg</code>). Additionally, here the terminal output is also written to the file <code>results_80S/tomo200528_100_roc.log</code> as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (<code>cat results_80S/tomo200528_100_roc.log</code>), the estimated number of total true positives is approx. 180 ribosomes.</p>
+<p>This will automatically write a file to the folder where the job file is located (<code>tomo200528_107_roc.svg</code>). Additionally, here the terminal output is also written to the file <code>results_80S/tomo200528_107_roc.log</code> as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (<code>cat results_80S/tomo200528_107_roc.log</code>), the estimated number of total true positives is approx. 180 ribosomes.</p>
 <figure>
   <a class="glightbox" href="../images/1_tomo200528_100_roc_80S.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_100_roc_80S.svg" width="800" /></a>
   <figcaption>ROC curve (results_80S/tomo200528_100_roc.svg)</figcaption>
