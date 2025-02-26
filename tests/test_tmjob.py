@@ -631,7 +631,7 @@ class TestTMJob(unittest.TestCase):
 
         # extract particles after running the job
         df, scores = extract_particles(
-            self.job, 100, particle_diameter=5, create_plot=False
+            self.job, 100, particle_diameter=10, create_plot=False
         )
         self.assertNotEqual(
             len(scores), 0, msg="Here we expect to get some annotations."
@@ -639,6 +639,11 @@ class TestTMJob(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "particle diameter"):
             _ = extract_particles(self.job, 100, create_plot=False)
+        job = self.job.copy()
+        job.particle_diameter = 10
+        with self.assertLogs(level="INFO") as cm:
+            _ = extract_particles(job, 100, create_plot=False)
+        self.assertIn("No particle diameter was provided,", "".join(cm.output))
 
         # extract particles in relion5 style
         df_rel5, scores = extract_particles(
