@@ -157,8 +157,7 @@ template matching results.
 ``` bash
 pytom_extract_candidates.py \
  -j results_80S/tomo200528_107_job.json \
- -n 200 \
- -r 5
+ -n 200
 ```
 
 This produces the following two files:
