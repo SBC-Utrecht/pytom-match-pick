@@ -157,8 +157,7 @@ template matching results.
 ``` bash
 pytom_extract_candidates.py \
  -j results_80S/tomo200528_107_job.json \
- -n 200 \
- -r 5
+ -n 200
 ```
 
 This produces the following two files:
@@ -169,7 +168,7 @@ This produces the following two files:
 
 pytom-match-pick has a default cut-off estimation 
 built-in and only extracts results above this threshold, but up to the limit of 200 
-that was specified (`-n 200`). In this we get 169 annotations. This program also by 
+that was specified (`-n 200`). In this we get 164 annotations. This program also by 
 default generates a plot that visualizes the estimated background and annotations. 
 
 <figure markdown="span">
@@ -292,8 +291,7 @@ Similar to part 1, we extract particles and look at the histogram of extracted s
 ``` bash
 pytom_extract_candidates.py \
  -j results_60S/tomo200528_107_job.json \
- -n 200 \
- -r 5
+ -n 200
 ```
 
 <figure markdown="span">
@@ -324,13 +322,12 @@ tophat-transform constraint to hopefully remove more false positives:
 pytom_extract_candidates.py \
  -j results_60S/tomo200528_107_job.json \
  -n 200 \
- -r 5 \
  --tophat-filter
 ```
 
 Running the extraction with this option, produces a second plot that 
 can be inspected in the folder (`results_60S/tomo200528_107_tophat_filter.svg`). The 
-number of annotations went down from 121 to 69, so we definitely lost some hits. 
+number of annotations went down from 108 to 69, so we definitely lost some hits. 
 
 <figure markdown="span">
   ![part1_roc](images/2_tomo200528_107_slice101_blik_tophat.png){ width="400" }
@@ -352,7 +349,6 @@ how to use it here:
 pytom_estimate_roc.py \
  -j results_80S/tomo200528_107_job.json \
  -n 800 \
- -r 8 \
  --bins 16 \
  --crop-plot  > results_80S/tomo200528_107_roc.log
 ```

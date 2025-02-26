@@ -318,13 +318,18 @@ def estimate_roc(argv=None):
         "is to multiply the expected number of particles by 3.",
     )
     parser.add_argument(
-        "-r",
-        "--radius-px",
-        type=int,
-        required=True,
+        "--particle-diameter",
+        type=float,
+        required=False,
         action=LargerThanZero,
-        help="Particle radius in pixels in the tomogram. It is used during extraction "
-        "to remove areas around peaks preventing double extraction.",
+        help="Particle diameter of the template in Angstrom. It is used during "
+        "extraction to remove areas around peaks to prevent double extraction. "
+        "If not previously specified, this option is required. If "
+        "specified in pytom_match_template, this is optional and "
+        "can be used to overwrite it, which might be relevant for strongly "
+        "elongated particles--where the angular sampling should be "
+        "determined using its long axis but the extraction mask should use its "
+        "short axis.",
     )
     parser.add_argument(
         "--bins",
@@ -390,8 +395,8 @@ def estimate_roc(argv=None):
     # Set cut off to -1 to ensure the number of particles gets extracted
     _, lcc_max_values = extract_particles(
         template_matching_job,
-        args.radius_px,
         args.number_of_particles,
+        particle_diameter=args.particle_diameter,
         cut_off=0,
         create_plot=False,
         ignore_tomogram_mask=args.ignore_tomogram_mask,
@@ -483,13 +488,18 @@ def extract_candidates(argv=None):
         "the cut-off more restrictive.",
     )
     parser.add_argument(
-        "-r",
-        "--radius-px",
-        type=int,
-        required=True,
+        "--particle-diameter",
+        type=float,
+        required=False,
         action=LargerThanZero,
-        help="Particle radius in pixels in the tomogram. It is used during extraction "
-        "to remove areas around peaks preventing double extraction.",
+        help="Particle diameter of the template in Angstrom. It is used during "
+        "extraction to remove areas around peaks to prevent double extraction. "
+        "If not previously specified, this option is required. If "
+        "specified in pytom_match_template, this is optional and "
+        "can be used to overwrite it, which might be relevant for strongly "
+        "elongated particles--where the angular sampling should be "
+        "determined using its long axis but the extraction mask should use its "
+        "short axis.",
     )
     parser.add_argument(
         "-c",
@@ -562,8 +572,8 @@ def extract_candidates(argv=None):
     job = load_json_to_tmjob(args.job_file)
     df, _ = extract_particles(
         job,
-        args.radius_px,
         args.number_of_particles,
+        particle_diameter=args.particle_diameter,
         cut_off=args.cut_off,
         n_false_positives=args.number_of_false_positives,
         tomogram_mask_path=args.tomogram_mask,

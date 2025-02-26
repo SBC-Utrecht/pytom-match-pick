@@ -150,8 +150,8 @@ def predict_tophat_mask(
 
 def extract_particles(
     job: TMJob,
-    particle_radius_px: int,
     n_particles: int,
+    particle_diameter: float | None = None,
     cut_off: float | None = None,
     n_false_positives: float = 1.0,
     tomogram_mask_path: pathlib.Path | None = None,
@@ -168,10 +168,10 @@ def extract_particles(
     ----------
     job: pytom_tm.tmjob.TMJob
         template matching job to annotate particles from
-    particle_radius_px: int
-        particle radius to remove peaks with after a score has been annotated
     n_particles: int
         maximum number of particles to extract
+    particle_diameter: Optional[float]
+        particle diameter to remove peaks with after a score has been annotated
     cut_off: Optional[float]
         manually override the automated score cut-off estimation, value between 0 and 1
     n_false_positives: float, default 1.0
@@ -249,6 +249,22 @@ def extract_particles(
         tomogram_mask = tomogram_mask[*slices]
         # mask should be larger than zero in regions of interest!
         score_volume[tomogram_mask <= 0] = 0
+
+    if particle_diameter is not None:
+        particle_radius_px = int((particle_diameter / 2) / job.voxel_size)
+    elif job.particle_diameter is not None:
+        particle_radius_px = int((job.particle_diameter / 2) / job.voxel_size)
+        logging.info(
+            "No particle diameter was provided, so using the diameter "
+            "specified previously to mask out areas around peaks. Take care for "
+            "strongly elongated particles as it might prevent correct "
+            "annotation when they arrange parallel to each other and close together."
+        )
+    else:
+        raise ValueError(
+            "You need to specify a particle diameter to mask out areas around each "
+            "peak during extraction!"
+        )
 
     # mask edges of score volume
     score_volume[0:particle_radius_px, :, :] = 0
