@@ -168,7 +168,7 @@ This produces the following two files:
 
 pytom-match-pick has a default cut-off estimation 
 built-in and only extracts results above this threshold, but up to the limit of 200 
-that was specified (`-n 200`). In this we get 169 annotations. This program also by 
+that was specified (`-n 200`). In this we get 164 annotations. This program also by 
 default generates a plot that visualizes the estimated background and annotations. 
 
 <figure markdown="span">
@@ -327,7 +327,7 @@ pytom_extract_candidates.py \
 
 Running the extraction with this option, produces a second plot that 
 can be inspected in the folder (`results_60S/tomo200528_107_tophat_filter.svg`). The 
-number of annotations went down from 121 to 69, so we definitely lost some hits. 
+number of annotations went down from 108 to 69, so we definitely lost some hits. 
 
 <figure markdown="span">
   ![part1_roc](images/2_tomo200528_107_slice101_blik_tophat.png){ width="400" }
