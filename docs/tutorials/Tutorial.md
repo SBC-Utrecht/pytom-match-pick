@@ -347,13 +347,13 @@ how to use it here:
 
 ``` bash
 pytom_estimate_roc.py \
- -j results_80S/tomo200528_100_job.json \
+ -j results_80S/tomo200528_107_job.json \
  -n 800 \
  --bins 16 \
- --crop-plot  > results_80S/tomo200528_100_roc.log
+ --crop-plot  > results_80S/tomo200528_107_roc.log
 ```
 
-This will automatically write a file to the folder where the job file is located (`tomo200528_100_roc.svg`). Additionally, here the terminal output is also written to the file `results_80S/tomo200528_100_roc.log` as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (`cat results_80S/tomo200528_100_roc.log`), the estimated number of total true positives is approx. 180 ribosomes.
+This will automatically write a file to the folder where the job file is located (`tomo200528_107_roc.svg`). Additionally, here the terminal output is also written to the file `results_80S/tomo200528_107_roc.log` as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (`cat results_80S/tomo200528_107_roc.log`), the estimated number of total true positives is approx. 180 ribosomes.
 
 <figure markdown="span">
   ![part1_roc](images/1_tomo200528_100_roc_80S.svg){ width="800" }
