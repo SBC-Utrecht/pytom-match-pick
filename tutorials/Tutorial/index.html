@@ -1165,8 +1165,7 @@ results_80S/tomo200528_107_scores.mrc (in Napari)</figcaption>
 template matching results. </p>
 <div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_107_job.json<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-n<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-r<span class="w"> </span><span class="m">5</span>
+<span class="w"> </span>-n<span class="w"> </span><span class="m">200</span>
 </code></pre></div>
 <p>This produces the following two files:</p>
 <ul>
@@ -1176,7 +1175,7 @@ template matching results. </p>
 </ul>
 <p>pytom-match-pick has a default cut-off estimation 
 built-in and only extracts results above this threshold, but up to the limit of 200 
-that was specified (<code>-n 200</code>). In this we get 169 annotations. This program also by 
+that was specified (<code>-n 200</code>). In this we get 164 annotations. This program also by 
 default generates a plot that visualizes the estimated background and annotations. </p>
 <figure>
   <a class="glightbox" href="../images/1_tomo200528_107_extraction_graph.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_107_extraction_graph.svg" width="400" /></a>
@@ -1270,8 +1269,7 @@ number or solvent embedding.</p>
 <p>Similar to part 1, we extract particles and look at the histogram of extracted scores:</p>
 <div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-j<span class="w"> </span>results_60S/tomo200528_107_job.json<span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-n<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-r<span class="w"> </span><span class="m">5</span>
+<span class="w"> </span>-n<span class="w"> </span><span class="m">200</span>
 </code></pre></div>
 <figure>
   <a class="glightbox" href="../images/2_tomo200528_107_extraction_graph.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/2_tomo200528_107_extraction_graph.svg" width="400" /></a>
@@ -1293,12 +1291,11 @@ tophat-transform constraint to hopefully remove more false positives:</p>
 <div class="highlight"><pre><span></span><code>pytom_extract_candidates.py<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-j<span class="w"> </span>results_60S/tomo200528_107_job.json<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-n<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-r<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--tophat-filter
 </code></pre></div>
 <p>Running the extraction with this option, produces a second plot that 
 can be inspected in the folder (<code>results_60S/tomo200528_107_tophat_filter.svg</code>). The 
-number of annotations went down from 121 to 69, so we definitely lost some hits. </p>
+number of annotations went down from 108 to 69, so we definitely lost some hits. </p>
 <figure>
   <a class="glightbox" href="../images/2_tomo200528_107_slice101_blik_tophat.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/2_tomo200528_107_slice101_blik_tophat.png" width="400" /></a>
   <figcaption>Visualization of 60S annotations with the tophat-transform contraint 
@@ -1314,7 +1311,6 @@ how to use it here:</p>
 <div class="highlight"><pre><span></span><code>pytom_estimate_roc.py<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-j<span class="w"> </span>results_80S/tomo200528_107_job.json<span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>-n<span class="w"> </span><span class="m">800</span><span class="w"> </span><span class="se">\</span>
-<span class="w"> </span>-r<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--bins<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="se">\</span>
 <span class="w"> </span>--crop-plot<span class="w">  </span>&gt;<span class="w"> </span>results_80S/tomo200528_107_roc.log
 </code></pre></div>
