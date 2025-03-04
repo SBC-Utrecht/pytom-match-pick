@@ -247,11 +247,11 @@ def extract_particles(
             for origin, size in zip(job.search_origin, job.search_size)
         ]
         tomogram_mask = tomogram_mask[*slices]
-        
+
         # If tomogram_mask is stored as signed bytes we need to convert it to unsigned:
-        if tomogram_mask.dtype == 'int8':
+        if tomogram_mask.dtype == "int8":
             if np.any(tomogram_mask < 0):
-                tomogram_mask = (tomogram_mask > -128).astype('int8')
+                tomogram_mask = (tomogram_mask > -128).astype("int8")
 
         # mask should be larger than zero in regions of interest!
         score_volume[tomogram_mask <= 0] = 0
