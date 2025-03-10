@@ -324,6 +324,7 @@ def estimate_roc(argv=None):
         action=LargerThanZero,
         help="Particle diameter of the template in Angstrom. It is used during "
         "extraction to remove areas around peaks to prevent double extraction. "
+        "Minimal peak-to-peak distance after extraction will be diameter/2."
         "If not previously specified, this option is required. If "
         "specified in pytom_match_template, this is optional and "
         "can be used to overwrite it, which might be relevant for strongly "
@@ -494,6 +495,7 @@ def extract_candidates(argv=None):
         action=LargerThanZero,
         help="Particle diameter of the template in Angstrom. It is used during "
         "extraction to remove areas around peaks to prevent double extraction. "
+        "Minimal peak-to-peak distance after extraction will be diameter/2."
         "If not previously specified, this option is required. If "
         "specified in pytom_match_template, this is optional and "
         "can be used to overwrite it, which might be relevant for strongly "
