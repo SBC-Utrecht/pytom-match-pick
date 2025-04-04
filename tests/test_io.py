@@ -18,6 +18,18 @@ CORRUPT_MRC = pathlib.Path(__file__).parent.joinpath(
 RELION5_TOMOGRAMS_STAR = pathlib.Path(__file__).parent.joinpath(
     "Data/relion5_project_example/Tomograms/job009/tomograms.star"
 )
+MULTI_COLUMN_TLT = pathlib.Path(__file__).parent.joinpath(
+    pathlib.Path("Data/test_angles_multi_column.rawtlt")
+)
+
+
+class TestMultiColumnTilt(unittest.TestCase):
+    def test_read_multi_column_tilt(self):
+        # TODO: add the following tests:
+        # 1) error out with a nice error in default mode
+        # 2) allow reading when an override flag is passed
+        # 3) make sure it gets passed from the cli
+        raise NotImplementedError()
 
 
 class TestBrokenMRC(unittest.TestCase):
