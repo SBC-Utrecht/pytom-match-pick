@@ -171,7 +171,8 @@ def extract_particles(
     n_particles: int
         maximum number of particles to extract
     particle_diameter: Optional[float]
-        particle diameter to remove peaks with after a score has been annotated
+        particle diameter to remove peaks with after a score has been annotated.
+        minimal peak-to-peak distance after extraction will be diameter/2.
     cut_off: Optional[float]
         manually override the automated score cut-off estimation, value between 0 and 1
     n_false_positives: float, default 1.0
