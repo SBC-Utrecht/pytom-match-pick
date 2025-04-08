@@ -9,6 +9,10 @@ from contextlib import contextmanager
 from operator import attrgetter
 
 
+class MultiColumnAngleFileError(ValueError):
+    pass
+
+
 class ParseLogging(argparse.Action):
     """argparse.Action subclass to parse logging parameter from input scripts. Users can
     set these to info/debug."""
@@ -116,6 +120,10 @@ class ParseTiltAngles(argparse.Action):
     a .tlt/.rawtlt file that specifies all the the tilt angles of the tilt-series to use
     for more refined wedge models."""
 
+    def __init__(self, *args, error_on_multi_column=True, **kwargs):
+        self.error_on_multi_column = error_on_multi_column
+        super().__init__(*args, **kwargs)
+
     def __call__(
         self,
         parser,
@@ -139,7 +147,20 @@ class ParseTiltAngles(argparse.Action):
                     f"{option_string} provided tilt angle file does not exist or does "
                     "not have the right format"
                 )
-            setattr(namespace, self.dest, read_tlt_file(values))
+            try:
+                setattr(
+                    namespace,
+                    self.dest,
+                    read_tlt_file(
+                        values, error_on_multi_column=self.error_on_multi_column
+                    ),
+                )
+            except MultiColumnAngleFileError:
+                parser.error(
+                    f"{option_string} provided tilt angle file has more than one "
+                    "column, please use --tilt-angles-first-column to only read "
+                    "the first column."
+                )
         else:
             parser.error(f"{option_string} can only take one or two arguments")
 
@@ -374,13 +395,18 @@ def read_mrc(file_name: pathlib.Path, transpose: bool = True) -> npt.NDArray[flo
     return data
 
 
-def read_txt_file(file_name: pathlib.Path) -> list[float, ...]:
+def read_txt_file(
+    file_name: pathlib.Path, error_on_multi_column: bool = True
+) -> list[float, ...]:
     """Read a txt file from disk with on each line a single float value.
 
     Parameters
     ----------
     file_name: pathlib.Path
         file on disk to read
+    error_on_multi_column: bool, default True
+        whether to error if more than one column is found.
+        if False only return the first column
 
     Returns
     -------
@@ -389,10 +415,35 @@ def read_txt_file(file_name: pathlib.Path) -> list[float, ...]:
     """
     with open(file_name) as fstream:
         lines = fstream.readlines()
+    for line in lines:
+        # find first non-empty line
+        if not line.isspace():
+            if len(line.strip().split()) > 1:
+                if error_on_multi_column:
+                    raise MultiColumnAngleFileError(
+                        f"Expected a single column in file {file_name}, got "
+                        f"{len(line.strip().split())} columns"
+                    )
+                else:
+                    logging.warning(
+                        f"Found more than one column in file {file_name}, "
+                        "only returning values from the first column"
+                    )
+                    return list(
+                        map(
+                            float,
+                            [x.strip().split()[0] for x in lines if not x.isspace()],
+                        )
+                    )
+            else:
+                # assume regular number of columns
+                break
     return list(map(float, [x.strip() for x in lines if not x.isspace()]))
 
 
-def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
+def read_tlt_file(
+    file_name: pathlib.Path, error_on_multi_column: bool = True
+) -> list[float, ...]:
     """Read a txt file from disk using read_txt_file(). File is expected to have tilt
     angles in degrees.
 
@@ -406,7 +457,7 @@ def read_tlt_file(file_name: pathlib.Path) -> list[float, ...]:
     output: list[float, ...]
         list of floats with tilt angles
     """
-    return read_txt_file(file_name)
+    return read_txt_file(file_name, error_on_multi_column)
 
 
 def read_dose_file(file_name: pathlib.Path) -> list[float, ...]:
