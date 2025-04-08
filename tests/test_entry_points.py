@@ -239,8 +239,7 @@ class TestEntryPoints(unittest.TestCase):
         with self.assertRaises(
             ValueError,
             msg=(
-                "Only one of '--tilt-angles' or "
-                "'--tilt-angles-first-column' is allowed"
+                "Only one of '--tilt-angles' or '--tilt-angles-first-column' is allowed"
             ),
         ):
             arguments = defaults.copy()
