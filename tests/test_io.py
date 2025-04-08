@@ -40,7 +40,7 @@ class TestMultiColumnTilt(unittest.TestCase):
         with self.assertRaises(MultiColumnAngleFileError):
             _ = read_tlt_file(MULTI_COLUMN_TLT)
         # allow reading when an override flag is passed
-        angles_multi = read_tlt_file(MULTI_COLUMN_TLT)
+        angles_multi = read_tlt_file(MULTI_COLUMN_TLT, error_on_multi_column=False)
         angles = read_tlt_file(REGULAR_TLT)
         self.assertEqual(angles, angles_multi)
 
