@@ -80,6 +80,7 @@ class TestEntryPoints(unittest.TestCase):
         TOMOGRAM.unlink()
         RELION5_TOMOGRAM.unlink()
         TILT_ANGLES.unlink()
+        TILT_ANGLES_MULTI_COLUMN.unlink()
         DOSE.unlink()
         DEFOCUS.unlink()
         for f in DESTINATION.iterdir():
