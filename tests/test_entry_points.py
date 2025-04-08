@@ -244,7 +244,7 @@ class TestEntryPoints(unittest.TestCase):
             ),
         ):
             arguments = defaults.copy()
-            arguments["--tilt-angles-first-column"] = (str(TILT_ANGLES_MULTI_COLUMN),)
+            arguments["--tilt-angles-first-column"] = str(TILT_ANGLES_MULTI_COLUMN)
             start(arguments)
         # make sure we error out if multi column angle file is give to regular flag
         dump = StringIO()
