@@ -115,7 +115,7 @@ code = ("""
 ---8<--- "entry_points.py:match_template_usage"
 """)
 cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+    if not any(keyword in line for keyword in ('action=', 'default=', 'type=', 'error_on_multi_column='))
 ]
 cleaned_code = '\n'.join(cleaned_lines)
 exec(cleaned_code)
