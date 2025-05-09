@@ -274,9 +274,9 @@ class TestTMJob(unittest.TestCase):
         # Test template mask mismatch
         with self.assertRaisesRegex(
             ValueError,
-            rf"{TEMPLATE_SIZE,TEMPLATE_SIZE, TEMPLATE_SIZE}"
+            rf"{TEMPLATE_SIZE, TEMPLATE_SIZE, TEMPLATE_SIZE}"
             ".*"
-            rf"{TEMPLATE_SIZE-1, TEMPLATE_SIZE-1, TEMPLATE_SIZE-1}",
+            rf"{TEMPLATE_SIZE - 1, TEMPLATE_SIZE - 1, TEMPLATE_SIZE - 1}",
         ):
             TMJob(
                 "0",
