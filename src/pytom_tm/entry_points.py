@@ -21,6 +21,7 @@ from pytom_tm.io import (
     ParseGPUIndices,
     parse_relion5_star_data,
 )
+from pytom_tm.io import parse_warp_xml_data
 from pytom_tm.tmjob import load_json_to_tmjob
 from os import urandom
 
@@ -43,7 +44,7 @@ def pytom_create_mask(argv=None):
     parser = argparse.ArgumentParser(
         prog="pytom_create_mask.py",
         description="Create a mask for template matching. "
-        "-- Marten Chaillet (@McHaillet)",
+                    "-- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-b",
@@ -59,8 +60,8 @@ def pytom_create_mask(argv=None):
         type=pathlib.Path,
         required=False,
         help="Provide path to write output, needs to end in .mrc ."
-        "If not provided file is written to current directory in the following format: "
-        "./mask_b[box_size]px_r[radius]px.mrc ",
+             "If not provided file is written to current directory in the following format: "
+             "./mask_b[box_size]px_r[radius]px.mrc ",
     )
     parser.add_argument(
         "--voxel-size",
@@ -69,7 +70,7 @@ def pytom_create_mask(argv=None):
         default=1.0,
         action=LargerThanZero,
         help="Provide a voxel size to annotate the MRC (currently not used for any "
-        "mask calculation).",
+             "mask calculation).",
     )
     parser.add_argument(
         "-r",
@@ -78,8 +79,8 @@ def pytom_create_mask(argv=None):
         required=True,
         action=LargerThanZero,
         help="Radius of the spherical mask in number of pixels. In case minor1 and "
-        "minor2 are provided, this will be the radius of the ellipsoidal mask along "
-        "the x-axis.",
+             "minor2 are provided, this will be the radius of the ellipsoidal mask along "
+             "the x-axis.",
     )
     parser.add_argument(
         "--radius-minor1",
@@ -102,8 +103,8 @@ def pytom_create_mask(argv=None):
         required=False,
         action=LargerThanZero,
         help="Sigma of gaussian drop-off around the mask edges in number of pixels. "
-        "Values in the range from 0.5-1.0 are usually sufficient for tomograms with "
-        "20A-10A voxel sizes.",
+             "Values in the range from 0.5-1.0 are usually sufficient for tomograms with "
+             "20A-10A voxel sizes.",
     )
 
     # ---8<--- [end:create_mask_usage]
@@ -144,7 +145,7 @@ def pytom_create_template(argv=None):
     parser = argparse.ArgumentParser(
         prog="pytom_create_template.py",
         description="Generate template from MRC density. "
-        "-- Marten Chaillet (@McHaillet)",
+                    "-- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-i",
@@ -160,8 +161,8 @@ def pytom_create_template(argv=None):
         type=pathlib.Path,
         required=False,
         help="Provide path to write output, needs to end in .mrc . If not provided "
-        "file is written to current directory in the following format: "
-        "template_{input_map.stem}_{voxel_size}A.mrc",
+             "file is written to current directory in the following format: "
+             "template_{input_map.stem}_{voxel_size}A.mrc",
     )
     parser.add_argument(
         "--input-voxel-size-angstrom",
@@ -169,7 +170,7 @@ def pytom_create_template(argv=None):
         required=False,
         action=LargerThanZero,
         help="Voxel size of input map, in Angstrom. If not provided will be read from "
-        "MRC input (so make sure it is annotated correctly!).",
+             "MRC input (so make sure it is annotated correctly!).",
     )
     parser.add_argument(
         "--output-voxel-size-angstrom",
@@ -177,8 +178,8 @@ def pytom_create_template(argv=None):
         required=True,
         action=LargerThanZero,
         help="Output voxel size of the template, in Angstrom. Needs to be equal to the "
-        "voxel size of the tomograms for template matching. Input map will be "
-        "downsampled to this spacing.",
+             "voxel size of the tomograms for template matching. Input map will be "
+             "downsampled to this spacing.",
     )
     parser.add_argument(
         "--center",
@@ -186,7 +187,7 @@ def pytom_create_template(argv=None):
         default=False,
         required=False,
         help="Set this flag to automatically center the density in the volume by "
-        "measuring the center of mass.",
+             "measuring the center of mass.",
     )
     parser.add_argument(
         "--low-pass",
@@ -194,8 +195,8 @@ def pytom_create_template(argv=None):
         required=False,
         action=LargerThanZero,
         help="Apply a low pass filter to this resolution, in Angstrom. By default a "
-        "low pass filter is applied to a resolution of (2 * output_spacing_angstrom) "
-        "before downsampling the input volume.",
+             "low pass filter is applied to a resolution of (2 * output_spacing_angstrom) "
+             "before downsampling the input volume.",
     )
     parser.add_argument(
         "-b",
@@ -204,7 +205,7 @@ def pytom_create_template(argv=None):
         required=False,
         action=LargerThanZero,
         help="Specify a desired size for the output box of the template. "
-        "Only works if it is larger than the downsampled box size of the input.",
+             "Only works if it is larger than the downsampled box size of the input.",
     )
     parser.add_argument(
         "--invert",
@@ -212,7 +213,7 @@ def pytom_create_template(argv=None):
         default=False,
         required=False,
         help="Multiply template by -1. "
-        "WARNING: not needed if ctf with defocus is already applied!",
+             "WARNING: not needed if ctf with defocus is already applied!",
     )
     parser.add_argument(
         "-m",
@@ -242,7 +243,7 @@ def pytom_create_template(argv=None):
     input_meta_data = read_mrc_meta_data(args.input_map)
     if args.input_voxel_size_angstrom is not None:
         if round(args.input_voxel_size_angstrom, 3) != round(
-            input_meta_data["voxel_size"], 3
+                input_meta_data["voxel_size"], 3
         ):
             logging.warning(
                 "Provided voxel size does not match voxel size annotated in input map."
@@ -297,7 +298,7 @@ def estimate_roc(argv=None):
     parser = argparse.ArgumentParser(
         prog="pytom_estimate_roc.py",
         description="Estimate ROC curve from TMJob file. "
-        "-- Marten Chaillet (@McHaillet)",
+                    "-- Marten Chaillet (@McHaillet)",
     )
     parser.add_argument(
         "-j",
@@ -306,7 +307,7 @@ def estimate_roc(argv=None):
         required=True,
         action=CheckFileExists,
         help="JSON file that contain all data on the template matching job, written "
-        "out by pytom_match_template.py in the destination path.",
+             "out by pytom_match_template.py in the destination path.",
     )
     parser.add_argument(
         "-n",
@@ -315,7 +316,7 @@ def estimate_roc(argv=None):
         required=True,
         action=LargerThanZero,
         help="The number of particles to extract and estimate the ROC on, recommended "
-        "is to multiply the expected number of particles by 3.",
+             "is to multiply the expected number of particles by 3.",
     )
     parser.add_argument(
         "--particle-diameter",
@@ -323,14 +324,14 @@ def estimate_roc(argv=None):
         required=False,
         action=LargerThanZero,
         help="Particle diameter of the template in Angstrom. It is used during "
-        "extraction to remove areas around peaks to prevent double extraction. "
-        "Minimal peak-to-peak distance after extraction will be diameter/2."
-        "If not previously specified, this option is required. If "
-        "specified in pytom_match_template, this is optional and "
-        "can be used to overwrite it, which might be relevant for strongly "
-        "elongated particles--where the angular sampling should be "
-        "determined using its long axis but the extraction mask should use its "
-        "short axis.",
+             "extraction to remove areas around peaks to prevent double extraction. "
+             "Minimal peak-to-peak distance after extraction will be diameter/2."
+             "If not previously specified, this option is required. If "
+             "specified in pytom_match_template, this is optional and "
+             "can be used to overwrite it, which might be relevant for strongly "
+             "elongated particles--where the angular sampling should be "
+             "determined using its long axis but the extraction mask should use its "
+             "short axis.",
     )
     parser.add_argument(
         "--bins",
@@ -346,7 +347,7 @@ def estimate_roc(argv=None):
         required=False,
         action=LargerThanZero,
         help="Expected index of the histogram peak of the Gaussian fitted to the "
-        "particle population.",
+             "particle population.",
     )
     parser.add_argument(
         "--force-peak",
@@ -368,7 +369,7 @@ def estimate_roc(argv=None):
         default=False,
         required=False,
         help="Flag to use a pop-up window for the plot instead of writing it to the "
-        "location of the job file.",
+             "location of the job file.",
     )
     parser.add_argument(
         "--log",
@@ -384,7 +385,7 @@ def estimate_roc(argv=None):
         default=False,
         required=False,
         help="Flag to ignore the TM job tomogram mask. "
-        "Useful if the scores mrc looks reasonable, but this finds 0 particles",
+             "Useful if the scores mrc looks reasonable, but this finds 0 particles",
     )
 
     # ---8<--- [end:estimate_roc_usage]
@@ -445,7 +446,7 @@ def extract_candidates(argv=None):
         required=True,
         action=CheckFileExists,
         help="JSON file that contain all data on the template matching job, written "
-        "out by pytom_match_template.py in the destination path.",
+             "out by pytom_match_template.py in the destination path.",
     )
     parser.add_argument(
         "--tomogram-mask",
@@ -453,11 +454,11 @@ def extract_candidates(argv=None):
         required=False,
         action=CheckFileExists,
         help="Here you can provide a mask for the extraction with dimensions "
-        "(in pixels) equal to the tomogram. All values in the mask that are smaller or "
-        "equal to 0 will be removed, all values larger than 0 are considered regions "
-        "of interest. It can be used to extract annotations only within a specific "
-        "cellular region. If the job was run with a tomogram mask, this file will be "
-        "used instead of the job mask",
+             "(in pixels) equal to the tomogram. All values in the mask that are smaller or "
+             "equal to 0 will be removed, all values larger than 0 are considered regions "
+             "of interest. It can be used to extract annotations only within a specific "
+             "cellular region. If the job was run with a tomogram mask, this file will be "
+             "used instead of the job mask",
     )
     parser.add_argument(
         "--ignore_tomogram_mask",
@@ -465,7 +466,7 @@ def extract_candidates(argv=None):
         default=False,
         required=False,
         help="Flag to ignore the input and TM job tomogram mask. Useful if the scores "
-        "mrc looks reasonable, but this finds 0 particles to extract",
+             "mrc looks reasonable, but this finds 0 particles to extract",
     )
     parser.add_argument(
         "-n",
@@ -482,11 +483,11 @@ def extract_candidates(argv=None):
         action=LargerThanZero,
         default=1.0,
         help="Number of false positives to determine the false alarm rate. Here one "
-        "can increase the recall of the particle of interest at the expense "
-        "of more false positives. The default value of 1 is recommended for "
-        "particles that can be distinguished well from the background (high "
-        "specificity). The value can also be set between 0 and 1 to make "
-        "the cut-off more restrictive.",
+             "can increase the recall of the particle of interest at the expense "
+             "of more false positives. The default value of 1 is recommended for "
+             "particles that can be distinguished well from the background (high "
+             "specificity). The value can also be set between 0 and 1 to make "
+             "the cut-off more restrictive.",
     )
     parser.add_argument(
         "--particle-diameter",
@@ -494,14 +495,14 @@ def extract_candidates(argv=None):
         required=False,
         action=LargerThanZero,
         help="Particle diameter of the template in Angstrom. It is used during "
-        "extraction to remove areas around peaks to prevent double extraction. "
-        "Minimal peak-to-peak distance after extraction will be diameter/2."
-        "If not previously specified, this option is required. If "
-        "specified in pytom_match_template, this is optional and "
-        "can be used to overwrite it, which might be relevant for strongly "
-        "elongated particles--where the angular sampling should be "
-        "determined using its long axis but the extraction mask should use its "
-        "short axis.",
+             "extraction to remove areas around peaks to prevent double extraction. "
+             "Minimal peak-to-peak distance after extraction will be diameter/2."
+             "If not previously specified, this option is required. If "
+             "specified in pytom_match_template, this is optional and "
+             "can be used to overwrite it, which might be relevant for strongly "
+             "elongated particles--where the angular sampling should be "
+             "determined using its long axis but the extraction mask should use its "
+             "short axis.",
     )
     parser.add_argument(
         "-c",
@@ -509,10 +510,10 @@ def extract_candidates(argv=None):
         type=float,
         required=False,
         help="Override automated extraction cutoff estimation and instead extract the "
-        "number-of-particles down to this LCCmax value. Setting to 0 will keep "
-        "extracting until number-of-particles, or until there are no positive values "
-        "left in the score map. Values larger than 1 make no sense as the correlation "
-        "cannot be higher than 1.",
+             "number-of-particles down to this LCCmax value. Setting to 0 will keep "
+             "extracting until number-of-particles, or until there are no positive values "
+             "left in the score map. Values larger than 1 make no sense as the correlation "
+             "cannot be higher than 1.",
     )
     parser.add_argument(
         "--tophat-filter",
@@ -528,9 +529,9 @@ def extract_candidates(argv=None):
         default=1,
         action=LargerThanZero,
         help="Set kernel connectivity for ndimage binary structure used for the "
-        "tophat transform. Integer value in range 1-3. 1 is the most "
-        "restrictive, 3 the least restrictive. Generally recommended to "
-        "leave at 1.",
+             "tophat transform. Integer value in range 1-3. 1 is the most "
+             "restrictive, 3 the least restrictive. Generally recommended to "
+             "leave at 1.",
     )
     parser.add_argument(
         "--relion5-compat",
@@ -554,7 +555,7 @@ def extract_candidates(argv=None):
         default=50,
         action=LargerThanZero,
         help="Number of bins to use in the histogram of occurences in the "
-        "tophat transform code (for both the estimation and the plotting).",
+             "tophat transform code (for both the estimation and the plotting).",
     )
     parser.add_argument(
         "--plot-bins",
@@ -617,8 +618,8 @@ def match_template(argv=None):
         required=True,
         action=CheckFileExists,
         help="Template; MRC file. Object should match the contrast of the tomogram: "
-        "if the tomogram has black ribosomes, the reference should be black. "
-        "(pytom_create_template.py has an option to invert contrast) ",
+             "if the tomogram has black ribosomes, the reference should be black. "
+             "(pytom_create_template.py has an option to invert contrast) ",
     )
     io_group.add_argument(
         "-v",
@@ -651,7 +652,7 @@ def match_template(argv=None):
         action="store_true",
         required=False,
         help="Flag to set when the mask is not spherical. It adds the required "
-        "computations for non-spherical masks and roughly doubles computation time.",
+             "computations for non-spherical masks and roughly doubles computation time.",
     )
     rotation_group = parser.add_argument_group("Angular search")
     rotation_group.add_argument(
@@ -660,24 +661,24 @@ def match_template(argv=None):
         required=False,
         action=LargerThanZero,
         help="Provide a particle diameter (in Angstrom) to automatically determine the "
-        "angular sampling using the Crowther criterion. For the max resolution, "
-        "(2 * pixel size) is used unless a low-pass filter is specified, "
-        "in which case the low-pass resolution is used. For non-globular "
-        "macromolecules choose the diameter along the longest axis.",
+             "angular sampling using the Crowther criterion. For the max resolution, "
+             "(2 * pixel size) is used unless a low-pass filter is specified, "
+             "in which case the low-pass resolution is used. For non-globular "
+             "macromolecules choose the diameter along the longest axis.",
     )
     rotation_group.add_argument(
         "--angular-search",
         type=str,
         required=False,
         help="This option overrides the angular search calculation from the particle "
-        "diameter. If given a float it will generate an angle list with healpix "
-        "for Z1 and X1 and linear search for Z2. The provided angle will be used "
-        "as the maximum for the "
-        "linear search and for the mean angle difference from healpix."
-        "Alternatively, a .txt file can be provided with three Euler angles "
-        "(in radians) per line that define the angular search. "
-        "Angle format is ZXZ anti-clockwise (see: "
-        "https://www.ccpem.ac.uk/user_help/rotation_conventions.php).",
+             "diameter. If given a float it will generate an angle list with healpix "
+             "for Z1 and X1 and linear search for Z2. The provided angle will be used "
+             "as the maximum for the "
+             "linear search and for the mean angle difference from healpix."
+             "Alternatively, a .txt file can be provided with three Euler angles "
+             "(in radians) per line that define the angular search. "
+             "Angle format is ZXZ anti-clockwise (see: "
+             "https://www.ccpem.ac.uk/user_help/rotation_conventions.php).",
     )
     rotation_group.add_argument(
         "--z-axis-rotational-symmetry",
@@ -686,8 +687,8 @@ def match_template(argv=None):
         action=LargerThanZero,
         default=1,
         help="Integer value indicating the rotational symmetry of the template around "
-        "the z-axis. The length of the rotation search will be shortened through "
-        "division by this value. Only works for template symmetry around the z-axis.",
+             "the z-axis. The length of the rotation search will be shortened through "
+             "division by this value. Only works for template symmetry around the z-axis.",
     )
     volume_group = parser.add_argument_group("Volume control")
     volume_group.add_argument(
@@ -698,8 +699,8 @@ def match_template(argv=None):
         required=False,
         default=[1, 1, 1],
         help="Split the volume into smaller parts for the search, "
-        "can be relevant if the volume does not fit into GPU memory. "
-        "Format is x y z, e.g. --volume-split 1 2 1",
+             "can be relevant if the volume does not fit into GPU memory. "
+             "Format is x y z, e.g. --volume-split 1 2 1",
     )
     volume_group.add_argument(
         "--search-x",
@@ -708,7 +709,7 @@ def match_template(argv=None):
         required=False,
         action=ParseSearch,
         help="Start and end indices of the search along the x-axis, "
-        "e.g. --search-x 10 490 ",
+             "e.g. --search-x 10 490 ",
     )
     volume_group.add_argument(
         "--search-y",
@@ -717,7 +718,7 @@ def match_template(argv=None):
         required=False,
         action=ParseSearch,
         help="Start and end indices of the search along the y-axis, "
-        "e.g. --search-x 10 490 ",
+             "e.g. --search-x 10 490 ",
     )
     volume_group.add_argument(
         "--search-z",
@@ -726,7 +727,7 @@ def match_template(argv=None):
         required=False,
         action=ParseSearch,
         help="Start and end indices of the search along the z-axis, "
-        "e.g. --search-x 30 230 ",
+             "e.g. --search-x 30 230 ",
     )
     volume_group.add_argument(
         "--tomogram-mask",
@@ -734,8 +735,8 @@ def match_template(argv=None):
         required=False,
         action=CheckFileExists,
         help="Here you can provide a mask for matching with dimensions (in pixels) "
-        "equal to the tomogram. If a subvolume only has values <= 0 for this mask it "
-        "will be skipped.",
+             "equal to the tomogram. If a subvolume only has values <= 0 for this mask it "
+             "will be skipped.",
     )
 
     filter_group = parser.add_argument_group("Filter control")
@@ -747,9 +748,9 @@ def match_template(argv=None):
         required=False,
         action=ParseTiltAngles,
         help="Tilt angles of the tilt-series, either the minimum and maximum values of "
-        "the tilts (e.g. --tilt-angles -59.1 60.1) or a .rawtlt/.tlt file with all the "
-        "angles (e.g. --tilt-angles tomo101.rawtlt). In case all the tilt angles are "
-        "provided a more elaborate Fourier space constraint can be used",
+             "the tilts (e.g. --tilt-angles -59.1 60.1) or a .rawtlt/.tlt file with all the "
+             "angles (e.g. --tilt-angles tomo101.rawtlt). In case all the tilt angles are "
+             "provided a more elaborate Fourier space constraint can be used",
     )
     filter_group.add_argument(
         "--tilt-angles-first-column",
@@ -759,9 +760,9 @@ def match_template(argv=None):
         action=ParseTiltAngles,
         error_on_multi_column=False,
         help="A .rawtlt/.tlt file with multiple columns where all the angles are in "
-        "the first column (e.g. --tilt-angles-first-column tomo101.rawtlt). In case "
-        "all the tilt angles are provided a more elaborate Fourier space constraint "
-        "can be used",
+             "the first column (e.g. --tilt-angles-first-column tomo101.rawtlt). In case "
+             "all the tilt angles are provided a more elaborate Fourier space constraint "
+             "can be used",
     )
     filter_group.add_argument(
         "--per-tilt-weighting",
@@ -769,11 +770,11 @@ def match_template(argv=None):
         default=False,
         required=False,
         help="Flag to activate per-tilt-weighting, only makes sense if a file with all "
-        "tilt angles have been provided. In case not set, while a tilt angle file is "
-        "provided, the minimum and maximum tilt angle are used to create a binary "
-        "wedge. The base functionality creates a fanned wedge where each tilt is "
-        "weighted by cos(tilt_angle). If dose accumulation and CTF parameters are "
-        "provided these will all be incorporated in the tilt-weighting.",
+             "tilt angles have been provided. In case not set, while a tilt angle file is "
+             "provided, the minimum and maximum tilt angle are used to create a binary "
+             "wedge. The base functionality creates a fanned wedge where each tilt is "
+             "weighted by cos(tilt_angle). If dose accumulation and CTF parameters are "
+             "provided these will all be incorporated in the tilt-weighting.",
     )
     filter_group.add_argument(
         "--voxel-size-angstrom",
@@ -781,8 +782,8 @@ def match_template(argv=None):
         required=False,
         action=LargerThanZero,
         help="Voxel spacing of tomogram/template in angstrom, if not provided will "
-        "try to read from the MRC files. Argument is important for band-pass "
-        "filtering!",
+             "try to read from the MRC files. Argument is important for band-pass "
+             "filtering!",
     )
     filter_group.add_argument(
         "--low-pass",
@@ -790,8 +791,8 @@ def match_template(argv=None):
         required=False,
         action=LargerThanZero,
         help="Apply a low-pass filter to the tomogram and template. Generally desired "
-        "if the template was already filtered to a certain resolution. "
-        "Value is the resolution in A.",
+             "if the template was already filtered to a certain resolution. "
+             "Value is the resolution in A.",
     )
     filter_group.add_argument(
         "--high-pass",
@@ -799,9 +800,9 @@ def match_template(argv=None):
         required=False,
         action=LargerThanZero,
         help="Apply a high-pass filter to the tomogram and template to reduce "
-        "correlation with large low frequency variations. Value is a resolution in A, "
-        "e.g. 500 could be appropriate as the CTF is often incorrectly modelled "
-        "up to 50nm.",
+             "correlation with large low frequency variations. Value is a resolution in A, "
+             "e.g. 500 could be appropriate as the CTF is often incorrectly modelled "
+             "up to 50nm.",
     )
     filter_group.add_argument(
         "--dose-accumulation",
@@ -809,8 +810,8 @@ def match_template(argv=None):
         required=False,
         action=ParseDoseFile,
         help="Here you can provide a file that contains the accumulated dose at each "
-        "tilt angle, assuming the same ordering of tilts as the tilt angle file. "
-        "Format should be a .txt file with on each line a dose value in e-/A2.",
+             "tilt angle, assuming the same ordering of tilts as the tilt angle file. "
+             "Format should be a .txt file with on each line a dose value in e-/A2.",
     )
     filter_group.add_argument(
         "--defocus",
@@ -818,14 +819,14 @@ def match_template(argv=None):
         required=False,
         action=ParseDefocus,
         help="Here you can provide an IMOD defocus (.defocus) file (version 2 or 3) "
-        ", a text (.txt) file with a single defocus value per line (in μm), "
-        "or a single "
-        "defocus value (in μm). "
-        "The value(s), together with the other ctf "
-        "parameters (amplitude contrast, voltage, spherical abberation), "
-        "will be used to create a 3D CTF weighting function. IMPORTANT: if "
-        "you provide this, the input template should not be modulated with a CTF "
-        "beforehand. If it is a reconstruction it should ideally be Wiener filtered.",
+             ", a text (.txt) file with a single defocus value per line (in μm), "
+             "or a single "
+             "defocus value (in μm). "
+             "The value(s), together with the other ctf "
+             "parameters (amplitude contrast, voltage, spherical abberation), "
+             "will be used to create a 3D CTF weighting function. IMPORTANT: if "
+             "you provide this, the input template should not be modulated with a CTF "
+             "beforehand. If it is a reconstruction it should ideally be Wiener filtered.",
     )
     filter_group.add_argument(
         "--amplitude-contrast",
@@ -861,12 +862,12 @@ def match_template(argv=None):
         required=False,
         choices=["phase-flip"],  # possible wiener filter mode to come?
         help="Optionally, you can specify if and how the CTF was corrected during "
-        "reconstruction of the input tomogram. This allows "
-        "match-pick to match the weighting of the template to the tomogram. "
-        "Not using this option is appropriate if the CTF was left uncorrected in "
-        "the tomogram. Option 'phase-flip' : appropriate for IMOD's strip-based "
-        "phase flipping or reconstructions generated with "
-        "novaCTF/3dctf.",
+             "reconstruction of the input tomogram. This allows "
+             "match-pick to match the weighting of the template to the tomogram. "
+             "Not using this option is appropriate if the CTF was left uncorrected in "
+             "the tomogram. Option 'phase-flip' : appropriate for IMOD's strip-based "
+             "phase flipping or reconstructions generated with "
+             "novaCTF/3dctf.",
     )
     filter_group.add_argument(
         "--defocus-handedness",
@@ -875,15 +876,15 @@ def match_template(argv=None):
         type=int,
         default=0,
         help="Specify the defocus handedness for defocus gradient correction of the "
-        "CTF in each subvolumes. The more subvolumes in x and z, "
-        "the finer the defocus gradient will be corrected, at the cost of "
-        "increased computing time. It will only have effect for very clean and "
-        "high-resolution data, such as isolated macromolecules. IMPORTANT: only "
-        "works in combination with --volume-split ! "
-        "A value of 0 means no defocus gradient correction (default), 1 means "
-        "correction assuming correct handedness (as specified in Pyle and "
-        "Zianetti (2021)), -1 means the handedness will be inverted. If uncertain "
-        "better to leave off as an inverted correction might hamper results.",
+             "CTF in each subvolumes. The more subvolumes in x and z, "
+             "the finer the defocus gradient will be corrected, at the cost of "
+             "increased computing time. It will only have effect for very clean and "
+             "high-resolution data, such as isolated macromolecules. IMPORTANT: only "
+             "works in combination with --volume-split ! "
+             "A value of 0 means no defocus gradient correction (default), 1 means "
+             "correction assuming correct handedness (as specified in Pyle and "
+             "Zianetti (2021)), -1 means the handedness will be inverted. If uncertain "
+             "better to leave off as an inverted correction might hamper results.",
     )
     filter_group.add_argument(
         "--spectral-whitening",
@@ -891,8 +892,8 @@ def match_template(argv=None):
         default=False,
         required=False,
         help="Calculate a whitening filtering from the power spectrum of the tomogram; "
-        "apply it to the tomogram patch and template. Effectively puts more weight on "
-        "high resolution features and sharpens the correlation peaks.",
+             "apply it to the tomogram patch and template. Effectively puts more weight on "
+             "high resolution features and sharpens the correlation peaks.",
     )
     additional_group = parser.add_argument_group("Additional options")
     additional_group.add_argument(
@@ -902,9 +903,9 @@ def match_template(argv=None):
         default=False,
         required=False,
         help="Run template matching simultaneously with a phase randomized version of "
-        "the template, and subtract this 'noise' map from the final score map. "
-        "For this method please see STOPGAP as a reference: "
-        "https://doi.org/10.1107/S205979832400295X .",
+             "the template, and subtract this 'noise' map from the final score map. "
+             "For this method please see STOPGAP as a reference: "
+             "https://doi.org/10.1107/S205979832400295X .",
     )
     additional_group.add_argument(
         "--half-precision",
@@ -920,7 +921,7 @@ def match_template(argv=None):
         default=int.from_bytes(urandom(8)),
         required=False,
         help="Specify a seed for the random number generator used for phase "
-        "randomization for consistent results!",
+             "randomization for consistent results!",
     )
     additional_group.add_argument(
         "--relion5-tomograms-star",
@@ -928,10 +929,18 @@ def match_template(argv=None):
         action=CheckFileExists,
         required=False,
         help="Here, you can provide a path to a RELION5 tomograms.star file (for "
-        "example "
-        "from a tomogram reconstruction job). pytom-match-pick will fetch all "
-        "the tilt-series metadata from this file and overwrite all other "
-        "metadata options.",
+             "example "
+             "from a tomogram reconstruction job). pytom-match-pick will fetch all "
+             "the tilt-series metadata from this file and overwrite all other "
+             "metadata options.",
+    )
+    additional_group.add_argument(
+        "--warp-xml-file",
+        type=pathlib.Path,
+        action=CheckFileExists,
+        required=False,
+        help="Here, you can provide a Warp xml file that has the metadata for that tiltseries."
+        "This xml metadata file will be in the tiltseries processing dir eg. <cwd>/warp_tiltseries/)",
     )
     device_group = parser.add_argument_group("Device control")
     device_group.add_argument(
@@ -977,9 +986,9 @@ def match_template(argv=None):
     ctf_params = None
     if args.defocus is not None:
         if (
-            args.amplitude_contrast is None
-            or args.spherical_aberration is None
-            or args.voltage is None
+                args.amplitude_contrast is None
+                or args.spherical_aberration is None
+                or args.voltage is None
         ):
             raise ValueError(
                 "Cannot create 3D CTF weighting because one or multiple of "
@@ -1005,6 +1014,16 @@ def match_template(argv=None):
                 args.tomogram,
                 phase_flip_correction=phase_flip_correction,
                 phase_shift=args.phase_shift,
+            )
+        )
+        per_tilt_weighting = True
+
+    elif args.warp_xml_file is not None:
+        voxel_size, tilt_angles, dose_accumulation, ctf_params, defocus_handedness = (
+            parse_warp_xml_data(
+                args.warp_xml_file,
+                args.tomogram,
+                phase_flip_correction=phase_flip_correction,
             )
         )
         per_tilt_weighting = True

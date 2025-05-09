@@ -7,7 +7,7 @@ import numpy as np
 import starfile
 from contextlib import contextmanager
 from operator import attrgetter
-
+from lxml import etree
 
 class MultiColumnAngleFileError(ValueError):
     pass
@@ -618,6 +618,99 @@ def parse_relion5_star_data(
         tomogram_voxel_size,
         tilt_angles,
         dose_accumulation,
+        ctf_params,
+        defocus_handedness,
+    )
+
+
+def parse_warp_xml_data(
+        warp_xml_path: pathlib.Path,
+        tomogram_path: pathlib.Path,
+        phase_flip_correction: bool = False,
+        phase_shift: float = 0.0,
+) -> tuple[float, list[float], list[float], list[dict[str, float | bool | float]], int]:
+    """Read WarpTools metadata from a project directory.
+
+    Parameters
+    ----------
+    warp_xml_path: pathlib.Path
+        path to the warp XML file containing metadata
+    tomogram_path: pathlib.Path
+        path to the tomogram for template matching
+    phase_flip_correction: bool, default False
+        whether phase flip correction was applied
+    phase_shift: float, default 0.0
+        phase shift in degrees
+
+    Returns
+    -------
+    tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params:
+        tuple[float, list[float], list[float], list[dict], int]
+    """
+    # First determine the tomogram_voxel_size from the tomogram_path
+    try:
+        # Try to read voxel size from MRC file
+        tomogram_meta = read_mrc_meta_data(tomogram_path)
+        tomogram_voxel_size = tomogram_meta["voxel_size"]
+    except Exception as e:
+        logging.warning(f"Could not read voxel size from tomogram: {e}")
+        # Default value if reading fails
+        tomogram_voxel_size = 1.0
+        logging.warning(f"Using default voxel size: {tomogram_voxel_size}. Results may be incorrect!")
+
+    def _flatten(t):
+        return [float(item) for sublist in t for item in sublist if item.strip()]
+
+    tree = etree.parse(warp_xml_path)
+
+    tilt_angle_nodes = tree.findall(".//Angles")
+    tilt_defocus_nodes = tree.findall(".//GridCTF/Node")
+    tilt_dose_nodes = tree.findall(".//Dose")
+
+    voltage = float(tree.xpath(".//OptionsCTF/Param[@Name='Voltage']/@Value")[0])
+    spherical_aberration = float(tree.xpath(".//OptionsCTF/Param[@Name='Cs']/@Value")[0])
+    amplitude_contrast = float(tree.xpath(".//OptionsCTF/Param[@Name='Amplitude']/@Value")[0])
+    phase_shift = float(tree.xpath(".//CTF/Param[@Name='PhaseShift']/@Value")[0])
+
+    tilt_angles = []
+    tilt_dose = []
+
+    for ts_angle in tilt_angle_nodes:
+        text = ts_angle.text
+        angles = [a for a in text.split('\n') if a.strip()]
+        tilt_angles.append(angles)
+
+    defocus_values = []
+    for node in tilt_defocus_nodes:
+        defocus_values.append(float(node.attrib['Value']))
+
+    for ts_dose in tilt_dose_nodes:
+        text = ts_dose.text
+        ts_cum_dose = [d for d in text.split('\n') if d.strip()]
+        tilt_dose.append(ts_cum_dose)
+
+    flattened_tilt_angles = _flatten(tilt_angles)
+    flattened_tilt_dose = _flatten(tilt_dose)
+
+    ctf_params = [
+        {
+            "defocus": defocus * 1e-10,
+            "amplitude_contrast": amplitude_contrast,
+            "voltage": voltage * 1e3,
+            "spherical_aberration": spherical_aberration * 1e-3,
+            "flip_phase": phase_flip_correction,
+            "phase_shift_deg": phase_shift,
+        }
+        for defocus in defocus_values
+    ]
+
+    # Default defocus handedness to 0 (no correction) for compatibility with return value expectations
+    defocus_handedness = 0
+
+    return (
+        tomogram_voxel_size,
+        flattened_tilt_angles,
+        flattened_tilt_dose,
         ctf_params,
         defocus_handedness,
     )
