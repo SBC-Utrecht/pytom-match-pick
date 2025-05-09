@@ -178,6 +178,19 @@ class TestTMJob(unittest.TestCase):
                 TEST_DATA_DIR,
             )
 
+        with self.assertRaises(
+            UnequalSpacingError, msg="Unequal spacing should raise specific Error"
+        ):
+            TMJob(
+                "0",
+                10,
+                TEST_TOMOGRAM,
+                TEST_TEMPLATE,
+                # Use unequal spaced template as broken mask
+                TEST_TEMPLATE_UNEQUAL_SPACING,
+                TEST_DATA_DIR,
+            )
+
         # test searches raise correct errors
         for param in ["search_x", "search_y", "search_z"]:
             with self.assertRaises(
