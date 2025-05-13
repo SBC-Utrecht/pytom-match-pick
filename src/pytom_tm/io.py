@@ -628,8 +628,7 @@ def parse_warp_xml_data(
     warp_xml_path: pathlib.Path,
     tomogram_path: pathlib.Path,
     phase_flip_correction: bool = False,
-    defocus_handedness: int = 0,
-) -> tuple[float, list[float], list[float], list[dict[str, float | bool | float]], int]:
+) -> tuple[float, list[float], list[float], list[dict[str, float | bool | float]]]:
     """Read WarpTools metadata from a project directory.
 
     Parameters
@@ -640,12 +639,11 @@ def parse_warp_xml_data(
         path to the tomogram for template matching
     phase_flip_correction: bool, default False
         whether phase flip correction was applied
-    defocus_handedness: int, default 0.0
-        perform defocus handedness correction?
+    
     Returns
     -------
     tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params:
-        tuple[float, list[float], list[float], list[dict], int]
+        tuple[float, list[float], list[float], list[dict]]
     """
     # First determine the tomogram_voxel_size from the tomogram_path
     tomogram_meta = read_mrc_meta_data(tomogram_path)
