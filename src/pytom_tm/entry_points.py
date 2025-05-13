@@ -1021,15 +1021,16 @@ def match_template(argv=None):
         per_tilt_weighting = True
 
     elif args.warp_xml_file is not None:
-        voxel_size, tilt_angles, dose_accumulation, ctf_params, defocus_handedness = (
-            parse_warp_xml_data(
-                args.warp_xml_file,
-                args.tomogram,
-                args.defocus_handedness,
-                phase_flip_correction=phase_flip_correction,
-            )
+    voxel_size, tilt_angles, dose_accumulation, ctf_params = (
+        parse_warp_xml_data(
+            args.warp_xml_file,
+            args.tomogram,
+            phase_flip_correction=phase_flip_correction,
         )
-        per_tilt_weighting = True
+    )
+    defocus_handedness = args.defocus_handedness
+    per_tilt_weighting = True
+    
     else:
         if tilt_angles is None:
             raise ValueError(
