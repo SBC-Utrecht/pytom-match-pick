@@ -706,5 +706,4 @@ def parse_warp_xml_data(
         flattened_tilt_angles,
         flattened_tilt_dose,
         ctf_params,
-        defocus_handedness,
     )
