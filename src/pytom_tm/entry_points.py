@@ -1028,8 +1028,8 @@ def match_template(argv=None):
                 phase_flip_correction=phase_flip_correction,
             )
         )
-    defocus_handedness = args.defocus_handedness
-    per_tilt_weighting = True
+        defocus_handedness = args.defocus_handedness
+        per_tilt_weighting = True
     
     else:
         if tilt_angles is None:
