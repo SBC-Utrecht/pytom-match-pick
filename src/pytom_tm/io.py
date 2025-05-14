@@ -639,7 +639,7 @@ def parse_warp_xml_data(
         path to the tomogram for template matching
     phase_flip_correction: bool, default False
         whether phase flip correction was applied
-    
+
     Returns
     -------
     tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params:
