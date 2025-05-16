@@ -380,8 +380,23 @@ class TMJob:
                 "Input template voxel spacing is not equal in each dimension!"
             )
 
+        try:
+            meta_data_mask = read_mrc_meta_data(self.mask)
+        except UnequalSpacingError:  # add information that the problem is the template
+            raise UnequalSpacingError(
+                "Input mask voxel spacing is not equal in each dimension!"
+            )
+
         self.tomo_shape = meta_data_tomo["shape"]
         self.template_shape = meta_data_template["shape"]
+        self.mask_shape = meta_data_mask["shape"]
+
+        if self.template_shape != self.mask_shape:
+            raise ValueError(
+                "Template and mask have a different shape in pixels. "
+                f"Found template shape: {self.template_shape}. "
+                f"Found maks shape: {self.mask_shape}"
+            )
 
         if voxel_size is not None:
             if voxel_size <= 0:
