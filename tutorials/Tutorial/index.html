@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
       
       
 
@@ -1147,7 +1147,8 @@ make the template match the contrast.</p>
 <p>The <code>--voxel-size</code> is not really required for the mask, but in case you want to open the mask and template in ChimeraX (or napari) they are automatically scaled to the right size. If you have ChimeraX/napari/3dmod available its anyway a good idea to open the mask and template at this point to get a feel for the data. The mask should always be 1 in the center and 0 outside with a smooth fall-off. The template should have contrast matching your tomogram (i.e. black if the tomogram has black objects, and white vice versa).</p>
 <figure>
   <a class="glightbox" href="../images/0_template_mask.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="template_and_mask" src="../images/0_template_mask.png" width="400" /></a>
-  <figcaption>Template and mask slice</figcaption>
+<br />
+<figcaption>Template and mask slice</figcaption>
 </figure>
 <p>The box size of the template and mask might seem a bit large, but we give it some 
 overhang on purpose to ensure sufficient sampling in Fourier space of the weighting 
@@ -1187,7 +1188,8 @@ the first 4 GPU's in the system.</p>
 <p>To visualize the results it can be very informative to open the tomogram and score map side-by-side in Napari. Which should look like this:</p>
 <figure>
   <a class="glightbox" href="../images/1_tomo200528_107_slice101_comb.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_score_map" src="../images/1_tomo200528_107_slice101_comb.png" width="800" /></a>
-  <figcaption>Slice 101 of dataset/tomo200528_107.mrc and 
+<br />
+<figcaption>Slice 101 of dataset/tomo200528_107.mrc and 
 results_80S/tomo200528_107_scores.mrc (in Napari)</figcaption>
 </figure>
 <p>We will then use <code>pytom_extract_candidates.py</code> to extract annotations from the 
@@ -1208,7 +1210,8 @@ that was specified (<code>-n 200</code>). In this we get 164 annotations. This p
 default generates a plot that visualizes the estimated background and annotations. </p>
 <figure>
   <a class="glightbox" href="../images/1_tomo200528_107_extraction_graph.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_107_extraction_graph.svg" width="400" /></a>
-  <figcaption>Extraction graph (results_80S/tomo200528_107_extraction_graph.svg)
+<br />
+<figcaption>Extraction graph (results_80S/tomo200528_107_extraction_graph.svg)
 </figcaption>
 </figure>
 <p>The blue dots are a histogram of the extracted scores, while the orange line shows 
@@ -1226,7 +1229,8 @@ separated from the background.</p>
 </ul>
 <figure>
   <a class="glightbox" href="../images/1_tomo200528_107_slice101_blik.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_107_slice101_blik.png" width="400" /></a>
-  <figcaption>Visualization of annotations with Blik.
+<br />
+<figcaption>Visualization of annotations with Blik.
 </figcaption>
 </figure>
 <p>Now you can scroll through the z-axis of the tomogram and the template matching 
@@ -1286,7 +1290,8 @@ using the method introduced by STOPGAP.</p>
 <p>Again, the slice and score map can be visualized in Napari:</p>
 <figure>
   <a class="glightbox" href="../images/2_tomo200528_107_slice101_60S.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part2_score_map" src="../images/2_tomo200528_107_slice101_60S.png" width="800" /></a>
-  <figcaption>Slice 101 of dataset/tomo200528_107.mrc and 
+<br />
+<figcaption>Slice 101 of dataset/tomo200528_107.mrc and 
 results_60S/tomo200528_107_scores.mrc (in Napari)</figcaption>
 </figure>
 <p>Matching only with the 60S subunit reduces the peak height at the actual ribosome 
@@ -1302,7 +1307,8 @@ number or solvent embedding.</p>
 </code></pre></div>
 <figure>
   <a class="glightbox" href="../images/2_tomo200528_107_extraction_graph.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/2_tomo200528_107_extraction_graph.svg" width="400" /></a>
-  <figcaption>Extraction graph (results_60S/tomo200528_107_extraction_graph.svg)
+<br />
+<figcaption>Extraction graph (results_60S/tomo200528_107_extraction_graph.svg)
 </figcaption>
 </figure>
 <p>Inspecting the locations with blik,</p>
@@ -1311,7 +1317,8 @@ number or solvent embedding.</p>
 <p>we see that we lost some ribosome annotations and also have some hits on gold beads. </p>
 <figure>
   <a class="glightbox" href="../images/2_tomo200528_107_slice101_blik.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/2_tomo200528_107_slice101_blik.png" width="400" /></a>
-  <figcaption>Visualization of 60S annotations with Blik.
+<br />
+<figcaption>Visualization of 60S annotations with Blik.
   </figcaption>
 </figure>
 <p>Although the phase randomization helps a bit with removing gold bead hits, it still 
@@ -1327,7 +1334,8 @@ can be inspected in the folder (<code>results_60S/tomo200528_107_tophat_filter.s
 number of annotations went down from 108 to 69, so we definitely lost some hits. </p>
 <figure>
   <a class="glightbox" href="../images/2_tomo200528_107_slice101_blik_tophat.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/2_tomo200528_107_slice101_blik_tophat.png" width="400" /></a>
-  <figcaption>Visualization of 60S annotations with the tophat-transform contraint 
+<br />
+<figcaption>Visualization of 60S annotations with the tophat-transform contraint 
 in Blik.
   </figcaption>
 </figure>
@@ -1346,7 +1354,8 @@ how to use it here:</p>
 <p>This will automatically write a file to the folder where the job file is located (<code>tomo200528_107_roc.svg</code>). Additionally, here the terminal output is also written to the file <code>results_80S/tomo200528_107_roc.log</code> as it contains some info on the estimated number of particles in the sample. Catting the log file in the terminal (<code>cat results_80S/tomo200528_107_roc.log</code>), the estimated number of total true positives is approx. 180 ribosomes.</p>
 <figure>
   <a class="glightbox" href="../images/1_tomo200528_100_roc_80S.svg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="part1_roc" src="../images/1_tomo200528_100_roc_80S.svg" width="800" /></a>
-  <figcaption>ROC curve (results_80S/tomo200528_100_roc.svg)</figcaption>
+<br />
+<figcaption>ROC curve (results_80S/tomo200528_100_roc.svg)</figcaption>
 </figure>
 <p>In this case the result is quite good: the Rectangle Under the Curve (RUC) is around 0.9 (1 is optimal). Also the fit of the gaussians seems very appropriate for the histogram, so we can use the estimated cut-off value (<code>0.194</code>) to extract particle coordinates and rotations into a STAR file: </p>
 <h2 id="increasing-the-angular-sampling">Increasing the angular sampling</h2>
@@ -1411,10 +1420,10 @@ cryo-ET! If you ran into any issues during the tutorial please let us know on ou
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.expand", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.expand", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
+      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
       
         <script src="../../assets/_markdown_exec_pyodide.js"></script>
       
