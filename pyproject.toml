@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytom-match-pick"
-version = "0.8.1"
+version = "0.9.0"
 description = "PyTOM's GPU template matching module as an independent package"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -35,6 +35,7 @@ dependencies = [
     "packaging",
     "scipy",
     "healpix",
+    "lxml"
 ]
 
 [project.optional-dependencies]
