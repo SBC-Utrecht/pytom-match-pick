@@ -77,8 +77,8 @@ class TestTMJob(unittest.TestCase):
         extraction_mask_inside = np.zeros(TOMO_SHAPE, dtype=np.float32)
         extraction_mask_inside[70:90, 15:35, 30:50] = 1
         # Specific extraction mask to test the int8 edge case (see #198):
-        extraction_mask_int8 = np.zeros(TOMO_SHAPE, dtype=np.int8)
-        extraction_mask_int8 = -128
+        extraction_mask_int8 = np.ones(TOMO_SHAPE, dtype=np.int8)
+        extraction_mask_int8 *= -128
         extraction_mask_int8[70:90, 15:35, 30:50] = -127
 
         TEST_DATA_DIR.mkdir(exist_ok=True)
@@ -752,11 +752,11 @@ class TestTMJob(unittest.TestCase):
             particle_diameter=5,
             create_plot=False,
         )
-        self.assertEqual(
+        self.assertNotEqual(
             len(scores),
             0,
-            msg="Length of returned list should be 0 after applying mask where the "
-            "object is not in the region of interest.",
+            msg="We expected a detected particle with a extraction mask that "
+            "covers the object.",
         )
         # test mask that is the wrong size raises an error
         with self.assertRaisesRegex(ValueError, str(TOMO_SHAPE)):
