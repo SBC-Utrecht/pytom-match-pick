@@ -24,6 +24,7 @@ TEST_BROKEN_TOMOGRAM_MASK = TEST_DATA_DIR.joinpath("broken_tomogram_mask.mrc")
 TEST_WRONG_SIZE_TOMO_MASK = TEST_DATA_DIR.joinpath("wrong_size_tomogram_mask.mrc")
 TEST_EXTRACTION_MASK_OUTSIDE = TEST_DATA_DIR.joinpath("extraction_mask_outside.mrc")
 TEST_EXTRACTION_MASK_INSIDE = TEST_DATA_DIR.joinpath("extraction_mask_inside.mrc")
+TEST_EXTRACTION_MASK_INT8 = TEST_DATA_DIR.joinpath("extraction_mask_int8.mrc")
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath("template.mrc")
 TEST_TEMPLATE_UNEQUAL_SPACING = TEST_DATA_DIR.joinpath("template_unequal_spacing.mrc")
 TEST_TEMPLATE_WRONG_VOXEL_SIZE = TEST_DATA_DIR.joinpath("template_voxel_error_test.mrc")
@@ -75,18 +76,21 @@ class TestTMJob(unittest.TestCase):
         extraction_mask_outside[20:40, 60:80, 10:30] = 1
         extraction_mask_inside = np.zeros(TOMO_SHAPE, dtype=np.float32)
         extraction_mask_inside[70:90, 15:35, 30:50] = 1
+        # Specific extraction mask to test the int8 edge case (see #198):
+        extraction_mask_int8 = np.zeros(TOMO_SHAPE, dtype=np.int8)
+        extraction_mask_int8 = -128
+        extraction_mask_int8[70:90, 15:35, 30:50] = -127
 
         TEST_DATA_DIR.mkdir(exist_ok=True)
         write_mrc(TEST_EXTRACTION_MASK_OUTSIDE, extraction_mask_outside, 1.0)
         write_mrc(TEST_EXTRACTION_MASK_INSIDE, extraction_mask_inside, 1.0)
+        # For this one we use mrcfile directly since write_mrc expects only floats:
+        mrcfile.write(TEST_EXTRACTION_MASK_INT8, extraction_mask_int8.T, voxel_size=1.0)
         write_mrc(TEST_MASK, mask, 1.0)
         write_mrc(TEST_TEMPLATE, template, 1.0)
         write_mrc(TEST_TEMPLATE_WRONG_VOXEL_SIZE, template, 1.5)
         mrcfile.write(
-            TEST_TEMPLATE_UNEQUAL_SPACING,
-            template,
-            voxel_size=(1.5, 1.0, 2.0),
-            overwrite=True,
+            TEST_TEMPLATE_UNEQUAL_SPACING, template, voxel_size=(1.5, 1.0, 2.0)
         )
         write_mrc(TEST_TOMOGRAM, volume, 1.0)
 
@@ -739,7 +743,21 @@ class TestTMJob(unittest.TestCase):
             msg="We expected a detected particle with a extraction mask that "
             "covers the object.",
         )
-
+        # test extraction mask of int8 dtype:
+        job = self.job.copy()
+        job.tomogram_mask = TEST_EXTRACTION_MASK_INT8
+        df, scores = extract_particles(
+            job,
+            100,
+            particle_diameter=5,
+            create_plot=False,
+        )
+        self.assertEqual(
+            len(scores),
+            0,
+            msg="Length of returned list should be 0 after applying mask where the "
+            "object is not in the region of interest.",
+        )
         # test mask that is the wrong size raises an error
         with self.assertRaisesRegex(ValueError, str(TOMO_SHAPE)):
             _, _ = extract_particles(
