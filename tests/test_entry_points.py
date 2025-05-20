@@ -32,6 +32,7 @@ MASK = TEST_DATA.joinpath("mask.mrc")
 TOMOGRAM = TEST_DATA.joinpath("tomogram.mrc")
 DESTINATION = TEST_DATA.joinpath("output")
 TILT_ANGLES = TEST_DATA.joinpath("angles.rawtlt")
+TILT_ANGLES_MULTI_COLUMN = TEST_DATA.joinpath("angles_multi_column.rawtlt")
 DOSE = TEST_DATA.joinpath("test_dose.txt")
 DEFOCUS = TEST_DATA.joinpath("defocus.txt")
 DEFOCUS_IMOD = (
@@ -64,6 +65,11 @@ class TestEntryPoints(unittest.TestCase):
         io.write_mrc(TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
         io.write_mrc(RELION5_TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
         np.savetxt(TILT_ANGLES, np.linspace(-50, 50, 35))
+        np.savetxt(
+            TILT_ANGLES_MULTI_COLUMN,
+            np.array((np.linspace(-50, 50, 35), np.arange(35))).T,
+            fmt=["%.18e", "%d"],
+        )
         np.savetxt(DOSE, np.linspace(0, 100, 35))
         np.savetxt(DEFOCUS, np.ones(35) * 3000)
 
@@ -74,6 +80,7 @@ class TestEntryPoints(unittest.TestCase):
         TOMOGRAM.unlink()
         RELION5_TOMOGRAM.unlink()
         TILT_ANGLES.unlink()
+        TILT_ANGLES_MULTI_COLUMN.unlink()
         DOSE.unlink()
         DEFOCUS.unlink()
         for f in DESTINATION.iterdir():
@@ -203,6 +210,13 @@ class TestEntryPoints(unittest.TestCase):
                 start(arguments)
             self.assertIn("gpu indices", dump.getvalue())
             dump.close()
+        # test error when volume splits can't be evenly distributed by gpus
+        arguments = defaults.copy()
+        # 4 pieces can't be fit on 3 gpus
+        arguments["--volume-split"] = "2 2 1"
+        arguments["-g"] = "0 0 0"
+        with self.assertRaisesRegex(ValueError, r"4 tomogram pieces.*3 GPUs"):
+            start(arguments)
 
         # test relion5 metadata reading
         arguments = defaults.copy()
@@ -227,3 +241,32 @@ class TestEntryPoints(unittest.TestCase):
         ):
             arguments.pop("--relion5-tomograms-star")
             start(arguments)
+
+        # test multi_column_angle_files
+        # make sure we error out if both options are given
+        with self.assertRaises(
+            ValueError,
+            msg=(
+                "Only one of '--tilt-angles' or '--tilt-angles-first-column' is allowed"
+            ),
+        ):
+            arguments = defaults.copy()
+            arguments["--tilt-angles-first-column"] = str(TILT_ANGLES_MULTI_COLUMN)
+            start(arguments)
+        # make sure we error out if multi column angle file is give to regular flag
+        dump = StringIO()
+        with (
+            self.assertRaises(SystemExit) as ex,
+            redirect_stdout(dump),
+            redirect_stderr(dump),
+        ):
+            arguments = defaults.copy()
+            arguments["--tilt-angles"] = str(TILT_ANGLES_MULTI_COLUMN)
+            start(arguments)
+        self.assertIn("--tilt-angles-first-column", dump.getvalue())
+        dump.close()
+        # make sure we can start with the correct option
+        arguments = defaults.copy()
+        arguments.pop("--tilt-angles")
+        arguments["--tilt-angles-first-column"] = str(TILT_ANGLES_MULTI_COLUMN)
+        start(arguments)

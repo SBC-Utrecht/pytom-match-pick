@@ -324,6 +324,7 @@ def estimate_roc(argv=None):
         action=LargerThanZero,
         help="Particle diameter of the template in Angstrom. It is used during "
         "extraction to remove areas around peaks to prevent double extraction. "
+        "Minimal peak-to-peak distance after extraction will be diameter/2."
         "If not previously specified, this option is required. If "
         "specified in pytom_match_template, this is optional and "
         "can be used to overwrite it, which might be relevant for strongly "
@@ -494,6 +495,7 @@ def extract_candidates(argv=None):
         action=LargerThanZero,
         help="Particle diameter of the template in Angstrom. It is used during "
         "extraction to remove areas around peaks to prevent double extraction. "
+        "Minimal peak-to-peak distance after extraction will be diameter/2."
         "If not previously specified, this option is required. If "
         "specified in pytom_match_template, this is optional and "
         "can be used to overwrite it, which might be relevant for strongly "
@@ -750,6 +752,18 @@ def match_template(argv=None):
         "provided a more elaborate Fourier space constraint can be used",
     )
     filter_group.add_argument(
+        "--tilt-angles-first-column",
+        nargs=1,
+        type=str,
+        required=False,
+        action=ParseTiltAngles,
+        error_on_multi_column=False,
+        help="A .rawtlt/.tlt file with multiple columns where all the angles are in "
+        "the first column (e.g. --tilt-angles-first-column tomo101.rawtlt). In case "
+        "all the tilt angles are provided a more elaborate Fourier space constraint "
+        "can be used",
+    )
+    filter_group.add_argument(
         "--per-tilt-weighting",
         action="store_true",
         default=False,
@@ -944,6 +958,16 @@ def match_template(argv=None):
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
+    # set correct tilt angles
+    if args.tilt_angles_first_column is not None:
+        if args.tilt_angles is not None:
+            raise ValueError(
+                "Only one of '--tilt-angles' or '--tilt-angles-first-column' is allowed"
+            )
+        tilt_angles = args.tilt_angles_first_column
+    else:
+        tilt_angles = args.tilt_angles
+
     # parse CTF phase correction
     phase_flip_correction = False
     if args.tomogram_ctf_model is not None and args.tomogram_ctf_model == "phase-flip":
@@ -985,14 +1009,13 @@ def match_template(argv=None):
         )
         per_tilt_weighting = True
     else:
-        if args.tilt_angles is None:
+        if tilt_angles is None:
             raise ValueError(
                 "Without tilt angles the missing wedge cannot be calculated. A "
                 "minimal run requires tilt angles."
             )
         voxel_size = args.voxel_size_angstrom
         defocus_handedness = args.defocus_handedness
-        tilt_angles = args.tilt_angles
         dose_accumulation = args.dose_accumulation
         per_tilt_weighting = args.per_tilt_weighting
 

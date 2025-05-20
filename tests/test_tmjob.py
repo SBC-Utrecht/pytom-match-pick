@@ -29,6 +29,7 @@ TEST_TEMPLATE = TEST_DATA_DIR.joinpath("template.mrc")
 TEST_TEMPLATE_UNEQUAL_SPACING = TEST_DATA_DIR.joinpath("template_unequal_spacing.mrc")
 TEST_TEMPLATE_WRONG_VOXEL_SIZE = TEST_DATA_DIR.joinpath("template_voxel_error_test.mrc")
 TEST_MASK = TEST_DATA_DIR.joinpath("mask.mrc")
+TEST_MASK_WRONG_SIZE = TEST_DATA_DIR.joinpath("mask_wrong_size.mrc")
 TEST_SCORES = TEST_DATA_DIR.joinpath("tomogram_scores.mrc")
 TEST_ANGLES = TEST_DATA_DIR.joinpath("tomogram_angles.mrc")
 TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath("custom_angular_search.txt")
@@ -47,6 +48,7 @@ class TestTMJob(unittest.TestCase):
         template[3:8, 4:8, 3:7] = 1.0
         template[7, 8, 5:7] = 1.0
         mask = spherical_mask(TEMPLATE_SIZE, 5, 0.5)
+        mask_wrong_size = spherical_mask(TEMPLATE_SIZE - 1, 5, 0.5)
         rotation = angle_to_angle_list(float(ANGULAR_SEARCH))[ANGLE_ID]
 
         volume[
@@ -87,6 +89,7 @@ class TestTMJob(unittest.TestCase):
         # For this one we use mrcfile directly since write_mrc expects only floats:
         mrcfile.write(TEST_EXTRACTION_MASK_INT8, extraction_mask_int8.T, voxel_size=1.0)
         write_mrc(TEST_MASK, mask, 1.0)
+        write_mrc(TEST_MASK_WRONG_SIZE, mask_wrong_size, 1.0)
         write_mrc(TEST_TEMPLATE, template, 1.0)
         write_mrc(TEST_TEMPLATE_WRONG_VOXEL_SIZE, template, 1.5)
         mrcfile.write(
@@ -179,6 +182,19 @@ class TestTMJob(unittest.TestCase):
                 TEST_DATA_DIR,
             )
 
+        with self.assertRaises(
+            UnequalSpacingError, msg="Unequal spacing should raise specific Error"
+        ):
+            TMJob(
+                "0",
+                10,
+                TEST_TOMOGRAM,
+                TEST_TEMPLATE,
+                # Use unequal spaced template as broken mask
+                TEST_TEMPLATE_UNEQUAL_SPACING,
+                TEST_DATA_DIR,
+            )
+
         # test searches raise correct errors
         for param in ["search_x", "search_y", "search_z"]:
             with self.assertRaises(
@@ -258,6 +274,23 @@ class TestTMJob(unittest.TestCase):
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
                 tomogram_mask=TEST_WRONG_SIZE_TOMO_MASK,
+            )
+        # Test template mask mismatch
+        with self.assertRaisesRegex(
+            ValueError,
+            rf"{TEMPLATE_SIZE, TEMPLATE_SIZE, TEMPLATE_SIZE}"
+            ".*"
+            rf"{TEMPLATE_SIZE - 1, TEMPLATE_SIZE - 1, TEMPLATE_SIZE - 1}",
+        ):
+            TMJob(
+                "0",
+                10,
+                TEST_TOMOGRAM,
+                TEST_TEMPLATE,
+                TEST_MASK_WRONG_SIZE,
+                TEST_DATA_DIR,
+                angle_increment=ANGULAR_SEARCH,
+                voxel_size=1.0,
             )
 
     def test_tm_job_copy(self):

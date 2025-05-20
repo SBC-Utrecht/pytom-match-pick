@@ -6,7 +6,14 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import mrcfile
 
-from pytom_tm.io import read_mrc, read_mrc_meta_data, write_mrc, parse_relion5_star_data
+from pytom_tm.io import (
+    read_mrc,
+    read_mrc_meta_data,
+    write_mrc,
+    parse_relion5_star_data,
+    read_tlt_file,
+    MultiColumnAngleFileError,
+)
 
 FAILING_MRC = pathlib.Path(__file__).parent.joinpath(
     pathlib.Path("Data/human_ribo_mask_32_8_5.mrc")
@@ -18,6 +25,24 @@ CORRUPT_MRC = pathlib.Path(__file__).parent.joinpath(
 RELION5_TOMOGRAMS_STAR = pathlib.Path(__file__).parent.joinpath(
     "Data/relion5_project_example/Tomograms/job009/tomograms.star"
 )
+REGULAR_TLT = pathlib.Path(__file__).parent.joinpath(
+    pathlib.Path("Data/test_angles.rawtlt")
+)
+# same file ase regular except an index column is added
+MULTI_COLUMN_TLT = pathlib.Path(__file__).parent.joinpath(
+    pathlib.Path("Data/test_angles_multi_column.rawtlt")
+)
+
+
+class TestMultiColumnTilt(unittest.TestCase):
+    def test_read_multi_column_tilt(self):
+        # test we raise on default
+        with self.assertRaises(MultiColumnAngleFileError):
+            _ = read_tlt_file(MULTI_COLUMN_TLT)
+        # allow reading when an override flag is passed
+        angles_multi = read_tlt_file(MULTI_COLUMN_TLT, error_on_multi_column=False)
+        angles = read_tlt_file(REGULAR_TLT)
+        self.assertEqual(angles, angles_multi)
 
 
 class TestBrokenMRC(unittest.TestCase):
