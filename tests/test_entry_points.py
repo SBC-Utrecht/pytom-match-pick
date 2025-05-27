@@ -237,7 +237,7 @@ class TestEntryPoints(unittest.TestCase):
             ]
         ]
         arguments["-v"] = str(RELION5_TOMOGRAM)
-        arguments["--warp-xml-star"] = str(WARP_XML)
+        arguments["--warp-xml-file"] = str(WARP_XML)
         start(arguments)
 
         # test relion5 metadata reading
