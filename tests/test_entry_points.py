@@ -38,6 +38,10 @@ DEFOCUS = TEST_DATA.joinpath("defocus.txt")
 DEFOCUS_IMOD = (
     pathlib.Path(__file__).parent.joinpath("Data").joinpath("test_imod.defocus")
 )
+WARP_XML = pathlib.Path(__file__).parent.joinpath(
+    "Data/warptools_xml_example/gs04_ts_003.xml"
+)
+
 RELION5_TOMOGRAMS_STAR = pathlib.Path(__file__).parent.joinpath(
     "Data/relion5_project_example/Tomograms/job009/tomograms.star"
 )
@@ -217,6 +221,24 @@ class TestEntryPoints(unittest.TestCase):
         arguments["-g"] = "0 0 0"
         with self.assertRaisesRegex(ValueError, r"4 tomogram pieces.*3 GPUs"):
             start(arguments)
+
+        # test warp xml metadata reading
+        arguments = defaults.copy()
+        [
+            arguments.pop(x)
+            for x in [
+                "--tilt-angles",
+                "--per-tilt-weighting",
+                "--dose-accumulation",
+                "--defocus",
+                "--amplitude-contrast",
+                "--spherical-aberration",
+                "--voltage",
+            ]
+        ]
+        arguments["-v"] = str(RELION5_TOMOGRAM)
+        arguments["--warp-xml-star"] = str(WARP_XML)
+        start(arguments)
 
         # test relion5 metadata reading
         arguments = defaults.copy()
