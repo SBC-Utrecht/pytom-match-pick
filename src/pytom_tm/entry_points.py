@@ -22,7 +22,6 @@ from pytom_tm.io import (
     parse_relion5_star_data,
     parse_warp_xml_data,
 )
-from pytom_tm.io import parse_warp_xml_data
 from pytom_tm.tmjob import load_json_to_tmjob
 from os import urandom
 
