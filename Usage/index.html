@@ -1322,6 +1322,7 @@ never seemed to clearly improve results.</p>
                                [--half-precision HALF_PRECISION]
                                [--rng-seed RNG_SEED]
                                [--relion5-tomograms-star RELION5_TOMOGRAMS_STAR]
+                               [--warp-xml-file WARP_XML_FILE]
                                -g GPU_IDS [GPU_IDS ...] [--log LOG]
 
 Run template matching. -- Marten Chaillet (@McHaillet)
@@ -1504,6 +1505,11 @@ Additional options:
                         reconstruction job). pytom-match-pick will fetch all
                         the tilt-series metadata from this file and overwrite
                         all other metadata options.
+  --warp-xml-file WARP_XML_FILE
+                        Here, you can provide a Warp xml file that has the
+                        metadata for that tiltseries.This xml metadata file
+                        will be in the tiltseries processing dir eg.
+                        &lt;cwd&gt;/warp_tiltseries/)
 
 Device control:
   -g, --gpu-ids GPU_IDS [GPU_IDS ...]
