@@ -20,6 +20,7 @@ from pytom_tm.io import (
     BetweenZeroAndOne,
     ParseGPUIndices,
     parse_relion5_star_data,
+    parse_warp_xml_data,
 )
 from pytom_tm.tmjob import load_json_to_tmjob
 from os import urandom
@@ -933,6 +934,16 @@ def match_template(argv=None):
         "the tilt-series metadata from this file and overwrite all other "
         "metadata options.",
     )
+    additional_group.add_argument(
+        "--warp-xml-file",
+        type=pathlib.Path,
+        action=CheckFileExists,
+        required=False,
+        help="Here, you can provide a Warp xml file that has the metadata "
+        "for that tiltseries."
+        "This xml metadata file will be in the tiltseries processing dir "
+        "eg. <cwd>/warp_tiltseries/)",
+    )
     device_group = parser.add_argument_group("Device control")
     device_group.add_argument(
         "-g",
@@ -1008,6 +1019,16 @@ def match_template(argv=None):
             )
         )
         per_tilt_weighting = True
+
+    elif args.warp_xml_file is not None:
+        voxel_size, tilt_angles, dose_accumulation, ctf_params = parse_warp_xml_data(
+            args.warp_xml_file,
+            args.tomogram,
+            phase_flip_correction=phase_flip_correction,
+        )
+        defocus_handedness = args.defocus_handedness
+        per_tilt_weighting = True
+
     else:
         if tilt_angles is None:
             raise ValueError(
