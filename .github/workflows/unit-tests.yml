@@ -53,3 +53,21 @@ jobs:
         with: 
           path: coverage.*
           name: coverage
+  test_suite_min_py_version:
+    runs-on: [self-hosted, linux, x64, gpu]
+    container:
+      image: continuumio/miniconda3
+      options: --runtime=nvidia --gpus all
+    steps:
+      - name: Pull code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          conda install -y -c conda-forge python=3.11 cupy cuda-version=11.8 gcc #gcc only needed until healpix releases under numpy>2
+      - name: Install base dev code and list dependencies 
+        run: |
+          python -m pip install -e .[dev]
+          conda list
+      - name: Run tests
+        run: |
+          python -m unittest discover tests/
