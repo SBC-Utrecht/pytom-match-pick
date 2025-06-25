@@ -60,6 +60,17 @@ def prep_argv(arg_dict):
     return argv
 
 
+class TestParseArgv(unittest.TestCase):
+    def test_parse_argv(self):
+        out = entry_points._parse_argv()
+        # This test should have been called with unittest
+        self.assertIn("unittest", out)
+        inp = ["test1", "test2"]
+        out = entry_points._parse_argv(inp)
+        for i in inp:
+            self.assertIn(i, out)
+
+
 class TestEntryPoints(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
