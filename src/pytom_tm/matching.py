@@ -5,7 +5,7 @@ import voltools as vt
 import gc
 from cupyx.scipy.fft import rfftn, irfftn
 from tqdm import tqdm
-from pytom_tm.correlation import mean_under_mask, std_under_mask
+from pytom_tm.correlation import normalise
 from pytom_tm.template import phase_randomize_template
 
 
@@ -365,13 +365,10 @@ class TemplateMatchingGPU:
             )
 
         # Normalize and mask template
-        mean = mean_under_mask(
+        norm = normalise(
             self.plan.template, self.plan.mask, mask_weight=self.plan.mask_weight
         )
-        std = std_under_mask(
-            self.plan.template, self.plan.mask, mean, mask_weight=self.plan.mask_weight
-        )
-        self.plan.template = ((self.plan.template - mean) / std) * self.plan.mask
+        self.plan.template = norm * self.plan.mask
 
         # Paste in center
         self.plan.template_padded[padding_index] = self.plan.template
