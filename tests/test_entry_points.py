@@ -1,4 +1,5 @@
 import unittest
+import sys
 import pathlib
 import numpy as np
 import cupy as cp
@@ -63,8 +64,8 @@ def prep_argv(arg_dict):
 class TestParseArgv(unittest.TestCase):
     def test_parse_argv(self):
         out = entry_points._parse_argv()
-        # This test should have been called with unittest
-        self.assertIn("unittest", out)
+        # test behavior by repeating the behavior
+        self.assertEqual(sys.argv[1:], out)
         inp = ["test1", "test2"]
         out = entry_points._parse_argv(inp)
         for i in inp:
