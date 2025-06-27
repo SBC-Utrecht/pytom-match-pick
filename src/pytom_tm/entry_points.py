@@ -34,9 +34,6 @@ def _parse_argv(argv=None):
 
 def pytom_create_mask(argv=None):
     from pytom_tm.mask import spherical_mask, ellipsoidal_mask
-
-    argv = _parse_argv(argv)
-
     # entry_point strings cannot use '\n' characters as this will break the website
     # snippet that displays the CLI help message
     # ---8<--- [start:create_mask_usage]
