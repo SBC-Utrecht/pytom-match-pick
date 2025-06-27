@@ -104,7 +104,7 @@ class TestEntryPoints(unittest.TestCase):
     def setUp(self):
         # set up a destination temp dir
         tempdir = TemporaryDirectory()
-        self.outputdir = tempdir.name
+        self.outputdir = pathlib.Path(tempdir.name)
         self.addCleanup(tempdir.cleanup)
 
     def test_entry_points_exist(self):
