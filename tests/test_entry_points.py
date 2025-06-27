@@ -75,6 +75,7 @@ class TestParseArgv(unittest.TestCase):
 class TestEntryPoints(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        TEST_DATA.mkdir(parents=True)
         io.write_mrc(TEMPLATE, np.zeros((5, 5, 5), dtype=np.float32), 1)
         io.write_mrc(MASK, np.zeros((5, 5, 5), dtype=np.float32), 1)
         io.write_mrc(TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
