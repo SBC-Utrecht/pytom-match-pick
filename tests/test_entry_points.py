@@ -7,6 +7,7 @@ import logging
 from shutil import which
 from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
+from tempfile import TemporaryDirectory
 from pytom_tm import entry_points
 from pytom_tm import io
 
@@ -31,7 +32,6 @@ TEST_DATA = pathlib.Path(__file__).parent.joinpath("test_data")
 TEMPLATE = TEST_DATA.joinpath("template.mrc")
 MASK = TEST_DATA.joinpath("mask.mrc")
 TOMOGRAM = TEST_DATA.joinpath("tomogram.mrc")
-DESTINATION = TEST_DATA.joinpath("output")
 TILT_ANGLES = TEST_DATA.joinpath("angles.rawtlt")
 TILT_ANGLES_MULTI_COLUMN = TEST_DATA.joinpath("angles_multi_column.rawtlt")
 DOSE = TEST_DATA.joinpath("test_dose.txt")
@@ -75,7 +75,6 @@ class TestParseArgv(unittest.TestCase):
 class TestEntryPoints(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        DESTINATION.mkdir(parents=True)
         io.write_mrc(TEMPLATE, np.zeros((5, 5, 5), dtype=np.float32), 1)
         io.write_mrc(MASK, np.zeros((5, 5, 5), dtype=np.float32), 1)
         io.write_mrc(TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
@@ -99,10 +98,13 @@ class TestEntryPoints(unittest.TestCase):
         TILT_ANGLES_MULTI_COLUMN.unlink()
         DOSE.unlink()
         DEFOCUS.unlink()
-        for f in DESTINATION.iterdir():
-            f.unlink()  # should test specific output?
-        DESTINATION.rmdir()
         TEST_DATA.rmdir()
+
+    def setUp(self):
+        # set up a destination temp dir
+        tempdir = TemporaryDirectory()
+        self.outputdir = tempdir.name
+        self.addCleanup(tempdir.cleanup)
 
     def test_entry_points_exist(self):
         for cli, fname in ENTRY_POINTS_TO_TEST:
@@ -123,7 +125,7 @@ class TestEntryPoints(unittest.TestCase):
             "-t": str(TEMPLATE),
             "-m": str(MASK),
             "-v": str(TOMOGRAM),
-            "-d": str(DESTINATION),
+            "-d": str(self.outputdir),
             "--angular-search": "35",
             "--tilt-angles": str(TILT_ANGLES),
             "--per-tilt-weighting": "",
@@ -201,11 +203,11 @@ class TestEntryPoints(unittest.TestCase):
         start(arguments)
         # these files will only exist if the test managed to set the logging correctly
         self.assertTrue(
-            DESTINATION.joinpath("template_psf.mrc").exists(),
+            self.outputdir.joinpath("template_psf.mrc").exists(),
             msg="File should exist in debug mode",
         )
         self.assertTrue(
-            DESTINATION.joinpath("template_convolved.mrc").exists(),
+            self.outputdir.joinpath("template_convolved.mrc").exists(),
             msg="File should exist in debug mode",
         )
 
