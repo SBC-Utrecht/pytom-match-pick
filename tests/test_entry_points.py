@@ -1,5 +1,6 @@
 import unittest
 import sys
+import os
 import pathlib
 import numpy as np
 import cupy as cp
@@ -120,6 +121,32 @@ class TestEntryPoints(unittest.TestCase):
             dump.close()
             # check if the system return code is 0 (success)
             self.assertEqual(ex.exception.code, 0)
+
+    def test_create_mask(self):
+        defaults = {
+            "-b": "60",
+            "-r": "12",
+        }
+        default_output_name = f"mask_b{defaults['-b']}px_r{defaults['-r']}px.mrc"
+
+        def start(arg_dict):
+            entry_points.pytom_create_mask(prep_argv(arg_dict))
+
+        # Test defaults, do change to temp dir
+        prev_cwd = os.getcwd()
+        os.chdir(self.outputdir)
+        start(defaults)
+        # Make sure default file exists
+        self.assertTrue(pathlib.Path(default_output_name).exists())
+        # change back to previous cwd
+        os.chdir(prev_cwd)
+
+        # Smoke test eliptical masks
+        inp = defaults.copy()
+        inp["--radius-minor1"] = "6"
+        inp["-o"] = str(self.outputdir / "mask_elipse.mrc")
+        start(inp)
+        self.assertTrue(self.outputdir.joinpath("mask_elipse").exists())
 
     def test_match_template(self):
         defaults = {
