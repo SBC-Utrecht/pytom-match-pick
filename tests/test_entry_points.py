@@ -150,7 +150,7 @@ class TestEntryPoints(unittest.TestCase):
         inp["--radius-minor1"] = "6"
         inp["-o"] = str(self.outputdir / "mask_elipse.mrc")
         start(inp)
-        self.assertTrue(self.outputdir.joinpath("mask_elipse").exists())
+        self.assertTrue(self.outputdir.joinpath("mask_elipse.mrc").exists())
 
     def test_match_template(self):
         defaults = {
