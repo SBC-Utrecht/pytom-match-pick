@@ -153,9 +153,7 @@ class TestEntryPoints(unittest.TestCase):
         inp["--radius-minor1"] = "6"
         inp["--radius-minor2"] = "8"
         inp["-o"] = str(self.outputdir / "mask_elipse.mrc")
-        # TODO: remove DEBUG code
-        print(f'output is: {str(self.outputdir / "mask_elipse.mrc")}')
-        print(list(self.outputdir.glob("*")))
+        start(inp)
 
         self.assertTrue(self.outputdir.joinpath("mask_elipse.mrc").exists())
 
