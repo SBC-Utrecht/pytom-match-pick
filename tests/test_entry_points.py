@@ -140,6 +140,7 @@ class TestEntryPoints(unittest.TestCase):
         # TODO: remove debug code
         print(f"cwd={pathlib.Path(os.getcwd())} prev_cwb={prev_cwd}")
         print(list(pathlib.Path(os.getcwd()).glob("*")))
+        print(f"{default_output_name=}")
         self.assertTrue(pathlib.Path(default_output_name).exists())
         # change back to previous cwd
         os.chdir(prev_cwd)
