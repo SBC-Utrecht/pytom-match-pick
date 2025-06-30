@@ -127,7 +127,7 @@ class TestEntryPoints(unittest.TestCase):
             "-b": "60",
             "-r": "12",
         }
-        default_output_name = f"mask_b{defaults['-b']}px_r{defaults['-r']}px.mrc"
+        default_output_name = f"mask_b{defaults['-b']}px_r{float(defaults['-r'])}px.mrc"
 
         def start(arg_dict):
             entry_points.pytom_create_mask(prep_argv(arg_dict))
