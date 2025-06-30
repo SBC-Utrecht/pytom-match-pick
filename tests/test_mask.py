@@ -114,4 +114,4 @@ class TestMask(unittest.TestCase):
             inp = default.copy()
             inp[i] *= -1
             with self.assertRaisesRegex(ValueError, "smooth or sd cutoff"):
-                ellipsoidal_mask(*inp)
+                ellipsoidal_mask(**inp)
