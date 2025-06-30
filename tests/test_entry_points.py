@@ -137,19 +137,22 @@ class TestEntryPoints(unittest.TestCase):
         os.chdir(self.outputdir)
         start(defaults)
         # Make sure default file exists
-        # TODO: remove debug code
-        print(f"cwd={pathlib.Path(os.getcwd())} prev_cwb={prev_cwd}")
-        print(list(pathlib.Path(os.getcwd()).glob("*")))
-        print(f"{default_output_name=}")
         self.assertTrue(pathlib.Path(default_output_name).exists())
         # change back to previous cwd
         os.chdir(prev_cwd)
 
-        # Smoke test eliptical masks
+        # Check we fail loud if only one of the two options is given
+        for i in ["--radius-minor1", "--radius-minor2"]:
+            inp = defaults.copy()
+            inp[i] = "6"
+            with self.assertRaisesRegex(ValueError, f"Only got {i}"):
+                start(inp)
+
+        # smoke test eliptical mask
         inp = defaults.copy()
         inp["--radius-minor1"] = "6"
+        inp["--radius-minor2"] = "8"
         inp["-o"] = str(self.outputdir / "mask_elipse.mrc")
-        start(inp)
         self.assertTrue(self.outputdir.joinpath("mask_elipse.mrc").exists())
 
     def test_match_template(self):
