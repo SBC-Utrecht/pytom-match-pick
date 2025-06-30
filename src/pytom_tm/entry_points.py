@@ -121,7 +121,7 @@ def pytom_create_mask(argv=None):
     elif args.radius_minor1 is not None or args.radius_minor2 is not None:
         # catch if only one of radius_minor1 or radius_minor2 is defined
         gotten = (
-            "--radius_minor1" if args.radius_minor1 is not None else "--radius_minor2"
+            "--radius-minor1" if args.radius_minor1 is not None else "--radius-minor2"
         )
         raise ValueError(
             "If either '--radius-minor1' or '--radius-minor2' is given, "
