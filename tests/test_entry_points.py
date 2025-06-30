@@ -137,6 +137,9 @@ class TestEntryPoints(unittest.TestCase):
         os.chdir(self.outputdir)
         start(defaults)
         # Make sure default file exists
+        # TODO: remove debug code
+        print(f"cwd={pathlib.Path(os.getcwd())} prev_cwb={prev_cwd}")
+        print(pathlib.Path(os.getcwd()).glob("*"))
         self.assertTrue(pathlib.Path(default_output_name).exists())
         # change back to previous cwd
         os.chdir(prev_cwd)
