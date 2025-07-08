@@ -1,7 +1,7 @@
 import unittest
 import voltools as vt
 import cupy as cp
-from pytom_tm.mask import spherical_mask
+from pytom_tm.mask import spherical_mask, ellipsoidal_mask
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.correlation import normalised_cross_correlation
 
@@ -93,3 +93,25 @@ class TestMask(unittest.TestCase):
         self.assertTrue(
             sum(nxcc_centered) > 99.09, msg="Precision of mask rotation is too low."
         )
+
+    def test_ellipsoidal_mask_errors(self):
+        # Make sure we error on negative box_size, major, minor1, or minor2
+        default = {
+            "box_size": 16,
+            "major": 12,
+            "minor1": 8,
+            "minor2": 6,
+            "smooth": 3,
+            "cutoff_sd": 2,
+        }
+        for i in ["box_size", "major", "minor1", "minor2"]:
+            inp = default.copy()
+            inp[i] *= -1
+            with self.assertRaisesRegex(ValueError, "box_size or radii"):
+                ellipsoidal_mask(**inp)
+        # Make sure we error on negative smooth or cutoff_sd
+        for i in ["smooth", "cutoff_sd"]:
+            inp = default.copy()
+            inp[i] *= -1
+            with self.assertRaisesRegex(ValueError, "smooth or sd cutoff"):
+                ellipsoidal_mask(**inp)

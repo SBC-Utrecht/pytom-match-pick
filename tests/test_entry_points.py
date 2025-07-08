@@ -1,4 +1,6 @@
 import unittest
+import sys
+import os
 import pathlib
 import numpy as np
 import cupy as cp
@@ -6,6 +8,7 @@ import logging
 from shutil import which
 from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
+from tempfile import TemporaryDirectory
 from pytom_tm import entry_points
 from pytom_tm import io
 
@@ -30,7 +33,6 @@ TEST_DATA = pathlib.Path(__file__).parent.joinpath("test_data")
 TEMPLATE = TEST_DATA.joinpath("template.mrc")
 MASK = TEST_DATA.joinpath("mask.mrc")
 TOMOGRAM = TEST_DATA.joinpath("tomogram.mrc")
-DESTINATION = TEST_DATA.joinpath("output")
 TILT_ANGLES = TEST_DATA.joinpath("angles.rawtlt")
 TILT_ANGLES_MULTI_COLUMN = TEST_DATA.joinpath("angles_multi_column.rawtlt")
 DOSE = TEST_DATA.joinpath("test_dose.txt")
@@ -60,10 +62,21 @@ def prep_argv(arg_dict):
     return argv
 
 
+class TestParseArgv(unittest.TestCase):
+    def test_parse_argv(self):
+        out = entry_points._parse_argv()
+        # test behavior by repeating the behavior
+        self.assertEqual(sys.argv[1:], out)
+        inp = ["test1", "test2"]
+        out = entry_points._parse_argv(inp)
+        for i in inp:
+            self.assertIn(i, out)
+
+
 class TestEntryPoints(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        DESTINATION.mkdir(parents=True)
+        TEST_DATA.mkdir(parents=True)
         io.write_mrc(TEMPLATE, np.zeros((5, 5, 5), dtype=np.float32), 1)
         io.write_mrc(MASK, np.zeros((5, 5, 5), dtype=np.float32), 1)
         io.write_mrc(TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
@@ -87,10 +100,13 @@ class TestEntryPoints(unittest.TestCase):
         TILT_ANGLES_MULTI_COLUMN.unlink()
         DOSE.unlink()
         DEFOCUS.unlink()
-        for f in DESTINATION.iterdir():
-            f.unlink()  # should test specific output?
-        DESTINATION.rmdir()
         TEST_DATA.rmdir()
+
+    def setUp(self):
+        # set up a destination temp dir
+        tempdir = TemporaryDirectory()
+        self.outputdir = pathlib.Path(tempdir.name)
+        self.addCleanup(tempdir.cleanup)
 
     def test_entry_points_exist(self):
         for cli, fname in ENTRY_POINTS_TO_TEST:
@@ -106,12 +122,47 @@ class TestEntryPoints(unittest.TestCase):
             # check if the system return code is 0 (success)
             self.assertEqual(ex.exception.code, 0)
 
+    def test_create_mask(self):
+        defaults = {
+            "-b": "60",
+            "-r": "12",
+        }
+        default_output_name = f"mask_b{defaults['-b']}px_r{float(defaults['-r'])}px.mrc"
+
+        def start(arg_dict):
+            entry_points.pytom_create_mask(prep_argv(arg_dict))
+
+        # Test defaults, do change to temp dir
+        prev_cwd = os.getcwd()
+        os.chdir(self.outputdir)
+        start(defaults)
+        # Make sure default file exists
+        self.assertTrue(pathlib.Path(default_output_name).exists())
+        # change back to previous cwd
+        os.chdir(prev_cwd)
+
+        # Check we fail loud if only one of the two options is given
+        for i in ["--radius-minor1", "--radius-minor2"]:
+            inp = defaults.copy()
+            inp[i] = "6"
+            with self.assertRaisesRegex(ValueError, f"Only got {i}"):
+                start(inp)
+
+        # smoke test eliptical mask
+        inp = defaults.copy()
+        inp["--radius-minor1"] = "6"
+        inp["--radius-minor2"] = "8"
+        inp["-o"] = str(self.outputdir / "mask_ellipse.mrc")
+        start(inp)
+
+        self.assertTrue(self.outputdir.joinpath("mask_ellipse.mrc").exists())
+
     def test_match_template(self):
         defaults = {
             "-t": str(TEMPLATE),
             "-m": str(MASK),
             "-v": str(TOMOGRAM),
-            "-d": str(DESTINATION),
+            "-d": str(self.outputdir),
             "--angular-search": "35",
             "--tilt-angles": str(TILT_ANGLES),
             "--per-tilt-weighting": "",
@@ -189,11 +240,11 @@ class TestEntryPoints(unittest.TestCase):
         start(arguments)
         # these files will only exist if the test managed to set the logging correctly
         self.assertTrue(
-            DESTINATION.joinpath("template_psf.mrc").exists(),
+            self.outputdir.joinpath("template_psf.mrc").exists(),
             msg="File should exist in debug mode",
         )
         self.assertTrue(
-            DESTINATION.joinpath("template_convolved.mrc").exists(),
+            self.outputdir.joinpath("template_convolved.mrc").exists(),
             msg="File should exist in debug mode",
         )
 

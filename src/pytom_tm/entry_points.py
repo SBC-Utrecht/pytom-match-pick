@@ -34,9 +34,6 @@ def _parse_argv(argv=None):
 
 def pytom_create_mask(argv=None):
     from pytom_tm.mask import spherical_mask, ellipsoidal_mask
-
-    argv = _parse_argv(argv)
-
     # entry_point strings cannot use '\n' characters as this will break the website
     # snippet that displays the CLI help message
     # ---8<--- [start:create_mask_usage]
@@ -121,6 +118,16 @@ def pytom_create_mask(argv=None):
             args.radius_minor2,
             smooth=args.sigma,
         )
+    elif args.radius_minor1 is not None or args.radius_minor2 is not None:
+        # catch if only one of radius_minor1 or radius_minor2 is defined
+        gotten = (
+            "--radius-minor1" if args.radius_minor1 is not None else "--radius-minor2"
+        )
+        raise ValueError(
+            "If either '--radius-minor1' or '--radius-minor2' is given, "
+            f"both need to be given. Only got {gotten}"
+        )
+
     else:
         mask = spherical_mask(args.box_size, args.radius, smooth=args.sigma)
 
