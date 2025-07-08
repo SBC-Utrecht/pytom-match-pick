@@ -31,13 +31,15 @@ TILT_ANGLES = read_tlt_file(
 )
 
 
-def make_random_particles(n: int = 10) -> pd.DataFrame:
+def make_random_particles(n: int = 10, relion5: bool = False) -> pd.DataFrame:
     """This is a function that outputs completely random data for testing purposses
 
     Parameters
     ----------
     n: int
         number of particles to generate random data for
+    relion5: bool, default False
+        output a relion5 compatible dataframe instead of a relion4 one (default)
 
     Returns
     -------
@@ -57,6 +59,7 @@ def make_random_particles(n: int = 10) -> pd.DataFrame:
         lcc_max = cut_off + (1 - cut_off) * np.random.rand()
         temp = [x, y, z, rot, tilt, psi, lcc_max] + common
         data.append(temp)
+
     output = pd.DataFrame(
         data,
         columns=[
@@ -73,4 +76,20 @@ def make_random_particles(n: int = 10) -> pd.DataFrame:
             "rlnMicrographName",
         ],
     )
+    if relion5:
+        # Use same alterations as in extract.py
+        center = (64 + 63) / 2
+        output["rlnCoordinateX"], output["rlnCoordinateY"], output["rlnCoordinateZ"] = (
+            (output["rlnCoordinateX"] - center) * pixel_size,
+            (output["rlnCoordinateY"] - center) * pixel_size,
+            (output["rlnCoordinateZ"] - center) * pixel_size,
+        )
+        column_change = {
+            "rlnCoordinateX": "rlnCenteredCoordinateXAngst",
+            "rlnCoordinateY": "rlnCenteredCoordinateYAngst",
+            "rlnCoordinateZ": "rlnCenteredCoordinateZAngst",
+            "rlnMicrographName": "rlnTomoName",
+            "rlnDetectorPixelSize": "rlnTomoTiltSeriesPixelSize",
+        }
+        output = output.rename(columns=column_change)
     return output
