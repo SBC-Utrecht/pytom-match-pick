@@ -1,7 +1,7 @@
 import unittest
 import starfile
 from tempfile import TemporaryDirectory
-from pytom.entry_points import merge_stars
+from pytom_tm.entry_points import merge_stars
 from .testing_utils import make_random_particles
 
 
