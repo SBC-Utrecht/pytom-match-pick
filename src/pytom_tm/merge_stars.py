@@ -26,7 +26,7 @@ def merge_stars(
                     "Are you sure this is a relion5 star file?"
                 )
             for name in set(df["rlnTomoName"]):
-                data.append(name, files[i])
+                data.append((name, files[i]))
         output = pd.DataFrame(
             data, columns=["rlnTomoName", "rlnTomoImportParticleFile"]
         )
