@@ -38,7 +38,7 @@ class TestMergeStars(unittest.TestCase):
         # check that both tomo IDs are in the new starfile
         for particle in [particles1, particles2]:
             for name in set(particle["rlnMicrographName"]):
-                self.assertIn(name, out["rlnMicrographName"])
+                self.assertIn(name, set(out["rlnMicrographName"]))
 
     def test_fail_on_incompatible_starfiles(self):
         # Make sure we fail if we try to combine RELION4 starfiles
@@ -68,10 +68,11 @@ class TestMergeStars(unittest.TestCase):
 
         # check that both tomo IDs are in the new starfile and the correct filename
         for particle in [particles1, particles2]:
-            self.assertIn(particle["rlnTomoName"], out["rlnTomoName"])
+            for name in set(particle["rlnTomoName"]):
+                self.assertIn(name, set(out["rlnTomoName"]))
 
         # Check that all star files can be read and contains the expected tomoname
         for _, (tomoname, filename) in out.iterrows():
             temp = starfile.read(filename)
-            temp_tomoname = set(temp["particles"]["rlnTomoName"])
+            temp_tomoname = set(temp["rlnTomoName"])
             self.assertIn(tomoname, temp_tomoname)
