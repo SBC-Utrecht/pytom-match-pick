@@ -14,10 +14,21 @@ def merge_stars(
 
     logging.info("Concatting and writing star files")
 
-    dataframes = [starfile.read(f) for f in files]
+    dataframes = (starfile.read(f) for f in files)
+    if not relion5_compat:
+        output = pd.concat(dataframes, ignore_index=True)
+    else:
+        data = []
+        for i, df in enumerate(dataframes):
+            if "rlnTomoName" not in df.columns:
+                raise ValueError(
+                    f"Could not find 'rlnTomoName' column in the file: {files[i]}. "
+                    "Are you sure this is a relion5 star file?"
+                )
+            for name in set(df["rlnTomoName"]):
+                data.append(name, files[i])
+        output = pd.DataFrame(
+            data, columns=["rlnTomoName", "rlnTomoImportParticleFile"]
+        )
 
-    starfile.write(
-        {"particles": pd.concat(dataframes, ignore_index=True)},
-        output_file,
-        overwrite=True,
-    )
+    starfile.write({"particles": output}, output_file, overwrite=True)
