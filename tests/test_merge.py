@@ -1,4 +1,5 @@
 import unittest
+import pathlib
 import starfile
 from tempfile import TemporaryDirectory
 from pytom_tm.entry_points import merge_stars
@@ -7,14 +8,15 @@ from testing_utils import make_random_particles
 
 class TestMergeStars(unittest.TestCase):
     def setUp(self):
-        self.tempdir = TemporaryDirectory()
+        tempdir = TemporaryDirectory()
+        self.tempdir = pathlib.Path(tempdir)
         self.dirname = self.tempdir.name
         self.addCleanup(self.tempdir.cleanup)
 
     def test_error_on_empty(self):
         # make sure we raise if we don't find any starfiles
         with self.assertRaisesRegex(ValueError, "No starfiles"):
-            merge_stars(["self.dirname"])
+            merge_stars([f"{self.dirname}"])
 
     def test_relion4_mode(self):
         # write 2 starfiles
