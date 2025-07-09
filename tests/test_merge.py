@@ -37,9 +37,7 @@ class TestMergeStars(unittest.TestCase):
 
         # check that both tomo IDs are in the new starfile
         for particle in [particles1, particles2]:
-            self.assertIn(
-                particle["rlnMicrographName"], out["particles"]["rlnMicrographName"]
-            )
+            self.assertIn(particle["rlnMicrographName"], out["rlnMicrographName"])
 
     def test_fail_on_incompatible_starfiles(self):
         # Make sure we fail if we try to combine RELION4 starfiles
@@ -61,7 +59,6 @@ class TestMergeStars(unittest.TestCase):
 
         # make sure we can read the output starfile
         out = starfile.read(outfile)
-        out = out["particles"]
         # make sure that the outfile is as expected:
         # - 2 columns with names _rlnTomoName and _rlnTomoImportParticleFile
         self.assertEqual(2, len(out.columns))
