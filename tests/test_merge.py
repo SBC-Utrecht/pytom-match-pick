@@ -16,7 +16,7 @@ class TestMergeStars(unittest.TestCase):
     def test_error_on_empty(self):
         # make sure we raise if we don't find any starfiles
         with self.assertRaisesRegex(ValueError, "No starfiles"):
-            merge_stars([f"{self.dirname}"])
+            merge_stars(["-i", f"{self.dirname}"])
 
     def test_relion4_mode(self):
         # write 2 starfiles
@@ -30,7 +30,7 @@ class TestMergeStars(unittest.TestCase):
 
         outfile = str(self.tempdir / "test.star")
         # Make a joined file via the entry point
-        merge_stars([f"{self.dirname}", "-o", outfile])
+        merge_stars(["-i", f"{self.dirname}", "-o", outfile])
 
         # make sure we can read the output starfile
         out = starfile.read(outfile)
@@ -57,7 +57,7 @@ class TestMergeStars(unittest.TestCase):
 
         outfile = str(self.tempdir / "test.star")
         # Make a joined file via the entry point
-        merge_stars([f"{self.dirname}", "-o", outfile, "--relion5-compat"])
+        merge_stars(["-i", f"{self.dirname}", "-o", outfile, "--relion5-compat"])
 
         # make sure we can read the output starfile
         out = starfile.read(outfile)
