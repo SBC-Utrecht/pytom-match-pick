@@ -9,9 +9,9 @@ from testing_utils import make_random_particles
 class TestMergeStars(unittest.TestCase):
     def setUp(self):
         tempdir = TemporaryDirectory()
-        self.tempdir = pathlib.Path(tempdir)
-        self.dirname = self.tempdir.name
-        self.addCleanup(self.tempdir.cleanup)
+        self.addCleanup(tempdir.cleanup)
+        self.dirname = tempdir.name
+        self.tempdir = pathlib.Path(tempdir.name)
 
     def test_error_on_empty(self):
         # make sure we raise if we don't find any starfiles
