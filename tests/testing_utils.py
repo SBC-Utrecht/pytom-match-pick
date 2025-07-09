@@ -53,7 +53,7 @@ def make_random_particles(n: int = 10, relion5: bool = False) -> pd.DataFrame:
     common = [cut_off, sigma, pixel_size, tomogram_id]
     data = []
     for i in range(n):
-        x, y, z = np.random.randint(-64, 64, size=3)
+        x, y, z = np.random.randint(128, size=3)
         rot, psi = 2 * np.pi * np.random.rand(2)
         tilt = np.pi * np.random.rand()
         lcc_max = cut_off + (1 - cut_off) * np.random.rand()
@@ -78,7 +78,7 @@ def make_random_particles(n: int = 10, relion5: bool = False) -> pd.DataFrame:
     )
     if relion5:
         # Use same alterations as in extract.py
-        center = (64 + 63) / 2
+        center = 128 / 2
         output["rlnCoordinateX"], output["rlnCoordinateY"], output["rlnCoordinateZ"] = (
             (output["rlnCoordinateX"] - center) * pixel_size,
             (output["rlnCoordinateY"] - center) * pixel_size,
