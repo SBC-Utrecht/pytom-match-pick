@@ -1157,7 +1157,7 @@ def merge_stars(argv=None):
     )
 
     # ---8<--- [end:merge_stars_usage]
-
+    argv = _parse_argv(argv)
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
     merge_st(args.input_dir, args.output_file, args.relion5_compat)
