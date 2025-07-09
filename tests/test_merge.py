@@ -43,7 +43,20 @@ class TestMergeStars(unittest.TestCase):
     def test_fail_on_incompatible_starfiles(self):
         # Make sure we fail if we try to combine RELION4 starfiles
         # with a RELION5 flag
-        self.fail()
+
+        # write 2 relion 4 starfiles
+        particles1 = make_random_particles()
+        particles2 = make_random_particles()
+        for particle in [particles1, particles2]:
+            tomo_id = particle["rlnMicrographName"][0]
+            starfile.write(
+                {"particles": particle}, self.tempdir / f"{tomo_id}_particles.star"
+            )
+
+        outfile = str(self.tempdir / "test.star")
+        # Make sure entry point fails if trying to do relion5 merge
+        with self.assertRaisesRegex(ValueError, "rlnTomoName"):
+            merge_stars(["-i", f"{self.dirname}", "-o", outfile, "--relion5-compat"])
 
     def test_relion5_mode(self):
         particles1 = make_random_particles(relion5=True)
