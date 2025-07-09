@@ -6,7 +6,21 @@ import logging
 
 def merge_stars(
     input_dir: pathlib.Path, output_file: pathlib.Path, relion5_compat: bool = False
-):
+) -> None:
+    """Merge particle starfiles together for RELION4 or make an importable RELION5
+    starfile pointing to all the starfiles
+
+    Parameters
+    ----------
+    input_dir: pathlib.Path
+        Input directory that cointains all the particle starfiles
+    output_file: pathlib.Path
+        Output file to be written
+    relion5_compat: Bool, default False
+        If True, write the new RELION5 import type starfile instead of just
+        concatenating all the starfiles together (default)
+    """
+
     files = [f for f in input_dir.iterdir() if f.suffix == ".star"]
 
     if len(files) == 0:
