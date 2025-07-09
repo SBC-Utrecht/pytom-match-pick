@@ -37,7 +37,8 @@ class TestMergeStars(unittest.TestCase):
 
         # check that both tomo IDs are in the new starfile
         for particle in [particles1, particles2]:
-            self.assertIn(particle["rlnMicrographName"], out["rlnMicrographName"])
+            for name in set(particle["rlnMicrographName"]):
+                self.assertIn(name, out["rlnMicrographName"])
 
     def test_fail_on_incompatible_starfiles(self):
         # Make sure we fail if we try to combine RELION4 starfiles
