@@ -1683,6 +1683,7 @@ options:
 <h3 id="pytom_merge_starspy">pytom_merge_stars.py</h3>
 <p>Without providing any parameters the script will try to merge all the starfiles in the current working directory and save them to a new file <code>particles.star</code>.</p>
 <div class="highlight"><pre><span></span><code>usage: pytom_merge_stars.py [-h] [-i INPUT_DIR] [-o OUTPUT_FILE] [--log LOG]
+                            [--relion5-compat RELION5_COMPAT]
 
 Merge multiple star files in the same directory. -- Marten Chaillet
 (@McHaillet)
@@ -1695,6 +1696,10 @@ options:
   -o, --output-file OUTPUT_FILE
                         Output star file name.
   --log LOG             Can be set to `info` or `debug`
+  --relion5-compat RELION5_COMPAT
+                        Write out a tomograms.star file that links to all the
+                        particle files instead of writing a single
+                        concatenated particle.star file
 </code></pre></div>
 
 
