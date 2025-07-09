@@ -23,6 +23,7 @@ from pytom_tm.io import (
     parse_warp_xml_data,
 )
 from pytom_tm.tmjob import load_json_to_tmjob
+from pytom_tm.merge_stars import merge_stars as merge_st
 from os import urandom
 
 
@@ -1105,8 +1106,6 @@ def match_template(argv=None):
 
 
 def merge_stars(argv=None):
-    import pandas as pd
-
     # entry_point strings cannot use '\n' characters as this will break the website
     # snippet that displays the CLI help message
     # ---8<--- [start:merge_stars_usage]
@@ -1146,23 +1145,19 @@ def merge_stars(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+    parser.add_argument(
+        "--relion5-compat",
+        action="store_true",
+        default=False,
+        required=False,
+        help=(
+            "Write out a tomograms.star file that links to all the particle files "
+            "instead of writing a single concatenated particle.star file"
+        ),
+    )
 
     # ---8<--- [end:merge_stars_usage]
-
+    argv = _parse_argv(argv)
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
-
-    files = [f for f in args.input_dir.iterdir() if f.suffix == ".star"]
-
-    if len(files) == 0:
-        raise ValueError("No starfiles in directory.")
-
-    logging.info("Concatting and writing star files")
-
-    dataframes = [starfile.read(f) for f in files]
-
-    starfile.write(
-        {"particles": pd.concat(dataframes, ignore_index=True)},
-        args.output_file,
-        overwrite=True,
-    )
+    merge_st(args.input_dir, args.output_file, args.relion5_compat)
