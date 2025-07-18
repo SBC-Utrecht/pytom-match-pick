@@ -157,7 +157,7 @@ class TestEntryPoints(unittest.TestCase):
         inp = defaults.copy()
         inp["--radius-minor1"] = "6"
         inp["--radius-minor2"] = "8"
-        inp["-b"] = 55
+        inp["-b"] = "55"
         inp["-o"] = str(self.outputdir / "mask_ellipse.mrc")
         start(inp)
 
@@ -168,7 +168,7 @@ class TestEntryPoints(unittest.TestCase):
             self.assertEqual(n, 5)
 
     def test_create_template(self):
-        defaults = {"-i": str(TEMPLATE), "--output-voxel-size-angstrom": 1}
+        defaults = {"-i": str(TEMPLATE), "--output-voxel-size-angstrom": "1"}
         default_output_name = f"template_{TEMPLATE.stem}_{float(1)}A.mrc"
 
         def start(arg_dict):
