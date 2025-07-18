@@ -1,4 +1,6 @@
 import pathlib
+import os
+import contextlib
 import numpy as np
 import pandas as pd
 from pytom_tm.io import read_defocus_file, read_dose_file, read_tlt_file
@@ -93,3 +95,27 @@ def make_random_particles(n: int = 10, relion5: bool = False) -> pd.DataFrame:
         }
         output = output.rename(columns=column_change)
     return output
+
+
+@contextlib.contextmanager
+def chdir(directory):
+    """This is a function that allows a test to use chdir,
+    but not error tests run after it if an error is raised while chdir is active
+
+    Parameters
+    ----------
+    directory: pathlib.Path
+        directory to chdir into
+
+    Returns
+    -------
+    contextmanager: contextlib.contextmanager
+        a contextmanager that deals with unwinding chdir if an
+        error is raised while the context is active
+    """
+    old = os.getcwd()
+    os.chdir(directory)
+    try:
+        yield
+    finally:
+        os.chdir(old)

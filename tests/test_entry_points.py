@@ -1,6 +1,5 @@
 import unittest
 import sys
-import os
 import pathlib
 import numpy as np
 import cupy as cp
@@ -11,6 +10,7 @@ from io import StringIO
 from tempfile import TemporaryDirectory
 from pytom_tm import entry_points
 from pytom_tm import io
+from testing_utils import chdir
 
 # (command line function, function in entry_points file)
 ENTRY_POINTS_TO_TEST = [
@@ -133,18 +133,15 @@ class TestEntryPoints(unittest.TestCase):
             entry_points.pytom_create_mask(prep_argv(arg_dict))
 
         # Test defaults, do change to temp dir
-        prev_cwd = os.getcwd()
-        os.chdir(self.outputdir)
-        start(defaults)
-        # Make sure default file exists
-        self.assertTrue(pathlib.Path(default_output_name).exists())
-        # Make sure it has the expected size
-        meta_data = io.read_mrc_meta_data(default_output_name)
-        self.assertEqual(len(meta_data["shape"]), 3)
-        for n in meta_data["shape"]:
-            self.assertEqual(n, 60)
-        # change back to previous cwd
-        os.chdir(prev_cwd)
+        with chdir(self.outputdir):
+            start(defaults)
+            # Make sure default file exists
+            self.assertTrue(pathlib.Path(default_output_name).exists())
+            # Make sure it has the expected size
+            meta_data = io.read_mrc_meta_data(default_output_name)
+            self.assertEqual(len(meta_data["shape"]), 3)
+            for n in meta_data["shape"]:
+                self.assertEqual(n, 60)
 
         # Check we fail loud if only one of the two options is given
         for i in ["--radius-minor1", "--radius-minor2"]:
@@ -175,19 +172,16 @@ class TestEntryPoints(unittest.TestCase):
             entry_points.pytom_create_template(prep_argv(arg_dict))
 
         # Test defaults, do change to temp dir
-        prev_cwd = os.getcwd()
-        os.chdir(self.outputdir)
-        start(defaults)
-        # Make sure default file exists
-        self.assertTrue(pathlib.Path(default_output_name).exists())
-        # Make sure it has the expected size
-        meta_data = io.read_mrc_meta_data(default_output_name)
-        self.assertEqual(len(meta_data["shape"]), 3)
-        for n in meta_data["shape"]:
-            self.assertEqual(n, 5)
-        self.assertEqual(meta_data["voxel_size"], 1.0)
-        # change back to previous cwd
-        os.chdir(prev_cwd)
+        with chdir(self.outputdir):
+            start(defaults)
+            # Make sure default file exists
+            self.assertTrue(pathlib.Path(default_output_name).exists())
+            # Make sure it has the expected size
+            meta_data = io.read_mrc_meta_data(default_output_name)
+            self.assertEqual(len(meta_data["shape"]), 3)
+            for n in meta_data["shape"]:
+                self.assertEqual(n, 5)
+            self.assertEqual(meta_data["voxel_size"], 1.0)
 
     def test_match_template(self):
         defaults = {
