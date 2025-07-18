@@ -138,6 +138,11 @@ class TestEntryPoints(unittest.TestCase):
         start(defaults)
         # Make sure default file exists
         self.assertTrue(pathlib.Path(default_output_name).exists())
+        # Make sure it has the expected size
+        meta_data = io.read_mrc_meta_data(default_output_name)
+        self.assertEqual(len(meta_data["shape"]), 3)
+        for n in meta_data["shape"]:
+            self.assertEqual(n, 60)
         # change back to previous cwd
         os.chdir(prev_cwd)
 
@@ -148,14 +153,19 @@ class TestEntryPoints(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, f"Only got {i}"):
                 start(inp)
 
-        # smoke test eliptical mask
+        # smoke test eliptical mask and uneven box
         inp = defaults.copy()
         inp["--radius-minor1"] = "6"
         inp["--radius-minor2"] = "8"
+        inp["-b"] = 55
         inp["-o"] = str(self.outputdir / "mask_ellipse.mrc")
         start(inp)
 
         self.assertTrue(self.outputdir.joinpath("mask_ellipse.mrc").exists())
+        meta_data = io.read_mrc_meta_data(self.outputdir.joinpath("mask_ellipse.mrc"))
+        self.assertEqual(len(meta_data["shape"]), 3)
+        for n in meta_data["shape"]:
+            self.assertEqual(n, 55)
 
     def test_match_template(self):
         defaults = {
