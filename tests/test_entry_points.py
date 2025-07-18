@@ -165,7 +165,29 @@ class TestEntryPoints(unittest.TestCase):
         meta_data = io.read_mrc_meta_data(self.outputdir.joinpath("mask_ellipse.mrc"))
         self.assertEqual(len(meta_data["shape"]), 3)
         for n in meta_data["shape"]:
-            self.assertEqual(n, 55)
+            self.assertEqual(n, 5)
+
+    def test_create_template(self):
+        defaults = {"-i": str(TEMPLATE), "--output-voxel-size-angstrom": 1}
+        default_output_name = f"template_{TEMPLATE.stem}_{float(1)}A.mrc"
+
+        def start(arg_dict):
+            entry_points.pytom_create_template(prep_argv(arg_dict))
+
+        # Test defaults, do change to temp dir
+        prev_cwd = os.getcwd()
+        os.chdir(self.outputdir)
+        start(defaults)
+        # Make sure default file exists
+        self.assertTrue(pathlib.Path(default_output_name).exists())
+        # Make sure it has the expected size
+        meta_data = io.read_mrc_meta_data(default_output_name)
+        self.assertEqual(len(meta_data["shape"]), 3)
+        for n in meta_data["shape"]:
+            self.assertEqual(n, 60)
+        self.assertEqual(meta_data["voxel_size"], 1.0)
+        # change back to previous cwd
+        os.chdir(prev_cwd)
 
     def test_match_template(self):
         defaults = {
