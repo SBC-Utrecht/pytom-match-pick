@@ -165,7 +165,7 @@ class TestEntryPoints(unittest.TestCase):
         meta_data = io.read_mrc_meta_data(self.outputdir.joinpath("mask_ellipse.mrc"))
         self.assertEqual(len(meta_data["shape"]), 3)
         for n in meta_data["shape"]:
-            self.assertEqual(n, 5)
+            self.assertEqual(n, 55)
 
     def test_create_template(self):
         defaults = {"-i": str(TEMPLATE), "--output-voxel-size-angstrom": "1"}
@@ -184,7 +184,7 @@ class TestEntryPoints(unittest.TestCase):
         meta_data = io.read_mrc_meta_data(default_output_name)
         self.assertEqual(len(meta_data["shape"]), 3)
         for n in meta_data["shape"]:
-            self.assertEqual(n, 60)
+            self.assertEqual(n, 5)
         self.assertEqual(meta_data["voxel_size"], 1.0)
         # change back to previous cwd
         os.chdir(prev_cwd)
