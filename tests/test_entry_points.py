@@ -201,7 +201,7 @@ class TestEntryPoints(unittest.TestCase):
         args["--input-voxel-size"] = "1.0006"
         # Don't try to invent pixels
         args["--output-voxel-size-angstrom"] = "2.0"
-        with self.assertLogs(level=logging.WARNING) as cm:
+        with self.assertLogs(level="WARNING") as cm:
             start(args)
         self.assertEqual(len(cm.output), 1)
         self.assertIn("voxel size does not match", cm.output[0])
