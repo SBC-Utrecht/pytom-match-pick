@@ -183,6 +183,26 @@ class TestEntryPoints(unittest.TestCase):
                 self.assertEqual(n, 5)
             self.assertEqual(meta_data["voxel_size"], 1.0)
 
+        # Test warning and no warning on input voxelsize
+        args = defaults.copy()
+        output = self.outputdir / "rounded_template.mrc"
+        args["-o"] = f"{output}"
+        # should round correctly at 3 digits
+        args["--input-voxel-size"] = "1.0002"
+        with self.assertNoLogs(level=logging.WARNING):
+            start(args)
+        self.assertTrue(output.exists())
+        # Now test with the warning
+        args = defaults.copy()
+        output = self.outputdir / "wrong_rounded_template.mrc"
+        args["-o"] = f"{output}"
+        # use 6 as 5 still rounds corrctly due to python bankers' round
+        args["--input-voxel-size"] = "1.0006"
+        with self.assertLogs(level=logging.WARNING) as cm:
+            start(args)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn("voxel size does not match", cm.output[0])
+
     def test_match_template(self):
         defaults = {
             "-t": str(TEMPLATE),
