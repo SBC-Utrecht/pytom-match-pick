@@ -189,6 +189,7 @@ class TestEntryPoints(unittest.TestCase):
         args["-o"] = f"{output}"
         # should round correctly at 3 digits
         args["--input-voxel-size"] = "0.9999"
+        args["--log-test"] = ""
         with self.assertNoLogs(level=logging.WARNING):
             start(args)
         self.assertTrue(output.exists())
@@ -201,6 +202,7 @@ class TestEntryPoints(unittest.TestCase):
         args["--input-voxel-size"] = "1.0006"
         # Don't try to invent pixels
         args["--output-voxel-size-angstrom"] = "2.0"
+        args["--log-test"] = ""
         with self.assertLogs(level="WARNING") as cm:
             start(args)
         self.assertEqual(len(cm.output), 1)
