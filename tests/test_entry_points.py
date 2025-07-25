@@ -211,7 +211,7 @@ class TestEntryPoints(unittest.TestCase):
 
         # Test failure on trying to get more resolution
         args = defaults.copy()
-        args["--output-voxel-size-angstrom":"0.5"]
+        args["--output-voxel-size-angstrom"] = "0.5"
         with self.assertRaisesRegex(NotImplementedError, "smaller voxel size"):
             start(args)
 
