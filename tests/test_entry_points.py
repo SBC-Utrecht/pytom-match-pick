@@ -165,7 +165,7 @@ class TestEntryPoints(unittest.TestCase):
             self.assertEqual(n, 55)
 
     def test_create_template(self):
-        defaults = {"-i": str(TEMPLATE), "--output-voxel-size-angstrom": "1"}
+        defaults = {"-i": str(TEMPLATE), "--output-voxel-size-angstrom": "1.000"}
         default_output_name = f"template_{TEMPLATE.stem}_{float(1)}A.mrc"
 
         def start(arg_dict):
@@ -188,7 +188,7 @@ class TestEntryPoints(unittest.TestCase):
         output = self.outputdir / "rounded_template.mrc"
         args["-o"] = f"{output}"
         # should round correctly at 3 digits
-        args["--input-voxel-size"] = "1.0002"
+        args["--input-voxel-size"] = "0.9999"
         with self.assertNoLogs(level=logging.WARNING):
             start(args)
         self.assertTrue(output.exists())
