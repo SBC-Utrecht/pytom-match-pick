@@ -192,6 +192,7 @@ class TestEntryPoints(unittest.TestCase):
         with self.assertNoLogs(level=logging.WARNING):
             start(args)
         self.assertTrue(output.exists())
+
         # Now test with the warning
         args = defaults.copy()
         output = self.outputdir / "wrong_rounded_template.mrc"
@@ -202,6 +203,12 @@ class TestEntryPoints(unittest.TestCase):
             start(args)
         self.assertEqual(len(cm.output), 1)
         self.assertIn("voxel size does not match", cm.output[0])
+
+        # Test failure on trying to get more resolution
+        args = defaults.copy()
+        args["--output-voxel-size-angstrom":"0.5"]
+        with self.assertRaisesRegex(NotImplementedError, "smaller voxel size"):
+            start(args)
 
     def test_match_template(self):
         defaults = {
