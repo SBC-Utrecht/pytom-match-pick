@@ -199,10 +199,13 @@ class TestEntryPoints(unittest.TestCase):
         args["-o"] = f"{output}"
         # use 6 as 5 still rounds corrctly due to python bankers' round
         args["--input-voxel-size"] = "1.0006"
+        # Don't try to invent pixels
+        args["--output-voxel-size-angstrom"] = "2.0"
         with self.assertLogs(level=logging.WARNING) as cm:
             start(args)
         self.assertEqual(len(cm.output), 1)
         self.assertIn("voxel size does not match", cm.output[0])
+        self.assertTrue(output.exists())
 
         # Test failure on trying to get more resolution
         args = defaults.copy()
