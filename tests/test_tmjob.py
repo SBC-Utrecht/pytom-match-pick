@@ -866,8 +866,10 @@ class TestTMJob(unittest.TestCase):
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
+            job.start_job(0, return_volumes=False)
+            job.write_to_json("test_issue_301.json")
 
-        job = load_json_to_tmjob(TEST_JOB_JSON)
+        job = load_json_to_tmjob(TEST_DATA_DIR / "test_issue_301.json")
         self.assertIsInstance(
             job,
             TMJob,
