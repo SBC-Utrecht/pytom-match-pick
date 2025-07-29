@@ -444,14 +444,6 @@ class TestTMJob(unittest.TestCase):
         job = load_json_to_tmjob(TEST_JOB_OLD_VERSION)
         self.assertEqual(job.ctf_data[0]["phase_shift_deg"], 0.0)
 
-        # test issue #301
-        # make sure we can load if we change into the result dir
-        with chdir(TEST_DATA_DIR):
-            job = load_json_to_tmjob(TEST_JOB_JSON_BASE)
-            self.assertIsInstance(
-                job, TMJob, msg="TMJob could not be properly loaded after chdir."
-            )
-
     def test_custom_angular_search(self):
         with TemporaryDirectory() as data_dir:
             data_dir = pathlib.Path(data_dir)
@@ -857,4 +849,30 @@ class TestTMJob(unittest.TestCase):
         self.assertTrue(
             (defocus_offsets == defocus_offsets_inverted).sum() == 1,
             msg="inverted handedness should have one identical offset",
+        )
+
+    def test_running_with_relative_paths(self):
+        # test issue #301
+        # make sure we can load if we run with relative paths
+        # and chdir out of the result dir
+        with chdir(TEST_DATA_DIR):
+            job = TMJob(
+                "0",
+                10,
+                TEST_TOMOGRAM.name,
+                TEST_TEMPLATE.name,
+                TEST_MASK.name,
+                TEST_DATA_DIR,  # should end up in the expected spot
+                angle_increment=ANGULAR_SEARCH,
+                voxel_size=1.0,
+            )
+
+        job = load_json_to_tmjob(TEST_JOB_JSON)
+        self.assertIsInstance(
+            job,
+            TMJob,
+            msg=(
+                "TMJob could not be properly loaded after running "
+                "with relative paths and chdir."
+            ),
         )
