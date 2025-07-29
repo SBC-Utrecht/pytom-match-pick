@@ -600,7 +600,7 @@ class TMJob:
         ]
         for key, value in d.items():
             if isinstance(value, pathlib.Path):
-                d[key] = str(value)
+                d[key] = str(value.resolve())
         # wrangle dtype conversion
         d["output_dtype"] = str(np.dtype(d["output_dtype"]))
         with open(file_name, "w") as fstream:
