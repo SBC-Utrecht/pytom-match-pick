@@ -577,6 +577,9 @@ class TMJob:
     def write_to_json(self, file_name: pathlib.Path) -> None:
         """Write job to .json file.
 
+        Note: This has to be run from the same cwd as where `self` was initiated
+              otherwise the path resolving doesn't make sense
+
         Parameters
         ----------
         file_name: pathlib.Path
