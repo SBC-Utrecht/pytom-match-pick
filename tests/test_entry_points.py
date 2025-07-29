@@ -1,6 +1,5 @@
 import unittest
 import sys
-import os
 import pathlib
 import numpy as np
 import cupy as cp
@@ -11,6 +10,7 @@ from io import StringIO
 from tempfile import TemporaryDirectory
 from pytom_tm import entry_points
 from pytom_tm import io
+from testing_utils import chdir
 
 # (command line function, function in entry_points file)
 ENTRY_POINTS_TO_TEST = [
@@ -133,13 +133,15 @@ class TestEntryPoints(unittest.TestCase):
             entry_points.pytom_create_mask(prep_argv(arg_dict))
 
         # Test defaults, do change to temp dir
-        prev_cwd = os.getcwd()
-        os.chdir(self.outputdir)
-        start(defaults)
-        # Make sure default file exists
-        self.assertTrue(pathlib.Path(default_output_name).exists())
-        # change back to previous cwd
-        os.chdir(prev_cwd)
+        with chdir(self.outputdir):
+            start(defaults)
+            # Make sure default file exists
+            self.assertTrue(pathlib.Path(default_output_name).exists())
+            # Make sure it has the expected size
+            meta_data = io.read_mrc_meta_data(default_output_name)
+            self.assertEqual(len(meta_data["shape"]), 3)
+            for n in meta_data["shape"]:
+                self.assertEqual(n, 60)
 
         # Check we fail loud if only one of the two options is given
         for i in ["--radius-minor1", "--radius-minor2"]:
@@ -148,14 +150,70 @@ class TestEntryPoints(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, f"Only got {i}"):
                 start(inp)
 
-        # smoke test eliptical mask
+        # smoke test eliptical mask and uneven box
         inp = defaults.copy()
         inp["--radius-minor1"] = "6"
         inp["--radius-minor2"] = "8"
+        inp["-b"] = "55"
         inp["-o"] = str(self.outputdir / "mask_ellipse.mrc")
         start(inp)
 
         self.assertTrue(self.outputdir.joinpath("mask_ellipse.mrc").exists())
+        meta_data = io.read_mrc_meta_data(self.outputdir.joinpath("mask_ellipse.mrc"))
+        self.assertEqual(len(meta_data["shape"]), 3)
+        for n in meta_data["shape"]:
+            self.assertEqual(n, 55)
+
+    def test_create_template(self):
+        defaults = {"-i": str(TEMPLATE), "--output-voxel-size-angstrom": "1.000"}
+        default_output_name = f"template_{TEMPLATE.stem}_{float(1)}A.mrc"
+
+        def start(arg_dict):
+            entry_points.pytom_create_template(prep_argv(arg_dict))
+
+        # Test defaults, do change to temp dir
+        with chdir(self.outputdir):
+            start(defaults)
+            # Make sure default file exists
+            self.assertTrue(pathlib.Path(default_output_name).exists())
+            # Make sure it has the expected size
+            meta_data = io.read_mrc_meta_data(default_output_name)
+            self.assertEqual(len(meta_data["shape"]), 3)
+            for n in meta_data["shape"]:
+                self.assertEqual(n, 5)
+            self.assertEqual(meta_data["voxel_size"], 1.0)
+
+        # Test warning and no warning on input voxelsize
+        args = defaults.copy()
+        output = self.outputdir / "rounded_template.mrc"
+        args["-o"] = f"{output}"
+        # should round correctly at 3 digits
+        args["--input-voxel-size"] = "0.9999"
+        args["--log-test"] = ""
+        with self.assertNoLogs(level=logging.WARNING):
+            start(args)
+        self.assertTrue(output.exists())
+
+        # Now test with the warning
+        args = defaults.copy()
+        output = self.outputdir / "wrong_rounded_template.mrc"
+        args["-o"] = f"{output}"
+        # use 6 as 5 still rounds corrctly due to python bankers' round
+        args["--input-voxel-size"] = "1.0006"
+        # Don't try to invent pixels
+        args["--output-voxel-size-angstrom"] = "2.0"
+        args["--log-test"] = ""
+        with self.assertLogs(level="WARNING") as cm:
+            start(args)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn("voxel size does not match", cm.output[0])
+        self.assertTrue(output.exists())
+
+        # Test failure on trying to get more resolution
+        args = defaults.copy()
+        args["--output-voxel-size-angstrom"] = "0.5"
+        with self.assertRaisesRegex(NotImplementedError, "smaller voxel size"):
+            start(args)
 
     def test_match_template(self):
         defaults = {

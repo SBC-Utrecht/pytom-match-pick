@@ -242,8 +242,13 @@ def pytom_create_template(argv=None):
 
     # ---8<--- [end:create_template_usage]
 
+    # Add hidden argument to prevent logging override for logtests
+    parser.add_argument(
+        "--log-test", help=argparse.SUPPRESS, action="store_true", default=False
+    )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log, force=True)
+    if not args.log_test:
+        logging.basicConfig(level=args.log, force=True)
 
     # set input voxel size and give user warning if it does not match
     # with MRC annotation
