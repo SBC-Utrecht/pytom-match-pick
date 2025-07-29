@@ -9,7 +9,7 @@ from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob, get_defocus_offsets
 from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm.extract import extract_particles
-from testing_utils import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES
+from testing_utils import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES, chdir
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -34,7 +34,8 @@ TEST_SCORES = TEST_DATA_DIR.joinpath("tomogram_scores.mrc")
 TEST_ANGLES = TEST_DATA_DIR.joinpath("tomogram_angles.mrc")
 TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath("custom_angular_search.txt")
 TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath("tomogram_whitening_filter.npy")
-TEST_JOB_JSON = TEST_DATA_DIR.joinpath("tomogram_job.json")
+TEST_JOB_JSON_BASE = pathlib.Path("tomogram_job.json")
+TEST_JOB_JSON = TEST_DATA_DIR / TEST_JOB_JSON_BASE
 TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath("tomogram_job_whitening.json")
 TEST_JOB_OLD_VERSION = TEST_DATA_DIR.joinpath("tomogram_job_old_version.json")
 
@@ -442,6 +443,14 @@ class TestTMJob(unittest.TestCase):
         # test backward compatibility with the update to 0.6.1
         job = load_json_to_tmjob(TEST_JOB_OLD_VERSION)
         self.assertEqual(job.ctf_data[0]["phase_shift_deg"], 0.0)
+
+        # test issue #301
+        # make sure we can load if we change into the result dir
+        with chdir(TEST_DATA_DIR):
+            job = load_json_to_tmjob(TEST_JOB_JSON_BASE)
+            self.assertIsInstance(
+                job, TMJob, msg="TMJob could not be properly loaded after chdir."
+            )
 
     def test_custom_angular_search(self):
         with TemporaryDirectory() as data_dir:
