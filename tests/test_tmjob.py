@@ -859,9 +859,9 @@ class TestTMJob(unittest.TestCase):
             job = TMJob(
                 "0",
                 10,
-                TEST_TOMOGRAM.name,
-                TEST_TEMPLATE.name,
-                TEST_MASK.name,
+                pathlib.Path(TEST_TOMOGRAM.name),
+                pathlib.Path(TEST_TEMPLATE.name),
+                pathlib.Path(TEST_MASK.name),
                 TEST_DATA_DIR,  # should end up in the expected spot
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
