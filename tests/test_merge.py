@@ -1,6 +1,7 @@
 import unittest
 import pathlib
 import starfile
+import glob
 from tempfile import TemporaryDirectory
 from pytom_tm.entry_points import merge_stars
 from testing_utils import make_random_particles
@@ -89,3 +90,54 @@ class TestMergeStars(unittest.TestCase):
             temp = starfile.read(filename)
             temp_tomoname = set(temp["rlnTomoName"])
             self.assertIn(tomoname, temp_tomoname)
+
+    def test_multi_input(self):
+        # write 2 starfiles
+        n = 10
+        particles = [make_random_particles(n=n) for i in range(2)]
+        directories = [self.tempdir / f"test{i}" for i in range(2)]
+        for particle, directory in zip(particles, directories):
+            directory.mkdir()
+            tomo_id = particle["rlnMicrographName"][0]
+            starfile.write(
+                {"particles": particle}, directory / f"{tomo_id}_particles.star"
+            )
+
+        outfile = str(self.tempdir / "test.star")
+
+        # Mimick inputting `output_dir/test*/*.star`
+        star_files = glob.glob(f"{self.dirname}/test*/*.star")
+
+        merge_stars(["-i"] + star_files + ["-o", outfile])
+
+        # make sure we can read the output starfile
+        out = starfile.read(outfile)
+
+        # make sure we have the number of particles we expect
+        self.assertEqual(len(out), 2 * n)
+
+        # Test the same if we input multiple directories
+        # remove outfile to make sure it is not testing the previous output
+        outfile.remove()
+        self.assertFalse(outfile.exists())
+
+        merge_stars(["-i"] + directories + ["-o", outfile])
+
+        # make sure we can read the output starfile
+        out2 = starfile.read(outfile)
+        # make sure we have the number of particles we expect
+        self.assertEqual(len(out2), 2 * n)
+
+        # make sure we can mix and match and still don't duplicate particles
+        # TODO: make sure we want this functionality
+        # remove outfile to make sure it is not testing the previous output
+        outfile.remove()
+        self.assertFalse(outfile.exists())
+
+        merge_stars(["-i"] + star_files + directories + ["-o", outfile])
+
+        # make sure we can read the output starfile
+        out3 = starfile.read(outfile)
+
+        # make sure we have the number of particles we expect
+        self.assertEqual(len(out3), 2 * n)
