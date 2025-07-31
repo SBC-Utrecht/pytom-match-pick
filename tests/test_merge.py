@@ -109,7 +109,7 @@ class TestMergeStars(unittest.TestCase):
 
         # Recheck that we can read all the star files even if we are in a different cwd
         tempdir2 = TemporaryDirectory()
-        with chdir(tempdir2):
+        with chdir(tempdir2.name):
             for _, (tomoname, filename) in out.iterrows():
                 temp = starfile.read(filename)
                 temp_tomoname = set(temp["rlnTomoName"])
