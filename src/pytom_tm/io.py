@@ -65,6 +65,24 @@ class CheckFileExists(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
+class CheckListOfFilesExists(argparse.Action):
+    """argparse.Action subclass to check if an expected input file exists."""
+
+    def __call__(
+        self,
+        parser,
+        namespace,
+        values: pathlib.Path,
+        option_string: str | None = None,
+    ):
+        for val in values:
+            if not val.is_file():
+                parser.error(
+                    f"{option_string} got a file path that does not exist: {val}"
+                )
+        setattr(namespace, self.dest, values)
+
+
 class LargerThanZero(argparse.Action):
     """argparse.Action subclass to constrain an input value to larger than zero only."""
 

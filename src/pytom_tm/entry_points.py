@@ -11,6 +11,7 @@ from pytom_tm.io import (
     read_mrc_meta_data,
     read_mrc,
     CheckFileExists,
+    CheckListOfFilesExists,
     ParseLogging,
     CheckDirExists,
     ParseSearch,
@@ -1127,7 +1128,7 @@ def merge_stars(argv=None):
         "--input-star-files",
         type=pathlib.Path,
         required=True,
-        action=CheckFileExists,
+        action=CheckListOfFilesExists,
         nargs="+",
         help=(
             "List of star files to merge, " "script will only try to merge unique files"
