@@ -4,7 +4,9 @@ import starfile
 import glob
 from tempfile import TemporaryDirectory
 from pytom_tm.entry_points import merge_stars
+from pytom_tm.utils import mute_stdout_stderr
 from testing_utils import make_random_particles
+import sys
 
 
 class TestMergeStars(unittest.TestCase):
@@ -13,17 +15,21 @@ class TestMergeStars(unittest.TestCase):
         self.addCleanup(tempdir.cleanup)
         self.dirname = tempdir.name
         self.tempdir = pathlib.Path(tempdir.name)
+        self.n = 10
+        particles1 = make_random_particles(n=self.n)
+        particles2 = make_random_particles(n=self.n)
+        self.particles = [particles1, particles2]
 
-    def test_error_on_empty(self):
+    def test_error_function_on_empty(self):
+        from pytom_tm.merge_stars import merge_stars as ms
+
         # make sure we raise if we don't find any starfiles
         with self.assertRaisesRegex(ValueError, "No starfiles"):
-            merge_stars(["-i", f"{self.dirname}"])
+            ms([], self.tempdir / "not_relevant.star")
 
     def test_relion4_mode(self):
         # write 2 starfiles
-        particles1 = make_random_particles()
-        particles2 = make_random_particles()
-        for particle in [particles1, particles2]:
+        for particle in self.particles:
             tomo_id = particle["rlnMicrographName"][0]
             starfile.write(
                 {"particles": particle}, self.tempdir / f"{tomo_id}_particles.star"
@@ -31,13 +37,18 @@ class TestMergeStars(unittest.TestCase):
 
         outfile = str(self.tempdir / "test.star")
         # Make a joined file via the entry point
-        merge_stars(["-i", f"{self.dirname}", "-o", outfile])
+        # mimick star expansion on a bash shell
+        in_files = glob.glob(f"{self.dirname}/*.star")
+        merge_stars(["-i"] + in_files + ["-o", outfile])
 
         # make sure we can read the output starfile
         out = starfile.read(outfile)
 
+        # make sure we have the number of expected lines
+        self.assertEqual(self.n * 2, len(out))
+
         # check that both tomo IDs are in the new starfile
-        for particle in [particles1, particles2]:
+        for particle in self.particles:
             for name in set(particle["rlnMicrographName"]):
                 self.assertIn(name, set(out["rlnMicrographName"]))
 
@@ -46,9 +57,7 @@ class TestMergeStars(unittest.TestCase):
         # with a RELION5 flag
 
         # write 2 relion 4 starfiles
-        particles1 = make_random_particles()
-        particles2 = make_random_particles()
-        for particle in [particles1, particles2]:
+        for particle in self.particles:
             tomo_id = particle["rlnMicrographName"][0]
             starfile.write(
                 {"particles": particle}, self.tempdir / f"{tomo_id}_particles.star"
@@ -56,8 +65,9 @@ class TestMergeStars(unittest.TestCase):
 
         outfile = str(self.tempdir / "test.star")
         # Make sure entry point fails if trying to do relion5 merge
+        in_files = glob.glob(f"{self.dirname}/*.star")
         with self.assertRaisesRegex(ValueError, "rlnTomoName"):
-            merge_stars(["-i", f"{self.dirname}", "-o", outfile, "--relion5-compat"])
+            merge_stars(["-i"] + in_files + ["-o", outfile, "--relion5-compat"])
 
     def test_relion5_mode(self):
         particles1 = make_random_particles(relion5=True)
@@ -69,8 +79,11 @@ class TestMergeStars(unittest.TestCase):
             )
 
         outfile = str(self.tempdir / "test.star")
+        # Make sure entry point fails if trying to do relion5 merge
+        in_files = glob.glob(f"{self.dirname}/*.star")
+
         # Make a joined file via the entry point
-        merge_stars(["-i", f"{self.dirname}", "-o", outfile, "--relion5-compat"])
+        merge_stars(["-i"] + in_files + ["-o", outfile, "--relion5-compat"])
 
         # make sure we can read the output starfile
         out = starfile.read(outfile)
@@ -91,12 +104,21 @@ class TestMergeStars(unittest.TestCase):
             temp_tomoname = set(temp["rlnTomoName"])
             self.assertIn(tomoname, temp_tomoname)
 
-    def test_multi_input(self):
+    def test_fail_on_dir_input(self):
+        # temp test to check unroling
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        with self.assertRaises(SystemExit) as ex, mute_stdout_stderr():
+            merge_stars(["-i", f"{self.dirname}", "-o", "irrelevant.star"])
+        self.assertEqual(ex.exception.code, 2)
+        # temp tests to make sure we revert the muting
+        self.assertIs(sys.stdout, old_stdout)
+        self.assertIs(sys.stderr, old_stderr)
+
+    def test_multi_dir_input(self):
         # write 2 starfiles
-        n = 10
-        particles = [make_random_particles(n=n) for i in range(2)]
         directories = [self.tempdir / f"test{i}" for i in range(2)]
-        for particle, directory in zip(particles, directories):
+        for particle, directory in zip(self.particles, directories):
             directory.mkdir()
             tomo_id = particle["rlnMicrographName"][0]
             starfile.write(
@@ -114,30 +136,10 @@ class TestMergeStars(unittest.TestCase):
         out = starfile.read(outfile)
 
         # make sure we have the number of particles we expect
-        self.assertEqual(len(out), 2 * n)
+        self.assertEqual(len(out), 2 * self.n)
 
-        # Test the same if we input multiple directories
-        # remove outfile to make sure it is not testing the previous output
-        outfile.remove()
-        self.assertFalse(outfile.exists())
+    def test_non_unique_input(self):
+        self.fail()
 
-        merge_stars(["-i"] + directories + ["-o", outfile])
-
-        # make sure we can read the output starfile
-        out2 = starfile.read(outfile)
-        # make sure we have the number of particles we expect
-        self.assertEqual(len(out2), 2 * n)
-
-        # make sure we can mix and match and still don't duplicate particles
-        # TODO: make sure we want this functionality
-        # remove outfile to make sure it is not testing the previous output
-        outfile.remove()
-        self.assertFalse(outfile.exists())
-
-        merge_stars(["-i"] + star_files + directories + ["-o", outfile])
-
-        # make sure we can read the output starfile
-        out3 = starfile.read(outfile)
-
-        # make sure we have the number of particles we expect
-        self.assertEqual(len(out3), 2 * n)
+    def test_single_input(self):
+        self.fail()

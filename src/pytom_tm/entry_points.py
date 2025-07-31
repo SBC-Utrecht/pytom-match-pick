@@ -1124,14 +1124,13 @@ def merge_stars(argv=None):
     )
     parser.add_argument(
         "-i",
-        "--input-dir",
+        "--input-star-files",
         type=pathlib.Path,
-        required=False,
-        default="./",
-        action=CheckDirExists,
+        required=True,
+        action=CheckFileExists,
+        nargs="+",
         help=(
-            "Directory with star files, "
-            "script will try to merge all files that end in '.star'."
+            "List of star files to merge, " "script will only try to merge unique files"
         ),
     )
     parser.add_argument(
@@ -1165,4 +1164,4 @@ def merge_stars(argv=None):
     argv = _parse_argv(argv)
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
-    merge_st(args.input_dir, args.output_file, args.relion5_compat)
+    merge_st(args.input_star_files, args.output_file, args.relion5_compat)
