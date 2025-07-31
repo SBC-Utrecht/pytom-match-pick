@@ -22,7 +22,7 @@ def merge_stars(
         If True, write the new RELION5 import type starfile instead of just
         concatenating all the starfiles together (default)
     """
-
+    # Make sure all paths are absolute and unique
     files = set(f.resolve() for f in input_star_files)
 
     # Warn if we end up with less files (due to symlinks pointing to the same thing
@@ -37,21 +37,22 @@ def merge_stars(
             "Only one (unique) starfile given which doesn't make sense to merge"
         )
 
-    dataframes = (starfile.read(f) for f in files)
     if not relion5_compat:
+        dataframes = (starfile.read(f) for f in files)
         logging.info("Concatting and writing star files")
         output = pd.concat(dataframes, ignore_index=True)
     else:
         logging.info("Writing out 2-column relion5 star file")
         data = []
-        for i, df in enumerate(dataframes):
+        for fname in files:
+            df = starfile.read(fname)
             if "rlnTomoName" not in df.columns:
                 raise ValueError(
-                    f"Could not find 'rlnTomoName' column in the file: {files[i]}. "
+                    f"Could not find 'rlnTomoName' column in the file: {fname}. "
                     "Are you sure this is a relion5 star file?"
                 )
             for name in set(df["rlnTomoName"]):
-                data.append((name, files[i]))
+                data.append((name, fname))
         output = pd.DataFrame(
             data, columns=["rlnTomoName", "rlnTomoImportParticleFile"]
         )
