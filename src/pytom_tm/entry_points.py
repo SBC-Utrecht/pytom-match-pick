@@ -1131,7 +1131,7 @@ def merge_stars(argv=None):
         action=CheckListOfFilesExists,
         nargs="+",
         help=(
-            "List of star files to merge, " "script will only try to merge unique files"
+            "List of star files to merge, script will only try to merge unique files"
         ),
     )
     parser.add_argument(
