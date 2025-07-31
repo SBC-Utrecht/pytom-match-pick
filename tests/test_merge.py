@@ -118,7 +118,7 @@ class TestMergeStars(unittest.TestCase):
 
         # test that we pass if we just give one starfile in this mode
         outfile2 = str(self.tempdir / "single_test.star")
-        merge_stars(["-i", in_files[0], "-o", outfile, "--relion5-compat"])
+        merge_stars(["-i", in_files[0], "-o", outfile2, "--relion5-compat"])
 
         # make sure we only written a single line
         out2 = starfile.read(outfile2)
