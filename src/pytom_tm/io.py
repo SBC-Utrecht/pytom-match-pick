@@ -42,7 +42,7 @@ class CheckDirExists(argparse.Action):
         option_string: str | None = None,
     ):
         if not values.is_dir():
-            parser.error(f"{option_string} got a file path that does not exist ")
+            parser.error(f"{option_string} got a directory path that does not exist ")
 
         setattr(namespace, self.dest, values)
 
@@ -57,8 +57,10 @@ class CheckFileExists(argparse.Action):
         values: pathlib.Path,
         option_string: str | None = None,
     ):
-        if not values.exists():
-            parser.error(f"{option_string} got a file path that does not exist ")
+        if not values.is_file():
+            parser.error(
+                f"{option_string} got a file path that does not exist: {values}"
+            )
 
         setattr(namespace, self.dest, values)
 
