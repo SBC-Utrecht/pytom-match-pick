@@ -164,7 +164,7 @@ def run_job_parallel(
                 for p in procs:
                     # if one of the processes is no longer alive and has a failed exit
                     # we should error
-                    if not p.is_alive() and p.exitcode == 1:  # to prevent a deadlock
+                    if not p.is_alive() and p.exitcode != 0:  # to prevent a deadlock
                         [
                             x.terminate() for x in procs
                         ]  # kill all spawned processes if something broke
