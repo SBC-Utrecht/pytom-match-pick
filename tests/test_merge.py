@@ -108,7 +108,7 @@ class TestMergeStars(unittest.TestCase):
         # temp test to check unroling
         old_stdout = sys.stdout
         old_stderr = sys.stderr
-        with self.assertRaises(SystemExit) as ex, mute_stdout_stderr():
+        with mute_stdout_stderr(), self.assertRaises(SystemExit) as ex:
             merge_stars(["-i", f"{self.dirname}", "-o", "irrelevant.star"])
         self.assertEqual(ex.exception.code, 2)
         # temp tests to make sure we revert the muting
