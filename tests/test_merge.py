@@ -109,7 +109,7 @@ class TestMergeStars(unittest.TestCase):
 
         # test that we pass if we just give one starfile in this mode
         outfile2 = str(self.tempdir / "single_test.star")
-        merge_stars(["-i", in_files[0], "-o", outfile])
+        merge_stars(["-i", in_files[0], "-o", outfile, "--relion5-compat"])
 
         # make sure we only written a single line
         out2 = starfile.read(outfile2)
@@ -155,7 +155,7 @@ class TestMergeStars(unittest.TestCase):
         # Make a joined file via the entry point
         # mimick star expansion on a bash shell
         in_files = glob.glob(f"{self.dirname}/*.star")
-        with self.assertLogs(level="Warning") as cm:
+        with self.assertLogs(level="WARNING") as cm:
             # Give all the files twice
             merge_stars(["-i"] + in_files + in_files + ["-o", outfile])
         for o in cm.output:
