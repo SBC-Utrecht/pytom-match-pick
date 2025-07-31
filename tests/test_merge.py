@@ -5,7 +5,7 @@ import glob
 from tempfile import TemporaryDirectory
 from pytom_tm.entry_points import merge_stars
 from pytom_tm.utils import mute_stdout_stderr
-from testing_utils import make_random_particles
+from testing_utils import make_random_particles, chdir
 
 
 class TestMergeStars(unittest.TestCase):
@@ -106,6 +106,15 @@ class TestMergeStars(unittest.TestCase):
             temp = starfile.read(filename)
             temp_tomoname = set(temp["rlnTomoName"])
             self.assertIn(tomoname, temp_tomoname)
+
+        # Recheck that we can read all the star files even if we are in a different cwd
+        tempdir2 = TemporaryDirectory()
+        with chdir(tempdir2):
+            for _, (tomoname, filename) in out.iterrows():
+                temp = starfile.read(filename)
+                temp_tomoname = set(temp["rlnTomoName"])
+                self.assertIn(tomoname, temp_tomoname)
+        tempdir2.cleanup()
 
         # test that we pass if we just give one starfile in this mode
         outfile2 = str(self.tempdir / "single_test.star")
