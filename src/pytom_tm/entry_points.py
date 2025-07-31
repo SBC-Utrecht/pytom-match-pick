@@ -1162,7 +1162,13 @@ def merge_stars(argv=None):
     )
 
     # ---8<--- [end:merge_stars_usage]
-    argv = _parse_argv(argv)
+
+    # Add hidden argument to prevent logging override for logtests
+    parser.add_argument(
+        "--log-test", help=argparse.SUPPRESS, action="store_true", default=False
+    )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log, force=True)
+    if not args.log_test:
+        logging.basicConfig(level=args.log, force=True)
+
     merge_st(args.input_star_files, args.output_file, args.relion5_compat)

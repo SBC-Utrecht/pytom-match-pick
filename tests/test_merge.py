@@ -166,7 +166,7 @@ class TestMergeStars(unittest.TestCase):
         in_files = glob.glob(f"{self.dirname}/*.star")
         with self.assertLogs(level="WARNING") as cm:
             # Give all the files twice
-            merge_stars(["-i"] + in_files + in_files + ["-o", outfile])
+            merge_stars(["-i"] + in_files + in_files + ["-o", outfile, "--log-test"])
         for o in cm.output:
             if "duplicate input" in o:
                 break
