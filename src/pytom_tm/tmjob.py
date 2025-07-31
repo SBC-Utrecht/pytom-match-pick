@@ -577,6 +577,9 @@ class TMJob:
     def write_to_json(self, file_name: pathlib.Path) -> None:
         """Write job to .json file.
 
+        Note: This has to be run from the same cwd as where `self` was initiated
+              otherwise the path resolving doesn't make sense
+
         Parameters
         ----------
         file_name: pathlib.Path
@@ -600,7 +603,7 @@ class TMJob:
         ]
         for key, value in d.items():
             if isinstance(value, pathlib.Path):
-                d[key] = str(value)
+                d[key] = str(value.resolve())
         # wrangle dtype conversion
         d["output_dtype"] = str(np.dtype(d["output_dtype"]))
         with open(file_name, "w") as fstream:

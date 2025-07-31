@@ -9,7 +9,7 @@ from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob, get_defocus_offsets
 from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm.extract import extract_particles
-from testing_utils import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES
+from testing_utils import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES, chdir
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -34,7 +34,8 @@ TEST_SCORES = TEST_DATA_DIR.joinpath("tomogram_scores.mrc")
 TEST_ANGLES = TEST_DATA_DIR.joinpath("tomogram_angles.mrc")
 TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath("custom_angular_search.txt")
 TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath("tomogram_whitening_filter.npy")
-TEST_JOB_JSON = TEST_DATA_DIR.joinpath("tomogram_job.json")
+TEST_JOB_JSON_BASE = pathlib.Path("tomogram_job.json")
+TEST_JOB_JSON = TEST_DATA_DIR / TEST_JOB_JSON_BASE
 TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath("tomogram_job_whitening.json")
 TEST_JOB_OLD_VERSION = TEST_DATA_DIR.joinpath("tomogram_job_old_version.json")
 
@@ -848,4 +849,32 @@ class TestTMJob(unittest.TestCase):
         self.assertTrue(
             (defocus_offsets == defocus_offsets_inverted).sum() == 1,
             msg="inverted handedness should have one identical offset",
+        )
+
+    def test_running_with_relative_paths(self):
+        # test issue #301
+        # make sure we can load if we run with relative paths
+        # and chdir out of the result dir
+        with chdir(TEST_DATA_DIR):
+            job = TMJob(
+                "0",
+                10,
+                pathlib.Path(TEST_TOMOGRAM.name),
+                pathlib.Path(TEST_TEMPLATE.name),
+                pathlib.Path(TEST_MASK.name),
+                TEST_DATA_DIR,  # should end up in the expected spot
+                angle_increment=ANGULAR_SEARCH,
+                voxel_size=1.0,
+            )
+            job.start_job(0, return_volumes=False)
+            job.write_to_json("test_issue_301.json")
+
+        job = load_json_to_tmjob(TEST_DATA_DIR / "test_issue_301.json")
+        self.assertIsInstance(
+            job,
+            TMJob,
+            msg=(
+                "TMJob could not be properly loaded after running "
+                "with relative paths and chdir."
+            ),
         )
