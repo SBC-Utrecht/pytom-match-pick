@@ -1,6 +1,7 @@
 import unittest
 import sys
 import pathlib
+import glob
 import numpy as np
 import cupy as cp
 import logging
@@ -365,7 +366,18 @@ class TestEntryPoints(unittest.TestCase):
         ]
         arguments["-v"] = str(RELION5_TOMOGRAM)
         arguments["--relion5-tomograms-star"] = str(RELION5_TOMOGRAMS_STAR)
+        outdir = self.outputdir / "relion5_output"
+        arguments["-d"] = str(outdir)
         start(arguments)
+        # make sure json is dumped
+        jsons = glob.glob(f"{outdir}/*.json")
+        self.assertEqual(len(jsons), 1)
+        # Test if we can extract with the metadata as well
+        json = jsons[0]
+        extract_arguments = {"-j": json, "-n": "1", "--relion5-compat": "", "-c": "0"}
+        entry_points.extract_candidates(prep_argv(extract_arguments))
+        starfiles = glob.glob(f"{outdir}/*.star")
+        self.assertEqual(len(starfiles), 1)
 
         with self.assertRaises(
             ValueError, msg="Missing tilt angles should raise an error."
