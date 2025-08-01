@@ -946,7 +946,8 @@ def match_template(argv=None):
         "example "
         "from a tomogram reconstruction job). pytom-match-pick will fetch all "
         "the tilt-series metadata from this file and overwrite all other "
-        "metadata options.",
+        "metadata options. It also keeps track of the binning and tilt-series "
+        "pixel size to make extraction more accurate",
     )
     additional_group.add_argument(
         "--warp-xml-file",
