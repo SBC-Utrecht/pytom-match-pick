@@ -367,6 +367,7 @@ class TestEntryPoints(unittest.TestCase):
         arguments["-v"] = str(RELION5_TOMOGRAM)
         arguments["--relion5-tomograms-star"] = str(RELION5_TOMOGRAMS_STAR)
         outdir = self.outputdir / "relion5_output"
+        outdir.mkdir()
         arguments["-d"] = str(outdir)
         start(arguments)
         # make sure json is dumped
