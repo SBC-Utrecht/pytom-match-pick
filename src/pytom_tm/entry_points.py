@@ -983,6 +983,9 @@ def match_template(argv=None):
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
+    # set some defaults
+    metadata = {}
+
     # set correct tilt angles
     if args.tilt_angles_first_column is not None:
         if args.tilt_angles is not None:
@@ -1089,6 +1092,7 @@ def match_template(argv=None):
         rng_seed=args.rng_seed,
         defocus_handedness=defocus_handedness,
         output_dtype=np.float16 if args.half_precision else np.float32,
+        metadata=metadata,
     )
 
     score_volume, angle_volume = run_job_parallel(
