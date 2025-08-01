@@ -1682,7 +1682,8 @@ options:
 <p>After running template matching and candidate extraction on multiple tomograms, each tomogram will have an individual starfile with particle annotations. Each starfile will contain the <code>MicrographName</code> column which refers back to the tomogram name. Multiple starfiles can therefore be appended to results in a large list which can be used in other software (such as RELION, WarpM) to load annotations. These software will link the annotations to specific tilt-series using the <code>MicrographName</code> column.</p>
 <h3 id="pytom_merge_starspy">pytom_merge_stars.py</h3>
 <p>Without providing any parameters the script will try to merge all the starfiles in the current working directory and save them to a new file <code>particles.star</code>.</p>
-<div class="highlight"><pre><span></span><code>usage: pytom_merge_stars.py [-h] [-i INPUT_DIR] [-o OUTPUT_FILE] [--log LOG]
+<div class="highlight"><pre><span></span><code>usage: pytom_merge_stars.py [-h] -i INPUT_STAR_FILES [INPUT_STAR_FILES ...]
+                            [-o OUTPUT_FILE] [--log LOG]
                             [--relion5-compat RELION5_COMPAT]
 
 Merge multiple star files in the same directory. -- Marten Chaillet
@@ -1690,9 +1691,9 @@ Merge multiple star files in the same directory. -- Marten Chaillet
 
 options:
   -h, --help            show this help message and exit
-  -i, --input-dir INPUT_DIR
-                        Directory with star files, script will try to merge
-                        all files that end in &#39;.star&#39;.
+  -i, --input-star-files INPUT_STAR_FILES [INPUT_STAR_FILES ...]
+                        List of star files to merge, script will only try to
+                        merge unique files
   -o, --output-file OUTPUT_FILE
                         Output star file name.
   --log LOG             Can be set to `info` or `debug`
