@@ -375,7 +375,13 @@ class TestEntryPoints(unittest.TestCase):
         self.assertEqual(len(jsons), 1)
         # Test if we can extract with the metadata as well
         json = jsons[0]
-        extract_arguments = {"-j": json, "-n": "1", "--relion5-compat": "", "-c": "0"}
+        extract_arguments = {
+            "-j": json,
+            "-n": "1",
+            "--relion5-compat": "",
+            "-c": "0",
+            "--particle-diameter": "1",
+        }
         entry_points.extract_candidates(prep_argv(extract_arguments))
         starfiles = glob.glob(f"{outdir}/*.star")
         self.assertEqual(len(starfiles), 1)
