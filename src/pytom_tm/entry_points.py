@@ -946,7 +946,8 @@ def match_template(argv=None):
         "example "
         "from a tomogram reconstruction job). pytom-match-pick will fetch all "
         "the tilt-series metadata from this file and overwrite all other "
-        "metadata options.",
+        "metadata options. It also keeps track of the binning and tilt-series "
+        "pixel size to make extraction more accurate",
     )
     additional_group.add_argument(
         "--warp-xml-file",
@@ -982,6 +983,9 @@ def match_template(argv=None):
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
+
+    # set some defaults
+    metadata = {}
 
     # set correct tilt angles
     if args.tilt_angles_first_column is not None:
@@ -1024,15 +1028,21 @@ def match_template(argv=None):
         ]
 
     if args.relion5_tomograms_star is not None:
-        voxel_size, tilt_angles, dose_accumulation, ctf_params, defocus_handedness = (
-            parse_relion5_star_data(
-                args.relion5_tomograms_star,
-                args.tomogram,
-                phase_flip_correction=phase_flip_correction,
-                phase_shift=args.phase_shift,
-            )
+        (
+            voxel_size,
+            tilt_angles,
+            dose_accumulation,
+            ctf_params,
+            defocus_handedness,
+            rel_metadata,
+        ) = parse_relion5_star_data(
+            args.relion5_tomograms_star,
+            args.tomogram,
+            phase_flip_correction=phase_flip_correction,
+            phase_shift=args.phase_shift,
         )
         per_tilt_weighting = True
+        metadata.update(rel_metadata)
 
     elif args.warp_xml_file is not None:
         voxel_size, tilt_angles, dose_accumulation, ctf_params = parse_warp_xml_data(
@@ -1089,6 +1099,7 @@ def match_template(argv=None):
         rng_seed=args.rng_seed,
         defocus_handedness=defocus_handedness,
         output_dtype=np.float16 if args.half_precision else np.float32,
+        metadata=metadata,
     )
 
     score_volume, angle_volume = run_job_parallel(
