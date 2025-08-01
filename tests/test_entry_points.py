@@ -380,7 +380,7 @@ class TestEntryPoints(unittest.TestCase):
             "-n": "1",
             "--relion5-compat": "",
             "-c": "0",
-            "--particle-diameter": "1",
+            "--particle-diameter": "3",
         }
         entry_points.extract_candidates(prep_argv(extract_arguments))
         starfiles = glob.glob(f"{outdir}/*.star")
