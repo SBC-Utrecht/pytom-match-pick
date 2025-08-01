@@ -1,20 +1,27 @@
 import os
 import sys
+import contextlib
 
 
-class mute_stdout_stderr:
+@contextlib.contextmanager
+def mute_stdout_stderr():
     """Context manager to redirect stdout and stderr to devnull. Only used to prevent
-    terminal flooding in unittests."""
+    terminal flooding in unittests. If an error is raised and not caught before, this
+    will hard-exit out"""
 
-    def __enter__(self):
-        self.outnull = open(os.devnull, "w")
-        self.old_stdout = sys.stdout
-        self.old_stderr = sys.stderr
-        sys.stdout = self.outnull
-        sys.stderr = self.outnull
-        return self
-
-    def __exit__(self):
-        sys.stdout = self.old_stdout
-        sys.stderr = self.old_stderr
-        self.outnull.close()
+    fail = False
+    outnull = open(os.devnull, "w")
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    sys.stdout = outnull
+    sys.stderr = outnull
+    try:
+        yield
+    except Exception:  # Bare exception to exit without printing anything
+        fail = True
+    finally:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+        outnull.close()
+        if fail:
+            sys.exit(2)

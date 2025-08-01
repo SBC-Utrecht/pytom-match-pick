@@ -11,6 +11,7 @@ from pytom_tm.io import (
     read_mrc_meta_data,
     read_mrc,
     CheckFileExists,
+    CheckListOfFilesExists,
     ParseLogging,
     CheckDirExists,
     ParseSearch,
@@ -1124,14 +1125,13 @@ def merge_stars(argv=None):
     )
     parser.add_argument(
         "-i",
-        "--input-dir",
+        "--input-star-files",
         type=pathlib.Path,
-        required=False,
-        default="./",
-        action=CheckDirExists,
+        required=True,
+        action=CheckListOfFilesExists,
+        nargs="+",
         help=(
-            "Directory with star files, "
-            "script will try to merge all files that end in '.star'."
+            "List of star files to merge, script will only try to merge unique files"
         ),
     )
     parser.add_argument(
@@ -1162,7 +1162,13 @@ def merge_stars(argv=None):
     )
 
     # ---8<--- [end:merge_stars_usage]
-    argv = _parse_argv(argv)
+
+    # Add hidden argument to prevent logging override for logtests
+    parser.add_argument(
+        "--log-test", help=argparse.SUPPRESS, action="store_true", default=False
+    )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log, force=True)
-    merge_st(args.input_dir, args.output_file, args.relion5_compat)
+    if not args.log_test:
+        logging.basicConfig(level=args.log, force=True)
+
+    merge_st(args.input_star_files, args.output_file, args.relion5_compat)
