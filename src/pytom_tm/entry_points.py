@@ -1027,15 +1027,21 @@ def match_template(argv=None):
         ]
 
     if args.relion5_tomograms_star is not None:
-        voxel_size, tilt_angles, dose_accumulation, ctf_params, defocus_handedness = (
-            parse_relion5_star_data(
-                args.relion5_tomograms_star,
-                args.tomogram,
-                phase_flip_correction=phase_flip_correction,
-                phase_shift=args.phase_shift,
-            )
+        (
+            voxel_size,
+            tilt_angles,
+            dose_accumulation,
+            ctf_params,
+            defocus_handedness,
+            rel_metadata,
+        ) = parse_relion5_star_data(
+            args.relion5_tomograms_star,
+            args.tomogram,
+            phase_flip_correction=phase_flip_correction,
+            phase_shift=args.phase_shift,
         )
         per_tilt_weighting = True
+        metadata.update(rel_metadata)
 
     elif args.warp_xml_file is not None:
         voxel_size, tilt_angles, dose_accumulation, ctf_params = parse_warp_xml_data(
