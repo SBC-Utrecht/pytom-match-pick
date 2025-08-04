@@ -37,15 +37,15 @@ TILT_ANGLES = read_tlt_file(
 def make_relion5_tomo_stars(
     tomoname: str,
     out_dir: pathlib.Path,
-    voltage: int = 200,
-    amp_contrast: float = 0.08,
-    cs: float = 2.7,
+    voltage: int = vol,
+    amp_contrast: float = amp,
+    cs: float = cs,
     tomohand: int = 1,
     pixelsize: float = 1.0,
     binning: float = 1.0,
-    tilt_angles: list | None = None,
-    dose: list | None = None,
-    defocus: list | None = None,
+    tilt_angles: list = TILT_ANGLES,
+    dose: list = ACCUMULATED_DOSE,
+    defocus: list = defocus_data,
 ):
     """This is a function that outputs a tomogram.star and a tilt_series/tilt_serie.star
     Mostly to test our relion5 processing is (internally) consistent
@@ -55,12 +55,6 @@ def make_relion5_tomo_stars(
     """
     if not out_dir.is_dir():
         out_dir.mkdir(parents=True)
-    if tilt_angles is None:
-        tilt_angles = TILT_ANGLES
-    if dose is None:
-        dose = ACCUMULATED_DOSE
-    if defocus is None:
-        defocus = defocus_data
 
     tomo_star = out_dir / "tomogram.star"
     tilt_star = out_dir / "tilt_series" / "tilt_serie.star"

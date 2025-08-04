@@ -7,9 +7,20 @@ from tempfile import TemporaryDirectory
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob, get_defocus_offsets
-from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
+from pytom_tm.io import (
+    read_mrc,
+    write_mrc,
+    UnequalSpacingError,
+    parse_relion5_star_data,
+)
 from pytom_tm.extract import extract_particles
-from testing_utils import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES, chdir
+from testing_utils import (
+    CTF_PARAMS,
+    ACCUMULATED_DOSE,
+    TILT_ANGLES,
+    chdir,
+    make_relion5_tomo_stars,
+)
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -38,6 +49,7 @@ TEST_JOB_JSON_BASE = pathlib.Path("tomogram_job.json")
 TEST_JOB_JSON = TEST_DATA_DIR / TEST_JOB_JSON_BASE
 TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath("tomogram_job_whitening.json")
 TEST_JOB_OLD_VERSION = TEST_DATA_DIR.joinpath("tomogram_job_old_version.json")
+TEST_JOB_RELION5_DIR = TEST_DATA_DIR.joinpath("relion5_data")
 
 
 class TestTMJob(unittest.TestCase):
@@ -139,6 +151,9 @@ class TestTMJob(unittest.TestCase):
         size[0] += 1
         wrong_size_tomogram_mask = np.ones(tuple(size), dtype=np.float32)
         write_mrc(TEST_WRONG_SIZE_TOMO_MASK, wrong_size_tomogram_mask, 1.0)
+
+        # write relion5 tomogram.star etc
+        make_relion5_tomo_stars(TEST_TOMOGRAM.stem, TEST_JOB_RELION5_DIR)
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -877,4 +892,72 @@ class TestTMJob(unittest.TestCase):
                 "TMJob could not be properly loaded after running "
                 "with relative paths and chdir."
             ),
+        )
+
+    def test_relion5_metadata_passthrough(self):
+        # write relion5 tomogram.star etc
+        make_relion5_tomo_stars(TEST_TOMOGRAM.stem, TEST_JOB_RELION5_DIR)
+        relion5_tomograms_star = TEST_JOB_RELION5_DIR / "tomogram.star"
+        # mimick entry point for this
+        (
+            voxel_size,
+            tilt_angles,
+            dose_accumulation,
+            ctf_params,
+            defocus_handedness,
+            metadata,
+        ) = parse_relion5_star_data(
+            relion5_tomograms_star,
+            TEST_TOMOGRAM,
+        )
+        per_tilt_weighting = True
+        job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=voxel_size,
+            tilt_angles=tilt_angles,
+            tilt_weighting=per_tilt_weighting,
+            dose_accumulation=dose_accumulation,
+            ctf_data=ctf_params,
+            defocus_handedness=defocus_handedness,
+            metadata=metadata,
+        )
+        job.start_job(0, return_volumes=False)
+
+        # repeat of relion5 extraction in extraction test above but with better center
+        df_rel5, scores = extract_particles(
+            job, 100, particle_diameter=10, create_plot=False, relion5_compat=True
+        )
+        binning = job.metadata["relion5_binning"]
+        voxel_size = job.metadata["relion5_ts_ps"]
+        center = (np.array(TOMO_SHAPE) * binning) / 2 - 1
+        centered_location = (np.array(LOCATION) * binning - center / 2) * voxel_size
+        diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()
+        self.assertEqual(
+            diff,
+            0,
+            msg="relion5 compat mode should return a centered location of the object",
+        )
+
+        # Redo with a fake bin2
+        job_bin2 = job.copy()
+        job_bin2.metadata["relion5_binning"] = 2.0
+
+        df_rel5, scores = extract_particles(
+            job_bin2, 100, particle_diameter=10, create_plot=False, relion5_compat=True
+        )
+        binning = job_bin2.metadata["relion5_binning"]
+        voxel_size = job_bin2.metadata["relion5_ts_ps"]
+        center = (np.array(TOMO_SHAPE) * binning) / 2 - 1
+        centered_location = (np.array(LOCATION) * binning - center / 2) * voxel_size
+        diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()
+        self.assertEqual(
+            diff,
+            0,
+            msg="relion5 compat mode should obey binning",
         )
