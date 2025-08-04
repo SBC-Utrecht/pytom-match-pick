@@ -933,7 +933,7 @@ class TestTMJob(unittest.TestCase):
         binning = job.metadata["relion5_binning"]
         voxel_size = job.metadata["relion5_ts_ps"]
         center = (np.array(TOMO_SHAPE) * binning) / 2 - 1
-        centered_location = (np.array(LOCATION) * binning - center / 2) * voxel_size
+        centered_location = (np.array(LOCATION) * binning - center) * voxel_size
         diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()
         self.assertEqual(
             diff,
@@ -951,7 +951,7 @@ class TestTMJob(unittest.TestCase):
         binning = job_bin2.metadata["relion5_binning"]
         voxel_size = job_bin2.metadata["relion5_ts_ps"]
         center = (np.array(TOMO_SHAPE) * binning) / 2 - 1
-        centered_location = (np.array(LOCATION) * binning - center / 2) * voxel_size
+        centered_location = (np.array(LOCATION) * binning - center) * voxel_size
         diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()
         self.assertEqual(
             diff,
