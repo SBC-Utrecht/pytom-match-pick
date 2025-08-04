@@ -58,6 +58,7 @@ def make_relion5_tomo_stars(
 
     tomo_star = out_dir / "tomogram.star"
     tilt_star = out_dir / "tilt_series" / "tilt_serie.star"
+    tilt_star.parent.mkdir()
 
     tilt_data = [
         [tilt_angle, do, de, de]
