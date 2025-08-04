@@ -152,9 +152,6 @@ class TestTMJob(unittest.TestCase):
         wrong_size_tomogram_mask = np.ones(tuple(size), dtype=np.float32)
         write_mrc(TEST_WRONG_SIZE_TOMO_MASK, wrong_size_tomogram_mask, 1.0)
 
-        # write relion5 tomogram.star etc
-        make_relion5_tomo_stars(TEST_TOMOGRAM.stem, TEST_JOB_RELION5_DIR)
-
     @classmethod
     def tearDownClass(cls) -> None:
         TEMP_DIR.cleanup()
