@@ -73,8 +73,13 @@ class TestMergeStars(unittest.TestCase):
         # Make a joined file via the entry point
         # mimick star expansion on a bash shell
         in_files = glob.glob(f"{self.dirname}/*.star")
-        merge_stars(["-i"] + in_files + ["-o", outfile])
-
+        with self.assertLogs(levels="WARNING") as cm:
+            merge_stars(["-i"] + in_files + ["-o", outfile])
+        for o in cm.output:
+            if "multi-data-block" in o:
+                break
+        else:
+            self.fail("expected a warning log about multi-data-block")
         # make sure we can read the output starfile
         out = starfile.read(outfile)
         self.assertIs(type(out), pd.DataFrame)
@@ -106,7 +111,8 @@ class TestMergeStars(unittest.TestCase):
             in_files = glob.glob(f"{outdir.name}/*.star")
 
             # Make a joined file via the entry point
-            merge_stars(["-i"] + in_files + ["-o", outfile, "--relion5-compat"])
+            with self.assertNoLogs(level="WARNING"):
+                merge_stars(["-i"] + in_files + ["-o", outfile, "--relion5-compat"])
 
             # make sure we can read the output starfile
             out = starfile.read(outfile)
@@ -121,6 +127,29 @@ class TestMergeStars(unittest.TestCase):
             for particle in [particles1, particles2]:
                 for name in set(particle["rlnTomoName"]):
                     self.assertIn(name, set(out["rlnTomoName"]))
+
+        # make sure we fail on no particles
+        with TemporaryDirectory() as outdir:
+            outdir_path = pathlib.Path(outdir.name)
+            particles1 = make_random_particles(relion5=True)
+            particles2 = make_random_particles(relion5=True)
+            for i, particle in enumerate([particles1, particles2]):
+                tomo_id = particle["rlnTomoName"][0]
+                test_data = pd.DataFrame(
+                    [[f"test{i}", tomo_id]], columns=["testID", "TomoID"]
+                )
+                starfile.write(
+                    {"testdata": test_data, "failparticles": particle},
+                    outdir_path / f"{tomo_id}_particles.star",
+                )
+
+            outfile = str(outdir_path / "test.star")
+
+            in_files = glob.glob(f"{outdir.name}/*.star")
+
+            # Make sure we fail joining the file via the entry point
+            with self.assertRaisesRegex(ValueError, "'particles data block"):
+                merge_stars(["-i"] + in_files + ["-o", outfile, "--relion5-compat"])
 
     def test_fail_on_incompatible_starfiles(self):
         # Make sure we fail if we try to combine RELION4 starfiles

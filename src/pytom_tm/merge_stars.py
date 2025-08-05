@@ -59,7 +59,7 @@ def merge_stars(
         logging.info("Writing out 2-column relion5 star file")
         data = []
         for fname in files:
-            df = capture_read(fname)
+            df = capture_read(fname, relion5_compat=True)
             if "rlnTomoName" not in df.columns:
                 raise ValueError(
                     f"Could not find 'rlnTomoName' column in the file: {fname}. "
