@@ -93,7 +93,7 @@ class TestMergeStars(unittest.TestCase):
 
         # redo for relion5
         with TemporaryDirectory() as outdir:
-            outdir_path = pathlib.Path(outdir.name)
+            outdir_path = pathlib.Path(outdir)
             particles1 = make_random_particles(relion5=True)
             particles2 = make_random_particles(relion5=True)
             for i, particle in enumerate([particles1, particles2]):
@@ -130,7 +130,7 @@ class TestMergeStars(unittest.TestCase):
 
         # make sure we fail on no particles
         with TemporaryDirectory() as outdir:
-            outdir_path = pathlib.Path(outdir.name)
+            outdir_path = pathlib.Path(outdir)
             particles1 = make_random_particles(relion5=True)
             particles2 = make_random_particles(relion5=True)
             for i, particle in enumerate([particles1, particles2]):
