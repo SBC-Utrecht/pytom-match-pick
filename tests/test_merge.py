@@ -73,7 +73,7 @@ class TestMergeStars(unittest.TestCase):
         # Make a joined file via the entry point
         # mimick star expansion on a bash shell
         in_files = glob.glob(f"{self.dirname}/*.star")
-        with self.assertLogs(levels="WARNING") as cm:
+        with self.assertLogs(level="WARNING") as cm:
             merge_stars(["-i"] + in_files + ["-o", outfile])
         for o in cm.output:
             if "multi-data-block" in o:
