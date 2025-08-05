@@ -79,7 +79,7 @@ class TestMergeStars(unittest.TestCase):
             if "multi-data-block" in o:
                 break
         else:
-            self.fail("expected a warning log about multi-data-block")
+            self.fail("expected a warning about multi-data-block")  # pragma: no cover
         # make sure we can read the output starfile
         out = starfile.read(outfile)
         self.assertIs(type(out), pd.DataFrame)
