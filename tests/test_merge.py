@@ -152,7 +152,7 @@ class TestMergeStars(unittest.TestCase):
             in_files = glob.glob(f"{outdir}/*.star")
 
             # Make sure we fail joining the file via the entry point
-            with self.assertRaisesRegex(ValueError, "'particles data block"):
+            with self.assertRaisesRegex(ValueError, "'particles' data block"):
                 merge_stars(["-i"] + in_files + ["-o", outfile, "--relion5-compat"])
 
     def test_fail_on_incompatible_starfiles(self):
