@@ -3,6 +3,7 @@ import pathlib
 import starfile
 import glob
 from tempfile import TemporaryDirectory
+import pandas as pd
 from pytom_tm.entry_points import merge_stars
 from pytom_tm.utils import mute_stdout_stderr
 from testing_utils import make_random_particles, chdir
@@ -54,6 +55,72 @@ class TestMergeStars(unittest.TestCase):
         # test that we fail if we just give one starfile in this mode
         with self.assertRaisesRegex(ValueError, "doesn't make sense to merge"):
             merge_stars(["-i", in_files[0], "-o", outfile])
+
+    def test_multi_datablock_file(self):
+        # write 2 starfiles
+        for i, particle in enumerate(self.particles):
+            tomo_id = particle["rlnMicrographName"][0]
+            # make a second dataframe
+            test_data = pd.DataFrame(
+                [[f"test{i}", tomo_id]], columns=["testID", "TomoID"]
+            )
+            starfile.write(
+                {"testdata": test_data, "particles": particle},
+                self.tempdir / f"{tomo_id}_particles.star",
+            )
+
+        outfile = str(self.tempdir / "test.star")
+        # Make a joined file via the entry point
+        # mimick star expansion on a bash shell
+        in_files = glob.glob(f"{self.dirname}/*.star")
+        merge_stars(["-i"] + in_files + ["-o", outfile])
+
+        # make sure we can read the output starfile
+        out = starfile.read(outfile)
+        self.assertIs(type(out), pd.DataFrame)
+        # make sure we have the number of expected lines
+        self.assertEqual(self.n * 2, len(out))
+
+        # check that both tomo IDs are in the new starfile
+        for particle in self.particles:
+            for name in set(particle["rlnMicrographName"]):
+                self.assertIn(name, set(out["rlnMicrographName"]))
+
+        # redo for relion5
+        with TemporaryDirectory() as outdir:
+            outdir_path = pathlib.Path(outdir.name)
+            particles1 = make_random_particles(relion5=True)
+            particles2 = make_random_particles(relion5=True)
+            for i, particle in enumerate([particles1, particles2]):
+                tomo_id = particle["rlnTomoName"][0]
+                test_data = pd.DataFrame(
+                    [[f"test{i}", tomo_id]], columns=["testID", "TomoID"]
+                )
+                starfile.write(
+                    {"testdata": test_data, "particles": particle},
+                    outdir_path / f"{tomo_id}_particles.star",
+                )
+
+            outfile = str(outdir_path / "test.star")
+
+            in_files = glob.glob(f"{outdir.name}/*.star")
+
+            # Make a joined file via the entry point
+            merge_stars(["-i"] + in_files + ["-o", outfile, "--relion5-compat"])
+
+            # make sure we can read the output starfile
+            out = starfile.read(outfile)
+            # make sure that the outfile is as expected:
+            # - 2 columns with names _rlnTomoName and _rlnTomoImportParticleFile
+            self.assertIs(type(out), pd.DataFrame)
+            self.assertEqual(2, len(out.columns))
+            for col in ["rlnTomoName", "rlnTomoImportParticleFile"]:
+                self.assertIn(col, out.columns)
+
+            # check that both tomo IDs are in the new starfile and the correct filename
+            for particle in [particles1, particles2]:
+                for name in set(particle["rlnTomoName"]):
+                    self.assertIn(name, set(out["rlnTomoName"]))
 
     def test_fail_on_incompatible_starfiles(self):
         # Make sure we fail if we try to combine RELION4 starfiles
