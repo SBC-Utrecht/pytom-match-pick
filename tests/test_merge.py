@@ -74,7 +74,7 @@ class TestMergeStars(unittest.TestCase):
         # mimick star expansion on a bash shell
         in_files = glob.glob(f"{self.dirname}/*.star")
         with self.assertLogs(level="WARNING") as cm:
-            merge_stars(["-i"] + in_files + ["-o", outfile])
+            merge_stars(["-i"] + in_files + ["-o", outfile, "--log-test"])
         for o in cm.output:
             if "multi-data-block" in o:
                 break
@@ -112,7 +112,11 @@ class TestMergeStars(unittest.TestCase):
 
             # Make a joined file via the entry point
             with self.assertNoLogs(level="WARNING"):
-                merge_stars(["-i"] + in_files + ["-o", outfile, "--relion5-compat"])
+                merge_stars(
+                    ["-i"]
+                    + in_files
+                    + ["-o", outfile, "--relion5-compat", "--log-test"]
+                )
 
             # make sure we can read the output starfile
             out = starfile.read(outfile)
