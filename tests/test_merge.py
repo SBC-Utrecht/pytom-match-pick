@@ -108,7 +108,7 @@ class TestMergeStars(unittest.TestCase):
 
             outfile = str(outdir_path / "test.star")
 
-            in_files = glob.glob(f"{outdir.name}/*.star")
+            in_files = glob.glob(f"{outdir}/*.star")
 
             # Make a joined file via the entry point
             with self.assertNoLogs(level="WARNING"):
@@ -149,7 +149,7 @@ class TestMergeStars(unittest.TestCase):
 
             outfile = str(outdir_path / "test.star")
 
-            in_files = glob.glob(f"{outdir.name}/*.star")
+            in_files = glob.glob(f"{outdir}/*.star")
 
             # Make sure we fail joining the file via the entry point
             with self.assertRaisesRegex(ValueError, "'particles data block"):
