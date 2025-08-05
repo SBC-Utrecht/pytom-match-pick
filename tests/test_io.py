@@ -117,13 +117,16 @@ class TestBrokenMRC(unittest.TestCase):
     def test_parse_relion5_star_data(self):
         tomogram = pathlib.Path("rec_tomo200528_107.mrc")
         meta_data = parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)
-        self.assertEqual(len(meta_data), 5)
+        self.assertEqual(len(meta_data), 6)
         self.assertIsInstance(meta_data[0], float)
         self.assertIsInstance(meta_data[1], list)
         self.assertIsInstance(meta_data[2], list)
         self.assertIsInstance(meta_data[3], list)
         self.assertIsInstance(meta_data[3][0], dict)
         self.assertIsInstance(meta_data[4], int)
+        self.assertIsInstance(meta_data[5], dict)
+        for key in meta_data[5].keys():
+            self.assertIn("relion5", key)
 
         tomogram = pathlib.Path("tomogram.mrc")
         with self.assertRaises(

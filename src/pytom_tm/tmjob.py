@@ -79,6 +79,7 @@ def load_json_to_tmjob(
         rng_seed=data.get("rng_seed", 321),
         defocus_handedness=data.get("defocus_handedness", 0),
         output_dtype=output_dtype,
+        metadata=data.get("metadata", {}),
     )
     # if the file originates from an old version set the phase shift for compatibility
     if (
@@ -285,6 +286,7 @@ class TMJob:
         rng_seed: int = 321,
         defocus_handedness: int = 0,
         output_dtype: np.dtype = np.float32,
+        metadata: dict | None = None,
     ):
         """
         Parameters
@@ -357,6 +359,8 @@ class TMJob:
              1 = regular (as in Pyle & Zianetti (2021))
         output_dtype: np.dtype, default np.float32
             output score volume dtype, options are np.float32 and np.float16
+        metadata: dict, default {}
+            other metadata we want to keep together with the job, i.e. tomogram binning
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -563,6 +567,10 @@ class TMJob:
 
         # output dtype
         self.output_dtype = output_dtype
+
+        if metadata is None:
+            metadata = {}
+        self.metadata = metadata
 
     def copy(self) -> TMJob:
         """Create a copy of the TMJob

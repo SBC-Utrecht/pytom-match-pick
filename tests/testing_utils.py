@@ -3,6 +3,7 @@ import os
 import contextlib
 import numpy as np
 import pandas as pd
+import starfile
 from pytom_tm.io import read_defocus_file, read_dose_file, read_tlt_file
 
 
@@ -31,6 +32,74 @@ ACCUMULATED_DOSE = read_dose_file(
 TILT_ANGLES = read_tlt_file(
     pathlib.Path(__file__).parent.joinpath("Data").joinpath("test_angles.rawtlt")
 )
+
+
+def make_relion5_tomo_stars(
+    tomoname: str,
+    out_dir: pathlib.Path,
+    voltage: int = vol,
+    amp_contrast: float = amp,
+    cs: float = cs,
+    tomohand: int = 1,
+    pixelsize: float = 1.0,
+    binning: float = 1.0,
+    tilt_angles: list = TILT_ANGLES,
+    dose: list = ACCUMULATED_DOSE,
+    defocus: list = defocus_data,
+):
+    """This is a function that outputs a tomogram.star and a tilt_series/tilt_serie.star
+    Mostly to test our relion5 processing is (internally) consistent
+
+    Parameters:
+
+    """
+    if not out_dir.is_dir():
+        out_dir.mkdir(parents=True)
+
+    tomo_star = out_dir / "tomogram.star"
+    tilt_star = out_dir / "tilt_series" / "tilt_serie.star"
+    tilt_star.parent.mkdir()
+
+    tilt_data = [
+        [tilt_angle, do, de, de]
+        for do, tilt_angle, de in zip(dose, tilt_angles, defocus)
+    ]
+    tilt_output = pd.DataFrame(
+        tilt_data,
+        columns=[
+            "rlnTomoNominalStageTiltAngle",
+            "rlnMicrographPreExposure",
+            "rlnDefocusV",
+            "rlnDefocusU",
+        ],
+    )
+    tomo_data = [
+        [
+            tomoname,
+            voltage,
+            cs,
+            amp_contrast,
+            tomohand,
+            pixelsize,
+            str(tilt_star),
+            binning,
+        ]
+    ]
+    tomo_output = pd.DataFrame(
+        tomo_data,
+        columns=[
+            "rlnTomoName",
+            "rlnVoltage",
+            "rlnSphericalAberration",
+            "rlnAmplitudeContrast",
+            "rlnTomoHand",
+            "rlnTomoTiltSeriesPixelSize",
+            "rlnTomoTiltSeriesStarFile",
+            "rlnTomoTomogramBinning",
+        ],
+    )
+    starfile.write({"global": tomo_output}, tomo_star, overwrite=True)
+    starfile.write({tomoname: tilt_output}, tilt_star, overwrite=True)
 
 
 def make_random_particles(n: int = 10, relion5: bool = False) -> pd.DataFrame:
