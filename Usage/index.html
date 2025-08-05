@@ -1504,7 +1504,9 @@ Additional options:
                         tomograms.star file (for example from a tomogram
                         reconstruction job). pytom-match-pick will fetch all
                         the tilt-series metadata from this file and overwrite
-                        all other metadata options.
+                        all other metadata options. It also keeps track of the
+                        binning and tilt-series pixel size to make extraction
+                        more accurate
   --warp-xml-file WARP_XML_FILE
                         Here, you can provide a Warp xml file that has the
                         metadata for that tiltseries.This xml metadata file
