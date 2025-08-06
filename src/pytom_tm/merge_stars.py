@@ -37,15 +37,29 @@ def merge_stars(
             "Only one (unique) starfile given which doesn't make sense to merge"
         )
 
+    def capture_read(f, relion5_compat=False):
+        out = starfile.read(f)
+        if type(out) is pd.DataFrame:
+            return out
+        # Assuming dict here
+        if not relion5_compat:
+            logging.warn(
+                f"{f} seems to be a multi-data-block starfile, will only "
+                "concatenate the 'particles' data block "
+            )
+        if "particles" not in out:
+            raise ValueError(f"{f} does not have a 'particles' data block")
+        return out["particles"]
+
     if not relion5_compat:
-        dataframes = (starfile.read(f) for f in files)
+        dataframes = (capture_read(f) for f in files)
         logging.info("Concatting and writing star files")
         output = pd.concat(dataframes, ignore_index=True)
     else:
         logging.info("Writing out 2-column relion5 star file")
         data = []
         for fname in files:
-            df = starfile.read(fname)
+            df = capture_read(fname, relion5_compat=True)
             if "rlnTomoName" not in df.columns:
                 raise ValueError(
                     f"Could not find 'rlnTomoName' column in the file: {fname}. "
