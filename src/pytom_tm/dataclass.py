@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CtfData:
     defocus: float
     amplitude_contrast: float
@@ -11,7 +11,7 @@ class CtfData:
     phase_shift_deg: float = 0.0
 
 
-@dataclass
+@dataclass(kw_only=True)
 class TiltSeriesMetaData:
     tilt_angles: list[float]
     dose_accumulation: list[float] | None = None
@@ -29,7 +29,7 @@ class TiltSeriesMetaData:
                 )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Relion5MetaData(TiltSeriesMetaData):
     binning: float
     tilt_series_pixel_size: float
