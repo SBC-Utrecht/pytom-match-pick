@@ -3,12 +3,30 @@ from dataclasses import dataclass, asdict
 
 @dataclass(kw_only=True)
 class CtfData:
+    """A data class to combine all CTF data for a single tilt
+
+    Attributes
+    ----------
+    defocus: float
+        defocus in µm
+    amplitude_contrast: float
+        fraction of amplitude contrast between 0 and 1
+    voltage: float
+        voltage in KeV
+    spherical_aberration: float
+        spherical aberration in mm
+    phase_shift_deg: float, default 0.0
+        phase shift for phase plates in degree
+    flip_phase: bool, default False
+        wether we should apply the phase-flip ctf correction
+    """
+
     defocus: float
     amplitude_contrast: float
     voltage: float
     spherical_aberration: float
-    flip_phase: bool = False
     phase_shift_deg: float = 0.0
+    flip_phase: bool = False
 
 
 @dataclass(kw_only=True)
