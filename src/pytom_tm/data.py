@@ -15,7 +15,7 @@ class CtfData:
 class TiltSeriesMetaData:
     tilt_angles: list[float]
     dose_accumulation: list[float] | None = None
-    ctf_param: list[dict] | None = None
+    ctf_param: list[CtfData] | None = None
     per_tilt_weighting: bool = False
 
     def __post_init__(self):
