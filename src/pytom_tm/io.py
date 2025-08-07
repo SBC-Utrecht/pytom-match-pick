@@ -8,6 +8,7 @@ import starfile
 from contextlib import contextmanager
 from operator import attrgetter
 from lxml import etree
+from pytom_tm.dataclass import CtfData
 
 
 class MultiColumnAngleFileError(ValueError):
@@ -579,7 +580,7 @@ def parse_relion5_star_data(
     -------
     tomogram_voxel_size, tilt_angles, dose_accumulation,
     ctf_params, defocus_handedness, relion_metadata:
-        tuple[float, list[float, ...], list[float, ...], list[dict, ...], int]
+        tuple[float, list[float, ...], list[float, ...], list[CtfData, ...], int, dict]
     """
     tomogram_id = tomogram_path.stem
     tomograms_star_data = starfile.read(tomograms_star_path)
@@ -627,14 +628,14 @@ def parse_relion5_star_data(
     defocus_handedness = int(tomogram_meta_data["rlnTomoHand"])
 
     ctf_params = [
-        {
-            "defocus": defocus * 1e-10,
-            "amplitude_contrast": tomogram_meta_data["rlnAmplitudeContrast"],
-            "voltage": tomogram_meta_data["rlnVoltage"] * 1e3,
-            "spherical_aberration": tomogram_meta_data["rlnSphericalAberration"] * 1e-3,
-            "flip_phase": phase_flip_correction,
-            "phase_shift_deg": phase_shift,  # RELION5 does not seem to store this
-        }
+        CtfData(
+            defocus=defocus * 1e-10,
+            amplitude_contrast=tomogram_meta_data["rlnAmplitudeContrast"],
+            voltage=tomogram_meta_data["rlnVoltage"] * 1e3,
+            spherical_aberration=tomogram_meta_data["rlnSphericalAberration"] * 1e-3,
+            flip_phase=phase_flip_correction,
+            phase_shift_deg=phase_shift,  # RELION5 does not seem to store this
+        )
         for defocus in (
             tilt_series_star_data.rlnDefocusV + tilt_series_star_data.rlnDefocusU
         )
@@ -670,7 +671,7 @@ def parse_warp_xml_data(
     Returns
     -------
     tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params:
-        tuple[float, list[float], list[float], list[dict]]
+        tuple[float, list[float], list[float], list[CtfData, ...]]
     """
     # First determine the tomogram_voxel_size from the tomogram_path
     tomogram_meta = read_mrc_meta_data(tomogram_path)
@@ -715,14 +716,14 @@ def parse_warp_xml_data(
     flattened_tilt_dose = _flatten(tilt_dose)
 
     ctf_params = [
-        {
-            "defocus": defocus * 1e-10,
-            "amplitude_contrast": amplitude_contrast,
-            "voltage": voltage * 1e3,
-            "spherical_aberration": spherical_aberration * 1e-3,
-            "flip_phase": phase_flip_correction,
-            "phase_shift_deg": phase_shift,
-        }
+        CtfData(
+            defocus=defocus * 1e-10,
+            amplitude_contrast=amplitude_contrast,
+            voltage=voltage * 1e3,
+            spherical_aberration=spherical_aberration * 1e-3,
+            flip_phase=phase_flip_correction,
+            phase_shift_deg=phase_shift,
+        )
         for defocus in defocus_values
     ]
 
