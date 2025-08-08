@@ -1,5 +1,6 @@
 import unittest
 import pathlib
+from dataclasses import asdict
 import numpy as np
 import voltools as vt
 import mrcfile
@@ -13,6 +14,7 @@ from pytom_tm.io import (
     UnequalSpacingError,
     parse_relion5_star_data,
 )
+from pytom_tm.dataclass import CtfData
 from pytom_tm.extract import extract_particles
 from testing_utils import (
     CTF_PARAMS,
@@ -444,17 +446,18 @@ class TestTMJob(unittest.TestCase):
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=False)
         self.assertIn("Estimating whitening filter...", "".join(cm.output))
 
-        # turn current job into 0.6.0 job with ctf params
-        job.pytom_tm_version_number = "0.6.0"
+        # turn current job into 0.10.0 job with ctf dict instead of dataclass
         job.ctf_data = []
         for ctf in CTF_PARAMS:
-            job.ctf_data.append(ctf.copy())
+            job.ctf_data.append(asdict(ctf))
             del job.ctf_data[-1]["phase_shift_deg"]
         job.write_to_json(TEST_JOB_OLD_VERSION)
 
-        # test backward compatibility with the update to 0.6.1
+        # test backward compatibility with the update to 0.11.0
         job = load_json_to_tmjob(TEST_JOB_OLD_VERSION)
-        self.assertEqual(job.ctf_data[0]["phase_shift_deg"], 0.0)
+        for ctf in job.ctf_data:
+            self.assertIs(type(ctf), CtfData)
+            self.assertEqual(ctf.phase_shift_deg, 0.0)
 
     def test_custom_angular_search(self):
         with TemporaryDirectory() as data_dir:

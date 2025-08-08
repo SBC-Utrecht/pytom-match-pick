@@ -19,6 +19,7 @@ from pytom_tm.weights import (
 )
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm.json import CustomJSONEncoder, CustomJSONDecoder
+from pytom_tm.dataclass import CtfData
 from pytom_tm import __version__ as PYTOM_TM_VERSION
 
 
@@ -43,6 +44,11 @@ def load_json_to_tmjob(
     """
     with open(file_name) as fstream:
         data = json.load(fstream, cls=CustomJSONDecoder)
+
+    # Deal with lading ctfdata that was a stored before 0.11.0
+    ctf_data = data.get("ctf_data", None)
+    if ctf_data is not None and type(ctf_data[0]) is dict:
+        ctf_data = [CtfData(**ctf) for ctf in ctf_data]
 
     # wrangle dtypes
     output_dtype = data.get("output_dtype", "float32")
@@ -82,13 +88,6 @@ def load_json_to_tmjob(
         output_dtype=output_dtype,
         metadata=data.get("metadata", {}),
     )
-    # if the file originates from an old version set the phase shift for compatibility
-    if (
-        version.parse(job.pytom_tm_version_number) < version.parse("0.6.1")
-        and job.ctf_data is not None
-    ):
-        for tilt in job.ctf_data:
-            tilt["phase_shift_deg"] = 0.0
     job.whole_start = data["whole_start"]
     job.sub_start = data["sub_start"]
     job.sub_step = data["sub_step"]
