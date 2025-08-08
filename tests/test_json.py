@@ -22,7 +22,7 @@ class TestJSON(unittest.TestCase):
             _ = json.dumps(test1, cls=CustomJSONEncoder)
 
         test2 = Test2()
-        out = json.dumpt(test2, cls=CustomJSONEncoder)
+        out = json.dumps(test2, cls=CustomJSONEncoder)
         self.assertIn("__class__", out)
         self.assertIn("Test2", out["__class__"])
         self.assertIn(out["__class__"], JsonSerializable._registry)
