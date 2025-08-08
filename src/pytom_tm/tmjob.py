@@ -18,6 +18,8 @@ from pytom_tm.weights import (
     create_gaussian_band_pass,
 )
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
+from pytom_tm.json import CustomJSONEncoder, CustomJSONDecoder
+from pytom_tm.dataclass import CtfData
 from pytom_tm import __version__ as PYTOM_TM_VERSION
 
 
@@ -41,7 +43,12 @@ def load_json_to_tmjob(
         initialized TMJob
     """
     with open(file_name) as fstream:
-        data = json.load(fstream)
+        data = json.load(fstream, cls=CustomJSONDecoder)
+
+    # Deal with lading ctfdata that was a stored before 0.11.0
+    ctf_data = data.get("ctf_data", None)
+    if ctf_data is not None and type(ctf_data[0]) is dict:
+        ctf_data = [CtfData(**ctf) for ctf in ctf_data]
 
     # wrangle dtypes
     output_dtype = data.get("output_dtype", "float32")
@@ -68,7 +75,7 @@ def load_json_to_tmjob(
         # Use 'get' for backwards compatibility
         high_pass=data.get("high_pass", None),
         dose_accumulation=data.get("dose_accumulation", None),
-        ctf_data=data.get("ctf_data", None),
+        ctf_data=ctf_data,
         whiten_spectrum=data.get("whiten_spectrum", False),
         rotational_symmetry=data.get("rotational_symmetry", 1),
         # if version number is not in the .json, it must be 0.3.0 or older
@@ -81,13 +88,6 @@ def load_json_to_tmjob(
         output_dtype=output_dtype,
         metadata=data.get("metadata", {}),
     )
-    # if the file originates from an old version set the phase shift for compatibility
-    if (
-        version.parse(job.pytom_tm_version_number) < version.parse("0.6.1")
-        and job.ctf_data is not None
-    ):
-        for tilt in job.ctf_data:
-            tilt["phase_shift_deg"] = 0.0
     job.whole_start = data["whole_start"]
     job.sub_start = data["sub_start"]
     job.sub_step = data["sub_step"]
@@ -276,7 +276,7 @@ class TMJob:
         low_pass: float | None = None,
         high_pass: float | None = None,
         dose_accumulation: list[float, ...] | None = None,
-        ctf_data: list[dict, ...] | None = None,
+        ctf_data: list[CtfData, ...] | None = None,
         whiten_spectrum: bool = False,
         rotational_symmetry: int = 1,
         pytom_tm_version_number: str = PYTOM_TM_VERSION,
@@ -332,9 +332,9 @@ class TMJob:
             template
         dose_accumulation: Optional[list[float, ...]], default None
             list with dose accumulation per tilt image
-        ctf_data: Optional[list[dict, ...]], default None
+        ctf_data: Optional[list[CtfData, ...]], default None
             list of dictionaries with CTF parameters per tilt image, see
-            pytom_tm.weight.create_ctf() for parameter definition
+            pytom_tm.dataclass.CtfData for parameter definitions
         whiten_spectrum: bool, default False
             whether to apply spectrum whitening
         rotational_symmetry: int, default 1
@@ -615,7 +615,7 @@ class TMJob:
         # wrangle dtype conversion
         d["output_dtype"] = str(np.dtype(d["output_dtype"]))
         with open(file_name, "w") as fstream:
-            json.dump(d, fstream, indent=4)
+            json.dump(d, fstream, indent=4, cls=CustomJSONEncoder)
 
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
         """Split the search into sub_jobs by dividing the rotations. Sub jobs will
@@ -918,14 +918,14 @@ class TMJob:
                     invert_handedness=self.defocus_handedness < 0,
                 )
                 for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
-                    ctf["defocus"] = ctf["defocus"] + defocus_shift * 1e-10
+                    ctf.defocus = ctf.defocus + defocus_shift * 1e-10
                 logging.debug(
                     "Patch center (nr. of voxels): "
                     f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
                 )
                 logging.debug(
                     "Defocus values (um): "
-                    f"{[round(ctf['defocus'] * 1e6, 2) for ctf in self.ctf_data]}",
+                    f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ctf_data]}",
                 )
 
             # for the tomogram a binary wedge is generated to explicitly set the missing

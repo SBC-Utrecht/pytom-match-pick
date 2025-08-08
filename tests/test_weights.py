@@ -9,6 +9,7 @@ from pytom_tm.weights import (
     power_spectrum_profile,
     profile_to_weighting,
 )
+from pytom_tm.dataclass import CtfData
 from testing_utils import TILT_ANGLES, ACCUMULATED_DOSE, CTF_PARAMS
 
 
@@ -289,16 +290,17 @@ class TestWeights(unittest.TestCase):
         )
 
     def test_ctf(self):
-        ctf_raw = create_ctf(
-            self.volume_shape_even, self.voxel_size * 1e-10, 3e-6, 0.08, 300e3, 2.7e-3
+        ctf_data = CtfData(
+            defocus=3e-6,
+            amplitude_contrast=0.08,
+            voltage=300e3,
+            spherical_aberration=2.7e-3,
         )
+        ctf_raw = create_ctf(self.volume_shape_even, self.voxel_size * 1e-10, ctf_data)
         ctf_cut = create_ctf(
             self.volume_shape_even,
             self.voxel_size * 1e-10,
-            3e-6,
-            0.08,
-            300e3,
-            2.7e-3,
+            ctf_data,
             cut_after_first_zero=True,
         )
         self.assertEqual(

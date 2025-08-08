@@ -613,6 +613,7 @@ def extract_candidates(argv=None):
 def match_template(argv=None):
     from pytom_tm.tmjob import TMJob
     from pytom_tm.parallel import run_job_parallel
+    from pytom_tm.dataclass import CtfData
 
     argv = _parse_argv(argv)
 
@@ -1016,14 +1017,14 @@ def match_template(argv=None):
                 "spherical-abberation or voltage) is/are missing."
             )
         ctf_params = [
-            {
-                "defocus": defocus * 1e-6,
-                "amplitude_contrast": args.amplitude_contrast,
-                "voltage": args.voltage * 1e3,
-                "spherical_aberration": args.spherical_aberration * 1e-3,
-                "flip_phase": phase_flip_correction,
-                "phase_shift_deg": args.phase_shift,
-            }
+            CtfData(
+                defocus=defocus * 1e-6,
+                amplitude_contrast=args.amplitude_contrast,
+                voltage=args.voltage * 1e3,
+                spherical_aberration=args.spherical_aberration * 1e-3,
+                flip_phase=phase_flip_correction,
+                phase_shift_deg=args.phase_shift,
+            )
             for defocus in args.defocus
         ]
 
