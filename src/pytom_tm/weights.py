@@ -640,20 +640,8 @@ def create_ctf(
         dimensions of volume to create ctf in
     pixel_size: float
         pixel size for ctf in m
-    defocus: float
-        defocus for ctf in m
-    amplitude_contrast: float
-        the fraction of amplitude contrast in the ctf
-    voltage: float
-        acceleration voltage of the microscope in eV
-    spherical_aberration: float
-        spherical aberration in m
-    flip_phase: bool, default False
-        make ctf fully positive/negative to imitate ctf correction by phase flipping
-    phase_shift_deg: float, default .0
-        additional phase shift to model phase plates, similar to
-        `https://github.com/dtegunov/tom_deconv` except the ctf defintion in tom
-        produces the inverse curve of what we have here
+    ctf_data: CtfData
+        The ctf data for a tilt, see pytom_tm.dataclass.CtfData for definitions
     cut_after_first_zero: bool, default False
         whether to cut ctf after first zero crossing
 

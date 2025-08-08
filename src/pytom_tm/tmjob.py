@@ -276,7 +276,7 @@ class TMJob:
         low_pass: float | None = None,
         high_pass: float | None = None,
         dose_accumulation: list[float, ...] | None = None,
-        ctf_data: list[dict, ...] | None = None,
+        ctf_data: list[CtfData, ...] | None = None,
         whiten_spectrum: bool = False,
         rotational_symmetry: int = 1,
         pytom_tm_version_number: str = PYTOM_TM_VERSION,
@@ -332,9 +332,9 @@ class TMJob:
             template
         dose_accumulation: Optional[list[float, ...]], default None
             list with dose accumulation per tilt image
-        ctf_data: Optional[list[dict, ...]], default None
+        ctf_data: Optional[list[CtfData, ...]], default None
             list of dictionaries with CTF parameters per tilt image, see
-            pytom_tm.weight.create_ctf() for parameter definition
+            pytom_tm.dataclass.CtfData for parameter definitions
         whiten_spectrum: bool, default False
             whether to apply spectrum whitening
         rotational_symmetry: int, default 1
