@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pytom_tm.json import JsonSerializable
-import copy
 
 
 @dataclass(kw_only=True)
@@ -29,9 +28,6 @@ class CtfData(JsonSerializable):
     spherical_aberration: float
     phase_shift_deg: float = 0.0
     flip_phase: bool = False
-
-    def copy(self):
-        return copy.deepcopy(self)
 
 
 # @dataclass(kw_only=True)
