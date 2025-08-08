@@ -455,7 +455,8 @@ class TestTMJob(unittest.TestCase):
         load_job = load_json_to_tmjob(json_location)
         for ctf1, ctf2 in zip(job.ctf_data, load_job.ctf_data):
             self.assertIs(type(ctf1), type(ctf2))
-            self.assertEq(ctf1, ctf2)
+            self.assertIs(type(ctf1), CtfData)
+            self.assertEqual(ctf1, ctf2)
 
         # turn current job into 0.10.0 job with ctf dict instead of dataclass
         job.ctf_data = []
