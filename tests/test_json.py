@@ -18,7 +18,7 @@ class TestJSON(unittest.TestCase):
 
         # Make sure the Encoder raises as expected
         test1 = Test1()
-        with self.assertRaisesRegex(ValueError, "Test1"):
+        with self.assertRaisesRegex(TypeError, "Test1"):
             _ = json.dumps(test1, cls=CustomJSONEncoder)
 
         test2 = Test2()
