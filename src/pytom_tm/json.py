@@ -4,6 +4,13 @@ from typing import Any, Type
 
 
 class JsonSerializable:
+    """Mixin class to make a class JSON serializable together with the custom Encoder
+    and Decoder defined in this file.
+
+    It uses __init_subclass__, which is called whenever a subclass is
+    defined, so we can pre-register which classes we expect to load in this way
+    """
+
     _registry: dict[str, Type["JsonSerializable"]] = {}
 
     def __init_subclass__(cls, **kwargs):
