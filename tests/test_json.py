@@ -11,10 +11,12 @@ class TestJSON(unittest.TestCase):
 
     def test_custom_encoder(self):
         class Test1:
-            test = 12
+            def __init__(self):
+                self.test = 12
 
         class Test2(JsonSerializable):
-            test = 42
+            def __init__(self):
+                self.test = 42
 
         # Make sure the Encoder raises as expected
         test1 = Test1()
