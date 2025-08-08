@@ -75,7 +75,7 @@ def load_json_to_tmjob(
         # Use 'get' for backwards compatibility
         high_pass=data.get("high_pass", None),
         dose_accumulation=data.get("dose_accumulation", None),
-        ctf_data=data.get("ctf_data", None),
+        ctf_data=ctf_data,
         whiten_spectrum=data.get("whiten_spectrum", False),
         rotational_symmetry=data.get("rotational_symmetry", 1),
         # if version number is not in the .json, it must be 0.3.0 or older
