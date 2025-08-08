@@ -1,5 +1,6 @@
 import unittest
 import pathlib
+import copy
 from dataclasses import asdict
 import numpy as np
 import voltools as vt
@@ -445,6 +446,16 @@ class TestTMJob(unittest.TestCase):
         with self.assertLogs(level="INFO") as cm:
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=False)
         self.assertIn("Estimating whitening filter...", "".join(cm.output))
+
+        # test dataclass loading
+        job.ctf_data = [copy.deepcopy(ctf) for ctf in CTF_PARAMS]
+        json_location = TEST_DATA_DIR.joinpath("job_dataclass.json")
+        job.write_to_json(json_location)
+
+        load_job = load_json_to_tmjob(json_location)
+        for ctf1, ctf2 in zip(job.ctf_data, load_job.ctf_data):
+            self.assertIs(type(ctf1), type(ctf2))
+            self.assertEq(ctf1, ctf2)
 
         # turn current job into 0.10.0 job with ctf dict instead of dataclass
         job.ctf_data = []
