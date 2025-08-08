@@ -926,7 +926,7 @@ class TMJob:
                 )
                 logging.debug(
                     "Defocus values (um): "
-                    f"{[round(ctf['defocus'] * 1e6, 2) for ctf in self.ctf_data]}",
+                    f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ctf_data]}",
                 )
 
             # for the tomogram a binary wedge is generated to explicitly set the missing
