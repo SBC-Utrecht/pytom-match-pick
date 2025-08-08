@@ -918,7 +918,7 @@ class TMJob:
                     invert_handedness=self.defocus_handedness < 0,
                 )
                 for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
-                    ctf["defocus"] = ctf["defocus"] + defocus_shift * 1e-10
+                    ctf.defocus = ctf.defocus + defocus_shift * 1e-10
                 logging.debug(
                     "Patch center (nr. of voxels): "
                     f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
