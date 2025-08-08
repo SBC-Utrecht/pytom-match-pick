@@ -18,6 +18,7 @@ from pytom_tm.weights import (
     create_gaussian_band_pass,
 )
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
+from pytom_tm.json import CustomJSONEncoder, CustomJSONDecoder
 from pytom_tm import __version__ as PYTOM_TM_VERSION
 
 
@@ -41,7 +42,7 @@ def load_json_to_tmjob(
         initialized TMJob
     """
     with open(file_name) as fstream:
-        data = json.load(fstream)
+        data = json.load(fstream, cls=CustomJSONDecoder)
 
     # wrangle dtypes
     output_dtype = data.get("output_dtype", "float32")
@@ -615,7 +616,7 @@ class TMJob:
         # wrangle dtype conversion
         d["output_dtype"] = str(np.dtype(d["output_dtype"]))
         with open(file_name, "w") as fstream:
-            json.dump(d, fstream, indent=4)
+            json.dump(d, fstream, indent=4, cls=CustomJSONEncoder)
 
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
         """Split the search into sub_jobs by dividing the rotations. Sub jobs will
