@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import starfile
 from pytom_tm.io import read_defocus_file, read_dose_file, read_tlt_file
-
+from pytom_tm.dataclass import CtfData
 
 # Dose and ctf params for tomo_104
 cs = 2.7
@@ -17,13 +17,13 @@ defocus_data = read_defocus_file(
 CTF_PARAMS = []
 for d in defocus_data:
     CTF_PARAMS.append(
-        {
-            "defocus": d,
-            "amplitude_contrast": amp,
-            "voltage": vol,
-            "spherical_aberration": cs,
-            "phase_shift_deg": 0.0,
-        }
+        CtfData(
+            defocus=d,
+            amplitude_contrast=amp,
+            voltage=vol,
+            spherical_aberration=cs,
+            phase_shift_deg=0.0,
+        )
     )
 
 ACCUMULATED_DOSE = read_dose_file(

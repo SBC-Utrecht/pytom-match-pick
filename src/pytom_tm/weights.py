@@ -3,6 +3,7 @@ import numpy.typing as npt
 import scipy.ndimage as ndimage
 import voltools as vt
 from pytom_tm.io import UnequalSpacingError
+from pytom_tm.dataclass import CtfData
 from itertools import pairwise
 
 
@@ -266,7 +267,7 @@ def create_wedge(
     high_pass: float | None = None,
     tilt_weighting: bool = False,
     accumulated_dose_per_tilt: list[float, ...] | None = None,
-    ctf_params_per_tilt: list[dict] | None = None,
+    ctf_params_per_tilt: list[CtfData] | None = None,
 ) -> npt.NDArray[float]:
     """This function returns a wedge volume that is either symmetric or asymmetric
     depending on wedge angle input.
@@ -291,9 +292,8 @@ def create_wedge(
         apply tilt weighting
     accumulated_dose_per_tilt: Optional[list[float, ...]], default None
         accumulated dose for each tilt for dose weighting
-    ctf_params_per_tilt: Optional[list[dict]], default None
-        ctf parameters for each tilt (see _create_tilt_weighted_wedge() for dict
-        specification)
+    ctf_params_per_tilt: Optional[list[CtfData, ...]], default None
+        ctf parameters for each tilt (see CtfData data class for specification)
 
     Returns
     -------
@@ -355,7 +355,7 @@ def create_wedge(
             wedge *= create_ctf(
                 shape,
                 voxel_size * 1e-10,
-                **ctf_params,
+                ctf_params,
             )
 
     if not (low_pass is None and high_pass is None):
@@ -485,7 +485,7 @@ def _create_tilt_weighted_wedge(
     cut_off_radius: float,
     pixel_size_angstrom: float,
     accumulated_dose_per_tilt: list[float, ...] | None = None,
-    ctf_params_per_tilt: list[dict] | None = None,
+    ctf_params_per_tilt: list[CtfData] | None = None,
 ) -> npt.NDArray[float]:
     """
     The following B-factor heuristic is used (as mentioned in the M paper, and
@@ -513,14 +513,8 @@ def _create_tilt_weighted_wedge(
         the pixel size as a value in Å
     accumulated_dose_per_tilt: list[float, ...], default None
         the accumulated dose in e− Å−2
-    ctf_params_per_tilt: list[dict, ...], default None
-        the ctf parameters per tilt angle, list of dicts
-        where each dict has the following keys:
-        - 'defocus'; in um
-        - 'amplitude'; fraction of amplitude contrast between 0 and 1
-        - 'voltage'; in keV
-        - 'cs'; spherical abberation in mm
-        - 'phase_shift_deg'; phase shift for phase plates in deg
+    ctf_params_per_tilt: list[CtfData, ...], default None
+        the ctf parameters per tilt angle, list of CtfData data classes
 
     Returns
     -------
@@ -577,7 +571,7 @@ def _create_tilt_weighted_wedge(
                 create_ctf(
                     (image_size,) * 2,
                     pixel_size_angstrom * 1e-10,
-                    **ctf_params_per_tilt[i],
+                    ctf_params_per_tilt[i],
                 ),
                 axes=0,
             )
@@ -635,13 +629,8 @@ def _create_tilt_weighted_wedge(
 def create_ctf(
     shape: tuple[int, int, int] | tuple[int, int],
     pixel_size: float,
-    defocus: float,
-    amplitude_contrast: float,
-    voltage: float,
-    spherical_aberration: float,
+    ctf_data: CtfData,
     cut_after_first_zero: bool = False,
-    flip_phase: bool = False,
-    phase_shift_deg: float = 0.0,
 ) -> npt.NDArray[float]:
     """Create a CTF in a 3D volume in reduced format.
 
@@ -651,22 +640,10 @@ def create_ctf(
         dimensions of volume to create ctf in
     pixel_size: float
         pixel size for ctf in m
-    defocus: float
-        defocus for ctf in m
-    amplitude_contrast: float
-        the fraction of amplitude contrast in the ctf
-    voltage: float
-        acceleration voltage of the microscope in eV
-    spherical_aberration: float
-        spherical aberration in m
+    ctf_data: CtfData
+        The ctf data for a tilt, see pytom_tm.dataclass.CtfData for definitions
     cut_after_first_zero: bool, default False
         whether to cut ctf after first zero crossing
-    flip_phase: bool, default False
-        make ctf fully positive/negative to imitate ctf correction by phase flipping
-    phase_shift_deg: float, default .0
-        additional phase shift to model phase plates, similar to
-        `https://github.com/dtegunov/tom_deconv` except the ctf defintion in tom
-        produces the inverse curve of what we have here
 
     Returns
     -------
@@ -675,25 +652,27 @@ def create_ctf(
     """
     k = radial_reduced_grid(shape) / (2 * pixel_size)  # frequencies in fourier space
 
-    _lambda = wavelength_ev2m(voltage)
+    _lambda = wavelength_ev2m(ctf_data.voltage)
 
     # phase contrast transfer
     chi = (
-        np.pi * _lambda * defocus * k**2
-        - 0.5 * np.pi * spherical_aberration * _lambda**3 * k**4
+        np.pi * _lambda * ctf_data.defocus * k**2
+        - 0.5 * np.pi * ctf_data.spherical_aberration * _lambda**3 * k**4
     )
     # amplitude contrast term
-    tan_term = np.arctan(amplitude_contrast / np.sqrt(1 - amplitude_contrast**2))
+    tan_term = np.arctan(
+        ctf_data.amplitude_contrast / np.sqrt(1 - ctf_data.amplitude_contrast**2)
+    )
 
     # determine the ctf
-    ctf = -np.sin(chi + tan_term + np.deg2rad(phase_shift_deg))
+    ctf = -np.sin(chi + tan_term + np.deg2rad(ctf_data.phase_shift_deg))
 
     if cut_after_first_zero:  # find frequency to cut first zero
 
         def chi_1d(q):
             return (
-                np.pi * _lambda * defocus * q**2
-                - 0.5 * np.pi * spherical_aberration * _lambda**3 * q**4
+                np.pi * _lambda * ctf_data.defocus * q**2
+                - 0.5 * np.pi * ctf_data.spherical_aberration * _lambda**3 * q**4
             )
 
         def ctf_1d(q):
@@ -707,18 +686,20 @@ def create_ctf(
         # for overfocus the first crossing needs to be skipped,
         # for example see: Yonekura et al. 2006 JSB
         k_cutoff = (
-            k_range[zero_crossings[0]] if defocus > 0 else k_range[zero_crossings[1]]
+            k_range[zero_crossings[0]]
+            if ctf_data.defocus > 0
+            else k_range[zero_crossings[1]]
         )
 
         # filter the ctf with the cutoff frequency
         ctf[k > k_cutoff] = 0
 
-    if flip_phase:  # take absolute, ensures matching contrast
+    if ctf_data.flip_phase:  # take absolute, ensures matching contrast
         ctf = np.abs(ctf)
     else:  # multiply the ctf with -1 if we have overfocus, this allows the user to
         # always match the contrast of the input template with the contrast of the
         # tomogram: if the tomogram is black the reference should be black.
-        ctf *= -1 if defocus > 0 else 1
+        ctf *= -1 if ctf_data.defocus > 0 else 1
 
     return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
 
