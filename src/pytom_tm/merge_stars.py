@@ -43,7 +43,7 @@ def merge_stars(
             return out
         # Assuming dict here
         if not relion5_compat:
-            logging.warn(
+            logging.warning(
                 f"{f} seems to be a multi-data-block starfile, will only "
                 "concatenate the 'particles' data block "
             )
