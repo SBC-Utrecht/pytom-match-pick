@@ -114,3 +114,19 @@ class RelionTiltSeriesMetaData(TiltSeriesMetaData):
     binning: float
     tilt_series_pixel_size: float
     per_tilt_weighting: bool = True
+
+
+# TODO: possible TomogramMetaData dataclass
+# @dataclass(kw_only=True)
+# class TomogramMetaData(JsonSerializable):
+#    """A dataclass for to keep all the meta-data for the tomogram together
+#
+#    """
+#    path: pathlib.Path
+#    voxel_size: float | None = None
+#    ts_metadata: TiltSeriesMetaData = None
+#    mask: pathlib.Path | None = None
+#    #TODO: add mrc header info??
+#
+#    def __post_init__(self):
+#        # Set and check the voxel size if not given

@@ -4,6 +4,7 @@ import pathlib
 import logging
 import numpy as np
 import starfile
+from pytom_tm.dataclass import TiltSeriesMetaData
 from pytom_tm.extract import extract_particles
 from pytom_tm.io import (
     LargerThanZero,
@@ -985,9 +986,6 @@ def match_template(argv=None):
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
 
-    # set some defaults
-    metadata = {}
-
     # set correct tilt angles
     if args.tilt_angles_first_column is not None:
         if args.tilt_angles is not None:
@@ -1003,8 +1001,8 @@ def match_template(argv=None):
     if args.tomogram_ctf_model is not None and args.tomogram_ctf_model == "phase-flip":
         phase_flip_correction = True
 
-    # combine ctf values to ctf_params list of dicts
-    ctf_params = None
+    # combine ctf values to ctf_date list of CtfData
+    ctf_data = None
     if args.defocus is not None:
         if (
             args.amplitude_contrast is None
@@ -1016,7 +1014,7 @@ def match_template(argv=None):
                 "the required parameters (amplitude-contrast, "
                 "spherical-abberation or voltage) is/are missing."
             )
-        ctf_params = [
+        ctf_data = [
             CtfData(
                 defocus=defocus * 1e-6,
                 amplitude_contrast=args.amplitude_contrast,
@@ -1029,30 +1027,21 @@ def match_template(argv=None):
         ]
 
     if args.relion5_tomograms_star is not None:
-        (
-            voxel_size,
-            tilt_angles,
-            dose_accumulation,
-            ctf_params,
-            defocus_handedness,
-            rel_metadata,
-        ) = parse_relion5_star_data(
+        ts_metadata = parse_relion5_star_data(
             args.relion5_tomograms_star,
             args.tomogram,
             phase_flip_correction=phase_flip_correction,
             phase_shift=args.phase_shift,
         )
-        per_tilt_weighting = True
-        metadata.update(rel_metadata)
 
     elif args.warp_xml_file is not None:
-        voxel_size, tilt_angles, dose_accumulation, ctf_params = parse_warp_xml_data(
+        ts_metadata = parse_warp_xml_data(
             args.warp_xml_file,
             args.tomogram,
             phase_flip_correction=phase_flip_correction,
         )
-        defocus_handedness = args.defocus_handedness
-        per_tilt_weighting = True
+        # Replace is needed here to rerun the sanity checking
+        ts_metadata = ts_metadata.replace(defocus_handedness=args.defocus_handedness)
 
     else:
         if tilt_angles is None:
@@ -1060,10 +1049,14 @@ def match_template(argv=None):
                 "Without tilt angles the missing wedge cannot be calculated. A "
                 "minimal run requires tilt angles."
             )
-        voxel_size = args.voxel_size_angstrom
-        defocus_handedness = args.defocus_handedness
-        dose_accumulation = args.dose_accumulation
-        per_tilt_weighting = args.per_tilt_weighting
+        ts_metadata = TiltSeriesMetaData(
+            voxel_size=args.voxel_size_angstrom,
+            tilt_angles=tilt_angles,
+            ctf_data=ctf_data,
+            dose_accumulation=args.dose_accumulation,
+            defocus_handedness=args.defocus_handedness,
+            per_tilt_weighting=args.per_tilt_weighting,
+        )
 
     if args.angular_search is None and args.particle_diameter is None:
         raise ValueError(
@@ -1078,29 +1071,23 @@ def match_template(argv=None):
         args.template,
         args.mask,
         args.destination,
+        ts_metadata=ts_metadata,
         angle_increment=args.angular_search,
         mask_is_spherical=True
         if args.non_spherical_mask is None
         else (not args.non_spherical_mask),
-        tilt_angles=tilt_angles,
-        tilt_weighting=per_tilt_weighting,
         search_x=args.search_x,
         search_y=args.search_y,
         search_z=args.search_z,
         tomogram_mask=args.tomogram_mask,
-        voxel_size=voxel_size,
         low_pass=args.low_pass,
         high_pass=args.high_pass,
-        dose_accumulation=dose_accumulation,
-        ctf_data=ctf_params,
         whiten_spectrum=args.spectral_whitening,
         rotational_symmetry=args.z_axis_rotational_symmetry,
         particle_diameter=args.particle_diameter,
         random_phase_correction=args.random_phase_correction,
         rng_seed=args.rng_seed,
-        defocus_handedness=defocus_handedness,
         output_dtype=np.float16 if args.half_precision else np.float32,
-        metadata=metadata,
     )
 
     score_volume, angle_volume = run_job_parallel(

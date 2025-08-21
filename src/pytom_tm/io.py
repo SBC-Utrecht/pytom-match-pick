@@ -8,7 +8,7 @@ import starfile
 from contextlib import contextmanager
 from operator import attrgetter
 from lxml import etree
-from pytom_tm.dataclass import CtfData
+from pytom_tm.dataclass import CtfData, WarpTiltSeriesMetaData, RelionTiltSeriesMetaData
 
 
 class MultiColumnAngleFileError(ValueError):
@@ -562,7 +562,7 @@ def parse_relion5_star_data(
     tomogram_path: pathlib.Path,
     phase_flip_correction: bool = False,
     phase_shift: float = 0.0,
-) -> tuple[float, list[float, ...], list[float, ...], list[dict, ...], int, dict]:
+) -> RelionTiltSeriesMetaData:
     """Read RELION5 metadata from a project directory.
 
     Parameters
@@ -578,14 +578,10 @@ def parse_relion5_star_data(
 
     Returns
     -------
-    tomogram_voxel_size, tilt_angles, dose_accumulation,
-    ctf_params, defocus_handedness, relion_metadata:
-        tuple[float, list[float, ...], list[float, ...], list[CtfData, ...], int, dict]
+    RelionTiltSeriesMetaData
     """
     tomogram_id = tomogram_path.stem
     tomograms_star_data = starfile.read(tomograms_star_path)
-
-    relion_metadata = {}
 
     # match the tomo_id and check if viable
     matches = [
@@ -622,12 +618,12 @@ def parse_relion5_star_data(
         tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
         * tomogram_meta_data["rlnTomoTomogramBinning"]
     )
-    relion_metadata["relion5_binning"] = tomogram_meta_data["rlnTomoTomogramBinning"]
-    relion_metadata["relion5_ts_ps"] = tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
+    binning = tomogram_meta_data["rlnTomoTomogramBinning"]
+    tilt_series_pixel_size = tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
 
     defocus_handedness = int(tomogram_meta_data["rlnTomoHand"])
 
-    ctf_params = [
+    ctf_data = [
         CtfData(
             defocus=defocus * 1e-10,
             amplitude_contrast=tomogram_meta_data["rlnAmplitudeContrast"],
@@ -641,22 +637,23 @@ def parse_relion5_star_data(
         )
         / 2
     ]
-
-    return (
-        tomogram_voxel_size,
-        tilt_angles,
-        dose_accumulation,
-        ctf_params,
-        defocus_handedness,
-        relion_metadata,
+    ts_metadata = RelionTiltSeriesMetaData(
+        voxel_size=tomogram_voxel_size,
+        tilt_angles=tilt_angles,
+        ctf_data=ctf_data,
+        dose_accumulation=dose_accumulation,
+        defocus_handedness=defocus_handedness,
+        binning=binning,
+        tilt_series_pixel_size=tilt_series_pixel_size,
     )
+    return ts_metadata
 
 
 def parse_warp_xml_data(
     warp_xml_path: pathlib.Path,
     tomogram_path: pathlib.Path,
     phase_flip_correction: bool = False,
-) -> tuple[float, list[float], list[float], list[dict[str, float | bool | float]]]:
+) -> WarpTiltSeriesMetaData:
     """Read WarpTools metadata from a project directory.
 
     Parameters
@@ -670,8 +667,7 @@ def parse_warp_xml_data(
 
     Returns
     -------
-    tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params:
-        tuple[float, list[float], list[float], list[CtfData, ...]]
+    WarpTiltSeriesMetaData
     """
     # First determine the tomogram_voxel_size from the tomogram_path
     tomogram_meta = read_mrc_meta_data(tomogram_path)
@@ -715,7 +711,7 @@ def parse_warp_xml_data(
     flattened_tilt_angles = _flatten(tilt_angles)
     flattened_tilt_dose = _flatten(tilt_dose)
 
-    ctf_params = [
+    ctf_data = [
         CtfData(
             defocus=defocus * 1e-10,
             amplitude_contrast=amplitude_contrast,
@@ -726,10 +722,11 @@ def parse_warp_xml_data(
         )
         for defocus in defocus_values
     ]
-
-    return (
-        tomogram_voxel_size,
-        flattened_tilt_angles,
-        flattened_tilt_dose,
-        ctf_params,
+    ts_metadata = WarpTiltSeriesMetaData(
+        voxel_size=tomogram_voxel_size,
+        tilt_angles=flattened_tilt_angles,
+        ctf_data=ctf_data,
+        dose_accumulation=flattened_tilt_dose,
     )
+
+    return ts_metadata
