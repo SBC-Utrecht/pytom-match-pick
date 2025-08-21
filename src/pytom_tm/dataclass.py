@@ -84,8 +84,33 @@ class TiltSeriesMetaData(JsonSerializable):
                 f"angles ({n_angles}). Got {len(self.dose_accumulation)} instead."
             )
 
-        if self.defocus_handedness not in (-1, 0, 1):
+        if self.defocus_handedness not in {-1, 0, 1}:
             raise ValueError(
                 "Got an invalid defocus handedness, "
                 f"expected -1, 0, or 1. Got: {self.defocus_handedness}"
             )
+
+
+@dataclass(kw_only=True)
+class WarpTiltSeriesMetaData(TiltSeriesMetaData):
+    """Extension of TiltSeriesMetaData that has per_tilt_weighting default as True"""
+
+    per_tilt_weighting: bool = True
+
+
+@dataclass(kw_only=True)
+class RelionTiltSeriesMetaData(TiltSeriesMetaData):
+    """Extension of the TiltSeriesMetaData that has per_tilt_weighting default as True
+    and has the following extra attributes
+
+    Attributes
+    ----------
+    binning: float
+        binning of the tomogram
+    tilt_series_pixel_size: float
+        pixel size of the original tilt series in Å
+    """
+
+    binning: float
+    tilt_series_pixel_size: float
+    per_tilt_weighting: bool = True
