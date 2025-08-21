@@ -1027,7 +1027,7 @@ def match_template(argv=None):
         ]
 
     if args.relion5_tomograms_star is not None:
-        ts_metadata = parse_relion5_star_data(
+        voxel_size, ts_metadata = parse_relion5_star_data(
             args.relion5_tomograms_star,
             args.tomogram,
             phase_flip_correction=phase_flip_correction,
@@ -1035,7 +1035,7 @@ def match_template(argv=None):
         )
 
     elif args.warp_xml_file is not None:
-        ts_metadata = parse_warp_xml_data(
+        voxel_size, ts_metadata = parse_warp_xml_data(
             args.warp_xml_file,
             args.tomogram,
             phase_flip_correction=phase_flip_correction,
@@ -1049,8 +1049,9 @@ def match_template(argv=None):
                 "Without tilt angles the missing wedge cannot be calculated. A "
                 "minimal run requires tilt angles."
             )
+
+        voxel_size = (args.voxel_size_angstrom,)
         ts_metadata = TiltSeriesMetaData(
-            voxel_size=args.voxel_size_angstrom,
             tilt_angles=tilt_angles,
             ctf_data=ctf_data,
             dose_accumulation=args.dose_accumulation,
@@ -1071,6 +1072,7 @@ def match_template(argv=None):
         args.template,
         args.mask,
         args.destination,
+        voxel_size=voxel_size,
         ts_metadata=ts_metadata,
         angle_increment=args.angular_search,
         mask_is_spherical=True

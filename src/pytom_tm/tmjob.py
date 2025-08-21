@@ -53,7 +53,6 @@ def load_json_to_tmjob(
     # Deal with loading ts_metadata that was stored before 0.11.0
     if "ts_metadata" not in data:
         kw_dict = {
-            "voxel_size": data["voxel_size"],
             "tilt_angles": data["tilt_angles"],
             "ctf_data": data["ctf_data"],
             "dose_accumulation": data.get("dose_accumulation", None),
@@ -82,6 +81,7 @@ def load_json_to_tmjob(
         pathlib.Path(data["output_dir"]),
         angle_increment=data.get("angle_increment", data["rotation_file"]),
         mask_is_spherical=data["mask_is_spherical"],
+        voxel_size=data["voxel_size"],
         ts_metadata=data["ts_metadata"],
         search_x=data["search_x"],
         search_y=data["search_y"],
@@ -277,14 +277,14 @@ class TMJob:
         template: pathlib.Path,
         mask: pathlib.Path,
         output_dir: pathlib.Path,
-        ts_metadata: TiltSeriesMetaData,
+        voxel_size: float | None = None,
+        ts_metadata: TiltSeriesMetaData | None = None,
         angle_increment: str | float | None = None,
         mask_is_spherical: bool = True,
         search_x: list[int, int] | None = None,
         search_y: list[int, int] | None = None,
         search_z: list[int, int] | None = None,
         tomogram_mask: pathlib.Path | None = None,
-        voxel_size: float | None = None,
         low_pass: float | None = None,
         high_pass: float | None = None,
         whiten_spectrum: bool = False,
@@ -311,8 +311,11 @@ class TMJob:
             path to mask MRC
         output_dir: pathlib.Path
             path to output directory
-        ts_metadata: TiltSeriesMetaData
-            metadata of the tilt series
+        voxel_size: float | None, default None
+            voxel size of tomogram and template (in A) if not provided will be read from
+            template/tomogram MRCs
+        ts_metadata: TiltSeriesMetaData | None, default None
+            tilt series metadata of the tomogram
         angle_increment: Union[str, float]; default 7.00
             angular increment of template search
         mask_is_spherical: bool, default True
@@ -393,12 +396,12 @@ class TMJob:
                 f"Found maks shape: {self.mask_shape}"
             )
 
-        if ts_metadata.voxel_size is not None:
+        if voxel_size is not None:
             if voxel_size <= 0:
                 raise ValueError(
                     "Invalid voxel size provided, smaller or equal to zero."
                 )
-            ts_metadata.voxel_size = voxel_size
+            self.voxel_size = voxel_size
             if (  # allow tiny numerical differences that are not relevant for
                 # template matching
                 round(self.voxel_size, 3) != round(meta_data_tomo["voxel_size"], 3)
@@ -419,7 +422,7 @@ class TMJob:
             == round(meta_data_template["voxel_size"], 3)
             and meta_data_tomo["voxel_size"] > 0
         ):
-            self.ts_metadata.voxel_size = round(meta_data_tomo["voxel_size"], 3)
+            self.voxel_size = round(meta_data_tomo["voxel_size"], 3)
         else:
             raise ValueError(
                 "Voxel size could not be assigned, either a mismatch between tomogram "

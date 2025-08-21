@@ -36,8 +36,6 @@ class TiltSeriesMetaData(JsonSerializable):
 
     Attributes
     ----------
-    voxel_size: float
-        voxel_size of the created tomogram in Å
     tilt_angles: list[float]
         list of tilt angles of the tilt-series in degrees
     ctf_data: list[CtfData] | None, default None
@@ -57,7 +55,6 @@ class TiltSeriesMetaData(JsonSerializable):
         of a default binary one
     """
 
-    voxel_size: float
     tilt_angles: list[float]
     ctf_data: list[CtfData] | None = None
     dose_accumulation: list[float] | None = None
@@ -65,6 +62,8 @@ class TiltSeriesMetaData(JsonSerializable):
     per_tilt_weighting: bool = False
 
     def __post_init__(self):
+        if self.tilt_angles is None:
+            return
         n_angles = len(self.tilt_angles)
         # Make sure all lists have the same value
         if self.ctf_data is not None and len(self.ctf_data) == 1:

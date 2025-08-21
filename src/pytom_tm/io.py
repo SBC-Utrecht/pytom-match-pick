@@ -562,7 +562,7 @@ def parse_relion5_star_data(
     tomogram_path: pathlib.Path,
     phase_flip_correction: bool = False,
     phase_shift: float = 0.0,
-) -> RelionTiltSeriesMetaData:
+) -> tuple[float, RelionTiltSeriesMetaData]:
     """Read RELION5 metadata from a project directory.
 
     Parameters
@@ -578,7 +578,10 @@ def parse_relion5_star_data(
 
     Returns
     -------
-    RelionTiltSeriesMetaData
+    voxel_size: float
+       voxel_size of the tomogram
+    ts_metadata: RelionTiltSeriesMetaData
+       metadata of the assosiated tilt series
     """
     tomogram_id = tomogram_path.stem
     tomograms_star_data = starfile.read(tomograms_star_path)
@@ -638,7 +641,6 @@ def parse_relion5_star_data(
         / 2
     ]
     ts_metadata = RelionTiltSeriesMetaData(
-        voxel_size=tomogram_voxel_size,
         tilt_angles=tilt_angles,
         ctf_data=ctf_data,
         dose_accumulation=dose_accumulation,
@@ -646,14 +648,14 @@ def parse_relion5_star_data(
         binning=binning,
         tilt_series_pixel_size=tilt_series_pixel_size,
     )
-    return ts_metadata
+    return tomogram_voxel_size, ts_metadata
 
 
 def parse_warp_xml_data(
     warp_xml_path: pathlib.Path,
     tomogram_path: pathlib.Path,
     phase_flip_correction: bool = False,
-) -> WarpTiltSeriesMetaData:
+) -> tuple[float, WarpTiltSeriesMetaData]:
     """Read WarpTools metadata from a project directory.
 
     Parameters
@@ -667,7 +669,10 @@ def parse_warp_xml_data(
 
     Returns
     -------
-    WarpTiltSeriesMetaData
+    voxel_size: float
+        tomogram voxel size
+    ts_metadata: WarpTiltSeriesMetaData
+        associated tilt series metadata
     """
     # First determine the tomogram_voxel_size from the tomogram_path
     tomogram_meta = read_mrc_meta_data(tomogram_path)
@@ -723,10 +728,9 @@ def parse_warp_xml_data(
         for defocus in defocus_values
     ]
     ts_metadata = WarpTiltSeriesMetaData(
-        voxel_size=tomogram_voxel_size,
         tilt_angles=flattened_tilt_angles,
         ctf_data=ctf_data,
         dose_accumulation=flattened_tilt_dose,
     )
 
-    return ts_metadata
+    return tomogram_voxel_size, ts_metadata
