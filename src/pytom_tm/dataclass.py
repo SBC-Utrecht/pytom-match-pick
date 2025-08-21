@@ -32,19 +32,44 @@ class CtfData(JsonSerializable):
 
 @dataclass(kw_only=True)
 class TiltSeriesMetaData(JsonSerializable):
+    """A dataclass for to keep all the meta-data for the tilt-series together
+
+    Attributes
+    ----------
+    voxel_size: float
+        voxel_size of the created tomogram in Å
+    tilt_angles: list[float]
+        list of tilt angles of the tilt-series in degrees
+    ctf_data: list[CtfData] | None, default None
+        list of CtfData per tilt, should either be length 1 if it is identical for all
+        tilts or the same length as tilt_angles
+    dose_accumulation: list[float] | None, default None
+        list of accumulated doses per tilt in electrons per Å^2,
+        if given should have the same length as tilt_angles
+    defocus_handedness: int from {-1, 0, 1}, default 0
+        defocus handesness for gradient correction
+        0: no defocus gradient correction (default),
+        1: correction assuming correct handedness
+           as specified in Pyle and  Zianetti (2021)
+       -1: the handedness will be inverted
+    per_tilt_weighting: bool, default False
+        if we want to do per-tilt weighting to create a fanned wedge instead
+        of a default binary one
+    """
+
     voxel_size: float
     tilt_angles: list[float]
-    per_tilt_weighting: bool = False
-    defocus_handedness: int = 0
     ctf_data: list[CtfData] | None = None
     dose_accumulation: list[float] | None = None
+    defocus_handedness: int = 0
+    per_tilt_weighting: bool = False
 
     def __post_init__(self):
         n_angles = len(self.tilt_angles)
         # Make sure all lists have the same value
         if self.ctf_data is not None and len(self.ctf_data) == 1:
             self.ctf_data = self.ctf_data * n_angles
-        elif self.ctf_data is not None and not len(self.ctf_data) == n_angles:
+        elif self.ctf_data is not None and len(self.ctf_data) != n_angles:
             raise ValueError(
                 "Expected either a list with a single CtfData or the "
                 f"same number as tilt_angles ({n_angles}). Got {len(self.ctf_data)} "
