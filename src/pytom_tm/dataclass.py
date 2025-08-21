@@ -48,9 +48,9 @@ class TiltSeriesMetaData(JsonSerializable):
         if given should have the same length as tilt_angles
     defocus_handedness: int from {-1, 0, 1}, default 0
         defocus handesness for gradient correction
+        as specified in Pyle and Zianetti (2021)
         0: no defocus gradient correction (default),
         1: correction assuming correct handedness
-           as specified in Pyle and  Zianetti (2021)
        -1: the handedness will be inverted
     per_tilt_weighting: bool, default False
         if we want to do per-tilt weighting to create a fanned wedge instead
