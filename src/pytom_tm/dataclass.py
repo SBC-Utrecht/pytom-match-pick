@@ -62,8 +62,8 @@ class TiltSeriesMetaData(JsonSerializable):
     per_tilt_weighting: bool = False
 
     def __post_init__(self):
-        if self.tilt_angles is None:
-            return
+        if not isinstance(self.tilt_angles, list) or len(self.tilt_angles) < 2:
+            raise ValueError("TiltSeriesMetaData requires at least 2 tilt angles")
         n_angles = len(self.tilt_angles)
         # Make sure all lists have the same value
         if self.ctf_data is not None and len(self.ctf_data) == 1:
@@ -88,6 +88,9 @@ class TiltSeriesMetaData(JsonSerializable):
                 "Got an invalid defocus handedness, "
                 f"expected -1, 0, or 1. Got: {self.defocus_handedness}"
             )
+
+    def __len__(self):
+        return len(self.tilt_angles)
 
 
 @dataclass(kw_only=True)

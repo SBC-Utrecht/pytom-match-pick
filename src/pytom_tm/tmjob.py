@@ -277,8 +277,8 @@ class TMJob:
         template: pathlib.Path,
         mask: pathlib.Path,
         output_dir: pathlib.Path,
+        ts_metadata: TiltSeriesMetaData,
         voxel_size: float | None = None,
-        ts_metadata: TiltSeriesMetaData | None = None,
         angle_increment: str | float | None = None,
         mask_is_spherical: bool = True,
         search_x: list[int, int] | None = None,
@@ -882,69 +882,67 @@ class TMJob:
                 np.load(self.whitening_filter), self.template_shape
             ).astype(np.float32)
 
-        # if tilt angles are provided we can create wedge filters
-        if self.tilt_angles is not None:
-            if self.tilt_weighting and self.defocus_handedness != 0:
-                # adjust ctf parameters for this specific patch in the tomogram
-                full_tomo_center = np.array(self.tomo_shape) / 2
-                patch_center = (
-                    np.array(self.search_origin) + np.array(self.search_size) / 2
-                )
-                relative_patch_center_angstrom = (
-                    patch_center - full_tomo_center
-                ) * self.voxel_size
-                defocus_offsets = get_defocus_offsets(
-                    relative_patch_center_angstrom[0],  # x-coordinate
-                    relative_patch_center_angstrom[2],  # z-coordinate
-                    self.tilt_angles,
-                    angles_in_degrees=True,
-                    invert_handedness=self.defocus_handedness < 0,
-                )
-                for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
-                    ctf.defocus = ctf.defocus + defocus_shift * 1e-10
-                logging.debug(
-                    "Patch center (nr. of voxels): "
-                    f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
-                )
-                logging.debug(
-                    "Defocus values (um): "
-                    f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ctf_data]}",
-                )
-
-            # for the tomogram a binary wedge is generated to explicitly set the missing
-            # wedge region to 0
-            tomo_filter *= create_wedge(
-                search_volume.shape,
+        # create wedge filters
+        if (
+            self.ts_metadata.per_tilt_weighting
+            and self.ts_metadata.defocus_handedness != 0
+        ):
+            # adjust ctf parameters for this specific patch in the tomogram
+            full_tomo_center = np.array(self.tomo_shape) / 2
+            patch_center = np.array(self.search_origin) + np.array(self.search_size) / 2
+            relative_patch_center_angstrom = (
+                patch_center - full_tomo_center
+            ) * self.voxel_size
+            defocus_offsets = get_defocus_offsets(
+                relative_patch_center_angstrom[0],  # x-coordinate
+                relative_patch_center_angstrom[2],  # z-coordinate
                 self.tilt_angles,
-                self.voxel_size,
-                cut_off_radius=1.0,
                 angles_in_degrees=True,
-                tilt_weighting=False,
-            ).astype(np.float32)
-            # for the template a binary or per-tilt-weighted wedge is generated
-            # depending on the options
-            template_wedge *= create_wedge(
-                self.template_shape,
-                self.tilt_angles,
-                self.voxel_size,
-                cut_off_radius=1.0,
-                angles_in_degrees=True,
-                tilt_weighting=self.tilt_weighting,
-                accumulated_dose_per_tilt=self.dose_accumulation,
-                ctf_params_per_tilt=self.ctf_data,
-            ).astype(np.float32)
+                invert_handedness=self.defocus_handedness < 0,
+            )
+            # TODO: make sure this doesn't lead to weird race conditions
+            for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
+                ctf.defocus = ctf.defocus + defocus_shift * 1e-10
+            logging.debug(
+                "Patch center (nr. of voxels): "
+                f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
+            )
+            logging.debug(
+                "Defocus values (um): "
+                f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ctf_data]}",
+            )
 
-            if logging.DEBUG >= logging.root.level:
-                write_mrc(
-                    self.output_dir.joinpath("template_psf.mrc"),
-                    template_wedge,
-                    self.voxel_size,
-                )
-                write_mrc(
-                    self.output_dir.joinpath("template_convolved.mrc"),
-                    irfftn(rfftn(template) * template_wedge, s=template.shape),
-                    self.voxel_size,
-                )
+        # for the tomogram a binary wedge is generated to explicitly set the missing
+        # wedge region to 0
+        tomo_filter *= create_wedge(
+            search_volume.shape,
+            self.ts_metadata,
+            self.voxel_size,
+            cut_off_radius=1.0,
+            angles_in_degrees=True,
+            per_tilt_weighting=False,
+        ).astype(np.float32)
+        # for the template a binary or per-tilt-weighted wedge is generated
+        # depending on the options
+        template_wedge *= create_wedge(
+            self.template_shape,
+            self.ts_metadata,
+            self.voxel_size,
+            cut_off_radius=1.0,
+            angles_in_degrees=True,
+        ).astype(np.float32)
+
+        if logging.DEBUG >= logging.root.level:
+            write_mrc(
+                self.output_dir.joinpath("template_psf.mrc"),
+                template_wedge,
+                self.voxel_size,
+            )
+            write_mrc(
+                self.output_dir.joinpath("template_convolved.mrc"),
+                irfftn(rfftn(template) * template_wedge, s=template.shape),
+                self.voxel_size,
+            )
 
         # apply the optional band pass and whitening filter to the search region
         search_volume = np.real(
