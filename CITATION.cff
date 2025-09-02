@@ -60,7 +60,7 @@ preferred-citation:
       affiliation: Utrecht University
       orcid: 'https://orcid.org/0000-0002-6044-2746'
   type: article
-  title: pytom-match-pick: A tophat-transform constraint for automated classification in template matching
+  title: "pytom-match-pick: A tophat-transform constraint for automated classification in template matching"
   abstract: >-
     Template matching (TM) in cryo-electron tomography (cryo-ET)
     enables in situ detection and localization of known macromolecules. 
