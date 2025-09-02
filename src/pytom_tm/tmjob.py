@@ -19,7 +19,7 @@ from pytom_tm.weights import (
 )
 from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
 from pytom_tm.json import CustomJSONEncoder, CustomJSONDecoder
-from pytom_tm.dataclass import CtfData
+from pytom_tm.dataclass import CtfData, TiltSeriesMetaData, RelionTiltSeriesMetaData
 from pytom_tm import __version__ as PYTOM_TM_VERSION
 
 
@@ -45,10 +45,28 @@ def load_json_to_tmjob(
     with open(file_name) as fstream:
         data = json.load(fstream, cls=CustomJSONDecoder)
 
-    # Deal with lading ctfdata that was a stored before 0.11.0
+    # Deal with loading ctfdata that was a stored before 0.11.0
     ctf_data = data.get("ctf_data", None)
     if ctf_data is not None and type(ctf_data[0]) is dict:
-        ctf_data = [CtfData(**ctf) for ctf in ctf_data]
+        data["ctf_data"] = [CtfData(**ctf) for ctf in ctf_data]
+
+    # Deal with loading ts_metadata that was stored before 0.11.0
+    if "ts_metadata" not in data:
+        kw_dict = {
+            "tilt_angles": data["tilt_angles"],
+            "ctf_data": data["ctf_data"],
+            "dose_accumulation": data.get("dose_accumulation", None),
+            "defocus_handedness": data.get("defocus_handedness", 0),
+            "per_tilt_weighting": data.get("tilt_weighting"),
+        }
+        if "metadata" in data:
+            # relion5 metadata instead
+            kw_dict["binning"] = data["metadata"]["relion5_binning"]
+            kw_dict["tilt_series_pixel_size"] = data["metadata"]["relion5_ts_ps"]
+            cls = RelionTiltSeriesMetaData
+        else:
+            cls = TiltSeriesMetaData
+        data["ts_metadata"] = cls(**kw_dict)
 
     # wrangle dtypes
     output_dtype = data.get("output_dtype", "float32")
@@ -63,19 +81,16 @@ def load_json_to_tmjob(
         pathlib.Path(data["output_dir"]),
         angle_increment=data.get("angle_increment", data["rotation_file"]),
         mask_is_spherical=data["mask_is_spherical"],
-        tilt_angles=data["tilt_angles"],
-        tilt_weighting=data["tilt_weighting"],
+        voxel_size=data["voxel_size"],
+        ts_metadata=data["ts_metadata"],
         search_x=data["search_x"],
         search_y=data["search_y"],
         search_z=data["search_z"],
         # Use 'get' for backwards compatibility
         tomogram_mask=data.get("tomogram_mask", None),
-        voxel_size=data["voxel_size"],
         low_pass=data["low_pass"],
         # Use 'get' for backwards compatibility
         high_pass=data.get("high_pass", None),
-        dose_accumulation=data.get("dose_accumulation", None),
-        ctf_data=ctf_data,
         whiten_spectrum=data.get("whiten_spectrum", False),
         rotational_symmetry=data.get("rotational_symmetry", 1),
         # if version number is not in the .json, it must be 0.3.0 or older
@@ -84,9 +99,7 @@ def load_json_to_tmjob(
         particle_diameter=data.get("particle_diameter", None),
         random_phase_correction=data.get("random_phase_correction", False),
         rng_seed=data.get("rng_seed", 321),
-        defocus_handedness=data.get("defocus_handedness", 0),
         output_dtype=output_dtype,
-        metadata=data.get("metadata", {}),
     )
     job.whole_start = data["whole_start"]
     job.sub_start = data["sub_start"]
@@ -264,19 +277,16 @@ class TMJob:
         template: pathlib.Path,
         mask: pathlib.Path,
         output_dir: pathlib.Path,
+        ts_metadata: TiltSeriesMetaData,
+        voxel_size: float | None = None,
         angle_increment: str | float | None = None,
         mask_is_spherical: bool = True,
-        tilt_angles: list[float, ...] | None = None,
-        tilt_weighting: bool = False,
         search_x: list[int, int] | None = None,
         search_y: list[int, int] | None = None,
         search_z: list[int, int] | None = None,
         tomogram_mask: pathlib.Path | None = None,
-        voxel_size: float | None = None,
         low_pass: float | None = None,
         high_pass: float | None = None,
-        dose_accumulation: list[float, ...] | None = None,
-        ctf_data: list[CtfData, ...] | None = None,
         whiten_spectrum: bool = False,
         rotational_symmetry: int = 1,
         pytom_tm_version_number: str = PYTOM_TM_VERSION,
@@ -284,9 +294,7 @@ class TMJob:
         particle_diameter: float | None = None,
         random_phase_correction: bool = False,
         rng_seed: int = 321,
-        defocus_handedness: int = 0,
         output_dtype: np.dtype = np.float32,
-        metadata: dict | None = None,
     ):
         """
         Parameters
@@ -303,16 +311,15 @@ class TMJob:
             path to mask MRC
         output_dir: pathlib.Path
             path to output directory
+        voxel_size: float | None, default None
+            voxel size of tomogram and template (in A) if not provided will be read from
+            template/tomogram MRCs
+        ts_metadata: TiltSeriesMetaData | None, default None
+            tilt series metadata of the tomogram
         angle_increment: Union[str, float]; default 7.00
             angular increment of template search
         mask_is_spherical: bool, default True
             whether template mask is spherical, reduces computation complexity
-        tilt_angles: Optional[list[float, ...]], default None
-            tilt angles of tilt-series used to reconstruct tomogram, if only two floats
-            will be used to generate a continuous wedge model
-        tilt_weighting: bool, default False
-            use advanced tilt weighting options, can be supplemented with CTF parameters
-            and accumulated dose
         search_x: Optional[list[int, int]], default None
             restrict tomogram search region along the x-axis
         search_y: Optional[list[int, int]], default None
@@ -322,19 +329,11 @@ class TMJob:
         tomogram_mask: Optional[pathlib.Path], default None
             when volume splitting tomograms, only subjobs where any(mask > 0) will be
             generated
-        voxel_size: Optional[float], default None
-            voxel size of tomogram and template (in A) if not provided will be read from
-            template/tomogram MRCs
         low_pass: Optional[float], default None
             optional low-pass filter (resolution in A) to apply to tomogram and template
         high_pass: Optional[float], default None
             optional high-pass filter (resolution in A) to apply to tomogram and
             template
-        dose_accumulation: Optional[list[float, ...]], default None
-            list with dose accumulation per tilt image
-        ctf_data: Optional[list[CtfData, ...]], default None
-            list of dictionaries with CTF parameters per tilt image, see
-            pytom_tm.dataclass.CtfData for parameter definitions
         whiten_spectrum: bool, default False
             whether to apply spectrum whitening
         rotational_symmetry: int, default 1
@@ -352,15 +351,8 @@ class TMJob:
             scores for noise
         rng_seed: int, default 321
             set a seed for the rng for phase randomization
-        defocus_handedness: int, default 0
-            specify a defocus handedness:
-            -1 = inverted
-             0 = don't correct offsets (preferred if unknown)
-             1 = regular (as in Pyle & Zianetti (2021))
         output_dtype: np.dtype, default np.float32
             output score volume dtype, options are np.float32 and np.float16
-        metadata: dict, default {}
-            other metadata we want to keep together with the job, i.e. tomogram binning
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
@@ -369,6 +361,8 @@ class TMJob:
         self.tomogram = tomogram
         self.template = template
         self.tomo_id = self.tomogram.stem
+
+        self.ts_metadata = ts_metadata
 
         try:
             meta_data_tomo = read_mrc_meta_data(self.tomogram)
@@ -516,17 +510,10 @@ class TMJob:
 
         self.n_rotations = len(angle_list)
 
-        # missing wedge
-        self.tilt_angles = tilt_angles
-        self.tilt_weighting = tilt_weighting
         # set the band-pass resolution shells
         self.low_pass = low_pass
         self.high_pass = high_pass
 
-        # set dose and ctf
-        self.dose_accumulation = dose_accumulation
-        self.ctf_data = ctf_data
-        self.defocus_handedness = defocus_handedness
         self.whiten_spectrum = whiten_spectrum
         self.whitening_filter = self.output_dir.joinpath(
             f"{self.tomo_id}_whitening_filter.npy"
@@ -567,10 +554,6 @@ class TMJob:
 
         # output dtype
         self.output_dtype = output_dtype
-
-        if metadata is None:
-            metadata = {}
-        self.metadata = metadata
 
     def copy(self) -> TMJob:
         """Create a copy of the TMJob
@@ -899,69 +882,67 @@ class TMJob:
                 np.load(self.whitening_filter), self.template_shape
             ).astype(np.float32)
 
-        # if tilt angles are provided we can create wedge filters
-        if self.tilt_angles is not None:
-            if self.tilt_weighting and self.defocus_handedness != 0:
-                # adjust ctf parameters for this specific patch in the tomogram
-                full_tomo_center = np.array(self.tomo_shape) / 2
-                patch_center = (
-                    np.array(self.search_origin) + np.array(self.search_size) / 2
-                )
-                relative_patch_center_angstrom = (
-                    patch_center - full_tomo_center
-                ) * self.voxel_size
-                defocus_offsets = get_defocus_offsets(
-                    relative_patch_center_angstrom[0],  # x-coordinate
-                    relative_patch_center_angstrom[2],  # z-coordinate
-                    self.tilt_angles,
-                    angles_in_degrees=True,
-                    invert_handedness=self.defocus_handedness < 0,
-                )
-                for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
-                    ctf.defocus = ctf.defocus + defocus_shift * 1e-10
-                logging.debug(
-                    "Patch center (nr. of voxels): "
-                    f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
-                )
-                logging.debug(
-                    "Defocus values (um): "
-                    f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ctf_data]}",
-                )
-
-            # for the tomogram a binary wedge is generated to explicitly set the missing
-            # wedge region to 0
-            tomo_filter *= create_wedge(
-                search_volume.shape,
+        # create wedge filters
+        if (
+            self.ts_metadata.per_tilt_weighting
+            and self.ts_metadata.defocus_handedness != 0
+        ):
+            # adjust ctf parameters for this specific patch in the tomogram
+            full_tomo_center = np.array(self.tomo_shape) / 2
+            patch_center = np.array(self.search_origin) + np.array(self.search_size) / 2
+            relative_patch_center_angstrom = (
+                patch_center - full_tomo_center
+            ) * self.voxel_size
+            defocus_offsets = get_defocus_offsets(
+                relative_patch_center_angstrom[0],  # x-coordinate
+                relative_patch_center_angstrom[2],  # z-coordinate
                 self.tilt_angles,
-                self.voxel_size,
-                cut_off_radius=1.0,
                 angles_in_degrees=True,
-                tilt_weighting=False,
-            ).astype(np.float32)
-            # for the template a binary or per-tilt-weighted wedge is generated
-            # depending on the options
-            template_wedge *= create_wedge(
-                self.template_shape,
-                self.tilt_angles,
-                self.voxel_size,
-                cut_off_radius=1.0,
-                angles_in_degrees=True,
-                tilt_weighting=self.tilt_weighting,
-                accumulated_dose_per_tilt=self.dose_accumulation,
-                ctf_params_per_tilt=self.ctf_data,
-            ).astype(np.float32)
+                invert_handedness=self.defocus_handedness < 0,
+            )
+            # TODO: make sure this doesn't lead to weird race conditions
+            for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
+                ctf.defocus = ctf.defocus + defocus_shift * 1e-10
+            logging.debug(
+                "Patch center (nr. of voxels): "
+                f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
+            )
+            logging.debug(
+                "Defocus values (um): "
+                f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ctf_data]}",
+            )
 
-            if logging.DEBUG >= logging.root.level:
-                write_mrc(
-                    self.output_dir.joinpath("template_psf.mrc"),
-                    template_wedge,
-                    self.voxel_size,
-                )
-                write_mrc(
-                    self.output_dir.joinpath("template_convolved.mrc"),
-                    irfftn(rfftn(template) * template_wedge, s=template.shape),
-                    self.voxel_size,
-                )
+        # for the tomogram a binary wedge is generated to explicitly set the missing
+        # wedge region to 0
+        tomo_filter *= create_wedge(
+            search_volume.shape,
+            self.ts_metadata,
+            self.voxel_size,
+            cut_off_radius=1.0,
+            angles_in_degrees=True,
+            per_tilt_weighting=False,
+        ).astype(np.float32)
+        # for the template a binary or per-tilt-weighted wedge is generated
+        # depending on the options
+        template_wedge *= create_wedge(
+            self.template_shape,
+            self.ts_metadata,
+            self.voxel_size,
+            cut_off_radius=1.0,
+            angles_in_degrees=True,
+        ).astype(np.float32)
+
+        if logging.DEBUG >= logging.root.level:
+            write_mrc(
+                self.output_dir.joinpath("template_psf.mrc"),
+                template_wedge,
+                self.voxel_size,
+            )
+            write_mrc(
+                self.output_dir.joinpath("template_convolved.mrc"),
+                irfftn(rfftn(template) * template_wedge, s=template.shape),
+                self.voxel_size,
+            )
 
         # apply the optional band pass and whitening filter to the search region
         search_volume = np.real(
