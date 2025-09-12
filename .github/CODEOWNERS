@@ -1,0 +1,2 @@
+# HARDEN .github directory (from the root of the repo) to only be altered after review by maintainers
+/.github/ @SBC-Utrecht/maintainers

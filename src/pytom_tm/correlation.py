@@ -103,12 +103,10 @@ def normalise(
 def normalised_cross_correlation(
     data1: npt.NDArray[float] | cpt.NDArray[float],
     data2: npt.NDArray[float] | cpt.NDArray[float],
-    mask: npt.NDArray[float] | cpt.NDArray[float] | None = None,
 ) -> float | cpt.NDArray[float]:
-    """Calculate normalised cross correlation between two arrays. Optionally only in a
-    masked region.
+    """Calculate normalised cross correlation between two arrays.
 
-    data1, data2, and mask can be cupy or numpy arrays.
+    data1, and data2 can be cupy or numpy arrays.
 
     Parameters
     ----------
@@ -116,18 +114,11 @@ def normalised_cross_correlation(
         first array for correlation
     data2: Union[npt.NDArray[float], cpt.NDArray[float]]
         second array for correlation
-    mask: Optional[Union[npt.NDArray[float], cpt.NDArray[float]]], default None
-        optional mask to calculate the correlation under
 
     Returns
     -------
     output: Union[float, cpt.NDArray[float]]
         normalised cross correlation between the arrays
     """
-    if mask is None:
-        output = (normalise(data1) * normalise(data2)).sum() / data1.size
-    else:
-        output = (
-            normalise(data1, mask) * mask * normalise(data2, mask)
-        ).sum() / mask.sum()
+    output = (normalise(data1) * normalise(data2)).sum() / data1.size
     return output

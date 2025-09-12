@@ -7,6 +7,8 @@ import numpy as np
 import starfile
 from contextlib import contextmanager
 from operator import attrgetter
+from lxml import etree
+from pytom_tm.dataclass import CtfData
 
 
 class MultiColumnAngleFileError(ValueError):
@@ -41,7 +43,7 @@ class CheckDirExists(argparse.Action):
         option_string: str | None = None,
     ):
         if not values.is_dir():
-            parser.error(f"{option_string} got a file path that does not exist ")
+            parser.error(f"{option_string} got a directory path that does not exist ")
 
         setattr(namespace, self.dest, values)
 
@@ -56,9 +58,29 @@ class CheckFileExists(argparse.Action):
         values: pathlib.Path,
         option_string: str | None = None,
     ):
-        if not values.exists():
-            parser.error(f"{option_string} got a file path that does not exist ")
+        if not values.is_file():
+            parser.error(
+                f"{option_string} got a file path that does not exist: {values}"
+            )
 
+        setattr(namespace, self.dest, values)
+
+
+class CheckListOfFilesExists(argparse.Action):
+    """argparse.Action subclass to check if an expected input file exists."""
+
+    def __call__(
+        self,
+        parser,
+        namespace,
+        values: pathlib.Path,
+        option_string: str | None = None,
+    ):
+        for val in values:
+            if not val.is_file():
+                parser.error(
+                    f"{option_string} got a file path that does not exist: {val}"
+                )
         setattr(namespace, self.dest, values)
 
 
@@ -540,7 +562,7 @@ def parse_relion5_star_data(
     tomogram_path: pathlib.Path,
     phase_flip_correction: bool = False,
     phase_shift: float = 0.0,
-) -> tuple[float, list[float, ...], list[float, ...], list[dict, ...], int]:
+) -> tuple[float, list[float, ...], list[float, ...], list[dict, ...], int, dict]:
     """Read RELION5 metadata from a project directory.
 
     Parameters
@@ -556,11 +578,14 @@ def parse_relion5_star_data(
 
     Returns
     -------
-    tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params, defocus_handedness:
-        tuple[float, list[float, ...], list[float, ...], list[dict, ...], int]
+    tomogram_voxel_size, tilt_angles, dose_accumulation,
+    ctf_params, defocus_handedness, relion_metadata:
+        tuple[float, list[float, ...], list[float, ...], list[CtfData, ...], int, dict]
     """
     tomogram_id = tomogram_path.stem
     tomograms_star_data = starfile.read(tomograms_star_path)
+
+    relion_metadata = {}
 
     # match the tomo_id and check if viable
     matches = [
@@ -597,17 +622,20 @@ def parse_relion5_star_data(
         tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
         * tomogram_meta_data["rlnTomoTomogramBinning"]
     )
+    relion_metadata["relion5_binning"] = tomogram_meta_data["rlnTomoTomogramBinning"]
+    relion_metadata["relion5_ts_ps"] = tomogram_meta_data["rlnTomoTiltSeriesPixelSize"]
+
     defocus_handedness = int(tomogram_meta_data["rlnTomoHand"])
 
     ctf_params = [
-        {
-            "defocus": defocus * 1e-10,
-            "amplitude_contrast": tomogram_meta_data["rlnAmplitudeContrast"],
-            "voltage": tomogram_meta_data["rlnVoltage"] * 1e3,
-            "spherical_aberration": tomogram_meta_data["rlnSphericalAberration"] * 1e-3,
-            "flip_phase": phase_flip_correction,
-            "phase_shift_deg": phase_shift,  # RELION5 does not seem to store this
-        }
+        CtfData(
+            defocus=defocus * 1e-10,
+            amplitude_contrast=tomogram_meta_data["rlnAmplitudeContrast"],
+            voltage=tomogram_meta_data["rlnVoltage"] * 1e3,
+            spherical_aberration=tomogram_meta_data["rlnSphericalAberration"] * 1e-3,
+            flip_phase=phase_flip_correction,
+            phase_shift_deg=phase_shift,  # RELION5 does not seem to store this
+        )
         for defocus in (
             tilt_series_star_data.rlnDefocusV + tilt_series_star_data.rlnDefocusU
         )
@@ -620,4 +648,88 @@ def parse_relion5_star_data(
         dose_accumulation,
         ctf_params,
         defocus_handedness,
+        relion_metadata,
+    )
+
+
+def parse_warp_xml_data(
+    warp_xml_path: pathlib.Path,
+    tomogram_path: pathlib.Path,
+    phase_flip_correction: bool = False,
+) -> tuple[float, list[float], list[float], list[dict[str, float | bool | float]]]:
+    """Read WarpTools metadata from a project directory.
+
+    Parameters
+    ----------
+    warp_xml_path: pathlib.Path
+        path to the warp XML file containing metadata
+    tomogram_path: pathlib.Path
+        path to the tomogram for template matching
+    phase_flip_correction: bool, default False
+        whether phase flip correction was applied
+
+    Returns
+    -------
+    tomogram_voxel_size, tilt_angles, dose_accumulation, ctf_params:
+        tuple[float, list[float], list[float], list[CtfData, ...]]
+    """
+    # First determine the tomogram_voxel_size from the tomogram_path
+    tomogram_meta = read_mrc_meta_data(tomogram_path)
+    tomogram_voxel_size = tomogram_meta["voxel_size"]
+
+    tree = etree.parse(warp_xml_path)
+
+    tilt_angle_nodes = tree.findall(".//Angles")
+    tilt_defocus_nodes = tree.findall(".//GridCTF/Node")
+    tilt_dose_nodes = tree.findall(".//Dose")
+
+    voltage = float(tree.xpath(".//OptionsCTF/Param[@Name='Voltage']/@Value")[0])
+    spherical_aberration = float(
+        tree.xpath(".//OptionsCTF/Param[@Name='Cs']/@Value")[0]
+    )
+    amplitude_contrast = float(
+        tree.xpath(".//OptionsCTF/Param[@Name='Amplitude']/@Value")[0]
+    )
+    phase_shift = float(tree.xpath(".//CTF/Param[@Name='PhaseShift']/@Value")[0])
+
+    tilt_angles = []
+    tilt_dose = []
+
+    for ts_angle in tilt_angle_nodes:
+        text = ts_angle.text
+        angles = [a for a in text.split("\n") if a.strip()]
+        tilt_angles.append(angles)
+
+    defocus_values = []
+    for node in tilt_defocus_nodes:
+        defocus_values.append(float(node.attrib["Value"]))
+
+    for ts_dose in tilt_dose_nodes:
+        text = ts_dose.text
+        ts_cum_dose = [d for d in text.split("\n") if d.strip()]
+        tilt_dose.append(ts_cum_dose)
+
+    def _flatten(t):
+        return [float(item) for sublist in t for item in sublist if item.strip()]
+
+    flattened_tilt_angles = _flatten(tilt_angles)
+    flattened_tilt_dose = _flatten(tilt_dose)
+
+    ctf_params = [
+        CtfData(
+            defocus=defocus * 1e-10,
+            amplitude_contrast=amplitude_contrast,
+            voltage=voltage * 1e3,
+            spherical_aberration=spherical_aberration * 1e-3,
+            flip_phase=phase_flip_correction,
+            phase_shift_deg=phase_shift,
+        )
+        for defocus in defocus_values
+    ]
+
+    return (
+        tomogram_voxel_size,
+        flattened_tilt_angles,
+        flattened_tilt_dose,
+        ctf_params,
     )

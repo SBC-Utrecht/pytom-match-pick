@@ -1,5 +1,7 @@
 import unittest
 import pathlib
+import copy
+from dataclasses import asdict
 import numpy as np
 import voltools as vt
 import mrcfile
@@ -7,9 +9,21 @@ from tempfile import TemporaryDirectory
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob, get_defocus_offsets
-from pytom_tm.io import read_mrc, write_mrc, UnequalSpacingError
+from pytom_tm.io import (
+    read_mrc,
+    write_mrc,
+    UnequalSpacingError,
+    parse_relion5_star_data,
+)
+from pytom_tm.dataclass import CtfData
 from pytom_tm.extract import extract_particles
-from testing_utils import CTF_PARAMS, ACCUMULATED_DOSE, TILT_ANGLES
+from testing_utils import (
+    CTF_PARAMS,
+    ACCUMULATED_DOSE,
+    TILT_ANGLES,
+    chdir,
+    make_relion5_tomo_stars,
+)
 
 
 TOMO_SHAPE = (100, 107, 59)
@@ -34,9 +48,11 @@ TEST_SCORES = TEST_DATA_DIR.joinpath("tomogram_scores.mrc")
 TEST_ANGLES = TEST_DATA_DIR.joinpath("tomogram_angles.mrc")
 TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath("custom_angular_search.txt")
 TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath("tomogram_whitening_filter.npy")
-TEST_JOB_JSON = TEST_DATA_DIR.joinpath("tomogram_job.json")
+TEST_JOB_JSON_BASE = pathlib.Path("tomogram_job.json")
+TEST_JOB_JSON = TEST_DATA_DIR / TEST_JOB_JSON_BASE
 TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath("tomogram_job_whitening.json")
 TEST_JOB_OLD_VERSION = TEST_DATA_DIR.joinpath("tomogram_job_old_version.json")
+TEST_JOB_RELION5_DIR = TEST_DATA_DIR.joinpath("relion5_data")
 
 
 class TestTMJob(unittest.TestCase):
@@ -431,17 +447,29 @@ class TestTMJob(unittest.TestCase):
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=False)
         self.assertIn("Estimating whitening filter...", "".join(cm.output))
 
-        # turn current job into 0.6.0 job with ctf params
-        job.pytom_tm_version_number = "0.6.0"
+        # test dataclass loading
+        job.ctf_data = [copy.deepcopy(ctf) for ctf in CTF_PARAMS]
+        json_location = TEST_DATA_DIR.joinpath("job_dataclass.json")
+        job.write_to_json(json_location)
+
+        load_job = load_json_to_tmjob(json_location)
+        for ctf1, ctf2 in zip(job.ctf_data, load_job.ctf_data):
+            self.assertIs(type(ctf1), type(ctf2))
+            self.assertIs(type(ctf1), CtfData)
+            self.assertEqual(ctf1, ctf2)
+
+        # turn current job into 0.10.0 job with ctf dict instead of dataclass
         job.ctf_data = []
         for ctf in CTF_PARAMS:
-            job.ctf_data.append(ctf.copy())
+            job.ctf_data.append(asdict(ctf))
             del job.ctf_data[-1]["phase_shift_deg"]
         job.write_to_json(TEST_JOB_OLD_VERSION)
 
-        # test backward compatibility with the update to 0.6.1
+        # test backward compatibility with the update to 0.11.0
         job = load_json_to_tmjob(TEST_JOB_OLD_VERSION)
-        self.assertEqual(job.ctf_data[0]["phase_shift_deg"], 0.0)
+        for ctf in job.ctf_data:
+            self.assertIs(type(ctf), CtfData)
+            self.assertEqual(ctf.phase_shift_deg, 0.0)
 
     def test_custom_angular_search(self):
         with TemporaryDirectory() as data_dir:
@@ -848,4 +876,100 @@ class TestTMJob(unittest.TestCase):
         self.assertTrue(
             (defocus_offsets == defocus_offsets_inverted).sum() == 1,
             msg="inverted handedness should have one identical offset",
+        )
+
+    def test_running_with_relative_paths(self):
+        # test issue #301
+        # make sure we can load if we run with relative paths
+        # and chdir out of the result dir
+        with chdir(TEST_DATA_DIR):
+            job = TMJob(
+                "0",
+                10,
+                pathlib.Path(TEST_TOMOGRAM.name),
+                pathlib.Path(TEST_TEMPLATE.name),
+                pathlib.Path(TEST_MASK.name),
+                TEST_DATA_DIR,  # should end up in the expected spot
+                angle_increment=ANGULAR_SEARCH,
+                voxel_size=1.0,
+            )
+            job.start_job(0, return_volumes=False)
+            job.write_to_json("test_issue_301.json")
+
+        job = load_json_to_tmjob(TEST_DATA_DIR / "test_issue_301.json")
+        self.assertIsInstance(
+            job,
+            TMJob,
+            msg=(
+                "TMJob could not be properly loaded after running "
+                "with relative paths and chdir."
+            ),
+        )
+
+    def test_relion5_metadata_passthrough(self):
+        # write relion5 tomogram.star etc
+        make_relion5_tomo_stars(TEST_TOMOGRAM.stem, TEST_JOB_RELION5_DIR)
+        relion5_tomograms_star = TEST_JOB_RELION5_DIR / "tomogram.star"
+        # mimick entry point for this
+        (
+            voxel_size,
+            tilt_angles,
+            dose_accumulation,
+            ctf_params,
+            defocus_handedness,
+            metadata,
+        ) = parse_relion5_star_data(
+            relion5_tomograms_star,
+            TEST_TOMOGRAM,
+        )
+        per_tilt_weighting = True
+        job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=voxel_size,
+            tilt_angles=tilt_angles,
+            tilt_weighting=per_tilt_weighting,
+            dose_accumulation=dose_accumulation,
+            ctf_data=ctf_params,
+            defocus_handedness=defocus_handedness,
+            metadata=metadata,
+        )
+        job.start_job(0, return_volumes=False)
+
+        # repeat of relion5 extraction in extraction test above but with better center
+        df_rel5, scores = extract_particles(
+            job, 100, particle_diameter=10, create_plot=False, relion5_compat=True
+        )
+        binning = job.metadata["relion5_binning"]
+        voxel_size = job.metadata["relion5_ts_ps"]
+        center = (np.array(TOMO_SHAPE) * binning) / 2 - 1
+        centered_location = (np.array(LOCATION) * binning - center) * voxel_size
+        diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()
+        self.assertEqual(
+            diff,
+            0,
+            msg="relion5 compat mode should return a centered location of the object",
+        )
+
+        # Redo with a fake bin2
+        job_bin2 = job.copy()
+        job_bin2.metadata["relion5_binning"] = 2.0
+
+        df_rel5, scores = extract_particles(
+            job_bin2, 100, particle_diameter=10, create_plot=False, relion5_compat=True
+        )
+        binning = job_bin2.metadata["relion5_binning"]
+        voxel_size = job_bin2.metadata["relion5_ts_ps"]
+        center = (np.array(TOMO_SHAPE) * binning) / 2 - 1
+        centered_location = (np.array(LOCATION) * binning - center) * voxel_size
+        diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()
+        self.assertEqual(
+            diff,
+            0,
+            msg="relion5 compat mode should obey binning",
         )

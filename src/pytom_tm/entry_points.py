@@ -11,6 +11,7 @@ from pytom_tm.io import (
     read_mrc_meta_data,
     read_mrc,
     CheckFileExists,
+    CheckListOfFilesExists,
     ParseLogging,
     CheckDirExists,
     ParseSearch,
@@ -20,8 +21,10 @@ from pytom_tm.io import (
     BetweenZeroAndOne,
     ParseGPUIndices,
     parse_relion5_star_data,
+    parse_warp_xml_data,
 )
 from pytom_tm.tmjob import load_json_to_tmjob
+from pytom_tm.merge_stars import merge_stars as merge_st
 from os import urandom
 
 
@@ -33,9 +36,6 @@ def _parse_argv(argv=None):
 
 def pytom_create_mask(argv=None):
     from pytom_tm.mask import spherical_mask, ellipsoidal_mask
-
-    argv = _parse_argv(argv)
-
     # entry_point strings cannot use '\n' characters as this will break the website
     # snippet that displays the CLI help message
     # ---8<--- [start:create_mask_usage]
@@ -120,6 +120,16 @@ def pytom_create_mask(argv=None):
             args.radius_minor2,
             smooth=args.sigma,
         )
+    elif args.radius_minor1 is not None or args.radius_minor2 is not None:
+        # catch if only one of radius_minor1 or radius_minor2 is defined
+        gotten = (
+            "--radius-minor1" if args.radius_minor1 is not None else "--radius-minor2"
+        )
+        raise ValueError(
+            "If either '--radius-minor1' or '--radius-minor2' is given, "
+            f"both need to be given. Only got {gotten}"
+        )
+
     else:
         mask = spherical_mask(args.box_size, args.radius, smooth=args.sigma)
 
@@ -233,8 +243,13 @@ def pytom_create_template(argv=None):
 
     # ---8<--- [end:create_template_usage]
 
+    # Add hidden argument to prevent logging override for logtests
+    parser.add_argument(
+        "--log-test", help=argparse.SUPPRESS, action="store_true", default=False
+    )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log, force=True)
+    if not args.log_test:
+        logging.basicConfig(level=args.log, force=True)
 
     # set input voxel size and give user warning if it does not match
     # with MRC annotation
@@ -598,6 +613,7 @@ def extract_candidates(argv=None):
 def match_template(argv=None):
     from pytom_tm.tmjob import TMJob
     from pytom_tm.parallel import run_job_parallel
+    from pytom_tm.dataclass import CtfData
 
     argv = _parse_argv(argv)
 
@@ -931,7 +947,18 @@ def match_template(argv=None):
         "example "
         "from a tomogram reconstruction job). pytom-match-pick will fetch all "
         "the tilt-series metadata from this file and overwrite all other "
-        "metadata options.",
+        "metadata options. It also keeps track of the binning and tilt-series "
+        "pixel size to make extraction more accurate",
+    )
+    additional_group.add_argument(
+        "--warp-xml-file",
+        type=pathlib.Path,
+        action=CheckFileExists,
+        required=False,
+        help="Here, you can provide a Warp xml file that has the metadata "
+        "for that tiltseries."
+        "This xml metadata file will be in the tiltseries processing dir "
+        "eg. <cwd>/warp_tiltseries/)",
     )
     device_group = parser.add_argument_group("Device control")
     device_group.add_argument(
@@ -957,6 +984,9 @@ def match_template(argv=None):
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
+
+    # set some defaults
+    metadata = {}
 
     # set correct tilt angles
     if args.tilt_angles_first_column is not None:
@@ -987,27 +1017,43 @@ def match_template(argv=None):
                 "spherical-abberation or voltage) is/are missing."
             )
         ctf_params = [
-            {
-                "defocus": defocus * 1e-6,
-                "amplitude_contrast": args.amplitude_contrast,
-                "voltage": args.voltage * 1e3,
-                "spherical_aberration": args.spherical_aberration * 1e-3,
-                "flip_phase": phase_flip_correction,
-                "phase_shift_deg": args.phase_shift,
-            }
+            CtfData(
+                defocus=defocus * 1e-6,
+                amplitude_contrast=args.amplitude_contrast,
+                voltage=args.voltage * 1e3,
+                spherical_aberration=args.spherical_aberration * 1e-3,
+                flip_phase=phase_flip_correction,
+                phase_shift_deg=args.phase_shift,
+            )
             for defocus in args.defocus
         ]
 
     if args.relion5_tomograms_star is not None:
-        voxel_size, tilt_angles, dose_accumulation, ctf_params, defocus_handedness = (
-            parse_relion5_star_data(
-                args.relion5_tomograms_star,
-                args.tomogram,
-                phase_flip_correction=phase_flip_correction,
-                phase_shift=args.phase_shift,
-            )
+        (
+            voxel_size,
+            tilt_angles,
+            dose_accumulation,
+            ctf_params,
+            defocus_handedness,
+            rel_metadata,
+        ) = parse_relion5_star_data(
+            args.relion5_tomograms_star,
+            args.tomogram,
+            phase_flip_correction=phase_flip_correction,
+            phase_shift=args.phase_shift,
         )
         per_tilt_weighting = True
+        metadata.update(rel_metadata)
+
+    elif args.warp_xml_file is not None:
+        voxel_size, tilt_angles, dose_accumulation, ctf_params = parse_warp_xml_data(
+            args.warp_xml_file,
+            args.tomogram,
+            phase_flip_correction=phase_flip_correction,
+        )
+        defocus_handedness = args.defocus_handedness
+        per_tilt_weighting = True
+
     else:
         if tilt_angles is None:
             raise ValueError(
@@ -1054,6 +1100,7 @@ def match_template(argv=None):
         rng_seed=args.rng_seed,
         defocus_handedness=defocus_handedness,
         output_dtype=np.float16 if args.half_precision else np.float32,
+        metadata=metadata,
     )
 
     score_volume, angle_volume = run_job_parallel(
@@ -1077,8 +1124,6 @@ def match_template(argv=None):
 
 
 def merge_stars(argv=None):
-    import pandas as pd
-
     # entry_point strings cannot use '\n' characters as this will break the website
     # snippet that displays the CLI help message
     # ---8<--- [start:merge_stars_usage]
@@ -1092,14 +1137,13 @@ def merge_stars(argv=None):
     )
     parser.add_argument(
         "-i",
-        "--input-dir",
+        "--input-star-files",
         type=pathlib.Path,
-        required=False,
-        default="./",
-        action=CheckDirExists,
+        required=True,
+        action=CheckListOfFilesExists,
+        nargs="+",
         help=(
-            "Directory with star files, "
-            "script will try to merge all files that end in '.star'."
+            "List of star files to merge, script will only try to merge unique files"
         ),
     )
     parser.add_argument(
@@ -1118,23 +1162,25 @@ def merge_stars(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+    parser.add_argument(
+        "--relion5-compat",
+        action="store_true",
+        default=False,
+        required=False,
+        help=(
+            "Write out a tomograms.star file that links to all the particle files "
+            "instead of writing a single concatenated particle.star file"
+        ),
+    )
 
     # ---8<--- [end:merge_stars_usage]
 
-    args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log, force=True)
-
-    files = [f for f in args.input_dir.iterdir() if f.suffix == ".star"]
-
-    if len(files) == 0:
-        raise ValueError("No starfiles in directory.")
-
-    logging.info("Concatting and writing star files")
-
-    dataframes = [starfile.read(f) for f in files]
-
-    starfile.write(
-        {"particles": pd.concat(dataframes, ignore_index=True)},
-        args.output_file,
-        overwrite=True,
+    # Add hidden argument to prevent logging override for logtests
+    parser.add_argument(
+        "--log-test", help=argparse.SUPPRESS, action="store_true", default=False
     )
+    args = parser.parse_args(argv)
+    if not args.log_test:
+        logging.basicConfig(level=args.log, force=True)
+
+    merge_st(args.input_star_files, args.output_file, args.relion5_compat)

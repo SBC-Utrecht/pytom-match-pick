@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytom-match-pick"
-version = "0.8.1"
+version = "0.11.0"
 description = "PyTOM's GPU template matching module as an independent package"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Typing :: Typed"
 ]
-requires-python = ">= 3.10"
+requires-python = ">= 3.11"
 dependencies = [
     "numpy",
     "cupy!=13.0.*", #see https://github.com/SBC-Utrecht/pytom-match-pick/issues/106
@@ -35,6 +35,7 @@ dependencies = [
     "packaging",
     "scipy",
     "healpix",
+    "lxml"
 ]
 
 [project.optional-dependencies]

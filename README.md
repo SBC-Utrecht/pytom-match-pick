@@ -140,7 +140,9 @@ python -m unittest discover
 
 Contributions to the project are very welcome! Feel free to make a pull request or suggest an implementation in the issues. For PR's we will gladly give you feedback on how to integrate the code.
 
-## Citation
+## Citations
+
+Chaillet, M. L., Roet, S., Veltkamp, R. C., & Förster, F. (2025). pytom-match-pick: A tophat-transform constraint for automated classification in template matching. _Journal of Structural Biology: X_, 11, 100125. <https://doi.org/10.1016/j.yjsbx.2025.100125>
 
 Chaillet, M. L., van der Schot, G., Gubins, I., Roet, S., Veltkamp, R. C., & Förster, F. (2023). Extensive angular sampling enables the sensitive localization of macromolecules in electron tomograms. _International Journal of Molecular Sciences_, 24(17), 13375. <https://doi.org/10.3390/ijms241713375>
 
