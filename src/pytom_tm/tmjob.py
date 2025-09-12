@@ -95,6 +95,7 @@ def load_json_to_tmjob(
     job.start_slice = data["start_slice"]
     job.steps_slice = data["steps_slice"]
     job.job_stats = data["job_stats"]
+    job.tomo_id = data["tomo_id"]
     return job
 
 
