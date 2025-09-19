@@ -74,7 +74,12 @@ class TestTMJob(unittest.TestCase):
         TEST_MASK.unlink()
         TEST_TEMPLATE.unlink()
         TEST_TOMOGRAM.unlink()
-        TEST_DATA_DIR.rmdir()
+        # TODO: remove debug code
+        try:
+            TEST_DATA_DIR.rmdir()
+        except OSError as e:
+            print(TEST_DATA_DIR.iterdir())
+            raise e
 
     def setUp(self):
         self.job = TMJob(
