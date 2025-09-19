@@ -84,6 +84,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=38.53,
             voxel_size=1.0,
         )
