@@ -78,8 +78,7 @@ class TestTMJob(unittest.TestCase):
         try:
             TEST_DATA_DIR.rmdir()
         except OSError as e:
-            print(f"{list(TEST_DATA_DIR.iterdir())=}")
-            raise e
+            raise OSError(f"{list(TEST_DATA_DIR.iterdir())=}") from e
 
     def setUp(self):
         self.job = TMJob(
