@@ -8,11 +8,11 @@ closed which will allow the remaining test to use the GPU.
 """
 
 import unittest
-import pathlib
 import time
 import numpy as np
 import voltools as vt
 import multiprocessing
+from tempfile import TemporaryDirectory
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.parallel import run_job_parallel
@@ -25,7 +25,7 @@ TEMPLATE_SIZE = 13
 LOCATION = (77, 26, 40)
 ANGLE_ID = 100
 ANGULAR_SEARCH = 38.53
-TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath("test_data")
+TEST_DATA_DIR = TemporaryDirectory()
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath("tomogram.mrc")
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath("template.mrc")
 TEST_MASK = TEST_DATA_DIR.joinpath("mask.mrc")
@@ -71,10 +71,7 @@ class TestTMJob(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        TEST_MASK.unlink()
-        TEST_TEMPLATE.unlink()
-        TEST_TOMOGRAM.unlink()
-        TEST_DATA_DIR.rmdir()
+        TEST_DATA_DIR.cleanup()
 
     def setUp(self):
         self.job = TMJob(
@@ -84,6 +81,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=38.53,
             voxel_size=1.0,
         )

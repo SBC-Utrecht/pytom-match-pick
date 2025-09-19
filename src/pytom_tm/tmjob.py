@@ -61,9 +61,9 @@ def load_json_to_tmjob(
         pathlib.Path(data["template"]),
         pathlib.Path(data["mask"]),
         pathlib.Path(data["output_dir"]),
+        tilt_angles=data["tilt_angles"],
         angle_increment=data.get("angle_increment", data["rotation_file"]),
         mask_is_spherical=data["mask_is_spherical"],
-        tilt_angles=data["tilt_angles"],
         tilt_weighting=data["tilt_weighting"],
         search_x=data["search_x"],
         search_y=data["search_y"],
@@ -264,9 +264,9 @@ class TMJob:
         template: pathlib.Path,
         mask: pathlib.Path,
         output_dir: pathlib.Path,
+        tilt_angles: list[float, ...],
         angle_increment: str | float | None = None,
         mask_is_spherical: bool = True,
-        tilt_angles: list[float, ...] | None = None,
         tilt_weighting: bool = False,
         search_x: list[int, int] | None = None,
         search_y: list[int, int] | None = None,
@@ -303,13 +303,13 @@ class TMJob:
             path to mask MRC
         output_dir: pathlib.Path
             path to output directory
+        tilt_angles: list[float, ...],
+            tilt angles of tilt-series used to reconstruct tomogram, if only two floats
+            will be used to generate a continuous wedge model
         angle_increment: Union[str, float]; default 7.00
             angular increment of template search
         mask_is_spherical: bool, default True
             whether template mask is spherical, reduces computation complexity
-        tilt_angles: Optional[list[float, ...]], default None
-            tilt angles of tilt-series used to reconstruct tomogram, if only two floats
-            will be used to generate a continuous wedge model
         tilt_weighting: bool, default False
             use advanced tilt weighting options, can be supplemented with CTF parameters
             and accumulated dose
@@ -900,68 +900,65 @@ class TMJob:
             ).astype(np.float32)
 
         # if tilt angles are provided we can create wedge filters
-        if self.tilt_angles is not None:
-            if self.tilt_weighting and self.defocus_handedness != 0:
-                # adjust ctf parameters for this specific patch in the tomogram
-                full_tomo_center = np.array(self.tomo_shape) / 2
-                patch_center = (
-                    np.array(self.search_origin) + np.array(self.search_size) / 2
-                )
-                relative_patch_center_angstrom = (
-                    patch_center - full_tomo_center
-                ) * self.voxel_size
-                defocus_offsets = get_defocus_offsets(
-                    relative_patch_center_angstrom[0],  # x-coordinate
-                    relative_patch_center_angstrom[2],  # z-coordinate
-                    self.tilt_angles,
-                    angles_in_degrees=True,
-                    invert_handedness=self.defocus_handedness < 0,
-                )
-                for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
-                    ctf.defocus = ctf.defocus + defocus_shift * 1e-10
-                logging.debug(
-                    "Patch center (nr. of voxels): "
-                    f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
-                )
-                logging.debug(
-                    "Defocus values (um): "
-                    f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ctf_data]}",
-                )
-
-            # for the tomogram a binary wedge is generated to explicitly set the missing
-            # wedge region to 0
-            tomo_filter *= create_wedge(
-                search_volume.shape,
+        if self.tilt_weighting and self.defocus_handedness != 0:
+            # adjust ctf parameters for this specific patch in the tomogram
+            full_tomo_center = np.array(self.tomo_shape) / 2
+            patch_center = np.array(self.search_origin) + np.array(self.search_size) / 2
+            relative_patch_center_angstrom = (
+                patch_center - full_tomo_center
+            ) * self.voxel_size
+            defocus_offsets = get_defocus_offsets(
+                relative_patch_center_angstrom[0],  # x-coordinate
+                relative_patch_center_angstrom[2],  # z-coordinate
                 self.tilt_angles,
-                self.voxel_size,
-                cut_off_radius=1.0,
                 angles_in_degrees=True,
-                tilt_weighting=False,
-            ).astype(np.float32)
-            # for the template a binary or per-tilt-weighted wedge is generated
-            # depending on the options
-            template_wedge *= create_wedge(
-                self.template_shape,
-                self.tilt_angles,
-                self.voxel_size,
-                cut_off_radius=1.0,
-                angles_in_degrees=True,
-                tilt_weighting=self.tilt_weighting,
-                accumulated_dose_per_tilt=self.dose_accumulation,
-                ctf_params_per_tilt=self.ctf_data,
-            ).astype(np.float32)
+                invert_handedness=self.defocus_handedness < 0,
+            )
+            for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
+                ctf.defocus = ctf.defocus + defocus_shift * 1e-10
+            logging.debug(
+                "Patch center (nr. of voxels): "
+                f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
+            )
+            logging.debug(
+                "Defocus values (um): "
+                f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ctf_data]}",
+            )
 
-            if logging.DEBUG >= logging.root.level:
-                write_mrc(
-                    self.output_dir.joinpath("template_psf.mrc"),
-                    template_wedge,
-                    self.voxel_size,
-                )
-                write_mrc(
-                    self.output_dir.joinpath("template_convolved.mrc"),
-                    irfftn(rfftn(template) * template_wedge, s=template.shape),
-                    self.voxel_size,
-                )
+        # for the tomogram a binary wedge is generated to explicitly set the missing
+        # wedge region to 0
+        tomo_filter *= create_wedge(
+            search_volume.shape,
+            self.tilt_angles,
+            self.voxel_size,
+            cut_off_radius=1.0,
+            angles_in_degrees=True,
+            tilt_weighting=False,
+        ).astype(np.float32)
+        # for the template a binary or per-tilt-weighted wedge is generated
+        # depending on the options
+        template_wedge *= create_wedge(
+            self.template_shape,
+            self.tilt_angles,
+            self.voxel_size,
+            cut_off_radius=1.0,
+            angles_in_degrees=True,
+            tilt_weighting=self.tilt_weighting,
+            accumulated_dose_per_tilt=self.dose_accumulation,
+            ctf_params_per_tilt=self.ctf_data,
+        ).astype(np.float32)
+
+        if logging.DEBUG >= logging.root.level:
+            write_mrc(
+                self.output_dir.joinpath("template_psf.mrc"),
+                template_wedge,
+                self.voxel_size,
+            )
+            write_mrc(
+                self.output_dir.joinpath("template_convolved.mrc"),
+                irfftn(rfftn(template) * template_wedge, s=template.shape),
+                self.voxel_size,
+            )
 
         # apply the optional band pass and whitening filter to the search region
         search_volume = np.real(

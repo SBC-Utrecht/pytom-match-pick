@@ -1078,11 +1078,11 @@ def match_template(argv=None):
         args.template,
         args.mask,
         args.destination,
+        tilt_angles=tilt_angles,
         angle_increment=args.angular_search,
         mask_is_spherical=True
         if args.non_spherical_mask is None
         else (not args.non_spherical_mask),
-        tilt_angles=tilt_angles,
         tilt_weighting=per_tilt_weighting,
         search_x=args.search_x,
         search_y=args.search_y,
