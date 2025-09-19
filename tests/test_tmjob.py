@@ -34,6 +34,7 @@ ANGULAR_SEARCH = "38.53"
 TEMP_DIR = TemporaryDirectory()
 TEST_DATA_DIR = pathlib.Path(TEMP_DIR.name)
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath("tomogram.mrc")
+TEST_SYMLINK_TOMOGRAM = TEST_DATA_DIR.joinpath("margomot.mrc")
 TEST_BROKEN_TOMOGRAM_MASK = TEST_DATA_DIR.joinpath("broken_tomogram_mask.mrc")
 TEST_WRONG_SIZE_TOMO_MASK = TEST_DATA_DIR.joinpath("wrong_size_tomogram_mask.mrc")
 TEST_EXTRACTION_MASK_OUTSIDE = TEST_DATA_DIR.joinpath("extraction_mask_outside.mrc")
@@ -50,6 +51,7 @@ TEST_CUSTOM_ANGULAR_SEARCH = TEST_DATA_DIR.joinpath("custom_angular_search.txt")
 TEST_WHITENING_FILTER = TEST_DATA_DIR.joinpath("tomogram_whitening_filter.npy")
 TEST_JOB_JSON_BASE = pathlib.Path("tomogram_job.json")
 TEST_JOB_JSON = TEST_DATA_DIR / TEST_JOB_JSON_BASE
+TEST_JOB_SYMLINK_JSON = TEST_DATA_DIR / "tomogram_job_symlink.json"
 TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath("tomogram_job_whitening.json")
 TEST_JOB_OLD_VERSION = TEST_DATA_DIR.joinpath("tomogram_job_old_version.json")
 TEST_JOB_RELION5_DIR = TEST_DATA_DIR.joinpath("relion5_data")
@@ -128,6 +130,21 @@ class TestTMJob(unittest.TestCase):
         write_mrc(TEST_SCORES, score, job.voxel_size)
         write_mrc(TEST_ANGLES, angle, job.voxel_size)
         job.write_to_json(TEST_JOB_JSON)
+
+        # do a run against a symlinked tomogram
+        TEST_SYMLINK_TOMOGRAM.symlink_to(TEST_TOMOGRAM)
+        job = TMJob(
+            "0",
+            10,
+            TEST_SYMLINK_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=1.0,
+        )
+        score, angle = job.start_job(0, return_volumes=True)
+        job.write_to_json(TEST_JOB_SYMLINK_JSON)
 
         np.savetxt(TEST_CUSTOM_ANGULAR_SEARCH, np.random.rand(100, 3))
 
@@ -470,6 +487,11 @@ class TestTMJob(unittest.TestCase):
         for ctf in job.ctf_data:
             self.assertIs(type(ctf), CtfData)
             self.assertEqual(ctf.phase_shift_deg, 0.0)
+
+        # test that tomo_ids are properly when loading jobs that refer symlinks
+        # see issue 314
+        job = load_json_to_tmjob(TEST_JOB_SYMLINK_JSON)
+        self.assertEqual(job.tomo_id, "margomot")
 
     def test_custom_angular_search(self):
         with TemporaryDirectory() as data_dir:
