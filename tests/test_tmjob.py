@@ -123,6 +123,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
         )
@@ -140,6 +141,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
         )
@@ -156,6 +158,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=90.00,
             voxel_size=1.0,
             whiten_spectrum=True,
@@ -184,6 +187,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
         )
@@ -201,6 +205,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE_WRONG_VOXEL_SIZE,
                 TEST_MASK,
                 TEST_DATA_DIR,
+                tilt_angles=[-90, 90],
             )
 
         with self.assertRaises(
@@ -213,6 +218,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE_UNEQUAL_SPACING,
                 TEST_MASK,
                 TEST_DATA_DIR,
+                tilt_angles=[-90, 90],
             )
 
         with self.assertRaises(
@@ -226,6 +232,7 @@ class TestTMJob(unittest.TestCase):
                 # Use unequal spaced template as broken mask
                 TEST_TEMPLATE_UNEQUAL_SPACING,
                 TEST_DATA_DIR,
+                tilt_angles=[-90, 90],
             )
 
         # test searches raise correct errors
@@ -240,6 +247,7 @@ class TestTMJob(unittest.TestCase):
                     TEST_TEMPLATE,
                     TEST_MASK,
                     TEST_DATA_DIR,
+                    tilt_angles=[-90, 90],
                     voxel_size=1.0,
                     **{param: [-10, 100]},
                 )
@@ -253,6 +261,7 @@ class TestTMJob(unittest.TestCase):
                     TEST_TEMPLATE,
                     TEST_MASK,
                     TEST_DATA_DIR,
+                    tilt_angles=[-90, 90],
                     voxel_size=1.0,
                     **{param: [110, 130]},
                 )
@@ -266,6 +275,7 @@ class TestTMJob(unittest.TestCase):
                     TEST_TEMPLATE,
                     TEST_MASK,
                     TEST_DATA_DIR,
+                    tilt_angles=[-90, 90],
                     voxel_size=1.0,
                     **{param: [0, 120]},
                 )
@@ -278,6 +288,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK,
                 TEST_DATA_DIR,
+                tilt_angles=[-90, 90],
                 angle_increment="1.2.3",
                 voxel_size=1.0,
             )
@@ -291,6 +302,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK,
                 TEST_DATA_DIR,
+                tilt_angles=[-90, 90],
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
                 tomogram_mask=TEST_BROKEN_TOMOGRAM_MASK,
@@ -304,6 +316,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK,
                 TEST_DATA_DIR,
+                tilt_angles=[-90, 90],
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
                 tomogram_mask=TEST_WRONG_SIZE_TOMO_MASK,
@@ -322,6 +335,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK_WRONG_SIZE,
                 TEST_DATA_DIR,
+                tilt_angles=[-90, 90],
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
@@ -346,13 +360,13 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=TILT_ANGLES,
             angle_increment=90.00,
             voxel_size=1.0,
             low_pass=10,
             high_pass=100,
             dose_accumulation=ACCUMULATED_DOSE,
             ctf_data=CTF_PARAMS,
-            tilt_angles=TILT_ANGLES,
             whiten_spectrum=True,
             tilt_weighting=True,
             defocus_handedness=1,
@@ -371,11 +385,11 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=TILT_ANGLES,
             angle_increment=90.00,
             voxel_size=1.0,
             dose_accumulation=ACCUMULATED_DOSE,
             ctf_data=CTF_PARAMS,
-            tilt_angles=TILT_ANGLES,
             tilt_weighting=True,
         )
         score, angle = job.start_job(0, return_volumes=True)
@@ -391,6 +405,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=90.00,
             voxel_size=1.0,
             low_pass=10,
@@ -410,6 +425,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=90.00,
             voxel_size=1.0,
             whiten_spectrum=True,
@@ -428,6 +444,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=90.00,
             voxel_size=1.0,
             whiten_spectrum=True,
@@ -503,6 +520,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK,
                 data_dir,
+                tilt_angles=[-90, 90],
                 angle_increment=TEST_CUSTOM_ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
@@ -620,6 +638,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
             search_x=[9, 90],
@@ -693,6 +712,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=[-90, 90],
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
             output_dtype=np.float16,
@@ -912,6 +932,7 @@ class TestTMJob(unittest.TestCase):
                 pathlib.Path(TEST_TEMPLATE.name),
                 pathlib.Path(TEST_MASK.name),
                 TEST_DATA_DIR,  # should end up in the expected spot
+                tilt_angles=[-90, 90],
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
@@ -952,9 +973,9 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
+            tilt_angles=tilt_angles,
             angle_increment=ANGULAR_SEARCH,
             voxel_size=voxel_size,
-            tilt_angles=tilt_angles,
             tilt_weighting=per_tilt_weighting,
             dose_accumulation=dose_accumulation,
             ctf_data=ctf_params,
