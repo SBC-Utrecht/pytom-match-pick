@@ -865,17 +865,6 @@ class TMJob:
             dtype=np.float32,
         )
 
-        # load the (sub)volume
-        search_volume[
-            : self.search_size[0], : self.search_size[1], : self.search_size[2]
-        ] = np.ascontiguousarray(
-            read_mrc(self.tomogram)[
-                self.search_origin[0] : self.search_origin[0] + self.search_size[0],
-                self.search_origin[1] : self.search_origin[1] + self.search_size[1],
-                self.search_origin[2] : self.search_origin[2] + self.search_size[2],
-            ]
-        )
-
         # load template and mask
         template, mask = (read_mrc(self.template), read_mrc(self.mask))
 
@@ -959,12 +948,20 @@ class TMJob:
                 irfftn(rfftn(template) * template_wedge, s=template.shape),
                 self.voxel_size,
             )
-
-        # apply the optional band pass and whitening filter to the search region
-        # TODO: undo the debug comments
-        # search_volume = np.real(
-        #    irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape)
-        # )
+        # actually load the volume, apply optional filters, slice it down
+        # to subvolume
+        # TODO: we might want to rewrite to only do this once in a volume split
+        tomo = read_mrc(self.tomogram)
+        tomo = np.real(irfftn(rfftn(tomo) * tomo_filter, s=search_volume.shape))
+        search_volume[
+            : self.search_size[0], : self.search_size[1], : self.search_size[2]
+        ] = np.ascontiguousarray(
+            tomo[
+                self.search_origin[0] : self.search_origin[0] + self.search_size[0],
+                self.search_origin[1] : self.search_origin[1] + self.search_size[1],
+                self.search_origin[2] : self.search_origin[2] + self.search_size[2],
+            ]
+        )
 
         # load rotation search
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
