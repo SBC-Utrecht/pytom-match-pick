@@ -2,6 +2,7 @@ import numpy as np
 import unittest
 from pytom_tm.weights import (
     create_wedge,
+    _create_symmetric_wedge,
     create_ctf,
     create_gaussian_band_pass,
     radial_reduced_grid,
@@ -122,6 +123,10 @@ class TestWeights(unittest.TestCase):
             msg="Low-pass and high-pass filter should be different",
         )
 
+    def test_create_symmetric_wedge(self):
+        with self.assertRaisesRegex(ValueError, "bigger than 90 degrees"):
+            _create_symmetric_wedge(self.volume_shape_even, 4, 1.0)
+
     def test_create_wedge(self):
         with self.assertRaises(
             ValueError,
@@ -147,6 +152,8 @@ class TestWeights(unittest.TestCase):
             "equal to 0",
         ):
             create_wedge(self.volume_shape_even, TILT_ANGLES, 1.0, cut_off_radius=0.0)
+        with self.assertRaisesRegex(ValueError, "Negative wedge angles"):
+            create_wedge(self.volume_shape_even, [-91, 91], 1.0)
 
         # create test wedges
         structured_wedge = create_wedge(
