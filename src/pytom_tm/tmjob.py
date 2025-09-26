@@ -860,7 +860,7 @@ class TMJob:
             tuple([next_fast_len(s, real=True) for s in tomo.shape]),
             dtype=np.float32,
         )
-        fast_tomo[: tomo.shape[0], : tomo.shape[1], tomo.shape[2]] = tomo
+        fast_tomo[: tomo.shape[0], : tomo.shape[1], : tomo.shape[2]] = tomo
 
         # load template and mask
         template, mask = (read_mrc(self.template), read_mrc(self.mask))
