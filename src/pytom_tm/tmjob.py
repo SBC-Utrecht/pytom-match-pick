@@ -961,9 +961,10 @@ class TMJob:
             )
 
         # apply the optional band pass and whitening filter to the search region
-        search_volume = np.real(
-            irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape)
-        )
+        # TODO: undo the debug comments
+        # search_volume = np.real(
+        #    irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape)
+        # )
 
         # load rotation search
         angle_ids = list(range(self.start_slice, self.n_rotations, self.steps_slice))
