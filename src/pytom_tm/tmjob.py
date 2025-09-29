@@ -79,6 +79,7 @@ def load_json_to_tmjob(
         pathlib.Path(data["template"]),
         pathlib.Path(data["mask"]),
         pathlib.Path(data["output_dir"]),
+        tilt_angles=data["tilt_angles"],
         angle_increment=data.get("angle_increment", data["rotation_file"]),
         mask_is_spherical=data["mask_is_spherical"],
         voxel_size=data["voxel_size"],
@@ -838,26 +839,12 @@ class TMJob:
             angle map), when no volumes are returned the output consists of a dictionary
             with search statistics
         """
-        # next fast fft len
-        logging.debug(
-            "Next fast fft shape: "
-            f"{tuple([next_fast_len(s, real=True) for s in self.search_size])}"
-        )
-        search_volume = np.zeros(
-            tuple([next_fast_len(s, real=True) for s in self.search_size]),
+        tomo = read_mrc(self.tomogram)
+        fast_tomo = np.zeros(
+            tuple([next_fast_len(s, real=True) for s in tomo.shape]),
             dtype=np.float32,
         )
-
-        # load the (sub)volume
-        search_volume[
-            : self.search_size[0], : self.search_size[1], : self.search_size[2]
-        ] = np.ascontiguousarray(
-            read_mrc(self.tomogram)[
-                self.search_origin[0] : self.search_origin[0] + self.search_size[0],
-                self.search_origin[1] : self.search_origin[1] + self.search_size[1],
-                self.search_origin[2] : self.search_origin[2] + self.search_size[2],
-            ]
-        )
+        fast_tomo[: tomo.shape[0], : tomo.shape[1], : tomo.shape[2]] = tomo
 
         # load template and mask
         template, mask = (read_mrc(self.template), read_mrc(self.mask))
@@ -867,7 +854,7 @@ class TMJob:
         # first generate bandpass filters
         if not (self.low_pass is None and self.high_pass is None):
             tomo_filter *= create_gaussian_band_pass(
-                search_volume.shape, self.voxel_size, self.low_pass, self.high_pass
+                fast_tomo.shape, self.voxel_size, self.low_pass, self.high_pass
             ).astype(np.float32)
             template_wedge *= create_gaussian_band_pass(
                 self.template_shape, self.voxel_size, self.low_pass, self.high_pass
@@ -876,7 +863,7 @@ class TMJob:
         # then multiply with optional whitening filters
         if self.whiten_spectrum:
             tomo_filter *= profile_to_weighting(
-                np.load(self.whitening_filter), search_volume.shape
+                np.load(self.whitening_filter), fast_tomo.shape
             ).astype(np.float32)
             template_wedge *= profile_to_weighting(
                 np.load(self.whitening_filter), self.template_shape
@@ -915,7 +902,7 @@ class TMJob:
         # for the tomogram a binary wedge is generated to explicitly set the missing
         # wedge region to 0
         tomo_filter *= create_wedge(
-            search_volume.shape,
+            fast_tomo.shape,
             self.ts_metadata,
             self.voxel_size,
             cut_off_radius=1.0,
@@ -944,9 +931,28 @@ class TMJob:
                 self.voxel_size,
             )
 
-        # apply the optional band pass and whitening filter to the search region
-        search_volume = np.real(
-            irfftn(rfftn(search_volume) * tomo_filter, s=search_volume.shape)
+        # next fast fft len
+        logging.debug(
+            "Next fast fft shape: "
+            f"{tuple([next_fast_len(s, real=True) for s in self.search_size])}"
+        )
+        search_volume = np.zeros(
+            tuple([next_fast_len(s, real=True) for s in self.search_size]),
+            dtype=np.float32,
+        )
+
+        # apply optional filters to tomogram and slice it down to subvolume
+        # TODO: we might want to rewrite this to only do this and the tomo loading
+        # once in a volume split
+        fast_tomo = np.real(irfftn(rfftn(fast_tomo) * tomo_filter, s=fast_tomo.shape))
+        search_volume[
+            : self.search_size[0], : self.search_size[1], : self.search_size[2]
+        ] = np.ascontiguousarray(
+            fast_tomo[
+                self.search_origin[0] : self.search_origin[0] + self.search_size[0],
+                self.search_origin[1] : self.search_origin[1] + self.search_size[1],
+                self.search_origin[2] : self.search_origin[2] + self.search_size[2],
+            ]
         )
 
         # load rotation search

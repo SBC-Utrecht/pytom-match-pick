@@ -377,21 +377,35 @@ def _create_symmetric_wedge(
     wedge: npt.NDArray[float]
         wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
-    x = (
-        np.abs(
-            np.arange(-shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1.0)
-        )
-        / (shape[0] // 2)
-    )[:, np.newaxis]
-    z = np.arange(0, shape[2] // 2 + 1, 1.0) / (shape[2] // 2)
+    if wedge_angle < 0:
+        raise ValueError("Negative wedge angles are not defined")
+    elif wedge_angle > np.pi:
+        raise ValueError("Wedge angles bigger than 90 degrees are not defined")
 
-    # calculate the wedge mask with smooth edges
-    wedge_2d = x - np.tan(wedge_angle) * z
-    limit = (wedge_2d.max() - wedge_2d.min()) / (2 * min(shape[0], shape[2]) // 2)
-    wedge_2d[wedge_2d > limit] = limit
-    wedge_2d[wedge_2d < -limit] = -limit
-    wedge_2d = (wedge_2d - wedge_2d.min()) / (wedge_2d.max() - wedge_2d.min())
-    wedge_2d[shape[0] // 2 + 1, 0] = 1  # ensure that the zero frequency point equals 1
+    # special treatment for the 0.0 angles
+    if wedge_angle == 0.0:
+        new_shape = (shape[0], shape[2] // 2 + 1)
+        wedge_2d = np.ones(shape=new_shape)
+    else:
+        x = (
+            np.abs(
+                np.arange(
+                    -shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1.0
+                )
+            )
+            / (shape[0] // 2)
+        )[:, np.newaxis]
+        z = np.arange(0, shape[2] // 2 + 1, 1.0) / (shape[2] // 2)
+
+        # calculate the wedge mask with smooth edges
+        wedge_2d = x - np.tan(wedge_angle) * z
+        limit = (wedge_2d.max() - wedge_2d.min()) / (2 * min(shape[0], shape[2]) // 2)
+        wedge_2d[wedge_2d > limit] = limit
+        wedge_2d[wedge_2d < -limit] = -limit
+        wedge_2d = (wedge_2d - wedge_2d.min()) / (wedge_2d.max() - wedge_2d.min())
+        wedge_2d[shape[0] // 2 + 1, 0] = (
+            1  # ensure that the zero frequency point equals 1
+        )
 
     # duplicate in x
     wedge = np.tile(wedge_2d[:, np.newaxis, :], (1, shape[1], 1))
