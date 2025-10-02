@@ -324,7 +324,7 @@ def create_wedge(
             cut_off_radius,
             voxel_size,
             accumulated_dose_per_tilt=ts_metadata.accumulated_dose,
-            ctf_params_per_tilt=ts_metadata.ctf_params,
+            ctf_params_per_tilt=ts_metadata.ctf_data,
         ).astype(np.float32)
     else:
         wedge_angles = (
@@ -339,13 +339,13 @@ def create_wedge(
             wedge = _create_asymmetric_wedge(
                 shape, (wedge_angles[0], wedge_angles[1]), cut_off_radius
             ).astype(np.float32)
-        if ts_metadata.ctf_params is not None:
+        if ts_metadata.ctf_data is not None:
             # - take ctf params from approx. middle tilt as those are most accurate
-            ctf_params = ts_metadata.ctf_params[len(ts_metadata) // 2]
+            ctf_data = ts_metadata.ctf_data[len(ts_metadata) // 2]
             wedge *= create_ctf(
                 shape,
                 voxel_size * 1e-10,
-                ctf_params,
+                ctf_data,
             )
 
     if not (low_pass is None and high_pass is None):
