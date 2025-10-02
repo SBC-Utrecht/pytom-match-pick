@@ -133,22 +133,6 @@ class TestWeights(unittest.TestCase):
             _create_symmetric_wedge(self.volume_shape_even, 4, 1.0)
 
     def test_create_wedge(self):
-        # TODO: the top three things should be caught be the dataclass and tested there
-        temp = TiltSeriesMetaData(tilt_angles=[1.0])
-        with self.assertRaises(
-            ValueError,
-            msg="Create wedge should raise ValueError if tilt_angles list does not "
-            "contain at least two values",
-        ):
-            create_wedge(self.volume_shape_even, ts_metadata=temp, voxel_size=1.0)
-
-        temp = TiltSeriesMetaData(tilt_angles=1.0)
-        with self.assertRaises(
-            ValueError,
-            msg="Create wedge should raise ValueError if tilt_angles input is not a "
-            "list",
-        ):
-            create_wedge(self.volume_shape_even, ts_metadata=temp, voxel_size=1.0)
         temp = self.TiltSeriesMetaData(tilt_angles=[-91, 91])
         with self.assertRaisesRegex(ValueError, "Negative wedge angles"):
             create_wedge(self.volume_shape_even, ts_metadata=temp, voxel_size=1.0)

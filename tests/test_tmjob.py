@@ -356,7 +356,7 @@ class TestTMJob(unittest.TestCase):
             tilt_angles=TILT_ANGLES,
             dose_accumulation=ACCUMULATED_DOSE,
             ctf_data=CTF_PARAMS,
-            defocus_handednness=1,
+            defocus_handedness=1,
             per_tilt_weighting=True,
         )
         job = TMJob(

@@ -79,11 +79,10 @@ def load_json_to_tmjob(
         pathlib.Path(data["template"]),
         pathlib.Path(data["mask"]),
         pathlib.Path(data["output_dir"]),
-        tilt_angles=data["tilt_angles"],
+        ts_metadata=data["ts_metadata"],
         angle_increment=data.get("angle_increment", data["rotation_file"]),
         mask_is_spherical=data["mask_is_spherical"],
         voxel_size=data["voxel_size"],
-        ts_metadata=data["ts_metadata"],
         search_x=data["search_x"],
         search_y=data["search_y"],
         search_z=data["search_z"],
@@ -883,7 +882,7 @@ class TMJob:
             defocus_offsets = get_defocus_offsets(
                 relative_patch_center_angstrom[0],  # x-coordinate
                 relative_patch_center_angstrom[2],  # z-coordinate
-                self.tilt_angles,
+                self.ts_metadata.tilt_angles,
                 angles_in_degrees=True,
                 invert_handedness=self.defocus_handedness < 0,
             )

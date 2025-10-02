@@ -8,6 +8,7 @@ import pathlib
 from pytom_tm.tmjob import TMJob
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import get_angle_list, convert_euler
+from pyton_tm.dataclass import RelionTiltSeriesMetaData
 from pytom_tm.io import read_mrc
 from scipy.special import erfcinv
 from scipy.optimize import curve_fit
@@ -381,10 +382,10 @@ def extract_particles(
 
     if relion5_compat:
         dims = np.array(job.tomo_shape)
-        if "relion5_binning" in job.metadata:
-            binning = job.metadata["relion5_binning"]
+        if isinstance(job.ts_metadata, RelionTiltSeriesMetaData):
+            binning = job.ts_metadata.binning
             center = (dims * binning) / 2 - 1
-            voxel_size = job.metadata["relion5_ts_ps"]
+            voxel_size = job.ts_metadata.tilt_series_pixel_size
         else:
             # we approximate the center, the correct way is to use
             # relion5's unbinned dimensions and calculate:

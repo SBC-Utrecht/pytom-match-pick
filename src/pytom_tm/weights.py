@@ -323,7 +323,7 @@ def create_wedge(
             tilt_angles_rad,
             cut_off_radius,
             voxel_size,
-            accumulated_dose_per_tilt=ts_metadata.accumulated_dose,
+            accumulated_dose_per_tilt=ts_metadata.dose_accumulation,
             ctf_params_per_tilt=ts_metadata.ctf_data,
         ).astype(np.float32)
     else:
