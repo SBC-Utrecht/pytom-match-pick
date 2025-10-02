@@ -312,11 +312,11 @@ class TMJob:
             path to mask MRC
         output_dir: pathlib.Path
             path to output directory
+        ts_metadata: TiltSeriesMetaData
+            tilt series metadata of the tomogram, contains at least the tilt angles
         voxel_size: float | None, default None
             voxel size of tomogram and template (in A) if not provided will be read from
             template/tomogram MRCs
-        ts_metadata: TiltSeriesMetaData | None, default None
-            tilt series metadata of the tomogram
         angle_increment: Union[str, float]; default 7.00
             angular increment of template search
         mask_is_spherical: bool, default True

@@ -261,7 +261,6 @@ def create_gaussian_band_pass(
 def create_wedge(
     shape: tuple[int, int, int],
     ts_metadata: TiltSeriesMetaData,
-    tilt_angles: list[float, ...],
     voxel_size: float,
     cut_off_radius: float = 1.0,
     angles_in_degrees: bool = True,

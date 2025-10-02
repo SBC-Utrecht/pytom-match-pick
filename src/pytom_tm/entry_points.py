@@ -1050,7 +1050,7 @@ def match_template(argv=None):
                 "minimal run requires tilt angles."
             )
 
-        voxel_size = (args.voxel_size_angstrom,)
+        voxel_size = args.voxel_size_angstrom
         ts_metadata = TiltSeriesMetaData(
             tilt_angles=tilt_angles,
             ctf_data=ctf_data,
