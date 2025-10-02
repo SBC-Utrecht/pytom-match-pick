@@ -164,9 +164,10 @@ class TestWeights(unittest.TestCase):
             per_tilt_weighting=True,
         )
         sym_metadata = self.ts_metadata.replace(
-            tilt_angles=[TILT_ANGLES[0], TILT_ANGLES[-1]]
+            tilt_angles=[TILT_ANGLES[0], TILT_ANGLES[-1]],
+            ctf_data=[CTF_PARAMS[0], CTF_PARAMS[-1]],
+            dose_accumulation=[ACCUMULATED_DOSE[0], ACCUMULATED_DOSE[-1]],
         )
-
         symmetric_wedge = create_wedge(
             self.volume_shape_even,
             ts_metadata=sym_metadata,
@@ -174,7 +175,9 @@ class TestWeights(unittest.TestCase):
             tilt_weighting=False,
         )
         asym_metadata = self.ts_metadata.replace(
-            tilt_angles=[TILT_ANGLES[0], TILT_ANGLES[-2]]
+            tilt_angles=[TILT_ANGLES[0], TILT_ANGLES[-2]],
+            ctf_data=[CTF_PARAMS[0], CTF_PARAMS[-2]],
+            dose_accumulation=[ACCUMULATED_DOSE[0], ACCUMULATED_DOSE[-2]],
         )
         asymmetric_wedge = create_wedge(
             self.volume_shape_even,

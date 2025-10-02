@@ -887,7 +887,7 @@ class TMJob:
                 invert_handedness=self.ts_metadata.defocus_handedness < 0,
             )
             # TODO: make sure this doesn't lead to weird race conditions
-            for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
+            for ctf, defocus_shift in zip(self.ts_metadata.ctf_data, defocus_offsets):
                 ctf.defocus = ctf.defocus + defocus_shift * 1e-10
             logging.debug(
                 "Patch center (nr. of voxels): "

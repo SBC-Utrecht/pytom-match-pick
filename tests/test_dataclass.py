@@ -13,6 +13,6 @@ class TestTiltSeriesDataclass(unittest.TestCase):
         # test that the sanity checks happen when replacing values
         temp = TiltSeriesMetaData(tilt_angles=[1.0, 2.0], dose_accumulation=[1, 2])
         with self.assertRaisesRegex(
-            ValueError, "same number of doses as tilt angles (3)"
+            ValueError, r"same number of doses as tilt angles \(3\)"
         ):
             _ = temp.replace(tilt_angles=[1, 2, 3])

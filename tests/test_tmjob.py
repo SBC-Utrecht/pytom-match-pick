@@ -481,7 +481,7 @@ class TestTMJob(unittest.TestCase):
         self.assertIn("Estimating whitening filter...", "".join(cm.output))
 
         # test dataclass loading
-        metadata = TS_METADATA.replace(ctf_data=CTF_PARAMS)
+        metadata = TS_METADATA.replace(tilt_angles=TILT_ANGLES, ctf_data=CTF_PARAMS)
         job.ts_metadata = metadata
         json_location = TEST_DATA_DIR.joinpath("job_dataclass.json")
         job.write_to_json(json_location)
