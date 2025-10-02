@@ -133,7 +133,7 @@ class TestWeights(unittest.TestCase):
             _create_symmetric_wedge(self.volume_shape_even, 4, 1.0)
 
     def test_create_wedge(self):
-        temp = self.TiltSeriesMetaData(tilt_angles=[-91, 91])
+        temp = TiltSeriesMetaData(tilt_angles=[-91, 91])
         with self.assertRaisesRegex(ValueError, "Negative wedge angles"):
             create_wedge(self.volume_shape_even, ts_metadata=temp, voxel_size=1.0)
         with self.assertRaises(

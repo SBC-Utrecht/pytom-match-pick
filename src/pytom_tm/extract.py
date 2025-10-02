@@ -8,7 +8,7 @@ import pathlib
 from pytom_tm.tmjob import TMJob
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import get_angle_list, convert_euler
-from pyton_tm.dataclass import RelionTiltSeriesMetaData
+from pytom_tm.dataclass import RelionTiltSeriesMetaData
 from pytom_tm.io import read_mrc
 from scipy.special import erfcinv
 from scipy.optimize import curve_fit
