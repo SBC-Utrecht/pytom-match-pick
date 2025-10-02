@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pytom_tm.json import JsonSerializable
 
 
@@ -28,6 +28,9 @@ class CtfData(JsonSerializable):
     spherical_aberration: float
     phase_shift_deg: float = 0.0
     flip_phase: bool = False
+
+    def replace(self, **kwargs):
+        return replace(self, **kwargs)
 
 
 @dataclass(kw_only=True)
@@ -60,6 +63,9 @@ class TiltSeriesMetaData(JsonSerializable):
     dose_accumulation: list[float] | None = None
     defocus_handedness: int = 0
     per_tilt_weighting: bool = False
+
+    def replace(self, **kwargs):
+        return replace(self, **kwargs)
 
     def __post_init__(self):
         if not isinstance(self.tilt_angles, list) or len(self.tilt_angles) < 2:

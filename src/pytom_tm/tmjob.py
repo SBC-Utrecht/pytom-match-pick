@@ -884,7 +884,7 @@ class TMJob:
                 relative_patch_center_angstrom[2],  # z-coordinate
                 self.ts_metadata.tilt_angles,
                 angles_in_degrees=True,
-                invert_handedness=self.defocus_handedness < 0,
+                invert_handedness=self.ts_metadata.defocus_handedness < 0,
             )
             # TODO: make sure this doesn't lead to weird race conditions
             for ctf, defocus_shift in zip(self.ctf_data, defocus_offsets):
