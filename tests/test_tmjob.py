@@ -14,7 +14,7 @@ from pytom_tm.io import (
     UnequalSpacingError,
     parse_relion5_star_data,
 )
-from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
+from pytom_tm.dataclass import CtfData, TiltSeriesMetaData, RelionTiltSeriesMetaData
 from pytom_tm.extract import extract_particles
 from testing_utils import (
     CTF_PARAMS,
@@ -54,6 +54,7 @@ TEST_JOB_JSON = TEST_DATA_DIR / TEST_JOB_JSON_BASE
 TEST_JOB_SYMLINK_JSON = TEST_DATA_DIR / "tomogram_job_symlink.json"
 TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath("tomogram_job_whitening.json")
 TEST_JOB_OLD_VERSION = TEST_DATA_DIR.joinpath("tomogram_job_old_version.json")
+TEST_JOB_NO_TS_MD = TEST_DATA_DIR.joinpath("tomogram_job_no_ts_metadata.json")
 TEST_JOB_RELION5_DIR = TEST_DATA_DIR.joinpath("relion5_data")
 
 
@@ -504,6 +505,27 @@ class TestTMJob(unittest.TestCase):
         for ctf in job.ts_metadata.ctf_data:
             self.assertIs(type(ctf), CtfData)
             self.assertEqual(ctf.phase_shift_deg, 0.0)
+
+        # test backwards compatibility with the update on 0.12.0
+        # no tilt series dataclass
+        job = load_json_to_tmjob(TEST_JOB_JSON)
+        # remove the ts_metadata and populate the old fields
+        metadata = job.__dict__.pop("ts_metadata")
+        job.tilt_angles = metadata.tilt_angles
+        job.ctf_data = metadata.ctf_data
+        job.dose_accumulation = metadata.dose_accumulation
+        job.tilt_weighting = metadata.per_tilt_weighting
+        job.write_to_json(TEST_JOB_NO_TS_MD)
+
+        job2 = load_json_to_tmjob(TEST_JOB_NO_TS_MD)
+        self.assertIs(type(job2.ts_metadata), TiltSeriesMetaData)
+        self.assertEqual(job2.ts_metadata, metadata)
+
+        # Now test proper subclassing
+        job.metadata = {"relion5_binning": 1.0, "relion5_ts_ps": 2.0}
+        job.write_to_json(TEST_JOB_NO_TS_MD)
+        job2 = load_json_to_tmjob(TEST_JOB_NO_TS_MD)
+        self.assertIs(type(job2.ts_metadata), RelionTiltSeriesMetaData)
 
         # test that tomo_ids are properly when loading jobs that refer symlinks
         # see issue 314
