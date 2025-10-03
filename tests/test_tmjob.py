@@ -922,18 +922,19 @@ class TestTMJob(unittest.TestCase):
         # We don't look for the plots, they might be skipped if no plotting is available
 
     def test_get_defocus_offsets(self):
-        tilt_angles = list(range(-51, 54, 3))
+        ts_metadata = TiltSeriesMetaData(list(range(-51, 54, 3)))
         x_offset_um = 200 * 13.79 * 1e-4
         z_offset_um = 100 * 13.79 * 1e-4
-        defocus_offsets = get_defocus_offsets(x_offset_um, z_offset_um, tilt_angles)
+        defocus_offsets = get_defocus_offsets(x_offset_um, z_offset_um, ts_metadata)
         self.assertEqual(
             len(defocus_offsets),
-            len(tilt_angles),
+            len(ts_metadata),
             msg="get_defocus_offsets did not return a list with the same length as "
             "the number of tilt_angles",
         )
+        def_metadata = ts_metadata.replace(defocus_handedness=-1)
         defocus_offsets_inverted = get_defocus_offsets(
-            x_offset_um, z_offset_um, tilt_angles, invert_handedness=True
+            x_offset_um, z_offset_um, def_metadata
         )
         # only the offset at the 0 degrees tilt is expected to be identical,
         # so the test checks if exactly one element is the same
