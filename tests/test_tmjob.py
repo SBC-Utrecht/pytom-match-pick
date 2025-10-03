@@ -922,7 +922,7 @@ class TestTMJob(unittest.TestCase):
         # We don't look for the plots, they might be skipped if no plotting is available
 
     def test_get_defocus_offsets(self):
-        ts_metadata = TiltSeriesMetaData(list(range(-51, 54, 3)))
+        ts_metadata = TiltSeriesMetaData(angle_list=list(range(-51, 54, 3)))
         x_offset_um = 200 * 13.79 * 1e-4
         z_offset_um = 100 * 13.79 * 1e-4
         defocus_offsets = get_defocus_offsets(x_offset_um, z_offset_um, ts_metadata)
