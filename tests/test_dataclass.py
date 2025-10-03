@@ -1,5 +1,18 @@
 import unittest
-from pytom_tm.dataclass import TiltSeriesMetaData
+from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
+
+
+class TestCtfDataclass(unittest.TestCase):
+    def test_replace(self):
+        # test that replace exists and can be used
+        temp = CtfData(
+            defocus=1, amplitude_contrast=0.1, voltage=300, spherical_aberration=1e-6
+        )
+        temp2 = temp.replace(defocus=2)
+        self.assertNotEqual(temp.defocus, temp2.defocus)
+        self.assertEqual(temp.amplitude_contrast, temp2.amplitude_contrast)
+        self.assertEqual(temp.voltage, temp2.voltage)
+        self.assertEqual(temp.spherical_aberration, temp2.spherical_aberration)
 
 
 class TestTiltSeriesDataclass(unittest.TestCase):
@@ -8,6 +21,15 @@ class TestTiltSeriesDataclass(unittest.TestCase):
             _ = TiltSeriesMetaData(tilt_angles=[1.0])
         with self.assertRaisesRegex(ValueError, "at least 2 tilt angles"):
             _ = TiltSeriesMetaData(tilt_angles=1.0)
+
+        a = CtfData(
+            defocus=1, amplitude_contrast=0.1, voltage=300, spherical_aberration=1e-6
+        )
+        with self.assertRaisesRegex(ValueError, "a single CtfData or the same number"):
+            _ = TiltSeriesMetaData(tilt_angles=[1, 2, 3], ctf_data=[a, a])
+
+        with self.assertRaisesRegex(ValueError, "invalid defocus handedness"):
+            _ = TiltSeriesMetaData(tilt_angles=[1, 2, 3], defocus_handedness=0.5)
 
     def test_sanity_on_replace(self):
         # test that the sanity checks happen when replacing values
