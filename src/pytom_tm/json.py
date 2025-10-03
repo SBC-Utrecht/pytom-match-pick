@@ -1,4 +1,3 @@
-from dataclasses import asdict, is_dataclass
 import json
 from typing import Any, Type
 
@@ -30,10 +29,7 @@ class JsonSerializable:
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, JsonSerializable):
-            if is_dataclass(obj):
-                result = asdict(obj)
-            else:
-                result = obj.__dict__.copy()
+            result = obj.__dict__.copy()
             result["__class__"] = obj.__class__.__name__
             return result
         return super().default(obj)

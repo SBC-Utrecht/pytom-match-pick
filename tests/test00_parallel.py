@@ -16,6 +16,7 @@ import pathlib
 from tempfile import TemporaryDirectory
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import angle_to_angle_list
+from pytom_tm.dataclass import TiltSeriesMetaData
 from pytom_tm.parallel import run_job_parallel
 from pytom_tm.tmjob import TMJob
 from pytom_tm.io import write_mrc
@@ -76,6 +77,7 @@ class TestTMJob(unittest.TestCase):
         TEMP_DIR.cleanup()
 
     def setUp(self):
+        metadata = TiltSeriesMetaData(tilt_angles=[-90, 90])
         self.job = TMJob(
             "0",
             10,
@@ -83,7 +85,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            ts_metadata=metadata,
             angle_increment=38.53,
             voxel_size=1.0,
         )
