@@ -278,8 +278,6 @@ class TestWeights(unittest.TestCase):
             self.voxel_size * 3,
             per_tilt_weighting=True,
             low_pass=self.low_pass,
-            accumulated_dose_per_tilt=None,
-            ctf_params_per_tilt=None,
         )
         self.assertEqual(
             weights.shape,
