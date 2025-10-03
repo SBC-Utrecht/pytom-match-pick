@@ -263,7 +263,6 @@ def create_wedge(
     ts_metadata: TiltSeriesMetaData,
     voxel_size: float,
     cut_off_radius: float = 1.0,
-    angles_in_degrees: bool = True,
     low_pass: float | None = None,
     high_pass: float | None = None,
     per_tilt_weighting: bool | None = None,
@@ -281,8 +280,6 @@ def create_wedge(
         voxel size is needed for the calculation of various filters
     cut_off_radius: float, default 1.
         cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    angles_in_degrees: bool, default True
-        whether angles are in degrees or radians units
     low_pass: Optional[float], default None
         low pass filter resolution in A
     high_pass: Optional[float], default None
@@ -310,7 +307,7 @@ def create_wedge(
     elif cut_off_radius <= 0:
         raise ValueError("Invalid wedge cutoff: needs to be larger than 0")
 
-    if angles_in_degrees:
+    if ts_metadata.angles_in_degrees:
         tilt_angles_rad = [np.deg2rad(w) for w in ts_metadata.tilt_angles]
     else:
         tilt_angles_rad = ts_metadata.tilt_angles

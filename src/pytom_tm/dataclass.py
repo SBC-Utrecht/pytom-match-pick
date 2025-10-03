@@ -41,6 +41,8 @@ class TiltSeriesMetaData(JsonSerializable):
     ----------
     tilt_angles: list[float]
         list of tilt angles of the tilt-series in degrees
+    angles_in_degrees: bool, default True
+        Wether the tilt angles are in degree (default) or radian
     ctf_data: list[CtfData] | None, default None
         list of CtfData per tilt, should either be length 1 if it is identical for all
         tilts or the same length as tilt_angles
@@ -59,6 +61,7 @@ class TiltSeriesMetaData(JsonSerializable):
     """
 
     tilt_angles: list[float]
+    angles_in_degree: bool = True
     ctf_data: list[CtfData] | None = None
     dose_accumulation: list[float] | None = None
     defocus_handedness: int = 0
