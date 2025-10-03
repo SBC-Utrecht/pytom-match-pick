@@ -172,7 +172,7 @@ class TestWeights(unittest.TestCase):
             self.volume_shape_even,
             ts_metadata=sym_metadata,
             voxel_size=1.0,
-            tilt_weighting=False,
+            per_tilt_weighting=False,
         )
         asym_metadata = self.ts_metadata.replace(
             tilt_angles=[TILT_ANGLES[0], TILT_ANGLES[-2]],
@@ -183,7 +183,7 @@ class TestWeights(unittest.TestCase):
             self.volume_shape_even,
             ts_metadata=asym_metadata,
             voxel_size=1.0,
-            tilt_weighting=False,
+            per_tilt_weighting=False,
         )
 
         self.assertEqual(
