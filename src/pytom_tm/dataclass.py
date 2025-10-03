@@ -61,7 +61,7 @@ class TiltSeriesMetaData(JsonSerializable):
     """
 
     tilt_angles: list[float]
-    angles_in_degree: bool = True
+    angles_in_degrees: bool = True
     ctf_data: list[CtfData] | None = None
     dose_accumulation: list[float] | None = None
     defocus_handedness: int = 0
