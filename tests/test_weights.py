@@ -189,7 +189,7 @@ class TestWeights(unittest.TestCase):
             ctf_data=[CTF_PARAMS[0], CTF_PARAMS[-2]],
             dose_accumulation=[ACCUMULATED_DOSE[0], ACCUMULATED_DOSE[-2]],
         )
-        asym_metadata2 = sym_metadata.replace(
+        asym_metadata2 = asym_metadata.replace(
             tilt_angles=[np.deg2rad(a) for a in asym_metadata.tilt_angles],
             angles_in_degrees=False,
         )
