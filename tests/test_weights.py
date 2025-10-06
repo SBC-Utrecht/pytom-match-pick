@@ -168,9 +168,19 @@ class TestWeights(unittest.TestCase):
             ctf_data=[CTF_PARAMS[0], CTF_PARAMS[-1]],
             dose_accumulation=[ACCUMULATED_DOSE[0], ACCUMULATED_DOSE[-1]],
         )
+        sym_metadata2 = sym_metadata.replace(
+            tilt_angles=[np.deg2rad(a) for a in sym_metadata.tilt_angles],
+            angles_in_degrees=False,
+        )
         symmetric_wedge = create_wedge(
             self.volume_shape_even,
             ts_metadata=sym_metadata,
+            voxel_size=1.0,
+            per_tilt_weighting=False,
+        )
+        symmetric_wedge2 = create_wedge(
+            self.volume_shape_even,
+            ts_metadata=sym_metadata2,
             voxel_size=1.0,
             per_tilt_weighting=False,
         )
@@ -179,9 +189,19 @@ class TestWeights(unittest.TestCase):
             ctf_data=[CTF_PARAMS[0], CTF_PARAMS[-2]],
             dose_accumulation=[ACCUMULATED_DOSE[0], ACCUMULATED_DOSE[-2]],
         )
+        asym_metadata2 = sym_metadata.replace(
+            tilt_angles=[np.deg2rad(a) for a in asym_metadata.tilt_angles],
+            angles_in_degrees=False,
+        )
         asymmetric_wedge = create_wedge(
             self.volume_shape_even,
             ts_metadata=asym_metadata,
+            voxel_size=1.0,
+            per_tilt_weighting=False,
+        )
+        asymmetric_wedge2 = create_wedge(
+            self.volume_shape_even,
+            ts_metadata=asym_metadata2,
             voxel_size=1.0,
             per_tilt_weighting=False,
         )
@@ -223,6 +243,9 @@ class TestWeights(unittest.TestCase):
             np.sum((symmetric_wedge != asymmetric_wedge) * 1) != 0,
             msg="Symmetric and asymmetric wedge should be different!",
         )
+        # Check if degree2rad works
+        np.testing.assert_allclose(symmetric_wedge, symmetric_wedge2)
+        np.testing.assert_allclose(asymmetric_wedge, asymmetric_wedge2)
 
         structured_wedge = create_wedge(
             self.volume_shape_even,
