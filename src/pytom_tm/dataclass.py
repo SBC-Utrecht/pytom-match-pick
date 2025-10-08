@@ -33,7 +33,7 @@ class CtfData(JsonSerializable):
         return replace(self, **kwargs)
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class TiltSeriesMetaData(JsonSerializable):
     """A dataclass to keep all tilt-series metadata together
 
@@ -102,14 +102,14 @@ class TiltSeriesMetaData(JsonSerializable):
         return len(self.tilt_angles)
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class WarpTiltSeriesMetaData(TiltSeriesMetaData):
     """Extension of TiltSeriesMetaData that has per_tilt_weighting default as True"""
 
     per_tilt_weighting: bool = True
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class RelionTiltSeriesMetaData(TiltSeriesMetaData):
     """Extension of the TiltSeriesMetaData that has per_tilt_weighting default as True
     and has the following extra attributes
