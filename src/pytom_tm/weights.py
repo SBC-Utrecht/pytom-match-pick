@@ -308,7 +308,7 @@ def create_wedge(
         raise ValueError("Invalid wedge cutoff: needs to be larger than 0")
 
     if ts_metadata.angles_in_degrees:
-        tilt_angles_rad = [np.deg2rad(w) for w in ts_metadata.tilt_angles]
+        tilt_angles_rad = np.deg2rad(ts_metadata.tilt_angles)
     else:
         tilt_angles_rad = ts_metadata.tilt_angles
 

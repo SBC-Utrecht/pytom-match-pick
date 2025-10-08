@@ -35,7 +35,7 @@ class CtfData(JsonSerializable):
 
 @dataclass(kw_only=True)
 class TiltSeriesMetaData(JsonSerializable):
-    """A dataclass for to keep all the meta-data for the tilt-series together
+    """A dataclass to keep all tilt-series metadata together
 
     Attributes
     ----------
