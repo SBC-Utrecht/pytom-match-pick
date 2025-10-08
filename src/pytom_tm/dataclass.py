@@ -76,7 +76,8 @@ class TiltSeriesMetaData(JsonSerializable):
         n_angles = len(self.tilt_angles)
         # Make sure all lists have the same value
         if self.ctf_data is not None and len(self.ctf_data) == 1:
-            self.ctf_data = self.ctf_data * n_angles
+            # Weird invocation needed to circumvent frozen disallowing direct assignment
+            object.__setattr__(self, "ctf_data", self.ctf_data * n_angles)
         elif self.ctf_data is not None and len(self.ctf_data) != n_angles:
             raise ValueError(
                 "Expected either a list with a single CtfData or the "
