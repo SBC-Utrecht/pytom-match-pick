@@ -1,6 +1,5 @@
 import unittest
 import pathlib
-import copy
 from dataclasses import asdict
 import numpy as np
 import voltools as vt
@@ -15,7 +14,7 @@ from pytom_tm.io import (
     UnequalSpacingError,
     parse_relion5_star_data,
 )
-from pytom_tm.dataclass import CtfData
+from pytom_tm.dataclass import CtfData, TiltSeriesMetaData, RelionTiltSeriesMetaData
 from pytom_tm.extract import extract_particles
 from testing_utils import (
     CTF_PARAMS,
@@ -31,6 +30,7 @@ TEMPLATE_SIZE = 13
 LOCATION = (77, 26, 40)
 ANGLE_ID = 100
 ANGULAR_SEARCH = "38.53"
+TS_METADATA = TiltSeriesMetaData(tilt_angles=[-90, 90])
 TEMP_DIR = TemporaryDirectory()
 TEST_DATA_DIR = pathlib.Path(TEMP_DIR.name)
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath("tomogram.mrc")
@@ -54,6 +54,7 @@ TEST_JOB_JSON = TEST_DATA_DIR / TEST_JOB_JSON_BASE
 TEST_JOB_SYMLINK_JSON = TEST_DATA_DIR / "tomogram_job_symlink.json"
 TEST_JOB_JSON_WHITENING = TEST_DATA_DIR.joinpath("tomogram_job_whitening.json")
 TEST_JOB_OLD_VERSION = TEST_DATA_DIR.joinpath("tomogram_job_old_version.json")
+TEST_JOB_NO_TS_MD = TEST_DATA_DIR.joinpath("tomogram_job_no_ts_metadata.json")
 TEST_JOB_RELION5_DIR = TEST_DATA_DIR.joinpath("relion5_data")
 
 
@@ -114,7 +115,6 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE_UNEQUAL_SPACING, template, voxel_size=(1.5, 1.0, 2.0)
         )
         write_mrc(TEST_TOMOGRAM, volume, 1.0)
-
         # do a run without splitting to compare against
         job = TMJob(
             "0",
@@ -123,7 +123,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            TS_METADATA,
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
         )
@@ -141,7 +141,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            TS_METADATA,
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
         )
@@ -158,7 +158,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            TS_METADATA,
             angle_increment=90.00,
             voxel_size=1.0,
             whiten_spectrum=True,
@@ -187,7 +187,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            ts_metadata=TS_METADATA,
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
         )
@@ -205,7 +205,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE_WRONG_VOXEL_SIZE,
                 TEST_MASK,
                 TEST_DATA_DIR,
-                tilt_angles=[-90, 90],
+                ts_metadata=TS_METADATA,
             )
 
         with self.assertRaises(
@@ -218,7 +218,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE_UNEQUAL_SPACING,
                 TEST_MASK,
                 TEST_DATA_DIR,
-                tilt_angles=[-90, 90],
+                ts_metadata=TS_METADATA,
             )
 
         with self.assertRaises(
@@ -232,7 +232,7 @@ class TestTMJob(unittest.TestCase):
                 # Use unequal spaced template as broken mask
                 TEST_TEMPLATE_UNEQUAL_SPACING,
                 TEST_DATA_DIR,
-                tilt_angles=[-90, 90],
+                ts_metadata=TS_METADATA,
             )
 
         # test searches raise correct errors
@@ -247,7 +247,7 @@ class TestTMJob(unittest.TestCase):
                     TEST_TEMPLATE,
                     TEST_MASK,
                     TEST_DATA_DIR,
-                    tilt_angles=[-90, 90],
+                    ts_metadata=TS_METADATA,
                     voxel_size=1.0,
                     **{param: [-10, 100]},
                 )
@@ -261,7 +261,7 @@ class TestTMJob(unittest.TestCase):
                     TEST_TEMPLATE,
                     TEST_MASK,
                     TEST_DATA_DIR,
-                    tilt_angles=[-90, 90],
+                    ts_metadata=TS_METADATA,
                     voxel_size=1.0,
                     **{param: [110, 130]},
                 )
@@ -275,7 +275,7 @@ class TestTMJob(unittest.TestCase):
                     TEST_TEMPLATE,
                     TEST_MASK,
                     TEST_DATA_DIR,
-                    tilt_angles=[-90, 90],
+                    ts_metadata=TS_METADATA,
                     voxel_size=1.0,
                     **{param: [0, 120]},
                 )
@@ -288,7 +288,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK,
                 TEST_DATA_DIR,
-                tilt_angles=[-90, 90],
+                ts_metadata=TS_METADATA,
                 angle_increment="1.2.3",
                 voxel_size=1.0,
             )
@@ -302,7 +302,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK,
                 TEST_DATA_DIR,
-                tilt_angles=[-90, 90],
+                ts_metadata=TS_METADATA,
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
                 tomogram_mask=TEST_BROKEN_TOMOGRAM_MASK,
@@ -316,7 +316,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK,
                 TEST_DATA_DIR,
-                tilt_angles=[-90, 90],
+                ts_metadata=TS_METADATA,
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
                 tomogram_mask=TEST_WRONG_SIZE_TOMO_MASK,
@@ -335,7 +335,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK_WRONG_SIZE,
                 TEST_DATA_DIR,
-                tilt_angles=[-90, 90],
+                ts_metadata=TS_METADATA,
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
@@ -353,6 +353,13 @@ class TestTMJob(unittest.TestCase):
 
     def test_tm_job_weighting_options(self):
         # run with all options
+        metadata = TiltSeriesMetaData(
+            tilt_angles=TILT_ANGLES,
+            dose_accumulation=ACCUMULATED_DOSE,
+            ctf_data=CTF_PARAMS,
+            defocus_handedness=1,
+            per_tilt_weighting=True,
+        )
         job = TMJob(
             "0",
             10,
@@ -360,16 +367,12 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=TILT_ANGLES,
+            ts_metadata=metadata,
             angle_increment=90.00,
             voxel_size=1.0,
             low_pass=10,
             high_pass=100,
-            dose_accumulation=ACCUMULATED_DOSE,
-            ctf_data=CTF_PARAMS,
             whiten_spectrum=True,
-            tilt_weighting=True,
-            defocus_handedness=1,
         )
         score, angle = job.start_job(0, return_volumes=True)
         self.assertEqual(
@@ -385,12 +388,9 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=TILT_ANGLES,
+            ts_metadata=metadata,
             angle_increment=90.00,
             voxel_size=1.0,
-            dose_accumulation=ACCUMULATED_DOSE,
-            ctf_data=CTF_PARAMS,
-            tilt_weighting=True,
         )
         score, angle = job.start_job(0, return_volumes=True)
         self.assertEqual(
@@ -405,7 +405,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            ts_metadata=TS_METADATA,
             angle_increment=90.00,
             voxel_size=1.0,
             low_pass=10,
@@ -425,7 +425,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            ts_metadata=TS_METADATA,
             angle_increment=90.00,
             voxel_size=1.0,
             whiten_spectrum=True,
@@ -444,7 +444,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            ts_metadata=TS_METADATA,
             angle_increment=90.00,
             voxel_size=1.0,
             whiten_spectrum=True,
@@ -482,12 +482,13 @@ class TestTMJob(unittest.TestCase):
         self.assertIn("Estimating whitening filter...", "".join(cm.output))
 
         # test dataclass loading
-        job.ctf_data = [copy.deepcopy(ctf) for ctf in CTF_PARAMS]
+        metadata = TS_METADATA.replace(tilt_angles=TILT_ANGLES, ctf_data=CTF_PARAMS)
+        job.ts_metadata = metadata
         json_location = TEST_DATA_DIR.joinpath("job_dataclass.json")
         job.write_to_json(json_location)
 
         load_job = load_json_to_tmjob(json_location)
-        for ctf1, ctf2 in zip(job.ctf_data, load_job.ctf_data):
+        for ctf1, ctf2 in zip(job.ts_metadata.ctf_data, load_job.ts_metadata.ctf_data):
             self.assertIs(type(ctf1), type(ctf2))
             self.assertIs(type(ctf1), CtfData)
             self.assertEqual(ctf1, ctf2)
@@ -501,9 +502,30 @@ class TestTMJob(unittest.TestCase):
 
         # test backward compatibility with the update to 0.11.0
         job = load_json_to_tmjob(TEST_JOB_OLD_VERSION)
-        for ctf in job.ctf_data:
+        for ctf in job.ts_metadata.ctf_data:
             self.assertIs(type(ctf), CtfData)
             self.assertEqual(ctf.phase_shift_deg, 0.0)
+
+        # test backwards compatibility with the update on 0.12.0
+        # no tilt series dataclass
+        job = load_json_to_tmjob(TEST_JOB_JSON)
+        # remove the ts_metadata and populate the old fields
+        metadata = job.__dict__.pop("ts_metadata")
+        job.tilt_angles = metadata.tilt_angles
+        job.ctf_data = metadata.ctf_data
+        job.dose_accumulation = metadata.dose_accumulation
+        job.tilt_weighting = metadata.per_tilt_weighting
+        job.write_to_json(TEST_JOB_NO_TS_MD)
+
+        job2 = load_json_to_tmjob(TEST_JOB_NO_TS_MD)
+        self.assertIs(type(job2.ts_metadata), TiltSeriesMetaData)
+        self.assertEqual(job2.ts_metadata, metadata)
+
+        # Now test proper subclassing
+        job.metadata = {"relion5_binning": 1.0, "relion5_ts_ps": 2.0}
+        job.write_to_json(TEST_JOB_NO_TS_MD)
+        job2 = load_json_to_tmjob(TEST_JOB_NO_TS_MD)
+        self.assertIs(type(job2.ts_metadata), RelionTiltSeriesMetaData)
 
         # test that tomo_ids are properly when loading jobs that refer symlinks
         # see issue 314
@@ -520,7 +542,7 @@ class TestTMJob(unittest.TestCase):
                 TEST_TEMPLATE,
                 TEST_MASK,
                 data_dir,
-                tilt_angles=[-90, 90],
+                ts_metadata=TS_METADATA,
                 angle_increment=TEST_CUSTOM_ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
@@ -638,7 +660,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            ts_metadata=TS_METADATA,
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
             search_x=[9, 90],
@@ -712,7 +734,7 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=[-90, 90],
+            ts_metadata=TS_METADATA,
             angle_increment=ANGULAR_SEARCH,
             voxel_size=1.0,
             output_dtype=np.float16,
@@ -900,18 +922,19 @@ class TestTMJob(unittest.TestCase):
         # We don't look for the plots, they might be skipped if no plotting is available
 
     def test_get_defocus_offsets(self):
-        tilt_angles = list(range(-51, 54, 3))
+        ts_metadata = TiltSeriesMetaData(tilt_angles=list(range(-51, 54, 3)))
         x_offset_um = 200 * 13.79 * 1e-4
         z_offset_um = 100 * 13.79 * 1e-4
-        defocus_offsets = get_defocus_offsets(x_offset_um, z_offset_um, tilt_angles)
+        defocus_offsets = get_defocus_offsets(x_offset_um, z_offset_um, ts_metadata)
         self.assertEqual(
             len(defocus_offsets),
-            len(tilt_angles),
+            len(ts_metadata),
             msg="get_defocus_offsets did not return a list with the same length as "
             "the number of tilt_angles",
         )
+        def_metadata = ts_metadata.replace(defocus_handedness=-1)
         defocus_offsets_inverted = get_defocus_offsets(
-            x_offset_um, z_offset_um, tilt_angles, invert_handedness=True
+            x_offset_um, z_offset_um, def_metadata
         )
         # only the offset at the 0 degrees tilt is expected to be identical,
         # so the test checks if exactly one element is the same
@@ -932,7 +955,7 @@ class TestTMJob(unittest.TestCase):
                 pathlib.Path(TEST_TEMPLATE.name),
                 pathlib.Path(TEST_MASK.name),
                 TEST_DATA_DIR,  # should end up in the expected spot
-                tilt_angles=[-90, 90],
+                ts_metadata=TS_METADATA,
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
@@ -954,18 +977,10 @@ class TestTMJob(unittest.TestCase):
         make_relion5_tomo_stars(TEST_TOMOGRAM.stem, TEST_JOB_RELION5_DIR)
         relion5_tomograms_star = TEST_JOB_RELION5_DIR / "tomogram.star"
         # mimick entry point for this
-        (
-            voxel_size,
-            tilt_angles,
-            dose_accumulation,
-            ctf_params,
-            defocus_handedness,
-            metadata,
-        ) = parse_relion5_star_data(
+        (voxel_size, metadata) = parse_relion5_star_data(
             relion5_tomograms_star,
             TEST_TOMOGRAM,
         )
-        per_tilt_weighting = True
         job = TMJob(
             "0",
             10,
@@ -973,14 +988,9 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE,
             TEST_MASK,
             TEST_DATA_DIR,
-            tilt_angles=tilt_angles,
+            ts_metadata=metadata,
             angle_increment=ANGULAR_SEARCH,
             voxel_size=voxel_size,
-            tilt_weighting=per_tilt_weighting,
-            dose_accumulation=dose_accumulation,
-            ctf_data=ctf_params,
-            defocus_handedness=defocus_handedness,
-            metadata=metadata,
         )
         job.start_job(0, return_volumes=False)
 
@@ -988,8 +998,8 @@ class TestTMJob(unittest.TestCase):
         df_rel5, scores = extract_particles(
             job, 100, particle_diameter=10, create_plot=False, relion5_compat=True
         )
-        binning = job.metadata["relion5_binning"]
-        voxel_size = job.metadata["relion5_ts_ps"]
+        binning = job.ts_metadata.binning
+        voxel_size = job.ts_metadata.tilt_series_pixel_size
         center = (np.array(TOMO_SHAPE) * binning) / 2 - 1
         centered_location = (np.array(LOCATION) * binning - center) * voxel_size
         diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()
@@ -1001,13 +1011,14 @@ class TestTMJob(unittest.TestCase):
 
         # Redo with a fake bin2
         job_bin2 = job.copy()
-        job_bin2.metadata["relion5_binning"] = 2.0
+        job_metadata2 = job.ts_metadata.replace(binning=2.0)
+        job_bin2.ts_metadata = job_metadata2
 
         df_rel5, scores = extract_particles(
             job_bin2, 100, particle_diameter=10, create_plot=False, relion5_compat=True
         )
-        binning = job_bin2.metadata["relion5_binning"]
-        voxel_size = job_bin2.metadata["relion5_ts_ps"]
+        binning = job_bin2.ts_metadata.binning
+        voxel_size = job_bin2.ts_metadata.tilt_series_pixel_size
         center = (np.array(TOMO_SHAPE) * binning) / 2 - 1
         centered_location = (np.array(LOCATION) * binning - center) * voxel_size
         diff = np.abs(np.array(df_rel5.iloc[0, 0:3]) - centered_location).sum()

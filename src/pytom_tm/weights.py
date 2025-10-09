@@ -3,9 +3,10 @@ import numpy.typing as npt
 import scipy.ndimage as ndimage
 import voltools as vt
 from pytom_tm.io import UnequalSpacingError
-from pytom_tm.dataclass import CtfData
+from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
 from itertools import pairwise
 
+# typing imports
 
 constants = {
     # Dictionary of physical constants required for calculation.
@@ -259,15 +260,12 @@ def create_gaussian_band_pass(
 
 def create_wedge(
     shape: tuple[int, int, int],
-    tilt_angles: list[float, ...],
+    ts_metadata: TiltSeriesMetaData,
     voxel_size: float,
     cut_off_radius: float = 1.0,
-    angles_in_degrees: bool = True,
     low_pass: float | None = None,
     high_pass: float | None = None,
-    tilt_weighting: bool = False,
-    accumulated_dose_per_tilt: list[float, ...] | None = None,
-    ctf_params_per_tilt: list[CtfData] | None = None,
+    per_tilt_weighting: bool | None = None,
 ) -> npt.NDArray[float]:
     """This function returns a wedge volume that is either symmetric or asymmetric
     depending on wedge angle input.
@@ -276,33 +274,24 @@ def create_wedge(
     ----------
     shape: tuple[int, int, int]
         real space shape of volume to which it needs to be applied
-    tilt_angles: list[float, ...]
-        tilt angles used for reconstructing the tomogram
+    ts_metadata: TiltSeriesMetadata
+        tiltseries metadata for reconstructing the tomogram
     voxel_size: float
         voxel size is needed for the calculation of various filters
     cut_off_radius: float, default 1.
         cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-    angles_in_degrees: bool, default True
-        whether angles are in degrees or radians units
     low_pass: Optional[float], default None
         low pass filter resolution in A
     high_pass: Optional[float], default None
         high pass filter resolution in A
-    tilt_weighting: bool, default False
-        apply tilt weighting
-    accumulated_dose_per_tilt: Optional[list[float, ...]], default None
-        accumulated dose for each tilt for dose weighting
-    ctf_params_per_tilt: Optional[list[CtfData, ...]], default None
-        ctf parameters for each tilt (see CtfData data class for specification)
+    per_tilt_weighting: bool | None, default None
+        if given, use this instead of ts_metadata.per_tilt_weighting (default)
 
     Returns
     -------
     wedge: npt.NDArray[float]
         wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
-    if not isinstance(tilt_angles, list) or len(tilt_angles) < 2:
-        raise ValueError("Wedge generation needs at least a list of two tilt angles.")
-
     if voxel_size <= 0.0:
         raise ValueError(
             "Voxel size in create wedge is smaller or equal to 0, which is an invalid "
@@ -318,22 +307,21 @@ def create_wedge(
     elif cut_off_radius <= 0:
         raise ValueError("Invalid wedge cutoff: needs to be larger than 0")
 
-    if angles_in_degrees:
-        tilt_angles_rad = [np.deg2rad(w) for w in tilt_angles]
+    if ts_metadata.angles_in_degrees:
+        tilt_angles_rad = np.deg2rad(ts_metadata.tilt_angles)
     else:
-        tilt_angles_rad = tilt_angles
+        tilt_angles_rad = ts_metadata.tilt_angles
 
-    if tilt_weighting:
-        if ctf_params_per_tilt is not None and len(ctf_params_per_tilt) == 1:
-            # with only single defocus, copy the params for each tilt
-            ctf_params_per_tilt = ctf_params_per_tilt * len(tilt_angles_rad)
+    if per_tilt_weighting is None:
+        per_tilt_weighting = ts_metadata.per_tilt_weighting
+    if per_tilt_weighting:
         wedge = _create_tilt_weighted_wedge(
             shape,
             tilt_angles_rad,
             cut_off_radius,
             voxel_size,
-            accumulated_dose_per_tilt=accumulated_dose_per_tilt,
-            ctf_params_per_tilt=ctf_params_per_tilt,
+            accumulated_dose_per_tilt=ts_metadata.dose_accumulation,
+            ctf_params_per_tilt=ts_metadata.ctf_data,
         ).astype(np.float32)
     else:
         wedge_angles = (
@@ -348,14 +336,13 @@ def create_wedge(
             wedge = _create_asymmetric_wedge(
                 shape, (wedge_angles[0], wedge_angles[1]), cut_off_radius
             ).astype(np.float32)
-        if ctf_params_per_tilt is not None:
+        if ts_metadata.ctf_data is not None:
             # - take ctf params from approx. middle tilt as those are most accurate
-            # - in case list has 1 element we take that
-            ctf_params = ctf_params_per_tilt[len(ctf_params_per_tilt) // 2]
+            ctf_data = ts_metadata.ctf_data[len(ts_metadata) // 2]
             wedge *= create_ctf(
                 shape,
                 voxel_size * 1e-10,
-                ctf_params,
+                ctf_data,
             )
 
     if not (low_pass is None and high_pass is None):

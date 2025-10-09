@@ -10,7 +10,7 @@ from pytom_tm.weights import (
     power_spectrum_profile,
     profile_to_weighting,
 )
-from pytom_tm.dataclass import CtfData
+from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
 from testing_utils import TILT_ANGLES, ACCUMULATED_DOSE, CTF_PARAMS
 
 
@@ -29,6 +29,11 @@ class TestWeights(unittest.TestCase):
         self.reduced_uneven_shape_2d = (11, 6)
         self.reduced_irregular_shape_3d = (7, 12, 6 // 2 + 1)
         self.reduced_irregular_shape_2d = (7, 12 // 2 + 1)
+        self.ts_metadata = TiltSeriesMetaData(
+            tilt_angles=TILT_ANGLES,
+            ctf_data=CTF_PARAMS,
+            dose_accumulation=ACCUMULATED_DOSE,
+        )
 
     def test_radial_reduced_grid(self):
         with self.assertRaises(
@@ -128,54 +133,77 @@ class TestWeights(unittest.TestCase):
             _create_symmetric_wedge(self.volume_shape_even, 4, 1.0)
 
     def test_create_wedge(self):
-        with self.assertRaises(
-            ValueError,
-            msg="Create wedge should raise ValueError if tilt_angles list does not "
-            "contain at least two values",
-        ):
-            create_wedge(self.volume_shape_even, [1.0], 1.0)
-        with self.assertRaises(
-            ValueError,
-            msg="Create wedge should raise ValueError if tilt_angles input is not a "
-            "list",
-        ):
-            create_wedge(self.volume_shape_even, 1.0, 1.0)
+        temp = TiltSeriesMetaData(tilt_angles=[-91, 91])
+        with self.assertRaisesRegex(ValueError, "Negative wedge angles"):
+            create_wedge(self.volume_shape_even, ts_metadata=temp, voxel_size=1.0)
         with self.assertRaises(
             ValueError,
             msg="Create wedge should raise ValueError if voxel_size is smaller or "
             "equal to 0",
         ):
-            create_wedge(self.volume_shape_even, TILT_ANGLES, 0.0)
+            create_wedge(
+                self.volume_shape_even, ts_metadata=self.ts_metadata, voxel_size=0.0
+            )
         with self.assertRaises(
             ValueError,
             msg="Create wedge should raise ValueError if cut_off_radius is smaller or "
             "equal to 0",
         ):
-            create_wedge(self.volume_shape_even, TILT_ANGLES, 1.0, cut_off_radius=0.0)
-        with self.assertRaisesRegex(ValueError, "Negative wedge angles"):
-            create_wedge(self.volume_shape_even, [-91, 91], 1.0)
+            create_wedge(
+                self.volume_shape_even,
+                ts_metadata=self.ts_metadata,
+                voxel_size=1.0,
+                cut_off_radius=0.0,
+            )
 
         # create test wedges
         structured_wedge = create_wedge(
             self.volume_shape_even,
-            TILT_ANGLES,
-            1.0,
-            tilt_weighting=True,
-            ctf_params_per_tilt=CTF_PARAMS,
+            ts_metadata=self.ts_metadata,
+            voxel_size=1.0,
+            per_tilt_weighting=True,
+        )
+        sym_metadata = self.ts_metadata.replace(
+            tilt_angles=[TILT_ANGLES[0], TILT_ANGLES[-1]],
+            ctf_data=[CTF_PARAMS[0], CTF_PARAMS[-1]],
+            dose_accumulation=[ACCUMULATED_DOSE[0], ACCUMULATED_DOSE[-1]],
+        )
+        sym_metadata2 = sym_metadata.replace(
+            tilt_angles=[np.deg2rad(a) for a in sym_metadata.tilt_angles],
+            angles_in_degrees=False,
         )
         symmetric_wedge = create_wedge(
             self.volume_shape_even,
-            [TILT_ANGLES[0], TILT_ANGLES[-1]],
-            1.0,
-            tilt_weighting=False,
-            ctf_params_per_tilt=CTF_PARAMS,
+            ts_metadata=sym_metadata,
+            voxel_size=1.0,
+            per_tilt_weighting=False,
+        )
+        symmetric_wedge2 = create_wedge(
+            self.volume_shape_even,
+            ts_metadata=sym_metadata2,
+            voxel_size=1.0,
+            per_tilt_weighting=False,
+        )
+        asym_metadata = self.ts_metadata.replace(
+            tilt_angles=[TILT_ANGLES[0], TILT_ANGLES[-2]],
+            ctf_data=[CTF_PARAMS[0], CTF_PARAMS[-2]],
+            dose_accumulation=[ACCUMULATED_DOSE[0], ACCUMULATED_DOSE[-2]],
+        )
+        asym_metadata2 = asym_metadata.replace(
+            tilt_angles=[np.deg2rad(a) for a in asym_metadata.tilt_angles],
+            angles_in_degrees=False,
         )
         asymmetric_wedge = create_wedge(
             self.volume_shape_even,
-            [TILT_ANGLES[0], TILT_ANGLES[-2]],
-            1.0,
-            tilt_weighting=False,
-            ctf_params_per_tilt=CTF_PARAMS,
+            ts_metadata=asym_metadata,
+            voxel_size=1.0,
+            per_tilt_weighting=False,
+        )
+        asymmetric_wedge2 = create_wedge(
+            self.volume_shape_even,
+            ts_metadata=asym_metadata2,
+            voxel_size=1.0,
+            per_tilt_weighting=False,
         )
 
         self.assertEqual(
@@ -215,12 +243,15 @@ class TestWeights(unittest.TestCase):
             np.sum((symmetric_wedge != asymmetric_wedge) * 1) != 0,
             msg="Symmetric and asymmetric wedge should be different!",
         )
+        # Check if degree2rad works
+        np.testing.assert_allclose(symmetric_wedge, symmetric_wedge2)
+        np.testing.assert_allclose(asymmetric_wedge, asymmetric_wedge2)
 
         structured_wedge = create_wedge(
             self.volume_shape_even,
-            TILT_ANGLES,
+            self.ts_metadata,
             self.voxel_size,
-            tilt_weighting=True,
+            per_tilt_weighting=True,
             cut_off_radius=1.0,
             low_pass=self.low_pass,
             high_pass=self.high_pass,
@@ -239,12 +270,10 @@ class TestWeights(unittest.TestCase):
         # test shapes of wedges
         weights = create_wedge(
             self.volume_shape_even,
-            TILT_ANGLES,
+            self.ts_metadata,
             self.voxel_size * 3,
-            tilt_weighting=True,
+            per_tilt_weighting=True,
             low_pass=40,
-            accumulated_dose_per_tilt=ACCUMULATED_DOSE,
-            ctf_params_per_tilt=CTF_PARAMS,
         )
         self.assertEqual(
             weights.shape,
@@ -253,12 +282,10 @@ class TestWeights(unittest.TestCase):
         )
         weights = create_wedge(
             self.volume_shape_uneven,
-            TILT_ANGLES,
+            self.ts_metadata,
             self.voxel_size * 3,
-            tilt_weighting=True,
+            per_tilt_weighting=True,
             low_pass=40,
-            accumulated_dose_per_tilt=ACCUMULATED_DOSE,
-            ctf_params_per_tilt=CTF_PARAMS,
         )
         self.assertEqual(
             weights.shape,
@@ -267,33 +294,18 @@ class TestWeights(unittest.TestCase):
         )
 
         # test parameter flexibility of tilt_weighted wedge
+        metadata = self.ts_metadata.replace(ctf_data=None, dose_accumulation=None)
         weights = create_wedge(
             self.volume_shape_even,
-            TILT_ANGLES,
+            metadata,
             self.voxel_size * 3,
-            tilt_weighting=True,
+            per_tilt_weighting=True,
             low_pass=self.low_pass,
-            accumulated_dose_per_tilt=None,
-            ctf_params_per_tilt=None,
         )
         self.assertEqual(
             weights.shape,
             self.reduced_even_shape_3d,
             msg="Tilt weighted wedge should also work without defocus and dose info.",
-        )
-        weights = create_wedge(
-            self.volume_shape_even,
-            TILT_ANGLES,
-            self.voxel_size * 3,
-            tilt_weighting=True,
-            low_pass=self.low_pass,
-            accumulated_dose_per_tilt=None,
-            ctf_params_per_tilt=CTF_PARAMS[:1],
-        )
-        self.assertEqual(
-            weights.shape,
-            self.reduced_even_shape_3d,
-            msg="Tilt weighted wedge should work with single defocus.",
         )
 
     def test_ctf(self):
