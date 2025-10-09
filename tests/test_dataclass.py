@@ -38,3 +38,12 @@ class TestTiltSeriesDataclass(unittest.TestCase):
             ValueError, r"same number of doses as tilt angles \(3\)"
         ):
             _ = temp.replace(tilt_angles=[1, 2, 3])
+
+    def test_ctf_expansion(self):
+        a = CtfData(
+            defocus=1, amplitude_contrast=0.1, voltage=300, spherical_aberration=1e-6
+        )
+        ts_metadata = TiltSeriesMetaData(tilt_angles=[1, 2, 3], ctf_data=[a])
+        self.assertEqual(len(ts_metadata.tilt_angles), len(ts_metadata.ctf_data))
+        for ctf in ts_metadata.ctf_data:
+            self.assertIs(ctf, a)

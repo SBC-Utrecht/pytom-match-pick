@@ -307,22 +307,6 @@ class TestWeights(unittest.TestCase):
             self.reduced_even_shape_3d,
             msg="Tilt weighted wedge should also work without defocus and dose info.",
         )
-        # TODO: this should be moved to a dataclass test
-        metadata = self.ts_metadata.replace(
-            dose_accumulation=None, ctf_data=CTF_PARAMS[:1]
-        )
-        weights = create_wedge(
-            self.volume_shape_even,
-            metadata,
-            self.voxel_size * 3,
-            per_tilt_weighting=True,
-            low_pass=self.low_pass,
-        )
-        self.assertEqual(
-            weights.shape,
-            self.reduced_even_shape_3d,
-            msg="Tilt weighted wedge should work with single defocus.",
-        )
 
     def test_ctf(self):
         ctf_data = CtfData(
