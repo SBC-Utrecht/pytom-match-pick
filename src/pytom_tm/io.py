@@ -107,7 +107,7 @@ class BetweenZeroAndOne(argparse.Action):
     def __call__(
         self, parser, namespace, values: float, option_string: str | None = None
     ):
-        if 1.0 <= values <= 0.0:
+        if not (0.0 <= values <= 1.0):
             parser.error(
                 f"{option_string} is a fraction and can only range between 0 and 1"
             )
