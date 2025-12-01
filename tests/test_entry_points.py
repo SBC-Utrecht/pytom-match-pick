@@ -242,7 +242,7 @@ class TestEntryPoints(unittest.TestCase):
             arguments["--defocus"] = z
             start(arguments)
 
-        # test faulty args
+        # test faulty defocus args
         for z in ["asdf.txt", "asdf"]:
             dump = StringIO()
             with (
@@ -252,6 +252,21 @@ class TestEntryPoints(unittest.TestCase):
             ):
                 arguments = defaults.copy()
                 arguments["--defocus"] = z
+                start(arguments)
+            dump.close()
+            # check if the system return code is 0 (success)
+            self.assertEqual(ex.exception.code, 2)
+
+        # test faulty amplitude contrast args (not between 0-1)
+        for z in ["-0.5", "2"]:
+            dump = StringIO()
+            with (
+                self.assertRaises(SystemExit) as ex,
+                redirect_stdout(dump),
+                redirect_stderr(dump),
+            ):
+                arguments = defaults.copy()
+                arguments["--amplitude-contrast"] = z
                 start(arguments)
             dump.close()
             # check if the system return code is 0 (success)
