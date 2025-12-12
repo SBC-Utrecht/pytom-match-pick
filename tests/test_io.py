@@ -12,6 +12,7 @@ from pytom_tm.io import (
     read_mrc_meta_data,
     write_mrc,
     parse_relion5_star_data,
+    parse_warp_xml_data,
     read_tlt_file,
     MultiColumnAngleFileError,
 )
@@ -33,6 +34,11 @@ REGULAR_TLT = pathlib.Path(__file__).parent.joinpath(
 MULTI_COLUMN_TLT = pathlib.Path(__file__).parent.joinpath(
     pathlib.Path("Data/test_angles_multi_column.rawtlt")
 )
+WARP_XML = pathlib.Path(__file__).parent.joinpath(
+    pathlib.Path("Data/warptools_xml_example/gs04_ts_003.xml")
+)
+TEST_DATA = pathlib.Path(__file__).parent.joinpath("test_data")
+TEST_TOMOGRAM = TEST_DATA.joinpath("test_data/rec_tomo200528_107.mrc")
 
 
 class TestMultiColumnTilt(unittest.TestCase):
@@ -44,6 +50,25 @@ class TestMultiColumnTilt(unittest.TestCase):
         angles_multi = read_tlt_file(MULTI_COLUMN_TLT, error_on_multi_column=False)
         angles = read_tlt_file(REGULAR_TLT)
         self.assertEqual(angles, angles_multi)
+
+
+class TestWarpXMLParser(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        TEST_DATA.mkdir(parents=True)
+        write_mrc(TEST_TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        TEST_TOMOGRAM.unlink()
+        TEST_DATA.rmdir()
+
+    def test_correct_defocus_units(self):
+        # prevent issue 325 by testing if all defocus values are sane
+        # (between 100 and 0.1 μm)
+        voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
+        for ctf in ts_metadata.ctf_data:
+            self.assertTrue(100e-6 >= ctf.defocus >= 0.1e-6)
 
 
 class TestBrokenMRC(unittest.TestCase):
