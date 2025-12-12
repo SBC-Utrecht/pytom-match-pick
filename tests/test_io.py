@@ -38,7 +38,7 @@ WARP_XML = pathlib.Path(__file__).parent.joinpath(
     pathlib.Path("Data/warptools_xml_example/gs04_ts_003.xml")
 )
 TEST_DATA = pathlib.Path(__file__).parent.joinpath("test_data")
-TEST_TOMOGRAM = TEST_DATA.joinpath("test_data/rec_tomo200528_107.mrc")
+TEST_TOMOGRAM = TEST_DATA.joinpath("rec_tomo200528_107.mrc")
 
 
 class TestMultiColumnTilt(unittest.TestCase):
