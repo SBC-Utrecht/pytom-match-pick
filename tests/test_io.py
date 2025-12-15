@@ -68,7 +68,7 @@ class TestWarpXMLParser(unittest.TestCase):
         # (between 100 and 0.1 μm)
         voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
         for ctf in ts_metadata.ctf_data:
-            self.assertTrue(100e-6 >= ctf.defocus >= 0.1e-6)
+            self.assertTrue(10e-6 >= ctf.defocus >= 0.1e-6)
 
 
 class TestBrokenMRC(unittest.TestCase):
