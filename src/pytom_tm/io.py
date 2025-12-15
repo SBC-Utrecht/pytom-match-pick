@@ -718,7 +718,7 @@ def parse_warp_xml_data(
 
     ctf_data = [
         CtfData(
-            defocus=defocus * 1e-10,
+            defocus=defocus * 1e-6,
             amplitude_contrast=amplitude_contrast,
             voltage=voltage * 1e3,
             spherical_aberration=spherical_aberration * 1e-3,
