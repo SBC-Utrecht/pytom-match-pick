@@ -596,7 +596,97 @@ class TMJob:
 
     def generate_masks(self) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
         """Generate the tomogram and template mask"""
+        # grab shapes and update tomogram shape to next fast fft-shape
+        fast_tomo_shape = tuple(next_fast_len(s, real=True) for s in self.tomo_shape)
+        template_shape = self.template_shape
+        # mask_shape = self.mask_shape
+        voxel_size = self.voxel_size
+
+        # initial filters
         tomo_filter, template_filter = 1, 1
+
+        # bandpass filters
+        if not (self.low_pass is None and self.high_pass is None):
+            tomo_filter *= create_gaussian_band_pass(
+                fast_tomo_shape, voxel_size, self.low_pass, self.high_pass
+            ).astype(np.float32)
+            template_filter *= create_gaussian_band_pass(
+                template_shape, voxel_size, self.low_pass, self.high_pass
+            ).astype(np.float32)
+
+        # multiply with optional whitening filters
+        if self.whiten_spectrum:
+            tomo_filter *= profile_to_weighting(
+                np.load(self.whitening_filter), fast_tomo_shape
+            ).astype(np.float32)
+            template_filter *= profile_to_weighting(
+                np.load(self.whitening_filter), template_shape
+            ).astype(np.float32)
+
+        # TODO deal with this part of the code in some sane matter
+        # during volume splitting
+
+        # create wedge filters if we have the info
+        # TODO: continue coding here
+        """
+        if (
+            self.ts_metadata.per_tilt_weighting
+            and self.ts_metadata.defocus_handedness != 0
+        ):
+            # adjust ctf parameters for this specific patch in the tomogram
+            full_tomo_center = np.array(fast_tomo_shape) / 2
+            patch_center = np.array(self.search_origin) + np.array(self.search_size) / 2
+            relative_patch_center_angstrom = (
+                patch_center - full_tomo_center
+            ) * self.voxel_size
+            defocus_offsets = get_defocus_offsets(
+                relative_patch_center_angstrom[0],  # x-coordinate
+                relative_patch_center_angstrom[2],  # z-coordinate
+                self.ts_metadata,
+            )
+            # TODO: make sure this doesn't lead to weird race conditions
+            for ctf, defocus_shift in zip(self.ts_metadata.ctf_data, defocus_offsets):
+                ctf.defocus = ctf.defocus + defocus_shift * 1e-10
+            logging.debug(
+                "Patch center (nr. of voxels): "
+                f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
+            )
+            logging.debug(
+                "Defocus values (um): "
+                f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ts_metadata.ctf_data]}",
+            )
+
+
+        # for the tomogram a binary wedge is generated to explicitly set the missing
+        # wedge region to 0
+        tomo_filter *= create_wedge(
+            fast_tomo.shape,
+            self.ts_metadata,
+            self.voxel_size,
+            cut_off_radius=1.0,
+            per_tilt_weighting=False,
+        ).astype(np.float32)
+        # for the template a binary or per-tilt-weighted wedge is generated
+        # depending on the options
+        template_wedge *= create_wedge(
+            self.template_shape,
+            self.ts_metadata,
+            self.voxel_size,
+            cut_off_radius=1.0,
+        ).astype(np.float32)
+
+        if logging.DEBUG >= logging.root.level:
+            write_mrc(
+                self.output_dir.joinpath("template_psf.mrc"),
+                template_wedge,
+                self.voxel_size,
+            )
+            write_mrc(
+                self.output_dir.joinpath("template_convolved.mrc"),
+                irfftn(rfftn(template) * template_wedge, s=template.shape),
+                self.voxel_size,
+            )
+        """
         return tomo_filter, template_filter
 
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
