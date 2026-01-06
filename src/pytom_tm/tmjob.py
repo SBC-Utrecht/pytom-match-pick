@@ -594,6 +594,11 @@ class TMJob:
         with open(file_name, "w") as fstream:
             json.dump(d, fstream, indent=4, cls=CustomJSONEncoder)
 
+    def generate_masks(self) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+        """Generate the tomogram and template mask"""
+        tomo_filter, template_filter = 1, 1
+        return tomo_filter, template_filter
+
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
         """Split the search into sub_jobs by dividing the rotations. Sub jobs will
         obtain the key self.job_key + str(i) when looping over range(n).
