@@ -4,7 +4,7 @@ from dataclasses import asdict
 import numpy as np
 import voltools as vt
 import mrcfile
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob, get_defocus_offsets
@@ -350,6 +350,34 @@ class TestTMJob(unittest.TestCase):
             copy.tomo_shape,
             msg="Tomogram shape not correct in job, perhaps transpose issue?",
         )
+
+    def test_filter_caching(self):
+        job = self.job.copy()
+        # make sure cache is empty
+        self.assertIs(job._tomogram_filter, None)
+        self.assertIs(job._template_filter, None)
+
+        # make sure asking for either tomogram- or template-filter fills the cache
+        # for both
+        self.assertIsNot(job.tomogram_filter, None)
+        self.assertIsNot(job._tomogram_filter, None)
+        self.assertIsNot(job._template_filter, None)
+
+        # reset and repeat for template filter
+        job._tomogram_filter = None
+        job._template_filter = None
+        self.assertIsNot(job.template_filter, None)
+        self.assertIsNot(job._tomogram_filter, None)
+        self.assertIsNot(job._template_filter, None)
+
+        # make sure they are copied over (for splitting)
+        job2 = job.copy()
+        self.assertIsNot(job2._tomogram_filter, None)
+        self.assertIsNot(job2._template_filter, None)
+
+        # make sure we can still json dump
+        with NamedTemporaryFile(suffix=".json") as temp:
+            job.write_to_json(pathlib.Path(temp.name))
 
     def test_tm_job_weighting_options(self):
         # run with all options
