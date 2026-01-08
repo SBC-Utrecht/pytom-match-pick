@@ -590,6 +590,11 @@ class TMJob:
         d.pop("sub_jobs")
         d.pop("search_origin")
         d.pop("search_size")
+
+        # pop cached numpy arrays that we don't want to dump
+        for c in ["_tomogram_filter", "_template_filter"]:
+            d.pop(c)
+
         d["search_x"] = [
             self.search_origin[0],
             self.search_origin[0] + self.search_size[0],
@@ -607,6 +612,7 @@ class TMJob:
                 d[key] = str(value.absolute())
         # wrangle dtype conversion
         d["output_dtype"] = str(np.dtype(d["output_dtype"]))
+
         with open(file_name, "w") as fstream:
             json.dump(d, fstream, indent=4, cls=CustomJSONEncoder)
 
