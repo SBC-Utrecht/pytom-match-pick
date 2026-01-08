@@ -34,6 +34,7 @@ TS_METADATA = TiltSeriesMetaData(tilt_angles=[-90, 90])
 TEMP_DIR = TemporaryDirectory()
 TEST_DATA_DIR = pathlib.Path(TEMP_DIR.name)
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath("tomogram.mrc")
+TEST_TOMOGRAM_UNEQUAL_SPACING = TEST_DATA_DIR.joinpath("tomogram_unequal_spacing.mrc")
 TEST_SYMLINK_TOMOGRAM = TEST_DATA_DIR.joinpath("margomot.mrc")
 TEST_BROKEN_TOMOGRAM_MASK = TEST_DATA_DIR.joinpath("broken_tomogram_mask.mrc")
 TEST_WRONG_SIZE_TOMO_MASK = TEST_DATA_DIR.joinpath("wrong_size_tomogram_mask.mrc")
@@ -115,6 +116,8 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE_UNEQUAL_SPACING, template, voxel_size=(1.5, 1.0, 2.0)
         )
         write_mrc(TEST_TOMOGRAM, volume, 1.0)
+        write_mrc(TEST_TOMOGRAM_UNEQUAL_SPACING, volume, voxel_size=(1.5, 1.0, 2.0))
+
         # do a run without splitting to compare against
         job = TMJob(
             "0",
@@ -207,9 +210,25 @@ class TestTMJob(unittest.TestCase):
                 TEST_DATA_DIR,
                 ts_metadata=TS_METADATA,
             )
+        with self.assertRaisesRegex(
+            UnequalSpacingError,
+            "tomogram voxel spacing",
+            msg="Unequal spacing should raise specific Error",
+        ):
+            TMJob(
+                "0",
+                10,
+                TEST_TOMOGRAM_UNEQUAL_SPACING,
+                TEST_TEMPLATE,
+                TEST_MASK,
+                TEST_DATA_DIR,
+                ts_metadata=TS_METADATA,
+            )
 
-        with self.assertRaises(
-            UnequalSpacingError, msg="Unequal spacing should raise specific Error"
+        with self.assertRaisesRegex(
+            UnequalSpacingError,
+            "template voxel spacing",
+            msg="Unequal spacing should raise specific Error",
         ):
             TMJob(
                 "0",
@@ -221,8 +240,10 @@ class TestTMJob(unittest.TestCase):
                 ts_metadata=TS_METADATA,
             )
 
-        with self.assertRaises(
-            UnequalSpacingError, msg="Unequal spacing should raise specific Error"
+        with self.assertRaisesRegex(
+            UnequalSpacingError,
+            "mask voxel spacing",
+            msg="Unequal spacing should raise specific Error",
         ):
             TMJob(
                 "0",
@@ -339,6 +360,20 @@ class TestTMJob(unittest.TestCase):
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
+        # Test negative or zero voxel size
+        for voxel_size in [0, -1.0]:
+            with self.assertRaisesRegex(ValueError, "Invalid voxel size"):
+                TMJob(
+                    "0",
+                    10,
+                    TEST_TOMOGRAM,
+                    TEST_TEMPLATE,
+                    TEST_MASK,
+                    TEST_DATA_DIR,
+                    ts_metadata=TS_METADATA,
+                    voxel_size=voxel_size,
+                )
+
         # Test error double splitting the same job
         job_rot = self.job.copy()
         job_vol = self.job.copy()
