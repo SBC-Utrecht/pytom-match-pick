@@ -563,7 +563,7 @@ class TMJob:
     def template_filter(self) -> npt.NDArray[float]:
         if self._template_filter is None:
             self._generate_filters()
-        return self._tomogram_filter
+        return self._template_filter
 
     def copy(self) -> TMJob:
         """Create a copy of the TMJob
