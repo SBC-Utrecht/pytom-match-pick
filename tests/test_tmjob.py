@@ -195,6 +195,20 @@ class TestTMJob(unittest.TestCase):
             voxel_size=1.0,
         )
 
+    def test_tm_job_defaults(self):
+        # test default angle increment
+        job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            ts_metadata=TS_METADATA,
+            voxel_size=1.0,
+        )
+        self.assertEqual(job.rotation_file, 7.0)
+
     def test_tm_job_errors(self):
         with self.assertRaises(
             ValueError,
