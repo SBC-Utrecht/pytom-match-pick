@@ -671,6 +671,9 @@ class TMJob:
                 "Could not further split this job as it already has subjobs assigned!"
             )
 
+        # pregenerate the common part of the filters
+        self._generate_filters()
+
         sub_jobs = []
         for i in range(n):
             new_job = self.copy()
@@ -719,6 +722,8 @@ class TMJob:
             raise TMJobError(
                 "Could not further split this job as it already has subjobs assigned!"
             )
+        # pregenerate the common part of the filters
+        self._generate_filters()
 
         search_size = self.search_size
         if self.tomogram_mask is not None:
@@ -761,8 +766,6 @@ class TMJob:
                     # No non-masked unique data-points, skipping
                     continue
 
-            # pregenerate the comon part of the filters
-            self._generate_filters()
             new_job = self.copy()
             new_job.leader = self.job_key
             new_job.job_key = self.job_key + str(i)
