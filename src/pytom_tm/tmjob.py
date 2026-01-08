@@ -556,13 +556,13 @@ class TMJob:
     @property
     def tomogram_filter(self) -> npt.NDArray[float]:
         if self._tomogram_filter is None:
-            self.generate_filters()
+            self._generate_filters()
         return self._tomogram_filter
 
     @property
     def template_filter(self) -> npt.NDArray[float]:
         if self._template_filter is None:
-            self.generate_filters()
+            self._generate_filters()
         return self._tomogram_filter
 
     def copy(self) -> TMJob:
