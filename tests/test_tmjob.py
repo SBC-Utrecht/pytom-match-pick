@@ -339,6 +339,13 @@ class TestTMJob(unittest.TestCase):
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
+        # Test double splitting the same job on rotation
+        job = self.job.copy()
+        self.assertEqual(len(job.sub_jobs), 0)
+        _ = job.split_rotation_search(2)
+        self.assertNotEqual(len(job.sub_jobs), 0)
+        with self.assertRaisesRegex(TMJobError, "already has subjobs"):
+            job.split_rotation_search(2)
 
     def test_tm_job_copy(self):
         copy = self.job.copy()
