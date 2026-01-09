@@ -4,7 +4,7 @@ from dataclasses import asdict
 import numpy as np
 import voltools as vt
 import mrcfile
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob, get_defocus_offsets
@@ -34,6 +34,7 @@ TS_METADATA = TiltSeriesMetaData(tilt_angles=[-90, 90])
 TEMP_DIR = TemporaryDirectory()
 TEST_DATA_DIR = pathlib.Path(TEMP_DIR.name)
 TEST_TOMOGRAM = TEST_DATA_DIR.joinpath("tomogram.mrc")
+TEST_TOMOGRAM_UNEQUAL_SPACING = TEST_DATA_DIR.joinpath("tomogram_unequal_spacing.mrc")
 TEST_SYMLINK_TOMOGRAM = TEST_DATA_DIR.joinpath("margomot.mrc")
 TEST_BROKEN_TOMOGRAM_MASK = TEST_DATA_DIR.joinpath("broken_tomogram_mask.mrc")
 TEST_WRONG_SIZE_TOMO_MASK = TEST_DATA_DIR.joinpath("wrong_size_tomogram_mask.mrc")
@@ -115,6 +116,8 @@ class TestTMJob(unittest.TestCase):
             TEST_TEMPLATE_UNEQUAL_SPACING, template, voxel_size=(1.5, 1.0, 2.0)
         )
         write_mrc(TEST_TOMOGRAM, volume, 1.0)
+        write_mrc(TEST_TOMOGRAM_UNEQUAL_SPACING, volume, voxel_size=(1.5, 1.0, 2.0))
+
         # do a run without splitting to compare against
         job = TMJob(
             "0",
@@ -192,6 +195,20 @@ class TestTMJob(unittest.TestCase):
             voxel_size=1.0,
         )
 
+    def test_tm_job_defaults(self):
+        # test default angle increment
+        job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            ts_metadata=TS_METADATA,
+            voxel_size=1.0,
+        )
+        self.assertEqual(job.rotation_file, 7.0)
+
     def test_tm_job_errors(self):
         with self.assertRaises(
             ValueError,
@@ -207,9 +224,25 @@ class TestTMJob(unittest.TestCase):
                 TEST_DATA_DIR,
                 ts_metadata=TS_METADATA,
             )
+        with self.assertRaisesRegex(
+            UnequalSpacingError,
+            "tomogram voxel spacing",
+            msg="Unequal spacing should raise specific Error",
+        ):
+            TMJob(
+                "0",
+                10,
+                TEST_TOMOGRAM_UNEQUAL_SPACING,
+                TEST_TEMPLATE,
+                TEST_MASK,
+                TEST_DATA_DIR,
+                ts_metadata=TS_METADATA,
+            )
 
-        with self.assertRaises(
-            UnequalSpacingError, msg="Unequal spacing should raise specific Error"
+        with self.assertRaisesRegex(
+            UnequalSpacingError,
+            "template voxel spacing",
+            msg="Unequal spacing should raise specific Error",
         ):
             TMJob(
                 "0",
@@ -221,8 +254,10 @@ class TestTMJob(unittest.TestCase):
                 ts_metadata=TS_METADATA,
             )
 
-        with self.assertRaises(
-            UnequalSpacingError, msg="Unequal spacing should raise specific Error"
+        with self.assertRaisesRegex(
+            UnequalSpacingError,
+            "mask voxel spacing",
+            msg="Unequal spacing should raise specific Error",
         ):
             TMJob(
                 "0",
@@ -339,6 +374,37 @@ class TestTMJob(unittest.TestCase):
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
             )
+        # Test negative or zero voxel size
+        for voxel_size in [0, -1.0]:
+            with self.assertRaisesRegex(ValueError, "Invalid voxel size"):
+                TMJob(
+                    "0",
+                    10,
+                    TEST_TOMOGRAM,
+                    TEST_TEMPLATE,
+                    TEST_MASK,
+                    TEST_DATA_DIR,
+                    ts_metadata=TS_METADATA,
+                    voxel_size=voxel_size,
+                )
+
+        # Test error double splitting the same job
+        job_rot = self.job.copy()
+        job_vol = self.job.copy()
+        self.assertEqual(len(job_rot.sub_jobs), 0)
+        self.assertEqual(len(job_vol.sub_jobs), 0)
+        # do initial splits
+        _ = job_rot.split_rotation_search(2)
+        _ = job_vol.split_volume_search((2, 2, 2))
+        self.assertNotEqual(len(job_rot.sub_jobs), 0)
+        self.assertNotEqual(len(job_vol.sub_jobs), 0)
+
+        # Now make sure that both jobs on any other split
+        for job in [job_rot, job_vol]:
+            with self.assertRaisesRegex(TMJobError, "already has subjobs"):
+                job.split_rotation_search(2)
+            with self.assertRaisesRegex(TMJobError, "already has subjobs"):
+                job.split_volume_search((2, 2, 2))
 
     def test_tm_job_copy(self):
         copy = self.job.copy()
@@ -350,6 +416,34 @@ class TestTMJob(unittest.TestCase):
             copy.tomo_shape,
             msg="Tomogram shape not correct in job, perhaps transpose issue?",
         )
+
+    def test_filter_caching(self):
+        job = self.job.copy()
+        # make sure cache is empty
+        self.assertIs(job._tomogram_filter, None)
+        self.assertIs(job._template_filter, None)
+
+        # make sure asking for either tomogram- or template-filter fills the cache
+        # for both
+        self.assertIsNot(job.tomogram_filter, None)
+        self.assertIsNot(job._tomogram_filter, None)
+        self.assertIsNot(job._template_filter, None)
+
+        # reset and repeat for template filter
+        job._tomogram_filter = None
+        job._template_filter = None
+        self.assertIsNot(job.template_filter, None)
+        self.assertIsNot(job._tomogram_filter, None)
+        self.assertIsNot(job._template_filter, None)
+
+        # make sure they are copied over (for splitting)
+        job2 = job.copy()
+        self.assertIsNot(job2._tomogram_filter, None)
+        self.assertIsNot(job2._template_filter, None)
+
+        # make sure we can still json dump
+        with NamedTemporaryFile(suffix=".json") as temp:
+            job.write_to_json(pathlib.Path(temp.name))
 
     def test_tm_job_weighting_options(self):
         # run with all options

@@ -549,6 +549,22 @@ class TMJob:
         # output dtype
         self.output_dtype = output_dtype
 
+        # caching stuff
+        self._tomogram_filter = None
+        self._template_filter = None
+
+    @property
+    def tomogram_filter(self) -> npt.NDArray[float]:
+        if self._tomogram_filter is None:
+            self._generate_filters()
+        return self._tomogram_filter
+
+    @property
+    def template_filter(self) -> npt.NDArray[float]:
+        if self._template_filter is None:
+            self._generate_filters()
+        return self._template_filter
+
     def copy(self) -> TMJob:
         """Create a copy of the TMJob
 
@@ -574,6 +590,11 @@ class TMJob:
         d.pop("sub_jobs")
         d.pop("search_origin")
         d.pop("search_size")
+
+        # pop cached numpy arrays that we don't want to dump
+        for c in ["_tomogram_filter", "_template_filter"]:
+            d.pop(c)
+
         d["search_x"] = [
             self.search_origin[0],
             self.search_origin[0] + self.search_size[0],
@@ -591,8 +612,44 @@ class TMJob:
                 d[key] = str(value.absolute())
         # wrangle dtype conversion
         d["output_dtype"] = str(np.dtype(d["output_dtype"]))
+
         with open(file_name, "w") as fstream:
             json.dump(d, fstream, indent=4, cls=CustomJSONEncoder)
+
+    def _generate_filters(self):
+        """Generate the tomogram and template filters and sets them to
+        self._tomogram_filter and self._template_filter.
+
+        Note that the wedge filters are missing as it is specific per volume split part
+        """
+        # grab shapes and update tomogram shape to next fast fft-shape
+        fast_tomo_shape = tuple(next_fast_len(s, real=True) for s in self.tomo_shape)
+        template_shape = self.template_shape
+        # mask_shape = self.mask_shape
+        voxel_size = self.voxel_size
+
+        # initial filters
+        tomo_filter, template_filter = 1, 1
+
+        # bandpass filters
+        if not (self.low_pass is None and self.high_pass is None):
+            tomo_filter *= create_gaussian_band_pass(
+                fast_tomo_shape, voxel_size, self.low_pass, self.high_pass
+            ).astype(np.float32)
+            template_filter *= create_gaussian_band_pass(
+                template_shape, voxel_size, self.low_pass, self.high_pass
+            ).astype(np.float32)
+
+        # multiply with optional whitening filters
+        if self.whiten_spectrum:
+            tomo_filter *= profile_to_weighting(
+                np.load(self.whitening_filter), fast_tomo_shape
+            ).astype(np.float32)
+            template_filter *= profile_to_weighting(
+                np.load(self.whitening_filter), template_shape
+            ).astype(np.float32)
+        self._tomogram_filter = tomo_filter
+        self._template_filter = template_filter
 
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
         """Split the search into sub_jobs by dividing the rotations. Sub jobs will
@@ -613,6 +670,9 @@ class TMJob:
             raise TMJobError(
                 "Could not further split this job as it already has subjobs assigned!"
             )
+
+        # pregenerate the common part of the filters
+        self._generate_filters()
 
         sub_jobs = []
         for i in range(n):
@@ -662,6 +722,8 @@ class TMJob:
             raise TMJobError(
                 "Could not further split this job as it already has subjobs assigned!"
             )
+        # pregenerate the common part of the filters
+        self._generate_filters()
 
         search_size = self.search_size
         if self.tomogram_mask is not None:
@@ -703,6 +765,7 @@ class TMJob:
                 if np.all(tomogram_mask[*slices] <= 0):
                     # No non-masked unique data-points, skipping
                     continue
+
             new_job = self.copy()
             new_job.leader = self.job_key
             new_job.job_key = self.job_key + str(i)
@@ -842,26 +905,6 @@ class TMJob:
         # load template and mask
         template, mask = (read_mrc(self.template), read_mrc(self.mask))
 
-        # init tomogram and template weighting
-        tomo_filter, template_wedge = 1, 1
-        # first generate bandpass filters
-        if not (self.low_pass is None and self.high_pass is None):
-            tomo_filter *= create_gaussian_band_pass(
-                fast_tomo.shape, self.voxel_size, self.low_pass, self.high_pass
-            ).astype(np.float32)
-            template_wedge *= create_gaussian_band_pass(
-                self.template_shape, self.voxel_size, self.low_pass, self.high_pass
-            ).astype(np.float32)
-
-        # then multiply with optional whitening filters
-        if self.whiten_spectrum:
-            tomo_filter *= profile_to_weighting(
-                np.load(self.whitening_filter), fast_tomo.shape
-            ).astype(np.float32)
-            template_wedge *= profile_to_weighting(
-                np.load(self.whitening_filter), self.template_shape
-            ).astype(np.float32)
-
         # create wedge filters
         if (
             self.ts_metadata.per_tilt_weighting
@@ -890,6 +933,13 @@ class TMJob:
                 f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ts_metadata.ctf_data]}",
             )
 
+        # grab common tomogram and template filter
+        # (or generated them if this job isn't volume split)
+        tomo_filter = self.tomogram_filter
+        template_filter = self.template_filter
+        # The wedge filters use the patch specific defocus, so can't be pregenerated
+        # when splitting the volume
+
         # for the tomogram a binary wedge is generated to explicitly set the missing
         # wedge region to 0
         tomo_filter *= create_wedge(
@@ -901,7 +951,7 @@ class TMJob:
         ).astype(np.float32)
         # for the template a binary or per-tilt-weighted wedge is generated
         # depending on the options
-        template_wedge *= create_wedge(
+        template_filter *= create_wedge(
             self.template_shape,
             self.ts_metadata,
             self.voxel_size,
@@ -911,12 +961,12 @@ class TMJob:
         if logging.DEBUG >= logging.root.level:
             write_mrc(
                 self.output_dir.joinpath("template_psf.mrc"),
-                template_wedge,
+                template_filter,
                 self.voxel_size,
             )
             write_mrc(
                 self.output_dir.joinpath("template_convolved.mrc"),
-                irfftn(rfftn(template) * template_wedge, s=template.shape),
+                irfftn(rfftn(template) * template_filter, s=template.shape),
                 self.voxel_size,
             )
 
@@ -973,7 +1023,7 @@ class TMJob:
             angle_list=angle_list,
             angle_ids=angle_ids,
             mask_is_spherical=self.mask_is_spherical,
-            wedge=template_wedge,
+            wedge=template_filter,
             stats_roi=search_volume_roi,
             noise_correction=self.random_phase_correction,
             rng_seed=self.rng_seed,
