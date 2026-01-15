@@ -87,7 +87,7 @@ def run_job_parallel(
     n_pieces = reduce(lambda x, y: x * y, volume_splits)
 
     # error out reasonably if we can' make an even distribution
-    if n_pieces % len(gpu_ids) != 0:
+    if n_pieces > 1 and n_pieces % len(gpu_ids) != 0:
         raise ValueError(
             f"Can't evenly distribute {n_pieces} tomogram pieces over "
             f"{len(gpu_ids)} GPUs, please alter either the split or the number "
