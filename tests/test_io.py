@@ -5,6 +5,7 @@ import contextlib
 from tempfile import TemporaryDirectory
 import numpy as np
 import mrcfile
+from lxml import etree
 
 from pytom_tm.dataclass import CtfData, RelionTiltSeriesMetaData
 from pytom_tm.io import (
@@ -69,6 +70,20 @@ class TestWarpXMLParser(unittest.TestCase):
         voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
         for ctf in ts_metadata.ctf_data:
             self.assertTrue(10e-6 >= ctf.defocus >= 0.1e-6)
+
+    def test_correct_angle_sign(self):
+        voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
+        # grab raw xml data
+        tree = etree.parse(WARP_XML)
+        tilt_angle_nodes = tree.findall(".//Angles")
+        angles = [
+            float(j)
+            for i in tilt_angle_nodes
+            for j in i.text.split("\n")
+            if i.text.strip()
+        ]
+        for a, b in zip(ts_metadata, angles):
+            self.assertEqual(a, -b)
 
 
 class TestBrokenMRC(unittest.TestCase):
