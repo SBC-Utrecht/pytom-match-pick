@@ -82,7 +82,7 @@ class TestWarpXMLParser(unittest.TestCase):
             for j in i.text.split("\n")
             if i.text.strip()
         ]
-        for a, b in zip(ts_metadata, angles):
+        for a, b in zip(ts_metadata.tilt_angles, angles):
             self.assertEqual(a, -b)
 
 
