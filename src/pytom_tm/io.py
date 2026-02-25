@@ -713,7 +713,8 @@ def parse_warp_xml_data(
     def _flatten(t):
         return [float(item) for sublist in t for item in sublist if item.strip()]
 
-    flattened_tilt_angles = _flatten(tilt_angles)
+    # -1 multiplication is needed to swap between warp internal convention to pytom
+    flattened_tilt_angles = [-i for i in _flatten(tilt_angles)]
     flattened_tilt_dose = _flatten(tilt_dose)
 
     ctf_data = [
