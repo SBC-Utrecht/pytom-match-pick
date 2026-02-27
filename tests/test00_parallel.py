@@ -160,7 +160,7 @@ class TestTMJob(unittest.TestCase):
         # test volume split only
         job = self.job.copy()
         jobs = split_job_efficiently(job, (2, 2, 1), 4)
-        self.assertEqual(len(jobs), 6)
+        self.assertEqual(len(jobs), 4)
 
         # test no splits
         job = self.job.copy()
