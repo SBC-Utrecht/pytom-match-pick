@@ -17,7 +17,7 @@ from tempfile import TemporaryDirectory
 from pytom_tm.mask import spherical_mask
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.dataclass import TiltSeriesMetaData
-from pytom_tm.parallel import run_job_parallel
+from pytom_tm.parallel import run_job_parallel, split_job_efficiently
 from pytom_tm.tmjob import TMJob
 from pytom_tm.io import write_mrc
 
@@ -114,3 +114,40 @@ class TestTMJob(unittest.TestCase):
         self.assertTrue(score.max() > 0.931, msg="lcc max value lower than expected")
         self.assertEqual(ANGLE_ID, angle[ind])
         self.assertSequenceEqual(LOCATION, ind)
+
+    def test_split_job_efficiently(self):
+        # test more volume splits than gpus
+        # divisable
+        job = self.job.copy()
+        jobs = split_job_efficiently(job, (2, 2, 2), 4)
+        # jobs should be the same as total volume splits
+        self.assertEqual(len(jobs), 8)
+
+        # not divisible
+        job = self.job.copy()
+        jobs = split_job_efficiently(job, (3, 3, 1), 4)
+        # 6 jobs don't nicely divide on 4 GPUS,
+        # but 12 is the smallest multiple of 6 that does
+        self.assertEqual(len(jobs), 12)
+
+        # Test more gpus than jobs
+        # divisible
+        job = self.job.copy()
+        jobs = split_job_efficiently(job, (2, 2, 1), 8)
+        # should be the same as the numbers of gpus (8)
+        self.assertEqual(len(jobs), 8)
+
+        # not divisble
+        job = self.job.copy()
+        jobs = split_job_efficiently(job, (2, 2, 1), 6)
+        # 12 is the smallest multple of 4 that can be evenly split by 6 gpus
+        self.assertEqual(len(jobs), 12)
+
+        # test imposible error
+        job = self.job.copy()
+        job.n_rotations = 6
+        with self.assertRaisesRegex(ValueError, r"gpus: 16.*jobs: 12"):
+            _ = split_job_efficiently(job, (2, 1, 1), 16)
+        # make sure it does work with more splits
+        jobs = split_job_efficiently(job, (2, 2, 1), 16)
+        self.assertEqual(len(jobs), 16)
