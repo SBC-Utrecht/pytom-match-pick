@@ -125,7 +125,7 @@ class TestTMJob(unittest.TestCase):
 
         # not divisible
         job = self.job.copy()
-        jobs = split_job_efficiently(job, (3, 3, 1), 4)
+        jobs = split_job_efficiently(job, (3, 2, 1), 4)
         # 6 jobs don't nicely divide on 4 GPUS,
         # but 12 is the smallest multiple of 6 that does
         self.assertEqual(len(jobs), 12)
