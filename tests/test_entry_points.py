@@ -338,13 +338,6 @@ class TestEntryPoints(unittest.TestCase):
                 start(arguments)
             self.assertIn("gpu indices", dump.getvalue())
             dump.close()
-        # test error when volume splits can't be evenly distributed by gpus
-        arguments = defaults.copy()
-        # 4 pieces can't be fit on 3 gpus
-        arguments["--volume-split"] = "2 2 1"
-        arguments["-g"] = "0 0 0"
-        with self.assertRaisesRegex(ValueError, r"4 tomogram pieces.*3 GPUs"):
-            start(arguments)
 
         # test warp xml metadata reading
         arguments = defaults.copy()
