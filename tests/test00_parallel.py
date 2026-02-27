@@ -151,3 +151,19 @@ class TestTMJob(unittest.TestCase):
         # make sure it does work with more splits
         jobs = split_job_efficiently(job, (2, 2, 1), 16)
         self.assertEqual(len(jobs), 16)
+
+        # test angle split only
+        job = self.job.copy()
+        jobs = split_job_efficiently(job, (1, 1, 1), 6)
+        self.assertEqual(len(jobs), 6)
+
+        # test volume split only
+        job = self.job.copy()
+        jobs = split_job_efficiently(job, (2, 2, 1), 4)
+        self.assertEqual(len(jobs), 6)
+
+        # test no splits
+        job = self.job.copy()
+        jobs = split_job_efficiently(job, (1, 1, 1), 1)
+        self.assertEqual(len(jobs), 1)
+        self.assertIs(job, jobs[0])
