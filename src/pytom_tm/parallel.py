@@ -4,6 +4,7 @@ import logging
 import queue
 import time
 import contextlib
+from math import lcm
 from multiprocessing.managers import BaseProxy
 from functools import reduce
 from pytom_tm.tmjob import TMJob
@@ -55,6 +56,50 @@ def gpu_runner(
                 break
 
 
+def split_job_efficiently(
+    job: TMJob, volume_splits: tuple[int, int, int], gpus: int
+) -> list[TMJob, ...]:
+    """Do volume and angle splits in such a way that we can fill any number of gpus
+    with the same number of jobs for each gpu and the least amount of tomogram loading
+
+    Parameters
+    ----------
+    job: pytom_tm.tmjob.TMJob
+      a TM job to split into subjobs
+    volume_splits: tuple[int, int, int]
+      tuple of len 3 with number of splits in x, y, and z
+    gpus: int
+      number of gpus to split for
+    """
+    n_pieces = reduce(lambda x, y: x * y, volume_splits)
+    least_total_jobs = lcm(n_pieces, gpus)
+    n_angle_splits = least_total_jobs // n_pieces
+
+    if n_angle_splits > job.n_rotations:
+        # This should not happen for any sane setup,
+        # as the number of angles is normally in the 1000s
+        raise ValueError(
+            "Can't fill the assigned nuber of GPUs!"
+            f" number of assigned gpus: {gpus}, "
+            f" maximum number of possible jobs: {n_pieces * job.n_rotations}"
+        )
+
+    # do volume splits
+    if n_pieces > 1:
+        jobs = job.split_volume_search(volume_splits)
+    else:
+        jobs = [job]
+
+    # do angle splits
+    if n_angle_splits > 1:
+        out = []
+        for j in jobs:
+            out += j.split_rotation_search(n_angle_splits)
+    else:
+        out = jobs
+    return out
+
+
 def run_job_parallel(
     main_job: TMJob,
     volume_splits: tuple[int, int, int],
@@ -83,40 +128,7 @@ def run_job_parallel(
     result: tuple[npt.NDArray[float], npt.NDArray[float]]
         the volumes with the LCCmax and angle ids
     """
-
-    n_pieces = reduce(lambda x, y: x * y, volume_splits)
-
-    # error out reasonably if we can' make an even distribution
-    if n_pieces % len(gpu_ids) != 0:
-        raise ValueError(
-            f"Can't evenly distribute {n_pieces} tomogram pieces over "
-            f"{len(gpu_ids)} GPUs, please alter either the split or the number "
-            "of GPUs"
-        )
-    jobs = []
-
-    # =================== Splitting into subjobs ===============
-    if n_pieces == 1:
-        if len(gpu_ids) > 1:  # split rotation search
-            jobs = main_job.split_rotation_search(len(gpu_ids))
-
-        else:  # we just run the whole tomo on a single gpu
-            jobs.append(main_job)
-
-    elif n_pieces > 1:
-        rotation_split_factor = len(gpu_ids) // n_pieces
-
-        if (
-            rotation_split_factor >= 2
-        ):  # we can split the rotation search for the subvolumes
-            for j in main_job.split_volume_search(volume_splits):
-                jobs += j.split_rotation_search(rotation_split_factor)
-
-        else:  # only split the subvolume search
-            jobs = main_job.split_volume_search(volume_splits)
-
-    else:
-        raise ValueError("Invalid number of pieces in split volume")
+    jobs = split_job_efficiently(main_job, volume_splits, len(gpu_ids))
 
     # ================== Execution of jobs =========================
     if len(jobs) == 1:
@@ -179,9 +191,3 @@ def run_job_parallel(
 
         # merge split jobs; pass along the list of stats to annotate them in main_job
         return main_job.merge_sub_jobs(stats=results)
-
-    else:
-        ValueError(
-            "For some reason there are more gpu_ids than split job, this should never "
-            "happen."
-        )
