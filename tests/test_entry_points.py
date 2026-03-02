@@ -21,9 +21,11 @@ ENTRY_POINTS_TO_TEST = [
     ("pytom_merge_stars.py", "merge_stars"),
 ]
 # Test if optional dependencies are installed
+SKIP_PLOT = False
 try:
     from pytom_tm import plotting  # noqa: F401
 except RuntimeError:
+    SKIP_PLOT = True
     pass
 else:
     ENTRY_POINTS_TO_TEST.append(("pytom_estimate_roc.py", "estimate_roc"))
@@ -410,6 +412,7 @@ class TestEntryPoints(unittest.TestCase):
         arguments["--tilt-angles-first-column"] = str(TILT_ANGLES_MULTI_COLUMN)
         start(arguments)
 
+    @unittest.skipIf(SKIP_PLOT, "plotting modules not installed")
     def test_estimate_roc(self):
         match_defaults = {
             "-t": str(TEMPLATE),
@@ -463,6 +466,7 @@ class TestEntryPoints(unittest.TestCase):
         extract_defaults = {
             "-j": str(self.outputdir / f"{tomo_id}_job.json"),
             "-n": "1",
+            "--particle-diameter": "1",
         }
 
         def start(arg_dict):
