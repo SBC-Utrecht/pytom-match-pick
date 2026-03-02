@@ -430,7 +430,7 @@ class TestEntryPoints(unittest.TestCase):
         # generate match
         entry_points.match_template(prep_argv(match_defaults))
         tomo_id = f"{TOMOGRAM.stem}"
-        roc_defaults = {"-j": str(self.outputdir / f"{tomo_id}_job.json"), "-n": 1}
+        roc_defaults = {"-j": str(self.outputdir / f"{tomo_id}_job.json"), "-n": "1"}
 
         def start(arg_dict):
             entry_points.estimate_roc(prep_argv(arg_dict))
@@ -460,7 +460,10 @@ class TestEntryPoints(unittest.TestCase):
         entry_points.match_template(prep_argv(match_defaults))
         tomo_id = f"{TOMOGRAM.stem}"
         print(f"{str(self.outputdir / f'{tomo_id}_job.json')}")
-        extract_defaults = {"-j": str(self.outputdir / f"{tomo_id}_job.json"), "-n": 1}
+        extract_defaults = {
+            "-j": str(self.outputdir / f"{tomo_id}_job.json"),
+            "-n": "1",
+        }
 
         def start(arg_dict):
             entry_points.extract_candidates(prep_argv(arg_dict))
