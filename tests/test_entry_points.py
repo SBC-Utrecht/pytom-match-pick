@@ -466,7 +466,7 @@ class TestEntryPoints(unittest.TestCase):
         extract_defaults = {
             "-j": str(self.outputdir / f"{tomo_id}_job.json"),
             "-n": "1",
-            "--particle-diameter": "1",
+            "--particle-diameter": "50",
         }
 
         def start(arg_dict):
