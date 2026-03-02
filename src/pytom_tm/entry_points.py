@@ -60,7 +60,7 @@ def pytom_create_mask(argv=None):
         "--output-file",
         type=pathlib.Path,
         required=False,
-        help="Provide path to write output, needs to end in .mrc ."
+        help="Provide path to write output, needs to end in '.mrc'. "
         "If not provided file is written to current directory in the following format: "
         "./mask_b[box_size]px_r[radius]px.mrc ",
     )
@@ -239,7 +239,7 @@ def pytom_create_template(argv=None):
         "--log",
         type=str,
         required=False,
-        default=20,
+        default=logging.INFO,
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
