@@ -79,9 +79,13 @@ class TestEntryPoints(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         TEST_DATA.mkdir(parents=True)
-        io.write_mrc(TEMPLATE, np.zeros((5, 5, 5), dtype=np.float32), 1)
-        io.write_mrc(MASK, np.zeros((5, 5, 5), dtype=np.float32), 1)
-        io.write_mrc(TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
+        volume = np.zeros((10, 10, 10), dtype=np.float32)
+        template = np.ones((5, 5, 5), dtype=np.float32)
+        volume[2:7, 2:7, 2:7] = 1.0
+
+        io.write_mrc(TEMPLATE, template, 1)
+        io.write_mrc(MASK, np.ones((5, 5, 5), dtype=np.float32), 1)
+        io.write_mrc(TOMOGRAM, volume, 1)
         io.write_mrc(RELION5_TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
         np.savetxt(TILT_ANGLES, np.linspace(-50, 50, 35))
         np.savetxt(
@@ -433,7 +437,11 @@ class TestEntryPoints(unittest.TestCase):
         # generate match
         entry_points.match_template(prep_argv(match_defaults))
         tomo_id = f"{TOMOGRAM.stem}"
-        roc_defaults = {"-j": str(self.outputdir / f"{tomo_id}_job.json"), "-n": "1"}
+        roc_defaults = {
+            "-j": str(self.outputdir / f"{tomo_id}_job.json"),
+            "-n": "4",
+            "--particle-diameter": "5",
+        }
 
         def start(arg_dict):
             entry_points.estimate_roc(prep_argv(arg_dict))
@@ -466,7 +474,7 @@ class TestEntryPoints(unittest.TestCase):
         extract_defaults = {
             "-j": str(self.outputdir / f"{tomo_id}_job.json"),
             "-n": "1",
-            "--particle-diameter": "50",
+            "--particle-diameter": "5",
         }
 
         def start(arg_dict):
