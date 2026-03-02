@@ -409,3 +409,61 @@ class TestEntryPoints(unittest.TestCase):
         arguments.pop("--tilt-angles")
         arguments["--tilt-angles-first-column"] = str(TILT_ANGLES_MULTI_COLUMN)
         start(arguments)
+
+    def test_estimate_roc(self):
+        match_defaults = {
+            "-t": str(TEMPLATE),
+            "-m": str(MASK),
+            "-v": str(TOMOGRAM),
+            "-d": str(self.outputdir),
+            "--angular-search": "35",
+            "--tilt-angles": str(TILT_ANGLES),
+            "--per-tilt-weighting": "",
+            "--dose-accumulation": str(DOSE),
+            "--defocus": str(DEFOCUS_IMOD),
+            "--amplitude-contrast": "0.08",
+            "--spherical-aberration": "2.7",
+            "--voltage": "300",
+            "--tomogram-ctf-model": "phase-flip",
+            "-g": "0",
+        }
+        # generate match
+        entry_points.match_template(prep_argv(match_defaults))
+        tomo_id = f"{TOMOGRAM.stem}"
+        roc_defaults = {"-j": str(self.outputdir / f"{tomo_id}_job.json"), "-n": 1}
+
+        def start(arg_dict):
+            entry_points.estimate_roc(arg_dict)
+
+        # make sure we can run estimate roc
+        start(roc_defaults)
+        self.assertTrue((self.outputdir / f"{tomo_id}_roc.svg").exists())
+
+    def test_extract_candidates(self):
+        match_defaults = {
+            "-t": str(TEMPLATE),
+            "-m": str(MASK),
+            "-v": str(TOMOGRAM),
+            "-d": str(self.outputdir),
+            "--angular-search": "35",
+            "--tilt-angles": str(TILT_ANGLES),
+            "--per-tilt-weighting": "",
+            "--dose-accumulation": str(DOSE),
+            "--defocus": str(DEFOCUS_IMOD),
+            "--amplitude-contrast": "0.08",
+            "--spherical-aberration": "2.7",
+            "--voltage": "300",
+            "--tomogram-ctf-model": "phase-flip",
+            "-g": "0",
+        }
+        # generate match
+        entry_points.match_template(prep_argv(match_defaults))
+        tomo_id = f"{TOMOGRAM.stem}"
+        extract_defaults = {"-j": str(self.outputdir / f"{tomo_id}_job.json"), "-n": 1}
+
+        def start(arg_dict):
+            entry_points.extract_candidates(arg_dict)
+
+        # make sure we can run extraction
+        start(extract_defaults)
+        self.assertTrue((self.outputdir / f"{tomo_id}_particles.star").exists())
