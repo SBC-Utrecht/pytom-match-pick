@@ -239,7 +239,7 @@ def pytom_create_template(argv=None):
         "--log",
         type=str,
         required=False,
-        default="info",
+        default="INFO",
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
