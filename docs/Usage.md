@@ -34,7 +34,7 @@ code = ("""
 ---8<--- "entry_points.py:create_template_usage"
 """)
 cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+    if not any(keyword in line for keyword in ('action=', 'type='))
 ]
 cleaned_code = '\n'.join(cleaned_lines)
 exec(cleaned_code)
@@ -51,7 +51,7 @@ code = ("""
 ---8<--- "entry_points.py:create_mask_usage"
 """)
 cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+    if not any(keyword in line for keyword in ('action=', 'type='))
 ]
 cleaned_code = '\n'.join(cleaned_lines)
 exec(cleaned_code)
@@ -115,7 +115,7 @@ code = ("""
 ---8<--- "entry_points.py:match_template_usage"
 """)
 cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'default=', 'type=', 'error_on_multi_column='))
+    if not any(keyword in line for keyword in ('action=', 'type=', 'error_on_multi_column='))
 ]
 cleaned_code = '\n'.join(cleaned_lines)
 exec(cleaned_code)
@@ -168,7 +168,7 @@ code = ("""
 ---8<--- "entry_points.py:extract_candidates_usage"
 """)
 cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+    if not any(keyword in line for keyword in ('action=', 'type='))
 ]
 cleaned_code = '\n'.join(cleaned_lines)
 exec(cleaned_code)
@@ -185,7 +185,7 @@ code = ("""
 ---8<--- "entry_points.py:estimate_roc_usage"
 """)
 cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+    if not any(keyword in line for keyword in ('action=', 'type='))
 ]
 cleaned_code = '\n'.join(cleaned_lines)
 exec(cleaned_code)
@@ -206,7 +206,7 @@ code = ("""
 ---8<--- "entry_points.py:merge_stars_usage"
 """)
 cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'default=', 'type='))
+    if not any(keyword in line for keyword in ('action=', 'type='))
 ]
 cleaned_code = '\n'.join(cleaned_lines)
 exec(cleaned_code)
