@@ -433,7 +433,7 @@ class TestEntryPoints(unittest.TestCase):
         roc_defaults = {"-j": str(self.outputdir / f"{tomo_id}_job.json"), "-n": 1}
 
         def start(arg_dict):
-            entry_points.estimate_roc(arg_dict)
+            entry_points.estimate_roc(prep_argv(arg_dict))
 
         # make sure we can run estimate roc
         start(roc_defaults)
@@ -463,7 +463,7 @@ class TestEntryPoints(unittest.TestCase):
         extract_defaults = {"-j": str(self.outputdir / f"{tomo_id}_job.json"), "-n": 1}
 
         def start(arg_dict):
-            entry_points.extract_candidates(arg_dict)
+            entry_points.extract_candidates(prep_argv(arg_dict))
 
         # make sure we can run extraction
         start(extract_defaults)
