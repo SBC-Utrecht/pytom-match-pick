@@ -45,6 +45,7 @@ def pytom_create_mask(argv=None):
         prog="pytom_create_mask.py",
         description="Create a mask for template matching. "
         "-- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-b",
@@ -156,6 +157,7 @@ def pytom_create_template(argv=None):
         prog="pytom_create_template.py",
         description="Generate template from MRC density. "
         "-- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-i",
@@ -314,6 +316,7 @@ def estimate_roc(argv=None):
         prog="pytom_estimate_roc.py",
         description="Estimate ROC curve from TMJob file. "
         "-- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-j",
@@ -453,6 +456,7 @@ def extract_candidates(argv=None):
     parser = argparse.ArgumentParser(
         prog="pytom_extract_candidates.py",
         description="Run candidate extraction. -- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-j",
@@ -625,6 +629,7 @@ def match_template(argv=None):
     parser = argparse.ArgumentParser(
         prog="pytom_match_template.py",
         description="Run template matching. -- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     io_group = parser.add_argument_group("Template, search volume, and output")
     io_group.add_argument(
@@ -1123,6 +1128,7 @@ def merge_stars(argv=None):
             "Merge multiple star files in the same directory. "
             "-- Marten Chaillet (@McHaillet)"
         ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-i",
