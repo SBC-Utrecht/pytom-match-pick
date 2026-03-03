@@ -21,9 +21,11 @@ ENTRY_POINTS_TO_TEST = [
     ("pytom_merge_stars.py", "merge_stars"),
 ]
 # Test if optional dependencies are installed
+SKIP_PLOT = False
 try:
     from pytom_tm import plotting  # noqa: F401
 except RuntimeError:
+    SKIP_PLOT = True
     pass
 else:
     ENTRY_POINTS_TO_TEST.append(("pytom_estimate_roc.py", "estimate_roc"))
@@ -77,9 +79,13 @@ class TestEntryPoints(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         TEST_DATA.mkdir(parents=True)
-        io.write_mrc(TEMPLATE, np.zeros((5, 5, 5), dtype=np.float32), 1)
-        io.write_mrc(MASK, np.zeros((5, 5, 5), dtype=np.float32), 1)
-        io.write_mrc(TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
+        volume = np.zeros((10, 10, 10), dtype=np.float32)
+        template = np.ones((5, 5, 5), dtype=np.float32)
+        volume[2:7, 2:7, 2:7] = 1.0
+
+        io.write_mrc(TEMPLATE, template, 1)
+        io.write_mrc(MASK, np.ones((5, 5, 5), dtype=np.float32), 1)
+        io.write_mrc(TOMOGRAM, volume, 1)
         io.write_mrc(RELION5_TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
         np.savetxt(TILT_ANGLES, np.linspace(-50, 50, 35))
         np.savetxt(
@@ -409,3 +415,70 @@ class TestEntryPoints(unittest.TestCase):
         arguments.pop("--tilt-angles")
         arguments["--tilt-angles-first-column"] = str(TILT_ANGLES_MULTI_COLUMN)
         start(arguments)
+
+    @unittest.skipIf(SKIP_PLOT, "plotting modules not installed")
+    def test_estimate_roc(self):
+        match_defaults = {
+            "-t": str(TEMPLATE),
+            "-m": str(MASK),
+            "-v": str(TOMOGRAM),
+            "-d": str(self.outputdir),
+            "--angular-search": "35",
+            "--tilt-angles": str(TILT_ANGLES),
+            "--per-tilt-weighting": "",
+            "--dose-accumulation": str(DOSE),
+            "--defocus": str(DEFOCUS_IMOD),
+            "--amplitude-contrast": "0.08",
+            "--spherical-aberration": "2.7",
+            "--voltage": "300",
+            "--tomogram-ctf-model": "phase-flip",
+            "-g": "0",
+        }
+        # generate match
+        entry_points.match_template(prep_argv(match_defaults))
+        tomo_id = f"{TOMOGRAM.stem}"
+        roc_defaults = {
+            "-j": str(self.outputdir / f"{tomo_id}_job.json"),
+            "-n": "4",
+            "--particle-diameter": "5",
+        }
+
+        def start(arg_dict):
+            entry_points.estimate_roc(prep_argv(arg_dict))
+
+        # make sure we can run estimate roc
+        start(roc_defaults)
+        self.assertTrue((self.outputdir / f"{tomo_id}_roc.svg").exists())
+
+    def test_extract_candidates(self):
+        match_defaults = {
+            "-t": str(TEMPLATE),
+            "-m": str(MASK),
+            "-v": str(TOMOGRAM),
+            "-d": str(self.outputdir),
+            "--angular-search": "35",
+            "--tilt-angles": str(TILT_ANGLES),
+            "--per-tilt-weighting": "",
+            "--dose-accumulation": str(DOSE),
+            "--defocus": str(DEFOCUS_IMOD),
+            "--amplitude-contrast": "0.08",
+            "--spherical-aberration": "2.7",
+            "--voltage": "300",
+            "--tomogram-ctf-model": "phase-flip",
+            "-g": "0",
+        }
+        # generate match
+        entry_points.match_template(prep_argv(match_defaults))
+        tomo_id = f"{TOMOGRAM.stem}"
+        extract_defaults = {
+            "-j": str(self.outputdir / f"{tomo_id}_job.json"),
+            "-n": "1",
+            "--particle-diameter": "5",
+        }
+
+        def start(arg_dict):
+            entry_points.extract_candidates(prep_argv(arg_dict))
+
+        # make sure we can run extraction
+        start(extract_defaults)
+        self.assertTrue((self.outputdir / f"{tomo_id}_particles.star").exists())

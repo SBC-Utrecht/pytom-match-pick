@@ -45,6 +45,7 @@ def pytom_create_mask(argv=None):
         prog="pytom_create_mask.py",
         description="Create a mask for template matching. "
         "-- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-b",
@@ -59,7 +60,7 @@ def pytom_create_mask(argv=None):
         "--output-file",
         type=pathlib.Path,
         required=False,
-        help="Provide path to write output, needs to end in .mrc ."
+        help="Provide path to write output, needs to end in '.mrc'. "
         "If not provided file is written to current directory in the following format: "
         "./mask_b[box_size]px_r[radius]px.mrc ",
     )
@@ -156,6 +157,7 @@ def pytom_create_template(argv=None):
         prog="pytom_create_template.py",
         description="Generate template from MRC density. "
         "-- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-i",
@@ -237,7 +239,7 @@ def pytom_create_template(argv=None):
         "--log",
         type=str,
         required=False,
-        default=20,
+        default="INFO",
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
@@ -314,6 +316,7 @@ def estimate_roc(argv=None):
         prog="pytom_estimate_roc.py",
         description="Estimate ROC curve from TMJob file. "
         "-- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-j",
@@ -340,7 +343,7 @@ def estimate_roc(argv=None):
         action=LargerThanZero,
         help="Particle diameter of the template in Angstrom. It is used during "
         "extraction to remove areas around peaks to prevent double extraction. "
-        "Minimal peak-to-peak distance after extraction will be diameter/2."
+        "Minimal peak-to-peak distance after extraction will be diameter/2. "
         "If not previously specified, this option is required. If "
         "specified in pytom_match_template, this is optional and "
         "can be used to overwrite it, which might be relevant for strongly "
@@ -390,7 +393,7 @@ def estimate_roc(argv=None):
         "--log",
         type=str,
         required=False,
-        default=20,
+        default="INFO",
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
@@ -453,6 +456,7 @@ def extract_candidates(argv=None):
     parser = argparse.ArgumentParser(
         prog="pytom_extract_candidates.py",
         description="Run candidate extraction. -- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-j",
@@ -559,7 +563,7 @@ def extract_candidates(argv=None):
         "--log",
         type=str,
         required=False,
-        default=20,
+        default="INFO",
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
@@ -625,6 +629,7 @@ def match_template(argv=None):
     parser = argparse.ArgumentParser(
         prog="pytom_match_template.py",
         description="Run template matching. -- Marten Chaillet (@McHaillet)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     io_group = parser.add_argument_group("Template, search volume, and output")
     io_group.add_argument(
@@ -934,7 +939,6 @@ def match_template(argv=None):
         "--rng-seed",
         type=int,
         action=LargerThanZero,
-        default=int.from_bytes(urandom(8)),
         required=False,
         help="Specify a seed for the random number generator used for phase "
         "randomization for consistent results!",
@@ -976,7 +980,7 @@ def match_template(argv=None):
         "--log",
         type=str,
         required=False,
-        default=20,
+        default="INFO",
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
@@ -985,6 +989,10 @@ def match_template(argv=None):
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log, force=True)
+
+    # set rng if not set
+    if args.rng_seed is None:
+        args.rng_seed = int.from_bytes(urandom(8))
 
     # set correct tilt angles
     if args.tilt_angles_first_column is not None:
@@ -1123,6 +1131,7 @@ def merge_stars(argv=None):
             "Merge multiple star files in the same directory. "
             "-- Marten Chaillet (@McHaillet)"
         ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-i",
@@ -1147,7 +1156,7 @@ def merge_stars(argv=None):
         "--log",
         type=str,
         required=False,
-        default=20,
+        default="INFO",
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
