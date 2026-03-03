@@ -470,7 +470,6 @@ class TestEntryPoints(unittest.TestCase):
         # generate match
         entry_points.match_template(prep_argv(match_defaults))
         tomo_id = f"{TOMOGRAM.stem}"
-        print(f"{str(self.outputdir / f'{tomo_id}_job.json')}")
         extract_defaults = {
             "-j": str(self.outputdir / f"{tomo_id}_job.json"),
             "-n": "1",
