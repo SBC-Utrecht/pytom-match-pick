@@ -327,11 +327,11 @@ def extract_particles(
     scores = []
 
     for _ in tqdm(range(n_particles)):
-        ind = np.unravel_index(score_volume.argmax(), score_volume.shape)
+        ind = np.unravel_index(np.nanargmax(score_volume), score_volume.shape)
 
         lcc_max = score_volume[ind]
 
-        if lcc_max <= cut_off:
+        if lcc_max <= cut_off or np.isnan(lcc_max):
             break
 
         scores.append(lcc_max)
