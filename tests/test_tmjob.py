@@ -1015,6 +1015,25 @@ class TestTMJob(unittest.TestCase):
         )
         # We don't look for the plots, they might be skipped if no plotting is available
 
+        # Test raise on faulty stats
+        job = self.job.copy()
+        for i in [float("inf"), float("nan")]:
+            job.job_stats["variance"] = i
+            with self.assertRaisesRegex(ValueError, "variance.*NaN or inf"):
+                _, _ = extract_particles(
+                    job,
+                    100,
+                    5,
+                )
+        for i in [float("inf"), float("nan")]:
+            job.job_stats["std"] = i
+            with self.assertRaisesRegex(ValueError, "std.*NaN or inf"):
+                _, _ = extract_particles(
+                    job,
+                    100,
+                    5,
+                )
+
     def test_get_defocus_offsets(self):
         ts_metadata = TiltSeriesMetaData(tilt_angles=list(range(-51, 54, 3)))
         x_offset_um = 200 * 13.79 * 1e-4
