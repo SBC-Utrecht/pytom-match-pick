@@ -1,4 +1,5 @@
 from packaging import version
+import math
 import pandas as pd
 import numpy as np
 import numpy.typing as npt
@@ -215,6 +216,17 @@ def extract_particles(
         symmetry=job.rotational_symmetry,
     )
 
+    # Check for invalid values or NaNs
+    for x in ["variance", "std"]:
+        if math.isinf(job.job_stats[x]) or math.isnan(job.job_stats[x]):
+            raise ValueError(
+                f"job stat '{x}' is NaN or inf, please check your volumes and update "
+                "the job_stats json accordingly"
+            )
+
+    sigma = job.job_stats["std"]
+    search_space = job.job_stats["search_space"]
+
     if tophat_filter:  # constrain the extraction with a tophat filter
         predicted_peaks = predict_tophat_mask(
             score_volume,
@@ -285,8 +297,6 @@ def extract_particles(
     score_volume[:, -particle_radius_px:, :] = 0
     score_volume[:, :, -particle_radius_px:] = 0
 
-    sigma = job.job_stats["std"]
-    search_space = job.job_stats["search_space"]
     if cut_off is None:
         # formula Rickgauer et al. (2017, eLife):
         # N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
