@@ -836,8 +836,8 @@ class TMJob:
 
         if not is_subvolume_split:
             scores, angles = (
-                np.zeros_like(score_volumes[0]),
-                np.zeros_like(angle_volumes[0]) - float("inf"),
+                np.zeros_like(score_volumes[0]) + float("-inf"),
+                np.zeros_like(angle_volumes[0]) + float("inf"),
             )
             for s, a in zip(score_volumes, angle_volumes):
                 angles = np.where(s > scores, a, angles)
@@ -847,7 +847,7 @@ class TMJob:
         else:
             scores, angles = (
                 np.zeros(self.search_size, dtype=np.float32),
-                np.zeros(self.search_size, dtype=np.float32) - float("inf"),
+                np.zeros(self.search_size, dtype=np.float32) + float("inf"),
             )
             for job, s, a in zip(self.sub_jobs, score_volumes, angle_volumes):
                 sub_scores = s[
