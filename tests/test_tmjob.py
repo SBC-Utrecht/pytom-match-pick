@@ -1025,6 +1025,8 @@ class TestTMJob(unittest.TestCase):
                     100,
                     5,
                 )
+
+        job = self.job.copy()
         for i in [float("inf"), float("nan")]:
             job.job_stats["std"] = i
             with self.assertRaisesRegex(ValueError, "std.*NaN or inf"):
