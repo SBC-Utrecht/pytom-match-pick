@@ -846,7 +846,7 @@ class TMJob:
                 scores = np.where(s > scores, s, scores)
         else:
             scores, angles = (
-                np.zeros(self.search_size, dtype=np.float32),
+                np.zeros(self.search_size, dtype=np.float32) + float("-inf"),
                 np.zeros(self.search_size, dtype=np.float32) + float("inf"),
             )
             for job, s, a in zip(self.sub_jobs, score_volumes, angle_volumes):
