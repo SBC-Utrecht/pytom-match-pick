@@ -75,13 +75,21 @@ def predict_tophat_mask(
     if score_volume.dtype == np.float16:
         score_volume = score_volume.astype(np.float32)
 
+    # convert -inf (masked) scores to background 0 and kep track of them
+    # to exclude them from the histogram
+    if np.any(np.isneginf(score_volume)):
+        finite_indices = np.where(np.isfinite(score_volume))
+        score_volume = np.nan_to_num(neginf=0.0)
+    else:
+        finite_indices = None, None, None
+
     tophat = ndimage.white_tophat(
         score_volume,
         structure=ndimage.generate_binary_structure(
             rank=3, connectivity=tophat_connectivity
         ),
     )
-    y, bins = np.histogram(tophat.flatten(), bins=bins)
+    y, bins = np.histogram(tophat[finite_indices].flatten(), bins=bins)
     bin_centers = (bins[:-1] + bins[1:]) / 2
     x_raw, y_raw = (
         bin_centers[2:],
