@@ -25,6 +25,15 @@ class TestExtract(unittest.TestCase):
             tophat_mask.sum(), 0, msg="float16 scores failing for tophat mask"
         )
 
+        # test that -inf is dealt with as well
+        volume[:42, 42:, 24:42] = 0
+        ref = predict_tophat_mask(volume)
+        volume[:42, 42:, 24:42] = float("-inf")
+        self.assertTrue(
+            np.all(ref == predict_tophat_mask(volume)),
+            msg="0 or -inf should behave (almost) identical",
+        )
+
     # part of the extraction test in test_tmjob.py
     # def test_extract_job_with_tomogram_mask(self):
     #    pass

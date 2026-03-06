@@ -76,8 +76,8 @@ class TemplateMatchingPlan:
 
         # Initialize result volumes
         self.ccc_map = cp.zeros(volume_shape, dtype=cp.float32)
-        self.scores = cp.ones(volume_shape, dtype=cp.float32) * -1000
-        self.angles = cp.ones(volume_shape, dtype=cp.float32) * -1000
+        self.scores = cp.ones(volume_shape, dtype=cp.float32) * float("-inf")
+        self.angles = cp.ones(volume_shape, dtype=cp.float32) * float("-inf")
 
         self.random_phase_template_texture = None
         self.noise_scores = None
@@ -87,7 +87,7 @@ class TemplateMatchingPlan:
                 interpolation="filt_bspline",
                 device=f"gpu:{device_id}",
             )
-            self.noise_scores = cp.ones(volume_shape, dtype=cp.float32) * -1000
+            self.noise_scores = cp.ones(volume_shape, dtype=cp.float32) * float("-inf")
 
         # wait for stream to complete the work
         cp.cuda.stream.get_current_stream().synchronize()

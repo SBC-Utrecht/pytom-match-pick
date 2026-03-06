@@ -1,4 +1,5 @@
 from packaging import version
+import math
 import pandas as pd
 import numpy as np
 import numpy.typing as npt
@@ -74,13 +75,21 @@ def predict_tophat_mask(
     if score_volume.dtype == np.float16:
         score_volume = score_volume.astype(np.float32)
 
+    # convert -inf (masked) scores to background 0 and kep track of them
+    # to exclude them from the histogram
+    if np.any(np.isneginf(score_volume)):
+        finite_indices = np.where(np.isfinite(score_volume))
+        score_volume = np.nan_to_num(score_volume, neginf=0.0)
+    else:
+        finite_indices = None, None, None
+
     tophat = ndimage.white_tophat(
         score_volume,
         structure=ndimage.generate_binary_structure(
             rank=3, connectivity=tophat_connectivity
         ),
     )
-    y, bins = np.histogram(tophat.flatten(), bins=bins)
+    y, bins = np.histogram(tophat[finite_indices].flatten(), bins=bins)
     bin_centers = (bins[:-1] + bins[1:]) / 2
     x_raw, y_raw = (
         bin_centers[2:],
@@ -215,6 +224,17 @@ def extract_particles(
         symmetry=job.rotational_symmetry,
     )
 
+    # Check for invalid values or NaNs
+    for x in ["variance", "std"]:
+        if math.isinf(job.job_stats[x]) or math.isnan(job.job_stats[x]):
+            raise ValueError(
+                f"job stat '{x}' is NaN or inf, please check your volumes and update "
+                "the job_stats json accordingly"
+            )
+
+    sigma = job.job_stats["std"]
+    search_space = job.job_stats["search_space"]
+
     if tophat_filter:  # constrain the extraction with a tophat filter
         predicted_peaks = predict_tophat_mask(
             score_volume,
@@ -285,8 +305,6 @@ def extract_particles(
     score_volume[:, -particle_radius_px:, :] = 0
     score_volume[:, :, -particle_radius_px:] = 0
 
-    sigma = job.job_stats["std"]
-    search_space = job.job_stats["search_space"]
     if cut_off is None:
         # formula Rickgauer et al. (2017, eLife):
         # N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
@@ -317,11 +335,11 @@ def extract_particles(
     scores = []
 
     for _ in tqdm(range(n_particles)):
-        ind = np.unravel_index(score_volume.argmax(), score_volume.shape)
+        ind = np.unravel_index(np.nanargmax(score_volume), score_volume.shape)
 
         lcc_max = score_volume[ind]
 
-        if lcc_max <= cut_off:
+        if lcc_max <= cut_off or np.isnan(lcc_max):
             break
 
         scores.append(lcc_max)
