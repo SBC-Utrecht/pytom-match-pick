@@ -29,9 +29,8 @@ class TestExtract(unittest.TestCase):
         volume[:42, 42:, 24:42] = 0
         ref = predict_tophat_mask(volume)
         volume[:42, 42:, 24:42] = float("-inf")
-        self.assertEqual(
-            ref,
-            predict_tophat_mask(volume),
+        self.assertTrue(
+            np.all(ref == predict_tophat_mask(volume)),
             msg="0 or -inf should behave (almost) identical",
         )
 
