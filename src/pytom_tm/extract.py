@@ -79,7 +79,7 @@ def predict_tophat_mask(
     # to exclude them from the histogram
     if np.any(np.isneginf(score_volume)):
         finite_indices = np.where(np.isfinite(score_volume))
-        score_volume = np.nan_to_num(neginf=0.0)
+        score_volume = np.nan_to_num(score_volume, neginf=0.0)
     else:
         finite_indices = None, None, None
 
