@@ -490,7 +490,7 @@ class TestEntryPoints(unittest.TestCase):
         match_defaults = {
             "-t": str(TEMPLATE),
             "-m": str(MASK),
-            "-v": str(TOMOGRAM),
+            "-v": str(RELION5_TOMOGRAM),
             "-d": str(self.outputdir),
             "--angular-search": "35",
             "--tilt-angles": str(TILT_ANGLES),
