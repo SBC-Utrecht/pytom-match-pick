@@ -1033,7 +1033,7 @@ def match_template(argv=None):
             )
             for defocus in args.defocus
         ]
-
+    dropped_args = []
     if args.relion5_tomograms_star is not None:
         voxel_size, ts_metadata = parse_relion5_star_data(
             args.relion5_tomograms_star,
@@ -1041,6 +1041,18 @@ def match_template(argv=None):
             phase_flip_correction=phase_flip_correction,
             phase_shift=args.phase_shift,
         )
+        dropped_args += [
+            "--defocus",
+            "--amplitude_contrast",
+            "--voltage",
+            "--spherical-aberration",
+            ("-a", "--tilt-angles"),
+            "--per-tilt-weighting",
+            "--warp-xml-file",
+            "--voxel-size-angstrom",
+            "--dose-accumulation",
+            "--defocus-handedness",
+        ]
 
     elif args.warp_xml_file is not None:
         voxel_size, ts_metadata = parse_warp_xml_data(
@@ -1050,6 +1062,16 @@ def match_template(argv=None):
         )
         # Replace is needed here to rerun the sanity checking
         ts_metadata = ts_metadata.replace(defocus_handedness=args.defocus_handedness)
+        dropped_args += [
+            "--defocus",
+            "--amplitude_contrast",
+            "--voltage",
+            "--spherical-aberration",
+            ("-a", "--tilt-angles"),
+            "--per-tilt-weighting",
+            "--voxel-size-angstrom",
+            "--dose-accumulation",
+        ]
 
     else:
         if tilt_angles is None:
@@ -1066,6 +1088,24 @@ def match_template(argv=None):
             defocus_handedness=args.defocus_handedness,
             per_tilt_weighting=args.per_tilt_weighting,
         )
+
+    # Warn for dropped args, use new parser to deal with possible shorthand
+    test_input = argparse.ArgumentParser(
+        add_help=False, argument_default=argparse.SUPPRESS
+    )
+    for arg in dropped_args:
+        if isinstance(arg, tuple):
+            short, long = arg
+            test_input.add_argument(
+                short, long, nargs="*", action="store_const", const=f"-{short}/--{long}"
+            )
+        else:
+            test_input.add_argument(
+                arg, nargs="*", action="store_const", const=f"--{arg}"
+            )
+    test_args, _ = test_input.parse_known_args(args)
+    for val in vars(test_args.values()):
+        logging.warn(f"The following input argument was ignored: {val}")
 
     if args.angular_search is None and args.particle_diameter is None:
         raise ValueError(
