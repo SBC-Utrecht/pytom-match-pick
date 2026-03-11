@@ -1103,7 +1103,7 @@ def match_template(argv=None):
             test_input.add_argument(
                 arg, nargs="*", action="store_const", const=f"--{arg}"
             )
-    test_args, _ = test_input.parse_known_args(args)
+    test_args, _ = test_input.parse_known_args(argv)
     for val in vars(test_args.values()):
         logging.warn(f"The following input argument was ignored: {val}")
 
