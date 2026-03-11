@@ -492,7 +492,7 @@ class TestEntryPoints(unittest.TestCase):
             "-m": str(MASK),
             "-v": str(RELION5_TOMOGRAM),
             "-d": str(self.outputdir),
-            "--voxel-size-angstrom": 1,
+            "--voxel-size-angstrom": "1",
             "--angular-search": "35",
             "--tilt-angles": str(TILT_ANGLES),
             "--per-tilt-weighting": "",
