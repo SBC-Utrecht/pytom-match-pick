@@ -492,6 +492,7 @@ class TestEntryPoints(unittest.TestCase):
             "-m": str(MASK),
             "-v": str(RELION5_TOMOGRAM),
             "-d": str(self.outputdir),
+            "--voxel-size-angstrom": 1,
             "--angular-search": "35",
             "--tilt-angles": str(TILT_ANGLES),
             "--per-tilt-weighting": "",
@@ -517,8 +518,23 @@ class TestEntryPoints(unittest.TestCase):
             "--tilt-angles",
             "--per-tilt-weighting",
             "--dose-accumulation",
+            "--voxel-size-angstrom",
         ]
         # test 1 line per dropped option
+        self.assertEqual(
+            len([i for i in cm.output if ("WARN" in i and "-" in i)]),
+            len(dropped_options),
+        )
+        logs = " ".join(cm.output)
+        for i in dropped_options:
+            self.assertIn(i, logs)
+
+        # repeat for warp-xml
+        arguments = match_defaults.copy()
+        del arguments["--relion5-tomograms-star"]
+        arguments["--warp-xml-file"] = str(WARP_XML)
+        with self.assertLogs(level="WARNING") as cm:
+            entry_points.match_template(prep_argv(arguments))
         self.assertEqual(
             len([i for i in cm.output if ("WARN" in i and "-" in i)]),
             len(dropped_options),
