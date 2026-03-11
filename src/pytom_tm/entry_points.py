@@ -1104,7 +1104,7 @@ def match_template(argv=None):
                 arg, nargs="*", action="store_const", const=f"--{arg}"
             )
     test_args, _ = test_input.parse_known_args(argv)
-    for val in vars(test_args.values()):
+    for val in vars(test_args).values():
         logging.warn(f"The following input argument was ignored: {val}")
 
     if args.angular_search is None and args.particle_diameter is None:
