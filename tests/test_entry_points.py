@@ -486,7 +486,7 @@ class TestEntryPoints(unittest.TestCase):
     @unittest.mock.patch("pytom_tm.parallel.run_job_parallel")
     def test_dropped_logging(self, mock_run):
         # mock out the actuall running to speed up this test
-        mock_run.return_value = (np.random.rand((5, 5, 5)), np.random.rand((5, 5, 5)))
+        mock_run.return_value = (np.random.rand(5, 5, 5), np.random.rand(5, 5, 5))
         match_defaults = {
             "-t": str(TEMPLATE),
             "-m": str(MASK),
