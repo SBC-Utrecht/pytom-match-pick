@@ -482,3 +482,92 @@ class TestEntryPoints(unittest.TestCase):
         # make sure we can run extraction
         start(extract_defaults)
         self.assertTrue((self.outputdir / f"{tomo_id}_particles.star").exists())
+
+    @unittest.mock.patch("pytom_tm.parallel.run_job_parallel")
+    def test_dropped_logging(self, mock_run):
+        # mock out the actuall running to speed up this test
+        mock_run.return_value = (np.random.rand(5), np.random.rand(5))
+        match_defaults = {
+            "-t": str(TEMPLATE),
+            "-m": str(MASK),
+            "-v": str(TOMOGRAM),
+            "-d": str(self.outputdir),
+            "--angular-search": "35",
+            "--tilt-angles": str(TILT_ANGLES),
+            "--per-tilt-weighting": "",
+            "--dose-accumulation": str(DOSE),
+            "--defocus": str(DEFOCUS_IMOD),
+            "--amplitude-contrast": "0.08",
+            "--spherical-aberration": "2.7",
+            "--voltage": "300",
+            "--tomogram-ctf-model": "phase-flip",
+            "-g": "0",
+            "--relion5-tomograms-star": str(RELION5_TOMOGRAMS_STAR),
+            "--log-test": "",
+        }
+        # make sure we at least log
+        arguments = match_defaults.copy()
+        with self.assertLogs(level="WARNING") as cm:
+            entry_points.match_template(prep_argv(arguments))
+        dropped_options = [
+            "--defocus",
+            "--amplitude-contrast",
+            "--voltage",
+            "--spherical-aberration",
+            "--voltage",
+            "--tilt-angles",
+            "--per-tilt-weighting",
+            "--dose-accumulation",
+        ]
+        # test 1 line per dropped option
+        self.assertEqual(
+            len([i for i in cm.output if "WARN" in i]), len(dropped_options)
+        )
+        logs = " ".join(cm.output)
+        for i in dropped_options:
+            self.assertIn(i, logs)
+
+        # make sure we also log on shorthand
+        arguments = match_defaults.copy()
+        del arguments["--tilt-angles"]
+        arguments["-a"] = str(TILT_ANGLES)
+        with self.assertLogs(level="WARNING") as cm:
+            entry_points.match_template(prep_argv(arguments))
+        logs = " ".join(cm.output)
+        self.assertIn("--tilt-angles", logs)
+
+        # make sure we also log on abbreviations
+        arguments = match_defaults.copy()
+        del arguments["--per-tilt-weighting"]
+        arguments["--per-tilt"] = ""
+        with self.assertLogs(level="WARNING") as cm:
+            entry_points.match_template(prep_argv(arguments))
+        logs = " ".join(cm.output)
+        self.assertIn("--per-tilt-weighting", logs)
+
+        # make sure we log on both relion and warp xml
+        # TODO: is this actually intended behavior or should we error on this?
+        arguments = match_defaults.copy()
+        arguments["--warp-xml"] = "fake.xml"
+        with self.assertLogs(level="WARNING") as cm:
+            entry_points.match_template(prep_argv(arguments))
+        logs = " ".join(cm.output)
+        self.assertIn("--warp-xml-file", logs)
+
+        # make sure we log defocus handedness for relion but not for warp
+        arguments = match_defaults.copy()
+        arguments["--defocus-handedness"] = "0"
+        with self.assertLogs(level="WARNING") as cm:
+            entry_points.match_template(prep_argv(arguments))
+        logs = " ".join(cm.output)
+        self.assertIn("--defocus-handedness", logs)
+
+        # make sure no log for defocus handedness in warp
+        arguments = match_defaults.copy()
+        arguments["--defocus-handedness"] = "0"
+        del arguments["--relion5-tomograms-star"]
+        arguments["--warp-xml-file"] = str(WARP_XML)
+        with self.assertLogs(level="WARNING") as cm:
+            entry_points.match_template(prep_argv(arguments))
+        logs = " ".join(cm.output)
+        self.assertNotIn("--defocus-handedness", logs)
