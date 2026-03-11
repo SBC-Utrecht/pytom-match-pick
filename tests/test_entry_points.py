@@ -514,14 +514,14 @@ class TestEntryPoints(unittest.TestCase):
             "--amplitude-contrast",
             "--voltage",
             "--spherical-aberration",
-            "--voltage",
             "--tilt-angles",
             "--per-tilt-weighting",
             "--dose-accumulation",
         ]
         # test 1 line per dropped option
         self.assertEqual(
-            len([i for i in cm.output if "WARN" in i]), len(dropped_options)
+            len([i for i in cm.output if ("WARN" in i and "-" in i)]),
+            len(dropped_options),
         )
         logs = " ".join(cm.output)
         for i in dropped_options:
@@ -548,7 +548,7 @@ class TestEntryPoints(unittest.TestCase):
         # make sure we log on both relion and warp xml
         # TODO: is this actually intended behavior or should we error on this?
         arguments = match_defaults.copy()
-        arguments["--warp-xml"] = "fake.xml"
+        arguments["--warp-xml"] = str(WARP_XML)
         with self.assertLogs(level="WARNING") as cm:
             entry_points.match_template(prep_argv(arguments))
         logs = " ".join(cm.output)

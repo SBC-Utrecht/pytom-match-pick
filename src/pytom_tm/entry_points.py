@@ -1048,7 +1048,7 @@ def match_template(argv=None):
         )
         dropped_args += [
             "--defocus",
-            "--amplitude_contrast",
+            "--amplitude-contrast",
             "--voltage",
             "--spherical-aberration",
             ("-a", "--tilt-angles"),
@@ -1069,7 +1069,7 @@ def match_template(argv=None):
         ts_metadata = ts_metadata.replace(defocus_handedness=args.defocus_handedness)
         dropped_args += [
             "--defocus",
-            "--amplitude_contrast",
+            "--amplitude-contrast",
             "--voltage",
             "--spherical-aberration",
             ("-a", "--tilt-angles"),
@@ -1102,12 +1102,12 @@ def match_template(argv=None):
         if isinstance(arg, tuple):
             short, long = arg
             test_input.add_argument(
-                short, long, action="store_const", const=f"-{short}/--{long}"
+                short, long, action="store_const", const=f"{short}/{long}"
             )
         else:
-            test_input.add_argument(arg, action="store_const", const=f"--{arg}")
+            test_input.add_argument(arg, action="store_const", const=f"{arg}")
     # drop any input values that were not options
-    test_argv = [i for i in argv if "-" in argv]
+    test_argv = [i for i in argv if "-" in i]
     test_args, _ = test_input.parse_known_args(test_argv)
     for val in vars(test_args).values():
         logging.warn(f"The following input argument was ignored: {val}")
