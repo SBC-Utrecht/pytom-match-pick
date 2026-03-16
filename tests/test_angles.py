@@ -63,7 +63,9 @@ class TestAngles(unittest.TestCase):
         # Resample to smaller angle if angle is too big for healpix behavior to show up
         # see: https://github.com/ntessore/healpix/issues/99
         if angle > 58:
-            angles = 1 + np.random.random() * 57
+            angle = 1 + np.random.random() * 57
+            angles = angle_to_angle_list(angle, log_level=logging.INFO)
+
         # make sure everything is sorted, Z1 is not negative, and X is never 0
         for a, b in itt.pairwise(angles):
             # make sure default is sorted
