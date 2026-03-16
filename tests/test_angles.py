@@ -68,10 +68,18 @@ class TestAngles(unittest.TestCase):
         for a, b in itt.pairwise(angles):
             # make sure default is sorted
             self.assertLess(a, b)
-            # make surr Z1 is not negative
+            # make sure Z1 is between [0, 2π]
             # see https://github.com/ntessore/healpix/issues/99
             self.assertGreaterEqual(a[0], 0)
-            # make sure X is never 0
-            self.assertNotEqual(a[1], 0)
-        # also check the last X
-        self.assertNotEqual(b[1], 0)
+            self.assertLess(a[0], 2 * np.pi)
+            # make sure X is above 0 up to pi
+            self.assertGreater(a[1], 0)
+            self.assertLessEqual(a[1], np.pi)
+
+        # also check the last item
+        # make sure Z1 is between [0, 2π]
+        self.assertGreaterEqual(b[0], 0)
+        self.assertLess(b[0], 2 * np.pi)
+        # make sure X is above 0 up to pi
+        self.assertGreater(b[1], 0)
+        self.assertLessEqual(b[1], np.pi)
