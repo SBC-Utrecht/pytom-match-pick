@@ -14,7 +14,7 @@ jobs:
       options: --runtime=nvidia --gpus all
     steps:
       - name: Pull code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install build and twine
         run: |
           python -m pip install --upgrade build twine
@@ -39,7 +39,7 @@ jobs:
       id-token: write
     steps:
     - name: Download all the dists
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: match-pick-distributions
         path: dist/
@@ -63,7 +63,7 @@ jobs:
         run: |
           python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pytom-match-pick[plotting]
       - name: Pull test code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Run tests on the installed package
         run: |
           python -m unittest discover tests/
@@ -77,7 +77,7 @@ jobs:
       id-token: write
     steps:
     - name: Download all the dists
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: match-pick-distributions
         path: dist/
