@@ -60,10 +60,17 @@ class TestAngles(unittest.TestCase):
             self.assertEqual(len(possible_match), 1)
             self.assertLessEqual(float(possible_match[0]), angle)
 
-        # make sure everything is sorted and X is never 0
+        # Resample to smaller angle if angle is too big for healpix behavior to show up
+        # see: https://github.com/ntessore/healpix/issues/99
+        if angle > 58:
+            angles = 1 + np.random.random() * 57
+        # make sure everything is sorted, Z1 is not negative, and X is never 0
         for a, b in itt.pairwise(angles):
             # make sure default is sorted
             self.assertLess(a, b)
+            # make surr Z1 is not negative
+            # see https://github.com/ntessore/healpix/issues/99
+            self.assertGreaterEqual(a[0], 0)
             # make sure X is never 0
             self.assertNotEqual(a[1], 0)
         # also check the last X
