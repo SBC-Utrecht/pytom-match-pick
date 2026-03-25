@@ -571,19 +571,25 @@ class TestEntryPoints(unittest.TestCase):
         self.assertIn("--warp-xml-file", logs)
 
         # make sure we log defocus handedness for relion but not for warp
+        # and phase shift for warp but not for relion
         arguments = match_defaults.copy()
         arguments["--defocus-handedness"] = "0"
+        arguments["--phase-shift"] = "0"
         with self.assertLogs(level="WARNING") as cm:
             entry_points.match_template(prep_argv(arguments))
         logs = " ".join(cm.output)
         self.assertIn("--defocus-handedness", logs)
+        self.assertNotIn("--phase-shift", logs)
 
         # make sure no log for defocus handedness in warp
+        # but a log for phase shift
         arguments = match_defaults.copy()
         arguments["--defocus-handedness"] = "0"
+        arguments["--phase-shift"] = "0"
         del arguments["--relion5-tomograms-star"]
         arguments["--warp-xml-file"] = str(WARP_XML)
         with self.assertLogs(level="WARNING") as cm:
             entry_points.match_template(prep_argv(arguments))
         logs = " ".join(cm.output)
         self.assertNotIn("--defocus-handedness", logs)
+        self.assertIn("--phase-shift", logs)
