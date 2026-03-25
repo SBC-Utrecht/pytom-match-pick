@@ -574,7 +574,7 @@ class TestEntryPoints(unittest.TestCase):
         # and phase shift for warp but not for relion
         arguments = match_defaults.copy()
         arguments["--defocus-handedness"] = "0"
-        arguments["--phase-shift"] = "0"
+        arguments["--phase-shift"] = "1"
         with self.assertLogs(level="WARNING") as cm:
             entry_points.match_template(prep_argv(arguments))
         logs = " ".join(cm.output)
@@ -585,7 +585,7 @@ class TestEntryPoints(unittest.TestCase):
         # but a log for phase shift
         arguments = match_defaults.copy()
         arguments["--defocus-handedness"] = "0"
-        arguments["--phase-shift"] = "0"
+        arguments["--phase-shift"] = "1"
         del arguments["--relion5-tomograms-star"]
         arguments["--warp-xml-file"] = str(WARP_XML)
         with self.assertLogs(level="WARNING") as cm:
