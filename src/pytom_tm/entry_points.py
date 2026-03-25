@@ -1076,6 +1076,7 @@ def match_template(argv=None):
             "--per-tilt-weighting",
             "--voxel-size-angstrom",
             "--dose-accumulation",
+            "--phase-shift",
         ]
 
     else:
