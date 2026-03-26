@@ -895,6 +895,7 @@ class TMJob:
             with search statistics
         """
         from pytom_tm.matching import TemplateMatchingGPU
+
         tomo = read_mrc(self.tomogram)
         fast_tomo = np.zeros(
             tuple([next_fast_len(s, real=True) for s in tomo.shape]),

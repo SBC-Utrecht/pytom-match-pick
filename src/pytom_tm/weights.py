@@ -542,6 +542,7 @@ def _create_tilt_weighted_wedge(
         )
 
     import voltools as vt
+
     image_size = shape[0]  # assign to size variable as all dimensions are equal size
     tilt = np.zeros(shape)
     q_grid = radial_reduced_grid(shape)
