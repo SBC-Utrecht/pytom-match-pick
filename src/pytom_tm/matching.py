@@ -183,6 +183,8 @@ class TemplateMatchingGPU:
         self.angle_list = angle_list
         self.angle_ids = angle_ids
         self.stats = {"search_space": 0, "variance": 0.0, "std": 0.0}
+        if noise_correction:
+            self.stats["noise_variance"] = 0.0
         if stats_roi is None:
             self.stats_roi = (slice(None), slice(None), slice(None))
         else:
@@ -322,6 +324,10 @@ class TemplateMatchingGPU:
                     self.plan.noise_scores,
                 )
 
+                self.stats["noise_variance"] += (
+                    square_sum_kernel(self.plan.ccc_map * roi_mask) / roi_size
+                )
+
         # do the noise correction on the scores map: substract the noise scores first,
         # and then add the noise mean to ensure stats are consistent
         if self.noise_correction:
@@ -341,6 +347,14 @@ class TemplateMatchingGPU:
         self.stats["search_space"] = int(roi_size * len(self.angle_ids))
         self.stats["variance"] = float(self.stats["variance"] / len(self.angle_ids))
         self.stats["std"] = float(cp.sqrt(self.stats["variance"]))
+        if self.noise_correction:
+            self.stats["noise_variance"] = float(
+                self.stats["noise_variance"] / len(self.angle_ids)
+            )
+            self.stats["sigma_real"] = self.stats["std"]
+            self.stats["sigma_noise"] = float(
+                cp.sqrt(self.stats["noise_variance"])
+            )
 
         # package results back to the CPU
         results = (self.plan.scores.get(), self.plan.angles.get(), self.stats)

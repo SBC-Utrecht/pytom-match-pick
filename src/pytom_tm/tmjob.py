@@ -823,6 +823,14 @@ class TMJob:
                 "variance": variance,
                 "std": np.sqrt(variance),
             }
+            # Merge noise correction stats if present
+            if "noise_variance" in stats[0]:
+                noise_variance = sum(
+                    [s["noise_variance"] for s in stats]
+                ) / len(stats)
+                self.job_stats["noise_variance"] = noise_variance
+                self.job_stats["sigma_real"] = np.sqrt(variance)
+                self.job_stats["sigma_noise"] = np.sqrt(noise_variance)
 
         is_subvolume_split = np.all(
             np.array([x.start_slice for x in self.sub_jobs]) == 0
