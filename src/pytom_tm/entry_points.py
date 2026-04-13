@@ -1096,21 +1096,21 @@ def match_template(argv=None):
         )
 
     # Warn for dropped args, use new parser to deal with possible shorthand
-    test_input = argparse.ArgumentParser(
+    check_input = argparse.ArgumentParser(
         add_help=False, argument_default=argparse.SUPPRESS
     )
     for arg in dropped_args:
         if isinstance(arg, tuple):
             short, long = arg
-            test_input.add_argument(
+            check_input.add_argument(
                 short, long, action="store_const", const=f"{short}/{long}"
             )
         else:
-            test_input.add_argument(arg, action="store_const", const=f"{arg}")
+            check_input.add_argument(arg, action="store_const", const=f"{arg}")
     # drop any input values that were not options
-    test_argv = [i for i in argv if "-" in i]
-    test_args, _ = test_input.parse_known_args(test_argv)
-    for val in vars(test_args).values():
+    check_argv = [i for i in argv if "-" in i]
+    check_args, _ = check_input.parse_known_args(check_argv)
+    for val in vars(check_args).values():
         logging.warning(f"The following input argument was ignored: {val}")
 
     if args.angular_search is None and args.particle_diameter is None:
