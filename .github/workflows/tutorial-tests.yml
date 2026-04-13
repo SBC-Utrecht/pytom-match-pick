@@ -22,7 +22,7 @@ jobs:
         working-directory: ./docs/tutorials
     steps:
       - name: Pull code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install dependencies, code, and list everything
         working-directory: ./
         run: |
