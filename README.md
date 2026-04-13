@@ -11,7 +11,7 @@ This software is developed by Marten L. Chaillet ([@McHaillet](https://github.co
 ![cover_image](docs/images/tomo200528_100_illustration.png)
 
 <!--
-This line starts the block that is incorporated into the website via mkdocs snippets
+This line starts the block that is incorporated into the website via zensical snippets
 -->
 [//]: # (#--8<-- [start:docs])
 
@@ -123,7 +123,7 @@ This uses Ruff to check and format whenever you make commits.
 If you update anything in the (documentation) `docs/` folder make sure to test build the website locally:
 
 ```commandline
-mkdocs serve
+zensical serve
 ```
 
 ## Tests

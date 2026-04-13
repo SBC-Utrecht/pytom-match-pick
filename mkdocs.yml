@@ -37,7 +37,12 @@ markdown_extensions:
   - pymdownx.snippets:
       base_path: ["README.md", "src/pytom_tm/entry_points.py"]
       check_paths: true
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: python
+          class: python
+          format: !!python/name:markdown_exec.formatter
+          validator: !!python/name:markdown_exec.validator
   - pymdownx.arithmatex:
       generic: true
   - attr_list
