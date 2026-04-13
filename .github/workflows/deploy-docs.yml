@@ -25,12 +25,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install mkdocs mkdocs-material markdown-exec mkdocs-glightbox
+          pip install zensical mkdocs-material markdown-exec[ansi] mkdocs-glightbox
 
       # Build the book
       - name: Build the book
         run: |
-          mkdocs build
+          zensical build
 
       # Push the site to github-pages
       - name: GitHub Pages action
