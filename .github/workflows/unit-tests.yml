@@ -22,7 +22,7 @@ jobs:
       options: --runtime=nvidia --gpus all
     steps:
       - name: Pull code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           conda install -y -c conda-forge python=3 cupy cuda-version=11.8 gcc #gcc only needed until healpix releases under numpy>2
@@ -51,7 +51,7 @@ jobs:
           coverage xml
           echo ${{ github.event.number }} > coverage.PR
       - name: upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: 
           path: coverage.*
           name: coverage
@@ -62,7 +62,7 @@ jobs:
       options: --runtime=nvidia --gpus all
     steps:
       - name: Pull code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           conda install -y -c conda-forge python=3.11 cupy cuda-version=11.8 gcc #gcc only needed until healpix releases under numpy>2
