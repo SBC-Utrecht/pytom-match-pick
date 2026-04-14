@@ -10,7 +10,6 @@ import json
 import logging
 from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import get_angle_list
-from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import (
     create_wedge,
     power_spectrum_profile,
@@ -895,6 +894,8 @@ class TMJob:
             angle map), when no volumes are returned the output consists of a dictionary
             with search statistics
         """
+        from pytom_tm.matching import TemplateMatchingGPU
+
         tomo = read_mrc(self.tomogram)
         fast_tomo = np.zeros(
             tuple([next_fast_len(s, real=True) for s in tomo.shape]),

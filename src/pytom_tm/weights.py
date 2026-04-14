@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.typing as npt
 import scipy.ndimage as ndimage
-import voltools as vt
 from pytom_tm.io import UnequalSpacingError
 from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
 from itertools import pairwise
@@ -541,6 +540,8 @@ def _create_tilt_weighted_wedge(
             "Otherwise the frequencies in fourier space are not equal across "
             "dimensions."
         )
+
+    import voltools as vt
 
     image_size = shape[0]  # assign to size variable as all dimensions are equal size
     tilt = np.zeros(shape)
