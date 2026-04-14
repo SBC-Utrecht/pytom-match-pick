@@ -44,6 +44,11 @@ def angle_to_angle_list(
         log_level, f"Using an angle difference of {used_angle_diff:.4f} for Z1 and X"
     )
     theta, phi = hp.pix2ang(nside, np.arange(used_npix))
+    # map back to expected ranges
+    # see https://github.com/ntessore/healpix/issues/99
+    phi %= 2 * np.pi
+    theta %= np.pi
+
     # Now for psi
     n_psi_angles = int(np.ceil(360 / angle_diff))
     psi, used_psi_diff = np.linspace(

@@ -58,7 +58,7 @@ class TestTM(unittest.TestCase):
         )
         self.assertAlmostEqual(
             stats["std"],
-            0.005163,
+            0.005006,
             places=5,
             msg="Standard deviation of the search should be almost equal",
         )
@@ -106,7 +106,7 @@ class TestTM(unittest.TestCase):
         )
         self.assertAlmostEqual(
             stats["std"],
-            0.005187,
+            0.005015,
             places=4,
             msg="Standard deviation of the search should be almost equal",
         )
@@ -153,7 +153,7 @@ class TestTM(unittest.TestCase):
         )
         self.assertAlmostEqual(
             stats["std"],
-            0.005187,
+            0.005006,
             places=4,
             msg="Standard deviation of the search should be almost equal",
         )
