@@ -16,21 +16,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.x
 
       - name: Install dependencies
         run: |
-          pip install mkdocs mkdocs-material markdown-exec mkdocs-glightbox
+          pip install zensical mkdocs-material markdown-exec[ansi] mkdocs-glightbox
 
       # Build the book
       - name: Build the book
         run: |
-          mkdocs build
+          zensical build
 
       # Push the site to github-pages
       - name: GitHub Pages action
