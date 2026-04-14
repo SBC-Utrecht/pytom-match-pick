@@ -548,7 +548,7 @@ def _create_tilt_weighted_wedge(
     tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
     # create ramp weights to correct tilt summation for overlap
-    tilt_increment = min([abs(x - y) for x, y in pairwise(tilt_angles)])
+    tilt_increment = min([abs(x - y) for x, y in pairwise(sorted(set(tilt_angles)))])
     # Crowther freq. determines till what point adjacent tilts overlap in Fourier space
     overlap_frequency = 1 / (tilt_increment * image_size)
     freq_1d = (
