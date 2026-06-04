@@ -685,12 +685,8 @@ def parse_warp_xml_data(
     tilt_dose_nodes = tree.findall(".//Dose")
 
     voltage = float(tree.xpath(".//CTF/Param[@Name='Voltage']/@Value")[0])
-    spherical_aberration = float(
-        tree.xpath(".//CTF/Param[@Name='Cs']/@Value")[0]
-    )
-    amplitude_contrast = float(
-        tree.xpath(".//CTF/Param[@Name='Amplitude']/@Value")[0]
-    )
+    spherical_aberration = float(tree.xpath(".//CTF/Param[@Name='Cs']/@Value")[0])
+    amplitude_contrast = float(tree.xpath(".//CTF/Param[@Name='Amplitude']/@Value")[0])
     phase_shift = float(tree.xpath(".//CTF/Param[@Name='PhaseShift']/@Value")[0])
 
     tilt_angles = []
