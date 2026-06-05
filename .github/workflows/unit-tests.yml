@@ -25,10 +25,9 @@ jobs:
         uses: actions/checkout@v6
       - name: Install dependencies
         run: |
+          conda config --set plugins.use_sharded_repodata false
           conda install -y -c conda-forge python=3 cupy cuda-version=11.8 gcc #gcc only needed until healpix releases under numpy>2
           python -m pip install coverage
-        env:
-          CONDA_PKGS_DIRS: /tmp/conda-pkgs-${{ github.run_id }}-${{ github.job }}
       - name: Install base dev code and list dependencies 
         run: |
           python -m pip install -e .[dev]
@@ -67,9 +66,8 @@ jobs:
         uses: actions/checkout@v6
       - name: Install dependencies
         run: |
+          conda config --set plugins.use_sharded_repodata false
           conda install -y -c conda-forge python=3.11 cupy cuda-version=11.8 gcc #gcc only needed until healpix releases under numpy>2
-        env:
-          CONDA_PKGS_DIRS: /tmp/conda-pkgs-${{ github.run_id }}-${{ github.job }}
       - name: Install base dev code and list dependencies 
         run: |
           python -m pip install .
