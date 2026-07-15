@@ -2,6 +2,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.ndimage as ndimage
 import voltools as vt
+from typing import Generator
 from pytom_tm.io import UnequalSpacingError
 from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
 from itertools import pairwise
@@ -84,7 +85,8 @@ def wavelength_ev2m(voltage: float) -> float:
 
 
 def radial_reduced_grid(
-    shape: tuple[int, int, int] | tuple[int, int], shape_is_reduced: bool = False
+    shape: tuple[int, int, int] | tuple[int, int] | tuple[int],
+    shape_is_reduced: bool = False,
 ) -> npt.NDArray[float]:
     """Calculates a Fourier space radial reduced grid for the given input shape, with
     the 0 frequency in the center of the output image. Values range from 0 in the
@@ -98,8 +100,8 @@ def radial_reduced_grid(
 
     Parameters
     ----------
-    shape: Union[tuple[int, int, int], tuple[int, int]]
-        2D/3D input shape, usually the .shape attribute of a numpy array
+    shape: Union[tuple[int, int, int], tuple[int, int], tuple[int]]
+        1D/2D/3D input shape, usually the .shape attribute of a numpy array
     shape_is_reduced: bool, default False
         whether the shape is already in a reduced fourier format, False by default
 
@@ -108,10 +110,12 @@ def radial_reduced_grid(
     radial_reduced_grid: npt.NDArray[float]
         fourier space frequency grid, 0 in center, 1 at nyquist
     """
-    if len(shape) not in [2, 3]:
-        raise ValueError("radial_reduced_grid() only works for 2D or 3D shapes")
+    if len(shape) not in [1, 2, 3]:
+        raise ValueError("radial_reduced_grid() only works for 1D, 2D or 3D shapes")
     reduced_dim = shape[-1] if shape_is_reduced else shape[-1] // 2 + 1
-    if len(shape) == 3:
+    if len(shape) == 1:
+        return np.arange(0, reduced_dim, 1.0) / (reduced_dim - 1)
+    elif len(shape) == 3:
         x = (
             np.abs(
                 np.arange(
@@ -144,7 +148,7 @@ def radial_reduced_grid(
 
 
 def create_gaussian_low_pass(
-    shape: tuple[int, int, int] | tuple[int, int],
+    shape: tuple[int, int, int] | tuple[int, int] | tuple[int],
     spacing: float,
     resolution: float,
 ) -> npt.NDArray[float]:
@@ -153,8 +157,8 @@ def create_gaussian_low_pass(
 
     Parameters
     ----------
-    shape: Union[tuple[int, int, int], tuple[int, int]]
-        shape tuple with x,y or x,y,z dimension
+    shape: Union[tuple[int, int, int], tuple[int, int], tuple[int]]
+        shape tuple with x,y,z or x,y or x dimension
     spacing: float
         voxel size in real space
     resolution: float
@@ -171,11 +175,12 @@ def create_gaussian_low_pass(
     # then convert cutoff (hwhm) to sigma for gaussian function
     sigma_fourier = hwhm_to_sigma(2 * spacing / resolution)
 
-    return np.fft.ifftshift(np.exp(-(q**2) / (2 * sigma_fourier**2)), axes=(0, 1))
+    low_pass = np.exp(-(q**2) / (2 * sigma_fourier**2))
+    return low_pass if len(shape) == 1 else np.fft.ifftshift(low_pass, axes=(0, 1))
 
 
 def create_gaussian_high_pass(
-    shape: tuple[int, int, int] | tuple[int, int],
+    shape: tuple[int, int, int] | tuple[int, int] | tuple[int],
     spacing: float,
     resolution: float,
 ) -> npt.NDArray[float]:
@@ -184,8 +189,8 @@ def create_gaussian_high_pass(
 
     Parameters
     ----------
-    shape: Union[tuple[int, int, int], tuple[int, int]]
-        shape tuple with x,y or x,y,z dimension
+    shape: Union[tuple[int, int, int], tuple[int, int], tuple[int]]
+        shape tuple with x,y,z or x,y or x dimension
     spacing: float
         voxel size in real space
     resolution: float
@@ -202,11 +207,12 @@ def create_gaussian_high_pass(
     # then convert cutoff (hwhm) to sigma for gaussian function
     sigma_fourier = hwhm_to_sigma(2 * spacing / resolution)
 
-    return np.fft.ifftshift(1 - np.exp(-(q**2) / (2 * sigma_fourier**2)), axes=(0, 1))
+    high_pass = 1 - np.exp(-(q**2) / (2 * sigma_fourier**2))
+    return high_pass if len(shape) == 1 else np.fft.ifftshift(high_pass, axes=(0, 1))
 
 
 def create_gaussian_band_pass(
-    shape: tuple[int, int, int] | tuple[int, int],
+    shape: tuple[int, int, int] | tuple[int, int] | tuple[int],
     spacing: float,
     low_pass: float | None = None,
     high_pass: float | None = None,
@@ -218,8 +224,8 @@ def create_gaussian_band_pass(
 
     Parameters
     ----------
-    shape: Union[tuple[int, int, int], tuple[int, int]]
-        shape tuple with x,y or x,y,z dimension
+    shape: Union[tuple[int, int, int], tuple[int, int], tuple[int]]
+        shape tuple with x,y,z or x,y or x dimension
     spacing: float
         voxel size in real space
     low_pass: Optional[float], default None
@@ -251,10 +257,11 @@ def create_gaussian_band_pass(
         sigma_high_pass = hwhm_to_sigma(2 * spacing / high_pass)
         sigma_low_pass = hwhm_to_sigma(2 * spacing / low_pass)
 
-        return np.fft.ifftshift(
-            (1 - np.exp(-(q**2) / (2 * sigma_high_pass**2)))
-            * np.exp(-(q**2) / (2 * sigma_low_pass**2)),
-            axes=(0, 1),
+        band_pass = (1 - np.exp(-(q**2) / (2 * sigma_high_pass**2))) * np.exp(
+            -(q**2) / (2 * sigma_low_pass**2)
+        )
+        return (
+            band_pass if len(shape) == 1 else np.fft.ifftshift(band_pass, axes=(0, 1))
         )
 
 
@@ -705,70 +712,190 @@ def create_ctf(
     return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
 
 
-def radial_average(
-    weights: npt.NDArray[float],
+def estimate_whitening_filter(
+    tomogram: npt.NDArray[float],
+    ts_metadata: TiltSeriesMetaData,
+    patch_size: int,
+    overlap: float = 0.5,
+    reject_frac: float = 0.10,
+    exclude: npt.NDArray[bool] | None = None,
+    statistic: str = "median",
+    voxel_size: float = 1.0,
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
-    """This calculates the radial average of a reduced fourier space function.
+    """
+    Masked radial noise power spectrum of a tomogram, estimated on cubic patches.
+
+    Averages the power spectrum ONLY over Fourier voxels the tilt series actually
+    sampled (via the tilt mask), so the estimate is not biased by the empty
+    missing-wedge / inter-tilt-gap voxels.  Estimation is done on many overlapping,
+    windowed, mean-subtracted patches; the highest-variance patches (gold, carbon,
+    ice, volume edges) are rejected.
 
     Parameters
     ----------
-    weights: npt.NDArray[float]
-        3D array to be radially averaged: in fourier reduced form and with the origin
-        in the corner.
+    tomogram: npt.NDArray[float]
+        3D real-space array.
+    ts_metadata: TiltSeriesMetaData
+        tilt series metadata of the tomogram, used to build the coverage mask that
+        restricts the radial average to Fourier voxels the tilt series actually
+        sampled. CTF and dose weighting are not applied to this mask (only the
+        tilt geometry matters here), regardless of what ts_metadata specifies.
+    patch_size: int
+        edge length of the cubic estimation box.  Also the box the tilt mask is
+        built for.  Sensible default ~64 for typical binned ET (~10 A/vox): reaches
+        the low frequencies a template box needs, is a clean FFT size, and still
+        fits several times in a thin z so you keep many patches.  Drop to 48 if z
+        is tight; rise to 96 only for thick volumes with large targets.  A masked
+        profile can be interpolated to a different correlation-box size afterwards,
+        so estimation size and matching size are decoupled -- pick this purely for
+        estimation quality.
+    overlap: float, default 0.5
+        fractional overlap between patches (0.5 = 50%).
+    reject_frac: float, default 0.10
+        drop this fraction of the highest-variance patches.  0 disables.
+    exclude: Optional[npt.NDArray[bool]], default None
+        optional bool array, same shape as tomogram, True where voxels must not be
+        used (gold / carbon / contamination).  Do NOT mask out biological
+        structure -- under H0 the crowded cell IS the noise, and excluding it
+        biases P_n low and leaves the background sigma above 1.
+    statistic: str, default "median"
+        "median" (robust; bias-corrected to the mean) or "mean".
+    voxel_size: float, default 1.0
+        voxel size in Angstrom; sets the physical units of the returned frequency
+        axis.
 
     Returns
     -------
-    (q, mean): tuple[npt.NDArray[float], npt.NDArray[float]]
-        A tuple of two 1d numpy arrays. Their length equals half of largest
-        input dimension.
+    (q, w): tuple[npt.NDArray[float], npt.NDArray[float]]
+        q is the frequency of each shell, cycles/Angstrom (0..Nyquist), with
+        shape (patch_size // 2 + 1,). w is the whitening filter (already
+        transformed from the power spectrum profile, DC-zeroed, high-frequency
+        tapered and normalized to a maximum of 1), with the same shape as q.
     """
-    if len(weights.shape) not in [2, 3]:
-        raise ValueError("Radial average calculation only works for 2d/3d arrays")
+    tomogram = np.asarray(tomogram, dtype=np.float32)
+    length = int(patch_size)
 
-    # get the number of sampling points from the largest fourier dimension,
-    # unless the reduced dimensions is already the largest one
-    sampling_points = max(max(weights.shape[:-1]) // 2 + 1, weights.shape[-1])
+    # tilt coverage mask, built once for the cubic patch (geometry identical per
+    # patch). CTF and dose data are stripped from the metadata so only the tilt
+    # geometry determines which Fourier voxels count as sampled.
+    mask_metadata = ts_metadata.replace(ctf_data=None, dose_accumulation=None)
+    wedge = create_wedge((length, length, length), mask_metadata, voxel_size)
+    mask = wedge > 0.05
+    mask[0, 0, 0] = 0
 
-    q = np.arange(sampling_points)
-    q_grid = np.floor(
-        # convert to radial indices in the fourier power spectrum,
-        # 0.5 is added to obtain the correct ring
-        radial_reduced_grid(weights.shape, shape_is_reduced=True)
-        * (sampling_points - 1)
-        + 0.5
-    ).astype(int)
-    mean = ndimage.mean(
-        np.fft.fftshift(weights, axes=(0, 1) if len(weights.shape) == 3 else 0),
-        labels=q_grid,
-        index=q,
-    )
+    # window (mandatory: controls leakage across the 3+ decade dynamic range)
+    win = _hann3d(length)
+    win_power = float((win**2).sum())
 
-    return q, mean
+    # collect windowed periodograms over overlapping patches
+    step = max(1, int(round(length * (1.0 - overlap))))
+    psds, variances = [], []
+    for sl in _patch_slices(tomogram.shape, length, step):
+        if exclude is not None and exclude[sl].mean() > 0.01:
+            continue
+        v = tomogram[sl]
+        if not np.all(np.isfinite(v)):
+            continue
+        v = v - v.mean()
+        f = np.fft.rfftn(v * win)
+        psds.append((f.real**2 + f.imag**2) / win_power)
+        variances.append(float(v.var()))
+
+    if len(psds) < 4:
+        raise RuntimeError(f"only {len(psds)} usable patches; reduce patch_size")
+
+    # reject high-variance patches (gold / carbon / ice / edges)
+    variances = np.asarray(variances)
+    keep = np.ones(len(psds), bool)
+    if reject_frac > 0 and len(psds) >= 10:
+        keep = variances <= np.quantile(variances, 1.0 - reject_frac)
+        if keep.sum() < 4:
+            keep = np.ones(len(psds), bool)
+
+    psd = np.mean([p for p, k in zip(psds, keep) if k], axis=0)
+    dof = int(keep.sum())
+
+    # masked radial average
+    q, prof = _masked_radial(psd, mask, length, voxel_size, statistic, dof)
+
+    def cosine_cutoff():
+        r_frac = radial_reduced_grid((length,))
+        lo, hi = 0.9, 1.0
+        ramp = np.clip((r_frac - lo) / (hi - lo), 0, 1)
+        return 0.5 * (1 + np.cos(np.pi * ramp))  # 1 below lo, 0 at hi
+
+    # transform into a whitening filter
+    w = np.where(prof > 0, 1 / np.sqrt(prof), np.zeros_like(prof))
+    w[0] = 0.0  # zero DC because its not needed
+    w = w * cosine_cutoff()  # tamper high frequency estimate
+    w /= w.max()
+
+    return q, w
 
 
-def power_spectrum_profile(image: npt.NDArray[float]) -> npt.NDArray[float]:
-    """Calculate the power spectrum for a real space array and then find the profile
-    (radial average).
+def _hann3d(length: int) -> npt.NDArray[float]:
+    w = np.hanning(length + 2)[1:-1].astype(np.float32)  # drop the exact zeros
+    return (w[:, None, None] * w[None, :, None] * w[None, None, :]).astype(np.float32)
 
-    Parameters
-    ----------
-    image: npt.NDArray[float]
-        2D/3D array in real space for which the power spectrum profile needs to be
-        calculated
 
-    Returns
-    -------
-    profile: npt.NDArray[float]
-        A 1D numpy array
-    """
-    if len(image.shape) not in [2, 3]:
-        raise ValueError(
-            "Power spectrum profile calculation only works for 2d/3d arrays."
-        )
+def _patch_slices(
+    shape: tuple[int, int, int], length: int, step: int
+) -> Generator[tuple[slice, slice, slice], None, None]:
+    def starts(n):
+        s = list(range(0, n - length + 1, step))
+        if not s:
+            raise ValueError(f"patch_size {length} larger than tomogram extent {n}")
+        if s[-1] != n - length:
+            s.append(n - length)
+        return s
 
-    _, power_profile = radial_average(np.abs(np.fft.rfftn(image)) ** 2)
+    zs, ys, xs = (starts(n) for n in shape)
+    for z in zs:
+        for y in ys:
+            for x in xs:
+                yield (
+                    slice(z, z + length),
+                    slice(y, y + length),
+                    slice(x, x + length),
+                )
 
-    return power_profile
+
+def _masked_radial(
+    psd: npt.NDArray[float],
+    mask: npt.NDArray[bool],
+    length: int,
+    voxel_size: float,
+    statistic: str,
+    dof: int,
+) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    kz = np.fft.fftfreq(length, d=voxel_size)[:, None, None]
+    ky = np.fft.fftfreq(length, d=voxel_size)[None, :, None]
+    kx = np.fft.rfftfreq(length, d=voxel_size)[None, None, :]
+    r = np.sqrt(kz**2 + ky**2 + kx**2)
+
+    k_nyq = 0.5 / voxel_size
+    nb = length // 2 + 1
+    shell = np.floor(r / k_nyq * (nb - 1) + 0.5).astype(int)
+    q = np.arange(nb) / (nb - 1) * k_nyq
+
+    labels = shell.copy()
+    labels[(shell >= nb) | (shell < 0)] = -1
+    if mask is not None:
+        labels[~mask] = -1
+
+    idx = np.arange(nb)
+    counts = ndimage.sum(np.ones_like(psd), labels=labels, index=idx)
+    fn = ndimage.median if statistic == "median" else ndimage.mean
+    prof = np.asarray(fn(psd, labels=labels, index=idx), dtype=float)
+    prof[counts == 0] = np.nan  # empty shells -> NaN, not 0
+
+    if statistic == "median":
+        prof /= (1.0 - 1.0 / (9.0 * max(dof, 1))) ** 3  # median -> mean, Gamma(dof)
+
+    good = np.isfinite(prof) & (prof > 0)
+    if good.sum() >= 2:
+        prof = np.interp(q, q[good], prof[good])
+    return q, prof
 
 
 def profile_to_weighting(
@@ -788,7 +915,7 @@ def profile_to_weighting(
     Returns
     -------
     weighting: npt.NDArray[float]
-        Reduced Fourier space weighting for shape
+        Reduced Fourier space weighting for shape, with the DC component set to 0
     """
     if len(profile.shape) != 1:
         raise ValueError("Profile passed to profile_to_weighting is not 1-dimensional.")
@@ -798,9 +925,15 @@ def profile_to_weighting(
     q_grid = radial_reduced_grid(shape)
 
     weights = ndimage.map_coordinates(
-        profile, q_grid.flatten()[np.newaxis, :] * profile.shape[0], order=1
+        profile,
+        q_grid.flatten()[np.newaxis, :] * (profile.shape[0] - 1),
+        order=1,
+        mode="nearest",
     ).reshape(q_grid.shape)
 
     weights[q_grid > 1] = 0
 
-    return np.fft.ifftshift(weights, axes=(0, 1) if len(shape) == 3 else 0)
+    weights = np.fft.ifftshift(weights, axes=(0, 1) if len(shape) == 3 else 0)
+    weights[(0,) * len(shape)] = 0
+
+    return weights

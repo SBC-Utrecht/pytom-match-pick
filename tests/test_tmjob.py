@@ -542,20 +542,20 @@ class TestTMJob(unittest.TestCase):
             angle_increment=90.00,
             voxel_size=1.0,
             whiten_spectrum=True,
-            search_y=[10, 90],
+            search_z=[0, 30],
         )
         new_whitening_filter = np.load(TEST_WHITENING_FILTER)
         self.assertNotEqual(
             whitening_filter.shape,
             new_whitening_filter.shape,
-            msg="After reducing the search region along the largest dimension the "
-            "whitening filter should have less sampling points",
+            msg="After reducing the search region below the default estimation "
+            "patch size the whitening filter should have less sampling points",
         )
         self.assertEqual(
             new_whitening_filter.shape,
-            (max(job.search_size) // 2 + 1,),
+            (min(64, min(job.search_size)) // 2 + 1,),
             msg="The whitening filter does not have the expected size, it should be "
-            "equal (x // 2) + 1, where x is the largest dimension of the search box.",
+            "equal (x // 2) + 1, where x is min(64, smallest search box dimension).",
         )
 
         # TMJob with none of these weighting options is tested in all other runs
