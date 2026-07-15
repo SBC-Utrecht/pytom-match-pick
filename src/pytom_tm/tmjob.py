@@ -514,7 +514,7 @@ class TMJob:
         )
         if self.whiten_spectrum and not job_loaded_for_extraction:
             logging.info("Estimating whitening filter...")
-            patch_size = min(64, min(self.search_size))
+            patch_size = min(max(self.template_shape[0], 64), min(self.search_size))
             _, weights = estimate_whitening_filter(
                 read_mrc(self.tomogram)[
                     self.search_origin[0] : self.search_origin[0] + self.search_size[0],
