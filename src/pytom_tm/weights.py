@@ -777,7 +777,7 @@ def estimate_whitening_filter(
     # geometry determines which Fourier voxels count as sampled.
     mask_metadata = ts_metadata.replace(ctf_data=None, dose_accumulation=None)
     wedge = create_wedge((length, length, length), mask_metadata, voxel_size)
-    mask = wedge > 0.05
+    mask = wedge > 0.05  # binarize the mask and set DC to zero
     mask[0, 0, 0] = 0
 
     # window (mandatory: controls leakage across the 3+ decade dynamic range)
