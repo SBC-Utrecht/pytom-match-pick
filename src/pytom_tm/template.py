@@ -6,7 +6,7 @@ from scipy.ndimage import center_of_mass, zoom
 from scipy.fft import rfftn, irfftn
 from pytom_tm.weights import (
     create_gaussian_low_pass,
-    radial_reduced_grid,
+    radial_grid,
 )
 
 
@@ -140,7 +140,7 @@ def phase_randomize_template(
 
     # permute the phases in flattened version of the array
     phase = np.angle(ft).flatten()
-    grid = np.fft.ifftshift(radial_reduced_grid(template.shape), axes=(0, 1)).flatten()
+    grid = radial_grid(template.shape).flatten()
     relevant_freqs = grid <= 1  # permute only up to Nyquist
     noise = np.zeros_like(phase)
     rng = np.random.default_rng(seed)
