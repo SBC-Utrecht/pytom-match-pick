@@ -868,14 +868,13 @@ def _masked_radial(
     statistic: str,
     dof: int,
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
-    kz = np.fft.fftfreq(length, d=voxel_size)[:, None, None]
-    ky = np.fft.fftfreq(length, d=voxel_size)[None, :, None]
-    kx = np.fft.rfftfreq(length, d=voxel_size)[None, None, :]
-    r = np.sqrt(kz**2 + ky**2 + kx**2)
+    r_frac = np.fft.ifftshift(
+        radial_reduced_grid((length, length, length)), axes=(0, 1)
+    )
 
     k_nyq = 0.5 / voxel_size
     nb = length // 2 + 1
-    shell = np.floor(r / k_nyq * (nb - 1) + 0.5).astype(int)
+    shell = np.floor(r_frac * (nb - 1) + 0.5).astype(int)
     q = np.arange(nb) / (nb - 1) * k_nyq
 
     labels = shell.copy()
