@@ -722,55 +722,52 @@ def estimate_whitening_filter(
     statistic: str = "median",
     voxel_size: float = 1.0,
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
-    """
-    Masked radial noise power spectrum of a tomogram, estimated on cubic patches.
+    """Estimate a whitening filter from the radially averaged noise power spectrum
+    of a tomogram, sampled on overlapping cubic patches.
 
-    Averages the power spectrum ONLY over Fourier voxels the tilt series actually
-    sampled (via the tilt mask), so the estimate is not biased by the empty
-    missing-wedge / inter-tilt-gap voxels.  Estimation is done on many overlapping,
-    windowed, mean-subtracted patches; the highest-variance patches (gold, carbon,
-    ice, volume edges) are rejected.
+    The power spectrum is averaged only over Fourier voxels the tilt series
+    actually sampled (via a tilt coverage mask), so the estimate is not biased by
+    the empty missing-wedge / inter-tilt-gap voxels. Estimation is done on many
+    overlapping, windowed, mean-subtracted patches, and the highest-variance
+    patches (e.g. gold, carbon, ice, volume edges) are rejected before averaging.
 
     Parameters
     ----------
     tomogram: npt.NDArray[float]
-        3D real-space array.
+        3D real-space array to estimate the whitening filter from
     ts_metadata: TiltSeriesMetaData
         tilt series metadata of the tomogram, used to build the coverage mask that
         restricts the radial average to Fourier voxels the tilt series actually
-        sampled. CTF and dose weighting are not applied to this mask (only the
-        tilt geometry matters here), regardless of what ts_metadata specifies.
+        sampled. CTF and dose weighting are not applied to this mask, only the
+        tilt geometry matters here, regardless of what ts_metadata specifies
     patch_size: int
-        edge length of the cubic estimation box.  Also the box the tilt mask is
-        built for.  Sensible default ~64 for typical binned ET (~10 A/vox): reaches
-        the low frequencies a template box needs, is a clean FFT size, and still
-        fits several times in a thin z so you keep many patches.  Drop to 48 if z
-        is tight; rise to 96 only for thick volumes with large targets.  A masked
-        profile can be interpolated to a different correlation-box size afterwards,
-        so estimation size and matching size are decoupled -- pick this purely for
-        estimation quality.
+        edge length of the cubic estimation box, also the box the tilt coverage
+        mask is built for. A larger patch reaches lower frequencies but leaves
+        fewer patches to average over in a thin tomogram. The estimated profile
+        can be interpolated to a different box size afterwards, so estimation
+        size and matching size are decoupled
     overlap: float, default 0.5
-        fractional overlap between patches (0.5 = 50%).
+        fractional overlap between patches
     reject_frac: float, default 0.10
-        drop this fraction of the highest-variance patches.  0 disables.
+        fraction of the highest-variance patches to reject, 0 disables rejection
     exclude: Optional[npt.NDArray[bool]], default None
-        optional bool array, same shape as tomogram, True where voxels must not be
-        used (gold / carbon / contamination).  Do NOT mask out biological
-        structure -- under H0 the crowded cell IS the noise, and excluding it
-        biases P_n low and leaves the background sigma above 1.
+        boolean array, same shape as tomogram, True where voxels must not be used
+        (e.g. gold, carbon, contamination). Should not be used to mask out
+        biological structure, as that would bias the estimate low
     statistic: str, default "median"
-        "median" (robust; bias-corrected to the mean) or "mean".
+        radial averaging statistic, either "median" (robust, bias-corrected to
+        the mean) or "mean"
     voxel_size: float, default 1.0
-        voxel size in Angstrom; sets the physical units of the returned frequency
-        axis.
+        voxel size in Angstrom, sets the physical units of the returned frequency
+        axis
 
     Returns
     -------
     (q, w): tuple[npt.NDArray[float], npt.NDArray[float]]
-        q is the frequency of each shell, cycles/Angstrom (0..Nyquist), with
-        shape (patch_size // 2 + 1,). w is the whitening filter (already
-        transformed from the power spectrum profile, DC-zeroed, high-frequency
-        tapered and normalized to a maximum of 1), with the same shape as q.
+        q is the frequency of each shell in cycles/Angstrom (0 to Nyquist), with
+        shape (patch_size // 2 + 1,). w is the whitening filter derived from the
+        power spectrum profile (DC set to 0, high frequencies tapered, and
+        normalized to a maximum of 1), with the same shape as q
     """
     tomogram = np.asarray(tomogram, dtype=np.float32)
     length = int(patch_size)
