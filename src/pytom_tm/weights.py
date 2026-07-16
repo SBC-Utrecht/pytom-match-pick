@@ -638,7 +638,6 @@ def create_ctf(
     shape: tuple[int, int, int] | tuple[int, int],
     pixel_size: float,
     ctf_data: CtfData,
-    cut_after_first_zero: bool = False,
 ) -> npt.NDArray[float]:
     """Create a CTF in a 3D volume in reduced format.
 
@@ -650,8 +649,6 @@ def create_ctf(
         pixel size for ctf in m
     ctf_data: CtfData
         The ctf data for a tilt, see pytom_tm.dataclass.CtfData for definitions
-    cut_after_first_zero: bool, default False
-        whether to cut ctf after first zero crossing
 
     Returns
     -------
@@ -674,33 +671,6 @@ def create_ctf(
 
     # determine the ctf
     ctf = -np.sin(chi + tan_term + np.deg2rad(ctf_data.phase_shift_deg))
-
-    if cut_after_first_zero:  # find frequency to cut first zero
-
-        def chi_1d(q):
-            return (
-                np.pi * _lambda * ctf_data.defocus * q**2
-                - 0.5 * np.pi * ctf_data.spherical_aberration * _lambda**3 * q**4
-            )
-
-        def ctf_1d(q):
-            return -np.sin(chi_1d(q) + tan_term)
-
-        # sample 1d ctf and get indices of zero crossing
-        k_range = np.arange(max(k.shape)) / max(k.shape) / (2 * pixel_size)
-        values = ctf_1d(k_range)
-        zero_crossings = np.where(np.diff(np.sign(values)))[0]
-
-        # for overfocus the first crossing needs to be skipped,
-        # for example see: Yonekura et al. 2006 JSB
-        k_cutoff = (
-            k_range[zero_crossings[0]]
-            if ctf_data.defocus > 0
-            else k_range[zero_crossings[1]]
-        )
-
-        # filter the ctf with the cutoff frequency
-        ctf[k > k_cutoff] = 0
 
     if ctf_data.flip_phase:  # take absolute, ensures matching contrast
         ctf = np.abs(ctf)
