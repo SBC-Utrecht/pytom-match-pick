@@ -987,8 +987,13 @@ def match_template(argv=None):
 
     # ---8<--- [end:match_template_usage]
 
+    # Add hidden argument to prevent logging override for logtests
+    parser.add_argument(
+        "--log-test", help=argparse.SUPPRESS, action="store_true", default=False
+    )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log, force=True)
+    if not args.log_test:
+        logging.basicConfig(level=args.log, force=True)
 
     # set rng if not set
     if args.rng_seed is None:
@@ -1033,7 +1038,7 @@ def match_template(argv=None):
             )
             for defocus in args.defocus
         ]
-
+    dropped_args = []
     if args.relion5_tomograms_star is not None:
         voxel_size, ts_metadata = parse_relion5_star_data(
             args.relion5_tomograms_star,
@@ -1041,6 +1046,18 @@ def match_template(argv=None):
             phase_flip_correction=phase_flip_correction,
             phase_shift=args.phase_shift,
         )
+        dropped_args += [
+            "--defocus",
+            "--amplitude-contrast",
+            "--voltage",
+            "--spherical-aberration",
+            ("-a", "--tilt-angles"),
+            "--per-tilt-weighting",
+            "--warp-xml-file",
+            "--voxel-size-angstrom",
+            "--dose-accumulation",
+            "--defocus-handedness",
+        ]
 
     elif args.warp_xml_file is not None:
         voxel_size, ts_metadata = parse_warp_xml_data(
@@ -1050,6 +1067,17 @@ def match_template(argv=None):
         )
         # Replace is needed here to rerun the sanity checking
         ts_metadata = ts_metadata.replace(defocus_handedness=args.defocus_handedness)
+        dropped_args += [
+            "--defocus",
+            "--amplitude-contrast",
+            "--voltage",
+            "--spherical-aberration",
+            ("-a", "--tilt-angles"),
+            "--per-tilt-weighting",
+            "--voxel-size-angstrom",
+            "--dose-accumulation",
+            "--phase-shift",
+        ]
 
     else:
         if tilt_angles is None:
@@ -1066,6 +1094,24 @@ def match_template(argv=None):
             defocus_handedness=args.defocus_handedness,
             per_tilt_weighting=args.per_tilt_weighting,
         )
+
+    # Warn for dropped args, use new parser to deal with possible shorthand
+    check_input = argparse.ArgumentParser(
+        add_help=False, argument_default=argparse.SUPPRESS
+    )
+    for arg in dropped_args:
+        if isinstance(arg, tuple):
+            short, long = arg
+            check_input.add_argument(
+                short, long, action="store_const", const=f"{short}/{long}"
+            )
+        else:
+            check_input.add_argument(arg, action="store_const", const=f"{arg}")
+    # drop any input values that were not options
+    check_argv = [i for i in argv if "-" in i]
+    check_args, _ = check_input.parse_known_args(check_argv)
+    for val in vars(check_args).values():
+        logging.warning(f"The following input argument was ignored: {val}")
 
     if args.angular_search is None and args.particle_diameter is None:
         raise ValueError(
