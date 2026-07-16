@@ -803,7 +803,7 @@ def estimate_whitening_filter(
         return 0.5 * (1 + np.cos(np.pi * ramp))  # 1 below lo, 0 at hi
 
     # transform into a whitening filter
-    w = np.where(prof > 0, 1 / np.sqrt(prof), np.zeros_like(prof))
+    w = np.where(prof > 0, 1 / np.sqrt(prof), 0.0)
     w[0] = 0.0  # zero DC because its not needed
     w = w * cosine_cutoff()  # tamper high frequency estimate
     w /= w.max()
