@@ -478,6 +478,32 @@ def _create_asymmetric_wedge(
     return np.fft.ifftshift(wedge, axes=(0, 1))
 
 
+def _remove_friedel_symmetry(volume: npt.NDArray[float]) -> npt.NDArray[float]:
+    """Reduce a full (non-reduced) Fourier space volume to its reduced form by
+    exploiting Friedel symmetry (F(-q) = F(q) for a real-valued signal). The input
+    volume must already be fftshifted, i.e. the 0 frequency sits at the center of
+    each axis. Cropping the last axis to its first half (indices 0 to n // 2) and
+    flipping it maps the negative frequencies onto the positive ones, recovering
+    the same reduced representation that numpy.fft.rfftn would produce. A plain
+    slice from the center (without the flip) is not equivalent: for even n the
+    Nyquist bin is aliased and only stored at index 0 of the fftshifted array, so
+    a forward slice starting at the center would drop it.
+
+    Parameters
+    ----------
+    volume: npt.NDArray[float]
+        full (non-reduced) fftshifted fourier space volume, cubic in shape, with
+        the 0 frequency at the center of each axis
+
+    Returns
+    ----------
+    reduced: npt.NDArray[float]
+        volume with the last dimension reduced to shape[-1] // 2 + 1
+    """
+    reduced_dim = volume.shape[-1] // 2 + 1
+    return np.flip(volume[:, :, :reduced_dim], axis=2)
+
+
 def _create_tilt_weighted_wedge(
     shape: tuple[int, int, int],
     tilt_angles: list[float, ...],
@@ -578,7 +604,7 @@ def _create_tilt_weighted_wedge(
             tilt[:, :, image_size // 2] = ramp_weighting
 
         # rotate the image weights to the tilt angle
-        rotated = np.flip(
+        rotated = _remove_friedel_symmetry(
             vt.transform(
                 tilt,
                 rotation=(0, alpha, 0),
@@ -587,8 +613,7 @@ def _create_tilt_weighted_wedge(
                 center=(image_size // 2,) * 3,
                 interpolation="filt_bspline",
                 device="cpu",
-            )[:, :, : image_size // 2 + 1],  # crop back z-axis to reduced Fourier form
-            axis=2,
+            )
         )
 
         # weight with exposure and tilt dampening
