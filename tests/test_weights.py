@@ -3,11 +3,11 @@ import unittest
 from pytom_tm.weights import (
     create_wedge,
     _create_symmetric_wedge,
+    _masked_radial,
     create_ctf,
     create_gaussian_band_pass,
     radial_grid,
-    radial_average,
-    power_spectrum_profile,
+    estimate_whitening_filter,
     profile_to_weighting,
 )
 from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
@@ -25,6 +25,7 @@ class TestWeights(unittest.TestCase):
 
         self.reduced_even_shape_3d = (10, 10, 6)
         self.reduced_even_shape_2d = (10, 6)
+        self.reduced_even_shape_1d = (6,)
         self.reduced_uneven_shape_3d = (11, 11, 6)
         self.reduced_uneven_shape_2d = (11, 6)
         self.reduced_irregular_shape_3d = (7, 12, 6 // 2 + 1)
@@ -39,13 +40,7 @@ class TestWeights(unittest.TestCase):
         with self.assertRaises(
             ValueError,
             msg="Radial grid should raise ValueError if the shape is "
-            "not 2- or 3-dimensional.",
-        ):
-            radial_grid((5,))
-        with self.assertRaises(
-            ValueError,
-            msg="Radial grid should raise ValueError if the shape is "
-            "not 2- or 3-dimensional.",
+            "not 1-, 2- or 3-dimensional.",
         ):
             radial_grid((5,) * 4)
 
@@ -58,6 +53,11 @@ class TestWeights(unittest.TestCase):
             radial_grid(self.volume_shape_even[:2]).shape,
             self.reduced_even_shape_2d,
             msg="2D radial grid does not have the correct shape",
+        )
+        self.assertEqual(
+            radial_grid(self.volume_shape_even[:1]).shape,
+            self.reduced_even_shape_1d,
+            msg="1D radial grid does not have the correct shape",
         )
 
     def test_band_pass(self):
@@ -126,6 +126,19 @@ class TestWeights(unittest.TestCase):
         self.assertTrue(
             np.sum((low_pass != high_pass) * 1) != 0,
             msg="Low-pass and high-pass filter should be different",
+        )
+
+        # 1D band-pass, e.g. for filtering a radially averaged profile
+        band_pass_1d = create_gaussian_band_pass(
+            self.volume_shape_even[:1],
+            self.voxel_size,
+            self.low_pass,
+            self.high_pass,
+        )
+        self.assertEqual(
+            band_pass_1d.shape,
+            self.reduced_even_shape_1d,
+            msg="1D bandpass filter does not have expected output shape",
         )
 
     def test_create_symmetric_wedge(self):
@@ -322,62 +335,82 @@ class TestWeights(unittest.TestCase):
             msg="CTF does not have expected output shape",
         )
 
-    def test_radial_average(self):
-        x, y = 100, 50
+    def test_estimate_whitening_filter(self):
+        patch_size = 32
+        rng = np.random.default_rng(0)
+        tomogram = rng.normal(size=(64, 64, 64)).astype(np.float32)
+
         with self.assertRaises(
-            ValueError,
-            msg="Radial average should raise error if something other than 2d/3d "
-            "array is provided.",
+            RuntimeError,
+            msg="Estimate whitening filter should raise RuntimeError if no "
+            "patches are usable.",
         ):
-            radial_average(np.zeros(x))
-        q, m = radial_average(np.zeros((x, y)))
-        self.assertEqual(
-            m.shape[0],
-            x // 2 + 1,
-            msg="Radial average shape should equal largest sampling dimension.",
-        )
-        q, m = radial_average(np.zeros((30, y)))
-        self.assertEqual(
-            m.shape[0],
-            y,
-            msg="Radial average shape should equal largest sampling dimension, "
-            "considering Fourier reduced form.",
-        )
-        q, m = radial_average(np.zeros((20, x, y)))
-        self.assertEqual(
-            m.shape[0],
-            x // 2 + 1,
-            msg="Radial average shape should equal largest sampling dimension.",
-        )
-        q, m = radial_average(np.zeros((20, 30, y)))
-        self.assertEqual(
-            m.shape[0],
-            y,
-            msg="Radial average shape should equal largest sampling dimension, "
-            "considering Fourier reduced form.",
+            estimate_whitening_filter(
+                np.full((64, 64, 64), np.nan, dtype=np.float32),
+                self.ts_metadata,
+                patch_size=64,
+                voxel_size=self.voxel_size,
+            )
+
+        q, w = estimate_whitening_filter(
+            tomogram, self.ts_metadata, patch_size, voxel_size=self.voxel_size
         )
 
-    def test_power_spectrum_profile(self):
-        with self.assertRaises(
-            ValueError,
-            msg="Power spectrum profile should raise ValueError if input image is "
-            "not 2- or 3-dimensional.",
-        ):
-            power_spectrum_profile(np.zeros(5))
-        with self.assertRaises(
-            ValueError,
-            msg="Power spectrum profile should raise ValueError if input image is "
-            "not 2- or 3-dimensional.",
-        ):
-            power_spectrum_profile(np.zeros((5,) * 4))
-        profile = power_spectrum_profile(np.zeros(self.volume_shape_irregular))
         self.assertEqual(
-            profile.shape,
-            (max(self.volume_shape_irregular) // 2 + 1,),
-            msg="Power spectrum profile output shape should be a 1-dimensional array "
-            "with length equal to max(input_shape) // 2 + 1, corresponding to largest "
-            "sampling component in Fourier space.",
+            q.shape,
+            (patch_size // 2 + 1,),
+            msg="Frequency axis of the whitening filter does not have the expected "
+            "shape",
         )
+        self.assertEqual(
+            w.shape,
+            (patch_size // 2 + 1,),
+            msg="Whitening filter does not have the expected shape",
+        )
+        self.assertEqual(
+            w[0],
+            0.0,
+            msg="Whitening filter should have the DC component set to 0",
+        )
+        self.assertAlmostEqual(
+            w.max(),
+            1.0,
+            msg="Whitening filter should be normalized to a maximum of 1",
+        )
+
+        # statistic="mean" should also run without error
+        q_mean, w_mean = estimate_whitening_filter(
+            tomogram,
+            self.ts_metadata,
+            patch_size,
+            voxel_size=self.voxel_size,
+            statistic="mean",
+        )
+        self.assertEqual(
+            q_mean.shape,
+            (patch_size // 2 + 1,),
+            msg="Frequency axis of the whitening filter does not have the expected "
+            "shape when using the mean statistic",
+        )
+        self.assertEqual(
+            w_mean.shape,
+            (patch_size // 2 + 1,),
+            msg="Whitening filter does not have the expected shape when using the "
+            "mean statistic",
+        )
+
+    def test_masked_radial(self):
+        length = 8
+        nb = length // 2 + 1
+        psd = np.ones((length, length, nb))
+        mask = np.zeros((length, length, nb), dtype=bool)
+
+        with self.assertRaises(
+            RuntimeError,
+            msg="_masked_radial should raise RuntimeError if fewer than 2 radial "
+            "shells have valid data.",
+        ):
+            _masked_radial(psd, mask, length, self.voxel_size, "median", 10)
 
     def test_profile_to_weighting(self):
         with self.assertRaises(
@@ -399,7 +432,7 @@ class TestWeights(unittest.TestCase):
         ):
             profile_to_weighting(np.zeros(5), (5,) * 4)
 
-        profile = power_spectrum_profile(np.zeros(self.volume_shape_irregular))
+        profile = np.ones(7)
         self.assertEqual(
             profile_to_weighting(profile, self.volume_shape_irregular).shape,
             self.reduced_irregular_shape_3d,
@@ -409,4 +442,18 @@ class TestWeights(unittest.TestCase):
             profile_to_weighting(profile, self.volume_shape_irregular[:2]).shape,
             self.reduced_irregular_shape_2d,
             msg="Profile to weighting should return 2D Fourier reduced array.",
+        )
+
+        ramp_profile = np.arange(1, 7, dtype=float)  # monotonic, non-zero everywhere
+        weights_3d = profile_to_weighting(ramp_profile, self.volume_shape_even)
+        self.assertEqual(
+            weights_3d[0, 0, 0],
+            0,
+            msg="Profile to weighting should set the DC component to 0.",
+        )
+        self.assertAlmostEqual(
+            weights_3d.max(),
+            ramp_profile.max(),
+            msg="Nyquist frequency should map to the last profile value instead of "
+            "rolling off towards 0.",
         )
