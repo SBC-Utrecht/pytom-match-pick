@@ -58,7 +58,6 @@ jobs:
      steps:
       - name: Download conda dependencies 
         run: |
-          conda config --set plugins.use_sharded_repodata false
           conda install -y -c conda-forge python=3 cupy cuda-version=11.8
       - name: Install from testPyPi
         run: |
