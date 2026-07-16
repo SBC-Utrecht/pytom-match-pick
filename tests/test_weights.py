@@ -3,6 +3,7 @@ import unittest
 from pytom_tm.weights import (
     create_wedge,
     _create_symmetric_wedge,
+    _masked_radial,
     create_ctf,
     create_gaussian_band_pass,
     radial_reduced_grid,
@@ -352,11 +353,11 @@ class TestWeights(unittest.TestCase):
 
         with self.assertRaises(
             RuntimeError,
-            msg="Estimate whitening filter should raise RuntimeError if too few "
+            msg="Estimate whitening filter should raise RuntimeError if no "
             "patches are usable.",
         ):
             estimate_whitening_filter(
-                tomogram,
+                np.full((64, 64, 64), np.nan, dtype=np.float32),
                 self.ts_metadata,
                 patch_size=64,
                 voxel_size=self.voxel_size,
@@ -387,6 +388,40 @@ class TestWeights(unittest.TestCase):
             1.0,
             msg="Whitening filter should be normalized to a maximum of 1",
         )
+
+        # statistic="mean" should also run without error
+        q_mean, w_mean = estimate_whitening_filter(
+            tomogram,
+            self.ts_metadata,
+            patch_size,
+            voxel_size=self.voxel_size,
+            statistic="mean",
+        )
+        self.assertEqual(
+            q_mean.shape,
+            (patch_size // 2 + 1,),
+            msg="Frequency axis of the whitening filter does not have the expected "
+            "shape when using the mean statistic",
+        )
+        self.assertEqual(
+            w_mean.shape,
+            (patch_size // 2 + 1,),
+            msg="Whitening filter does not have the expected shape when using the "
+            "mean statistic",
+        )
+
+    def test_masked_radial(self):
+        length = 8
+        nb = length // 2 + 1
+        psd = np.ones((length, length, nb))
+        mask = np.zeros((length, length, nb), dtype=bool)
+
+        with self.assertRaises(
+            RuntimeError,
+            msg="_masked_radial should raise RuntimeError if fewer than 2 radial "
+            "shells have valid data.",
+        ):
+            _masked_radial(psd, mask, length, self.voxel_size, "median", 10)
 
     def test_profile_to_weighting(self):
         with self.assertRaises(

@@ -114,12 +114,12 @@ def radial_reduced_grid(
         raise ValueError("radial_reduced_grid() only works for 1D, 2D or 3D shapes")
     reduced_dim = shape[-1] if shape_is_reduced else shape[-1] // 2 + 1
     if len(shape) == 1:
-        return np.arange(0, reduced_dim, 1.0) / (reduced_dim - 1)
+        return np.arange(0, reduced_dim, 1) / (reduced_dim - 1)
     elif len(shape) == 3:
         x = (
             np.abs(
                 np.arange(
-                    -shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1.0
+                    -shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1
                 )
             )
             / (shape[0] // 2)
@@ -127,23 +127,23 @@ def radial_reduced_grid(
         y = (
             np.abs(
                 np.arange(
-                    -shape[1] // 2 + shape[1] % 2, shape[1] // 2 + shape[1] % 2, 1.0
+                    -shape[1] // 2 + shape[1] % 2, shape[1] // 2 + shape[1] % 2, 1
                 )
             )
             / (shape[1] // 2)
         )[:, np.newaxis]
-        z = np.arange(0, reduced_dim, 1.0) / (reduced_dim - 1)
+        z = np.arange(0, reduced_dim, 1) / (reduced_dim - 1)
         return np.sqrt(x**2 + y**2 + z**2)
     elif len(shape) == 2:
         x = (
             np.abs(
                 np.arange(
-                    -shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1.0
+                    -shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1
                 )
             )
             / (shape[0] // 2)
         )[:, np.newaxis]
-        y = np.arange(0, reduced_dim, 1.0) / (reduced_dim - 1)
+        y = np.arange(0, reduced_dim, 1) / (reduced_dim - 1)
         return np.sqrt(x**2 + y**2)
 
 
@@ -718,7 +718,6 @@ def estimate_whitening_filter(
     patch_size: int,
     overlap: float = 0.5,
     reject_frac: float = 0.10,
-    exclude: npt.NDArray[bool] | None = None,
     statistic: str = "median",
     voxel_size: float = 1.0,
 ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
@@ -750,10 +749,6 @@ def estimate_whitening_filter(
         fractional overlap between patches
     reject_frac: float, default 0.10
         fraction of the highest-variance patches to reject, 0 disables rejection
-    exclude: Optional[npt.NDArray[bool]], default None
-        boolean array, same shape as tomogram, True where voxels must not be used
-        (e.g. gold, carbon, contamination). Should not be used to mask out
-        biological structure, as that would bias the estimate low
     statistic: str, default "median"
         radial averaging statistic, either "median" (robust, bias-corrected to
         the mean) or "mean"
@@ -785,11 +780,9 @@ def estimate_whitening_filter(
     win_power = float((win**2).sum())
 
     # collect windowed periodograms over overlapping patches
-    step = max(1, int(round(length * (1.0 - overlap))))
+    step = max(1, int(length * (1.0 - overlap) + 0.5))  # round half up
     psds, variances = [], []
     for sl in _patch_slices(tomogram.shape, length, step):
-        if exclude is not None and exclude[sl].mean() > 0.01:
-            continue
         v = tomogram[sl]
         if not np.all(np.isfinite(v)):
             continue
@@ -798,18 +791,18 @@ def estimate_whitening_filter(
         psds.append((f.real**2 + f.imag**2) / win_power)
         variances.append(float(v.var()))
 
-    if len(psds) < 4:
-        raise RuntimeError(f"only {len(psds)} usable patches; reduce patch_size")
-
-    # reject high-variance patches (gold / carbon / ice / edges)
+    # reject high-variance patches (gold / carbon / ice / edges). Only attempted
+    # with enough patches for the quantile estimate to be meaningful.
+    psds = np.asarray(psds)
     variances = np.asarray(variances)
     keep = np.ones(len(psds), bool)
     if reject_frac > 0 and len(psds) >= 10:
         keep = variances <= np.quantile(variances, 1.0 - reject_frac)
-        if keep.sum() < 4:
-            keep = np.ones(len(psds), bool)
 
-    psd = np.mean([p for p, k in zip(psds, keep) if k], axis=0)
+    if keep.sum() == 0:
+        raise RuntimeError("no usable patches for whitening filter estimation")
+
+    psd = psds[keep].mean(axis=0)
     dof = int(keep.sum())
 
     # masked radial average
@@ -846,14 +839,14 @@ def _patch_slices(
             s.append(n - length)
         return s
 
-    zs, ys, xs = (starts(n) for n in shape)
-    for z in zs:
+    xs, ys, zs = (starts(n) for n in shape)
+    for x in xs:
         for y in ys:
-            for x in xs:
+            for z in zs:
                 yield (
-                    slice(z, z + length),
-                    slice(y, y + length),
                     slice(x, x + length),
+                    slice(y, y + length),
+                    slice(z, z + length),
                 )
 
 
@@ -889,8 +882,11 @@ def _masked_radial(
         prof /= (1.0 - 1.0 / (9.0 * max(dof, 1))) ** 3  # median -> mean, Gamma(dof)
 
     good = np.isfinite(prof) & (prof > 0)
-    if good.sum() >= 2:
-        prof = np.interp(q, q[good], prof[good])
+    if good.sum() < 2:
+        raise RuntimeError(
+            "too few valid radial shells to interpolate a whitening filter profile"
+        )
+    prof = np.interp(q, q[good], prof[good])
     return q, prof
 
 

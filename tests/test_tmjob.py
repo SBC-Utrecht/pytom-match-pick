@@ -43,6 +43,8 @@ TEST_EXTRACTION_MASK_INSIDE = TEST_DATA_DIR.joinpath("extraction_mask_inside.mrc
 TEST_EXTRACTION_MASK_INT8 = TEST_DATA_DIR.joinpath("extraction_mask_int8.mrc")
 TEST_TEMPLATE = TEST_DATA_DIR.joinpath("template.mrc")
 TEST_TEMPLATE_UNEQUAL_SPACING = TEST_DATA_DIR.joinpath("template_unequal_spacing.mrc")
+TEST_TEMPLATE_NOT_CUBIC = TEST_DATA_DIR.joinpath("template_not_cubic.mrc")
+TEST_MASK_NOT_CUBIC = TEST_DATA_DIR.joinpath("mask_not_cubic.mrc")
 TEST_TEMPLATE_WRONG_VOXEL_SIZE = TEST_DATA_DIR.joinpath("template_voxel_error_test.mrc")
 TEST_MASK = TEST_DATA_DIR.joinpath("mask.mrc")
 TEST_MASK_WRONG_SIZE = TEST_DATA_DIR.joinpath("mask_wrong_size.mrc")
@@ -112,6 +114,17 @@ class TestTMJob(unittest.TestCase):
         write_mrc(TEST_MASK_WRONG_SIZE, mask_wrong_size, 1.0)
         write_mrc(TEST_TEMPLATE, template, 1.0)
         write_mrc(TEST_TEMPLATE_WRONG_VOXEL_SIZE, template, 1.5)
+        not_cubic_shape = (TEMPLATE_SIZE, TEMPLATE_SIZE, TEMPLATE_SIZE - 2)
+        write_mrc(
+            TEST_TEMPLATE_NOT_CUBIC,
+            np.zeros(not_cubic_shape, dtype=np.float32),
+            1.0,
+        )
+        write_mrc(
+            TEST_MASK_NOT_CUBIC,
+            np.zeros(not_cubic_shape, dtype=np.float32),
+            1.0,
+        )
         mrcfile.write(
             TEST_TEMPLATE_UNEQUAL_SPACING, template, voxel_size=(1.5, 1.0, 2.0)
         )
@@ -355,6 +368,22 @@ class TestTMJob(unittest.TestCase):
                 angle_increment=ANGULAR_SEARCH,
                 voxel_size=1.0,
                 tomogram_mask=TEST_WRONG_SIZE_TOMO_MASK,
+            )
+        # Test non-cubic template
+        with self.assertRaisesRegex(
+            ValueError,
+            "not cubic",
+        ):
+            TMJob(
+                "0",
+                10,
+                TEST_TOMOGRAM,
+                TEST_TEMPLATE_NOT_CUBIC,
+                TEST_MASK_NOT_CUBIC,
+                TEST_DATA_DIR,
+                ts_metadata=TS_METADATA,
+                angle_increment=ANGULAR_SEARCH,
+                voxel_size=1.0,
             )
         # Test template mask mismatch
         with self.assertRaisesRegex(

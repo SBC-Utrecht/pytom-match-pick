@@ -383,6 +383,12 @@ class TMJob:
         self.template_shape = meta_data_template["shape"]
         self.mask_shape = meta_data_mask["shape"]
 
+        if len(set(self.template_shape)) != 1:
+            raise ValueError(
+                "Template is not cubic, all dimensions should be equal. "
+                f"Found template shape: {self.template_shape}."
+            )
+
         if self.template_shape != self.mask_shape:
             raise ValueError(
                 "Template and mask have a different shape in pixels. "
@@ -516,13 +522,13 @@ class TMJob:
             logging.info("Estimating whitening filter...")
             patch_size = min(max(self.template_shape[0], 64), min(self.search_size))
             _, weights = estimate_whitening_filter(
-                read_mrc(self.tomogram)[
+                tomogram=read_mrc(self.tomogram)[
                     self.search_origin[0] : self.search_origin[0] + self.search_size[0],
                     self.search_origin[1] : self.search_origin[1] + self.search_size[1],
                     self.search_origin[2] : self.search_origin[2] + self.search_size[2],
                 ],
-                self.ts_metadata,
-                patch_size,
+                ts_metadata=self.ts_metadata,
+                patch_size=patch_size,
                 voxel_size=self.voxel_size,
             )
             np.save(self.whitening_filter, weights)
