@@ -83,63 +83,63 @@ def wavelength_ev2m(voltage: float) -> float:
     return _lambda
 
 
-def radial_reduced_grid(
-    shape: tuple[int, int, int] | tuple[int, int], shape_is_reduced: bool = False
+def radial_grid(
+    shape: tuple[int, int, int] | tuple[int, int],
+    reduced: bool = True,
+    fftshifted: bool = False,
+    shape_is_reduced: bool = False,
 ) -> npt.NDArray[float]:
-    """Calculates a Fourier space radial reduced grid for the given input shape, with
-    the 0 frequency in the center of the output image. Values range from 0 in the
-    center to 1 at Nyquist frequency.
+    """Calculates a Fourier space radial grid for the given input shape. Values
+    range from 0 at the 0 frequency to 1 at Nyquist frequency.
 
-    By default, it is assumed shape belongs to a real space array, which causes the
-    function to return a grid with the last dimension reduced, i.e. shape[-1] // 2 + 1
-    (ideal for creating frequency dependent filters). However, setting
-    radial_reduced_grid(..., shape_is_reduced=True) the shape is assumed to already be
-    in a reduced form.
+    By default the last dimension is reduced to shape[-1] // 2 + 1 and the 0
+    frequency sits at index 0 of each axis, matching the unshifted output of
+    numpy.fft.rfftn. Set reduced=False for a full (non-reduced) last dimension, and
+    fftshifted=True to place the 0 frequency in the center of each axis instead
+    (matching numpy.fft.fftshift).
 
     Parameters
     ----------
     shape: Union[tuple[int, int, int], tuple[int, int]]
         2D/3D input shape, usually the .shape attribute of a numpy array
+    reduced: bool, default True
+        whether the last dimension should be reduced to shape[-1] // 2 + 1, as in
+        the output of numpy.fft.rfftn
+    fftshifted: bool, default False
+        whether the 0 frequency should be centered (True) or at index 0 of each
+        axis (False)
     shape_is_reduced: bool, default False
-        whether the shape is already in a reduced fourier format, False by default
+        whether the shape is already in a reduced fourier format, only relevant
+        when reduced=True, False by default
 
     Returns
     ----------
-    radial_reduced_grid: npt.NDArray[float]
-        fourier space frequency grid, 0 in center, 1 at nyquist
+    radial_grid: npt.NDArray[float]
+        fourier space frequency grid
     """
     if len(shape) not in [2, 3]:
-        raise ValueError("radial_reduced_grid() only works for 2D or 3D shapes")
-    reduced_dim = shape[-1] if shape_is_reduced else shape[-1] // 2 + 1
+        raise ValueError("radial_grid() only works for 2D or 3D shapes")
+
+    def full_axis(n: int) -> npt.NDArray[float]:
+        # magnitude of frequency for a full (non-reduced) axis: 0 in the center,
+        # 1 at nyquist
+        values = np.abs(np.arange(-n // 2 + n % 2, n // 2 + n % 2, 1.0)) / (n // 2)
+        return values if fftshifted else np.fft.ifftshift(values)
+
+    def last_axis(n: int) -> npt.NDArray[float]:
+        if not reduced:
+            return full_axis(n)
+        reduced_dim = n if shape_is_reduced else n // 2 + 1
+        return np.arange(0, reduced_dim, 1) / (reduced_dim - 1)
+
     if len(shape) == 3:
-        x = (
-            np.abs(
-                np.arange(
-                    -shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1.0
-                )
-            )
-            / (shape[0] // 2)
-        )[:, np.newaxis, np.newaxis]
-        y = (
-            np.abs(
-                np.arange(
-                    -shape[1] // 2 + shape[1] % 2, shape[1] // 2 + shape[1] % 2, 1.0
-                )
-            )
-            / (shape[1] // 2)
-        )[:, np.newaxis]
-        z = np.arange(0, reduced_dim, 1.0) / (reduced_dim - 1)
+        x = full_axis(shape[0])[:, np.newaxis, np.newaxis]
+        y = full_axis(shape[1])[:, np.newaxis]
+        z = last_axis(shape[2])
         return np.sqrt(x**2 + y**2 + z**2)
-    elif len(shape) == 2:
-        x = (
-            np.abs(
-                np.arange(
-                    -shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1.0
-                )
-            )
-            / (shape[0] // 2)
-        )[:, np.newaxis]
-        y = np.arange(0, reduced_dim, 1.0) / (reduced_dim - 1)
+    else:
+        x = full_axis(shape[0])[:, np.newaxis]
+        y = last_axis(shape[1])
         return np.sqrt(x**2 + y**2)
 
 
@@ -165,13 +165,13 @@ def create_gaussian_low_pass(
     output: npt.NDArray[float]
         array containing the filter
     """
-    q = radial_reduced_grid(shape)
+    q = radial_grid(shape)
 
     # 2 * spacing / resolution is cutoff in fourier space
     # then convert cutoff (hwhm) to sigma for gaussian function
     sigma_fourier = hwhm_to_sigma(2 * spacing / resolution)
 
-    return np.fft.ifftshift(np.exp(-(q**2) / (2 * sigma_fourier**2)), axes=(0, 1))
+    return np.exp(-(q**2) / (2 * sigma_fourier**2))
 
 
 def create_gaussian_high_pass(
@@ -196,13 +196,13 @@ def create_gaussian_high_pass(
     output: npt.NDArray[float]
         array containing the filter
     """
-    q = radial_reduced_grid(shape)
+    q = radial_grid(shape)
 
     # 2 * spacing / resolution is cutoff in fourier space
     # then convert cutoff (hwhm) to sigma for gaussian function
     sigma_fourier = hwhm_to_sigma(2 * spacing / resolution)
 
-    return np.fft.ifftshift(1 - np.exp(-(q**2) / (2 * sigma_fourier**2)), axes=(0, 1))
+    return 1 - np.exp(-(q**2) / (2 * sigma_fourier**2))
 
 
 def create_gaussian_band_pass(
@@ -244,17 +244,15 @@ def create_gaussian_band_pass(
             "Second value of band-pass needs to be a high resolution shell."
         )
     else:
-        q = radial_reduced_grid(shape)
+        q = radial_grid(shape)
 
         # 2 * spacing / resolution is cutoff in fourier space
         # then convert cutoff (hwhm) to sigma for gaussian function
         sigma_high_pass = hwhm_to_sigma(2 * spacing / high_pass)
         sigma_low_pass = hwhm_to_sigma(2 * spacing / low_pass)
 
-        return np.fft.ifftshift(
-            (1 - np.exp(-(q**2) / (2 * sigma_high_pass**2)))
-            * np.exp(-(q**2) / (2 * sigma_low_pass**2)),
-            axes=(0, 1),
+        return (1 - np.exp(-(q**2) / (2 * sigma_high_pass**2))) * np.exp(
+            -(q**2) / (2 * sigma_low_pass**2)
         )
 
 
@@ -406,7 +404,7 @@ def _create_symmetric_wedge(
     # duplicate in x
     wedge = np.tile(wedge_2d[:, np.newaxis, :], (1, shape[1], 1))
 
-    wedge[radial_reduced_grid(shape) > cut_off_radius] = 0
+    wedge[radial_grid(shape, fftshifted=True) > cut_off_radius] = 0
 
     # fourier shift to origin
     return np.fft.ifftshift(wedge, axes=(0, 1))
@@ -474,10 +472,36 @@ def _create_asymmetric_wedge(
     # duplicate in x
     wedge = np.tile(wedge_2d[:, np.newaxis, :], (1, shape[1], 1))
 
-    wedge[radial_reduced_grid(shape) > cut_off_radius] = 0
+    wedge[radial_grid(shape, fftshifted=True) > cut_off_radius] = 0
 
     # fourier shift to origin
     return np.fft.ifftshift(wedge, axes=(0, 1))
+
+
+def _remove_friedel_symmetry(volume: npt.NDArray[float]) -> npt.NDArray[float]:
+    """Reduce a full (non-reduced) Fourier space volume to its reduced form by
+    exploiting Friedel symmetry (F(-q) = F(q) for a real-valued signal). The input
+    volume must already be fftshifted, i.e. the 0 frequency sits at the center of
+    each axis. Cropping the last axis to its first half (indices 0 to n // 2) and
+    flipping it maps the negative frequencies onto the positive ones, recovering
+    the same reduced representation that numpy.fft.rfftn would produce. A plain
+    slice from the center (without the flip) is not equivalent: for even n the
+    Nyquist bin is aliased and only stored at index 0 of the fftshifted array, so
+    a forward slice starting at the center would drop it.
+
+    Parameters
+    ----------
+    volume: npt.NDArray[float]
+        full (non-reduced) fftshifted fourier space volume, cubic in shape, with
+        the 0 frequency at the center of each axis
+
+    Returns
+    ----------
+    reduced: npt.NDArray[float]
+        volume with the last dimension reduced to shape[-1] // 2 + 1
+    """
+    reduced_dim = volume.shape[-1] // 2 + 1
+    return np.flip(volume[:, :, :reduced_dim], axis=2)
 
 
 def _create_tilt_weighted_wedge(
@@ -544,7 +568,7 @@ def _create_tilt_weighted_wedge(
 
     image_size = shape[0]  # assign to size variable as all dimensions are equal size
     tilt = np.zeros(shape)
-    q_grid = radial_reduced_grid(shape)
+    q_grid = radial_grid(shape, fftshifted=True)
     tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
     # create ramp weights to correct tilt summation for overlap
@@ -568,30 +592,19 @@ def _create_tilt_weighted_wedge(
 
     for i, alpha in enumerate(tilt_angles):
         if ctf_params_per_tilt is not None:
-            ctf = np.fft.fftshift(
-                create_ctf(
-                    (image_size,) * 2,
-                    pixel_size_angstrom * 1e-10,
-                    ctf_params_per_tilt[i],
-                ),
-                axes=0,
+            ctf = create_ctf(
+                (image_size,) * 2,
+                pixel_size_angstrom * 1e-10,
+                ctf_params_per_tilt[i],
+                reduced=False,
+                fftshifted=True,
             )
-            tilt[:, :, image_size // 2] = (
-                np.concatenate(
-                    (  # duplicate and flip the CTF around the 0 frequency;
-                        # then concatenate to make it non-reduced
-                        np.flip(ctf[:, 1 : 1 + image_size - ctf.shape[1]], axis=1),
-                        ctf,
-                    ),
-                    axis=1,
-                )
-                * ramp_weighting
-            )
+            tilt[:, :, image_size // 2] = ctf * ramp_weighting
         else:
             tilt[:, :, image_size // 2] = ramp_weighting
 
         # rotate the image weights to the tilt angle
-        rotated = np.flip(
+        rotated = _remove_friedel_symmetry(
             vt.transform(
                 tilt,
                 rotation=(0, alpha, 0),
@@ -600,8 +613,7 @@ def _create_tilt_weighted_wedge(
                 center=(image_size // 2,) * 3,
                 interpolation="filt_bspline",
                 device="cpu",
-            )[:, :, : image_size // 2 + 1],  # crop back z-axis to reduced Fourier form
-            axis=2,
+            )
         )
 
         # weight with exposure and tilt dampening
@@ -631,6 +643,8 @@ def create_ctf(
     shape: tuple[int, int, int] | tuple[int, int],
     pixel_size: float,
     ctf_data: CtfData,
+    reduced: bool = True,
+    fftshifted: bool = False,
 ) -> npt.NDArray[float]:
     """Create a CTF in a 3D volume in reduced format.
 
@@ -642,13 +656,21 @@ def create_ctf(
         pixel size for ctf in m
     ctf_data: CtfData
         The ctf data for a tilt, see pytom_tm.dataclass.CtfData for definitions
+    reduced: bool, default True
+        whether the last dimension should be reduced to shape[-1] // 2 + 1, as in
+        the output of numpy.fft.rfftn
+    fftshifted: bool, default False
+        whether the 0 frequency should be centered (True) or at index 0 of each
+        axis (False)
 
     Returns
     -------
     ctf: npt.NDArray[float]
         CTF in 3D
     """
-    k = radial_reduced_grid(shape) / (2 * pixel_size)  # frequencies in fourier space
+    k = radial_grid(shape, reduced=reduced, fftshifted=fftshifted) / (
+        2 * pixel_size
+    )  # frequencies in fourier space
 
     _lambda = wavelength_ev2m(ctf_data.voltage)
 
@@ -672,7 +694,7 @@ def create_ctf(
         # tomogram: if the tomogram is black the reference should be black.
         ctf *= -1 if ctf_data.defocus > 0 else 1
 
-    return np.fft.ifftshift(ctf, axes=(0, 1) if len(shape) == 3 else 0)
+    return ctf
 
 
 def radial_average(
@@ -703,15 +725,9 @@ def radial_average(
     q_grid = np.floor(
         # convert to radial indices in the fourier power spectrum,
         # 0.5 is added to obtain the correct ring
-        radial_reduced_grid(weights.shape, shape_is_reduced=True)
-        * (sampling_points - 1)
-        + 0.5
+        radial_grid(weights.shape, shape_is_reduced=True) * (sampling_points - 1) + 0.5
     ).astype(int)
-    mean = ndimage.mean(
-        np.fft.fftshift(weights, axes=(0, 1) if len(weights.shape) == 3 else 0),
-        labels=q_grid,
-        index=q,
-    )
+    mean = ndimage.mean(weights, labels=q_grid, index=q)
 
     return q, mean
 
@@ -765,7 +781,7 @@ def profile_to_weighting(
     if len(shape) not in [2, 3]:
         raise ValueError("Shape passed to profile_to_weighting needs to be 2D/3D.")
 
-    q_grid = radial_reduced_grid(shape)
+    q_grid = radial_grid(shape)
 
     weights = ndimage.map_coordinates(
         profile, q_grid.flatten()[np.newaxis, :] * profile.shape[0], order=1
@@ -773,4 +789,4 @@ def profile_to_weighting(
 
     weights[q_grid > 1] = 0
 
-    return np.fft.ifftshift(weights, axes=(0, 1) if len(shape) == 3 else 0)
+    return weights
