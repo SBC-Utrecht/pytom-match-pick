@@ -6,7 +6,7 @@ from pytom_tm.weights import (
     _masked_radial,
     create_ctf,
     create_gaussian_band_pass,
-    radial_reduced_grid,
+    radial_grid,
     estimate_whitening_filter,
     profile_to_weighting,
 )
@@ -36,28 +36,28 @@ class TestWeights(unittest.TestCase):
             dose_accumulation=ACCUMULATED_DOSE,
         )
 
-    def test_radial_reduced_grid(self):
+    def test_radial_grid(self):
         with self.assertRaises(
             ValueError,
-            msg="Radial reduced grid should raise ValueError if the shape is "
+            msg="Radial grid should raise ValueError if the shape is "
             "not 1-, 2- or 3-dimensional.",
         ):
-            radial_reduced_grid((5,) * 4)
+            radial_grid((5,) * 4)
 
         self.assertEqual(
-            radial_reduced_grid(self.volume_shape_even).shape,
+            radial_grid(self.volume_shape_even).shape,
             self.reduced_even_shape_3d,
-            msg="3D radial reduced grid does not have the correct shape",
+            msg="3D radial grid does not have the correct shape",
         )
         self.assertEqual(
-            radial_reduced_grid(self.volume_shape_even[:2]).shape,
+            radial_grid(self.volume_shape_even[:2]).shape,
             self.reduced_even_shape_2d,
-            msg="2D radial reduced grid does not have the correct shape",
+            msg="2D radial grid does not have the correct shape",
         )
         self.assertEqual(
-            radial_reduced_grid(self.volume_shape_even[:1]).shape,
+            radial_grid(self.volume_shape_even[:1]).shape,
             self.reduced_even_shape_1d,
-            msg="1D radial reduced grid does not have the correct shape",
+            msg="1D radial grid does not have the correct shape",
         )
 
     def test_band_pass(self):
