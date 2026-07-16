@@ -110,7 +110,7 @@ def radial_reduced_grid(
     radial_reduced_grid: npt.NDArray[float]
         fourier space frequency grid, 0 in center, 1 at nyquist
     """
-    if len(shape) not in [1, 2, 3]:
+    if len(shape) not in {1, 2, 3}:
         raise ValueError("radial_reduced_grid() only works for 1D, 2D or 3D shapes")
     reduced_dim = shape[-1] if shape_is_reduced else shape[-1] // 2 + 1
     if len(shape) == 1:
