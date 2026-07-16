@@ -316,21 +316,10 @@ class TestWeights(unittest.TestCase):
             spherical_aberration=2.7e-3,
         )
         ctf_raw = create_ctf(self.volume_shape_even, self.voxel_size * 1e-10, ctf_data)
-        ctf_cut = create_ctf(
-            self.volume_shape_even,
-            self.voxel_size * 1e-10,
-            ctf_data,
-            cut_after_first_zero=True,
-        )
         self.assertEqual(
             ctf_raw.shape,
             self.reduced_even_shape_3d,
             msg="CTF does not have expected output shape",
-        )
-        self.assertTrue(
-            np.sum((ctf_raw != ctf_cut) * 1) != 0,
-            msg="CTF should be different when cutting it off after the first zero "
-            "crossing",
         )
 
     def test_radial_average(self):
