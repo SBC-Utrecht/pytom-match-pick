@@ -130,7 +130,7 @@ def radial_grid(
         if not reduced:
             return full_axis(n)
         reduced_dim = n if shape_is_reduced else n // 2 + 1
-        return np.arange(0, reduced_dim, 1.0) / (reduced_dim - 1)
+        return np.arange(0, reduced_dim, 1) / (reduced_dim - 1)
 
     if len(shape) == 3:
         x = full_axis(shape[0])[:, np.newaxis, np.newaxis]
