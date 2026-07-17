@@ -231,6 +231,13 @@ def extract_particles(
                 f"job stat '{x}' is NaN or inf, please check your volumes and update "
                 "the job_stats json accordingly"
             )
+    if job.random_phase_correction and "sigma_noise" in job.job_stats:
+        for x in ["sigma_real", "sigma_noise"]:
+            if math.isinf(job.job_stats[x]) or math.isnan(job.job_stats[x]):
+                raise ValueError(
+                    f"job stat '{x}' is NaN or inf, please check your volumes "
+                    "and update the job_stats json accordingly"
+                )
 
     sigma = job.job_stats["std"]
     search_space = job.job_stats["search_space"]
@@ -306,11 +313,29 @@ def extract_particles(
     score_volume[:, :, -particle_radius_px:] = 0
 
     if cut_off is None:
-        # formula Rickgauer et al. (2017, eLife):
-        # N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
-        # we need to find theta (i.e. the cut off)
-        cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
-        logging.info(f"cut off for particle extraction: {cut_off}")
+        if job.random_phase_correction and "sigma_noise" in job.job_stats:
+            # Noise-corrected scores follow a logistic distribution (difference
+            # of two Gumbels), not Gaussian. Use the logistic tail formula.
+            sigma_real = job.job_stats["sigma_real"]
+            sigma_noise = job.job_stats["sigma_noise"]
+            n_angles = job.n_rotations
+            n_voxels = score_volume.size  # corrected search space is per-voxel
+            beta_eff = np.sqrt(
+                (sigma_real**2 + sigma_noise**2) / (4 * np.log(n_angles))
+            )
+            cut_off = beta_eff * np.log(n_voxels / n_false_positives)
+            logging.info(
+                f"Noise-corrected logistic cut-off: {cut_off:.6f} "
+                f"(sigma_real={sigma_real:.6f}, sigma_noise={sigma_noise:.6f}, "
+                f"beta_eff={beta_eff:.6f}, n_voxels={n_voxels}, n_angles={n_angles})"
+            )
+        else:
+            # Standard Rickgauer formula (Gaussian tail)
+            # N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
+            cut_off = (
+                erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
+            )
+            logging.info(f"cut off for particle extraction: {cut_off}")
     elif cut_off < 0:
         logging.warning(
             "Provided extraction score cut-off is smaller than 0. Changing to 0 as "
