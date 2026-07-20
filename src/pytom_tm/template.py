@@ -117,7 +117,6 @@ def phase_randomize_template(
     template: npt.NDArray[float],
     mask: npt.NDArray[float] | None = None,
     n_iter: int = 40,
-    positivity: bool = True,
     seed: int = 321,
 ) -> npt.NDArray[float]:
     """Create a phase-randomized version of `template` that preserves its
@@ -130,23 +129,19 @@ def phase_randomize_template(
     phases would violate.
 
     If a `mask` is provided, a Gerchberg-Saxton iteration alternates the
-    amplitude constraint in Fourier space with a real-space support (and,
-    if positivity=True, non-negativity) constraint for `n_iter` iterations,
-    so the resulting noise stays compact instead of delocalizing over the
-    full box.
+    amplitude constraint in Fourier space with a real-space support constraint
+    for `n_iter` iterations, so the resulting noise stays compact instead of
+    delocalizing over the full box.
 
     Parameters
     ----------
     template: npt.NDArray[float]
         input structure
     mask: Optional[npt.NDArray[float]], default None
-        if provided, real-space support (and positivity) constraint used in a
-        Gerchberg-Saxton iteration; same dimensions as template
+        if provided, real-space support constraint used in a Gerchberg-Saxton
+        iteration; same dimensions as template
     n_iter: int, default 40
         number of Gerchberg-Saxton iterations, only used if mask is provided
-    positivity: bool, default True
-        enforce non-negative density in real space during the Gerchberg-Saxton
-        iteration, only used if mask is provided
     seed: int, default 321
         seed for the random number generator
 
@@ -166,13 +161,9 @@ def phase_randomize_template(
     if mask is not None:
         for _ in range(n_iter):
             result = result * mask
-            if positivity:
-                result = np.maximum(result, 0.0)
             phase = np.angle(rfftn(result))
             result = irfftn(amplitude * np.exp(1j * phase), s=t.shape)
         result = result * mask
-        if positivity:
-            result = np.maximum(result, 0.0)
         if result.sum() > 0:  # match total mass under the (possibly soft) mask
             result = result * ((t * mask).sum() / (result * mask).sum())
 
