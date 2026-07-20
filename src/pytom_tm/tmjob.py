@@ -12,7 +12,7 @@ from scipy.fft import next_fast_len, rfftn, irfftn
 from pytom_tm.angles import get_angle_list
 from pytom_tm.weights import (
     create_wedge,
-    power_spectrum_profile,
+    estimate_whitening_filter,
     profile_to_weighting,
     create_gaussian_band_pass,
 )
@@ -382,6 +382,12 @@ class TMJob:
         self.template_shape = meta_data_template["shape"]
         self.mask_shape = meta_data_mask["shape"]
 
+        if len(set(self.template_shape)) != 1:
+            raise ValueError(
+                "Template is not cubic, all dimensions should be equal. "
+                f"Found template shape: {self.template_shape}."
+            )
+
         if self.template_shape != self.mask_shape:
             raise ValueError(
                 "Template and mask have a different shape in pixels. "
@@ -513,19 +519,17 @@ class TMJob:
         )
         if self.whiten_spectrum and not job_loaded_for_extraction:
             logging.info("Estimating whitening filter...")
-            weights = 1 / np.sqrt(
-                power_spectrum_profile(
-                    read_mrc(self.tomogram)[
-                        self.search_origin[0] : self.search_origin[0]
-                        + self.search_size[0],
-                        self.search_origin[1] : self.search_origin[1]
-                        + self.search_size[1],
-                        self.search_origin[2] : self.search_origin[2]
-                        + self.search_size[2],
-                    ]
-                )
+            patch_size = min(max(self.template_shape[0], 64), min(self.search_size))
+            _, weights = estimate_whitening_filter(
+                tomogram=read_mrc(self.tomogram)[
+                    self.search_origin[0] : self.search_origin[0] + self.search_size[0],
+                    self.search_origin[1] : self.search_origin[1] + self.search_size[1],
+                    self.search_origin[2] : self.search_origin[2] + self.search_size[2],
+                ],
+                ts_metadata=self.ts_metadata,
+                patch_size=patch_size,
+                voxel_size=self.voxel_size,
             )
-            weights /= weights.max()  # scale to 1
             np.save(self.whitening_filter, weights)
 
         # phase randomization options
