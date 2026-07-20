@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 import scipy.ndimage as ndimage
+from typing import Generator
 from pytom_tm.io import UnequalSpacingError
 from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
 from itertools import pairwise
