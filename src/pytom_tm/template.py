@@ -4,10 +4,7 @@ import voltools as vt
 import logging
 from scipy.ndimage import center_of_mass, zoom
 from scipy.fft import rfftn, irfftn
-from pytom_tm.weights import (
-    create_gaussian_low_pass,
-    radial_grid,
-)
+from pytom_tm.weights import create_gaussian_low_pass
 
 
 def generate_template_from_map(
@@ -118,35 +115,65 @@ def generate_template_from_map(
 
 def phase_randomize_template(
     template: npt.NDArray[float],
+    mask: npt.NDArray[float] | None = None,
+    n_iter: int = 40,
+    positivity: bool = True,
     seed: int = 321,
-):
-    """Create a version of the template that has its phases randomly
-    permuted in Fourier space.
+) -> npt.NDArray[float]:
+    """Create a phase-randomized version of `template` that preserves its
+    amplitude spectrum.
+
+    Random phases are taken from the rfftn of a random real-valued field
+    instead of drawn independently per Fourier voxel. This guarantees they
+    satisfy Hermitian symmetry by construction, including at the
+    self-conjugate DC/Nyquist points, which independent (e.g. permuted)
+    phases would violate.
+
+    If a `mask` is provided, a Gerchberg-Saxton iteration alternates the
+    amplitude constraint in Fourier space with a real-space support (and,
+    if positivity=True, non-negativity) constraint for `n_iter` iterations,
+    so the resulting noise stays compact instead of delocalizing over the
+    full box.
 
     Parameters
     ----------
     template: npt.NDArray[float]
         input structure
+    mask: Optional[npt.NDArray[float]], default None
+        if provided, real-space support (and positivity) constraint used in a
+        Gerchberg-Saxton iteration; same dimensions as template
+    n_iter: int, default 40
+        number of Gerchberg-Saxton iterations, only used if mask is provided
+    positivity: bool, default True
+        enforce non-negative density in real space during the Gerchberg-Saxton
+        iteration, only used if mask is provided
     seed: int, default 321
-        seed for random number generator for phase permutation
+        seed for the random number generator
 
     Returns
     -------
     result: npt.NDArray[float]
         phase randomized version of the template
     """
-    ft = rfftn(template)
-    amplitude = np.abs(ft)
-
-    # permute the phases in flattened version of the array
-    phase = np.angle(ft).flatten()
-    grid = radial_grid(template.shape).flatten()
-    relevant_freqs = grid <= 1  # permute only up to Nyquist
-    noise = np.zeros_like(phase)
     rng = np.random.default_rng(seed)
-    noise[relevant_freqs] = rng.permutation(phase[relevant_freqs])
+    t = np.asarray(template, dtype=np.float64)
+    amplitude = np.abs(rfftn(t))
 
-    # construct the new template
-    noise = np.reshape(noise, amplitude.shape)
-    result = irfftn(amplitude * np.exp(1j * noise), s=template.shape)
-    return result
+    # Hermitian-valid random phases: phases of the rfftn of a random real field
+    phase = np.angle(rfftn(rng.standard_normal(t.shape)))
+    result = irfftn(amplitude * np.exp(1j * phase), s=t.shape)
+
+    if mask is not None:
+        for _ in range(n_iter):
+            result = result * mask
+            if positivity:
+                result = np.maximum(result, 0.0)
+            phase = np.angle(rfftn(result))
+            result = irfftn(amplitude * np.exp(1j * phase), s=t.shape)
+        result = result * mask
+        if positivity:
+            result = np.maximum(result, 0.0)
+        if result.sum() > 0:  # match total mass under the (possibly soft) mask
+            result = result * ((t * mask).sum() / (result * mask).sum())
+
+    return result.astype(np.float32)

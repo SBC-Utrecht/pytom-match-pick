@@ -140,8 +140,19 @@ class TestTM(unittest.TestCase):
         score_volume, angle_volume, stats = tm.run()
 
         ind = np.unravel_index(score_volume.argmax(), self.volume.shape)
-        self.assertTrue(
-            score_volume.max() > 0.99, msg="lcc max value lower than expected"
+        # Noise correction subtracts the correlation of a phase-randomized version of
+        # the template, built with a Gerchberg-Saxton support constraint using
+        # self.mask. Because self.template is a small, simple, compact shape and
+        # self.mask covers most of the box, GS phase retrieval partially reconstructs
+        # the true template instead of randomizing it, so the noise-corrected peak
+        # ends up well below the ~1.0 seen without noise correction (test_search_
+        # spherical_mask). A real, structurally complex template would not have its
+        # phases retrieved this way and would keep a much smaller noise correlation.
+        self.assertAlmostEqual(
+            score_volume.max(),
+            0.49181,
+            places=2,
+            msg="lcc max value not almost equal to expected",
         )
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)

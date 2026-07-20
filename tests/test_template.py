@@ -99,7 +99,7 @@ class TestTemplate(unittest.TestCase):
 
         randomized_seeded = phase_randomize_template(
             self.template,
-            11,  # use default seed
+            seed=11,
         )
         diff = np.abs(randomized_seeded - randomized).sum()
         self.assertNotEqual(
