@@ -152,7 +152,11 @@ def phase_randomize_template(
     """
     rng = np.random.default_rng(seed)
     t = np.asarray(template, dtype=np.float64)
-    amplitude = np.abs(rfftn(t))
+    # restrict to the signal that actually falls inside the mask, so the
+    # amplitude spectrum being matched doesn't include density the support
+    # constraint will discard anyway
+    t_eff = t * mask if mask is not None else t
+    amplitude = np.abs(rfftn(t_eff))
 
     # Hermitian-valid random phases: phases of the rfftn of a random real field
     phase = np.angle(rfftn(rng.standard_normal(t.shape)))
@@ -165,6 +169,6 @@ def phase_randomize_template(
             result = irfftn(amplitude * np.exp(1j * phase), s=t.shape)
         result = result * mask
         if result.sum() > 0:  # match total mass under the (possibly soft) mask
-            result = result * ((t * mask).sum() / (result * mask).sum())
+            result = result * (t_eff.sum() / (result * mask).sum())
 
     return result.astype(np.float32)
