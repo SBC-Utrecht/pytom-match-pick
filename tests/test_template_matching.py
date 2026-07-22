@@ -140,8 +140,18 @@ class TestTM(unittest.TestCase):
         score_volume, angle_volume, stats = tm.run()
 
         ind = np.unravel_index(score_volume.argmax(), self.volume.shape)
-        self.assertTrue(
-            score_volume.max() > 0.99, msg="lcc max value lower than expected"
+        # Noise correction subtracts the correlation of a phase-randomized version of
+        # the template, built with a Gerchberg-Saxton support constraint using
+        # self.mask, from the score map, then adds back the mean noise correlation.
+        # This affine shift is not bounded to [-1, 1] like the raw ccc, so the
+        # corrected peak can end up above (or below) the ~1.0 seen without noise
+        # correction (test_search_spherical_mask), depending on how the noise
+        # template happens to correlate at that particular location.
+        self.assertAlmostEqual(
+            score_volume.max(),
+            1.01283,
+            places=2,
+            msg="lcc max value not almost equal to expected",
         )
         self.assertEqual(angle_id, angle_volume[ind])
         self.assertSequenceEqual(loc, ind)
