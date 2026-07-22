@@ -86,6 +86,29 @@ class TestWarpXMLParser(unittest.TestCase):
         for a, b in zip(ts_metadata.tilt_angles, angles):
             self.assertEqual(a, -b)
 
+    def test_level_angles_default_to_zero(self):
+        # the fixture xml predates LevelAngleX/LevelAngleY, so they should default
+        # to 0.0 instead of raising
+        _, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
+        self.assertEqual(ts_metadata.level_angle_x, 0.0)
+        self.assertEqual(ts_metadata.level_angle_y, 0.0)
+
+    def test_level_angle_sign(self):
+        # LevelAngleX/LevelAngleY should be negated the same way tilt angles are,
+        # to swap from warp's internal convention to pytom's (see PR #334)
+        raw_xml = WARP_XML.read_text(encoding="utf-8-sig")
+        raw_xml = raw_xml.replace(
+            'AreAnglesInverted="False"',
+            'AreAnglesInverted="False" LevelAngleX="1.5" LevelAngleY="-3.2"',
+            1,
+        )
+        with TemporaryDirectory() as tmp_dir:
+            level_angle_xml = pathlib.Path(tmp_dir).joinpath("level_angle.xml")
+            level_angle_xml.write_text(raw_xml, encoding="utf-8")
+            _, ts_metadata = parse_warp_xml_data(level_angle_xml, TEST_TOMOGRAM)
+        self.assertEqual(ts_metadata.level_angle_x, -1.5)
+        self.assertEqual(ts_metadata.level_angle_y, 3.2)
+
 
 class TestBrokenMRC(unittest.TestCase):
     def setUp(self):

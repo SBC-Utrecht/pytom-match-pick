@@ -678,6 +678,12 @@ def parse_warp_xml_data(
 
     tree = etree.parse(warp_xml_path)
 
+    # WarpTools sample-leveling angles that rotate the missing wedge to compensate
+    # for a tilted sample. Negated for the same reason the tilt angles below are
+    # negated (see PR #334): swap from warp's internal convention to pytom's.
+    level_angle_x = -float(tree.getroot().get("LevelAngleX", 0.0))
+    level_angle_y = -float(tree.getroot().get("LevelAngleY", 0.0))
+
     tilt_angle_nodes = tree.findall(".//Angles")
     tilt_defocus_nodes = tree.findall(".//GridCTF/Node")
     tilt_dose_nodes = tree.findall(".//Dose")
@@ -726,6 +732,8 @@ def parse_warp_xml_data(
         tilt_angles=flattened_tilt_angles,
         ctf_data=ctf_data,
         dose_accumulation=flattened_tilt_dose,
+        level_angle_x=level_angle_x,
+        level_angle_y=level_angle_y,
     )
 
     return tomogram_voxel_size, ts_metadata

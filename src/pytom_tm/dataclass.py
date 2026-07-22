@@ -59,6 +59,13 @@ class TiltSeriesMetaData(JsonSerializable):
     per_tilt_weighting: bool, default False
         if we want to do per-tilt weighting to create a fanned wedge instead
         of a default binary one
+    level_angle_x: float, default 0.0
+        sample leveling angle in degrees that rotates the missing wedge around the
+        x-axis, as introduced by WarpTools to compensate for a tilted sample
+    level_angle_y: float, default 0.0
+        sample leveling angle in degrees that is added to each tilt angle (rotation
+        around the y-axis), as introduced by WarpTools to compensate for a tilted
+        sample
     """
 
     tilt_angles: list[float]
@@ -67,6 +74,8 @@ class TiltSeriesMetaData(JsonSerializable):
     dose_accumulation: list[float] | None = None
     defocus_handedness: int = 0
     per_tilt_weighting: bool = False
+    level_angle_x: float = 0.0
+    level_angle_y: float = 0.0
 
     def replace(self, **kwargs):
         return replace(self, **kwargs)
