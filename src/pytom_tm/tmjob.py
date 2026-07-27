@@ -436,7 +436,7 @@ class TMJob:
             x[0] if x is not None else 0 for x in (search_x, search_y, search_z)
         ]
         # Check if tomogram origin is valid
-        if all([0 <= x < y for x, y in zip(search_origin, self.tomo_shape)]):
+        if all(0 <= x < y for x, y in zip(search_origin, self.tomo_shape)):
             self.search_origin = search_origin
         else:
             raise ValueError("Invalid input provided for search origin of tomogram.")
@@ -1047,8 +1047,8 @@ class TMJob:
         del tm  # delete the template matching plan
 
         # cast to correct dtype
+        # only cast score_volume for now, keep angle_volue as is
         score_volume = score_volume.astype(self.output_dtype)
-        angle_volume = angle_volume
 
         if return_volumes:
             return score_volume, angle_volume
