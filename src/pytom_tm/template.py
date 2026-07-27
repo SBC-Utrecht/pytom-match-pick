@@ -11,6 +11,8 @@ from pytom_tm.weights import (
     radial_grid,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def generate_template_from_map(
     input_map: npt.NDArray[float],
@@ -65,7 +67,7 @@ def generate_template_from_map(
             f"Filter resolution is too low,"
             f" setting to {2 * output_spacing}A (2 * output voxel size)"
         )
-        logging.warning(warning_text)
+        logger.warning(warning_text)
         filter_to_resolution = 2 * output_spacing
 
     if center:
@@ -75,7 +77,7 @@ def generate_template_from_map(
         shift = np.subtract(volume_center, input_center_of_mass)
         input_map = vt.transform(input_map, translation=shift, device="cpu")
 
-        logging.debug(
+        logger.debug(
             f"center of mass, before was "
             f"{np.round(input_center_of_mass, 2)} "
             f"and after {np.round(center_of_mass(input_map**2), 2)}"
@@ -83,7 +85,7 @@ def generate_template_from_map(
 
     # extend volume to the desired output size before applying convolutions!
     if output_box_size is not None:
-        logging.debug(
+        logger.debug(
             f"size check {output_box_size} > "
             f"{(input_map.shape[0] * input_spacing) // output_spacing}"
         )
@@ -92,7 +94,7 @@ def generate_template_from_map(
                 int(output_box_size * (output_spacing / input_spacing))
                 - input_map.shape[0]
             )
-            logging.debug(f"pad with this number of zeros: {pad}")
+            logger.debug(f"pad with this number of zeros: {pad}")
             input_map = np.pad(
                 input_map,
                 (pad // 2, pad // 2 + pad % 2),
@@ -100,7 +102,7 @@ def generate_template_from_map(
                 constant_values=0,
             )
         elif output_box_size < (input_map.shape[0] * input_spacing) // output_spacing:
-            logging.warning(
+            logger.warning(
                 "Could not set specified box size as the map would need to be cut and "
                 "this might result in loss of information of the structure. Please "
                 "decrease the box size of the map by hand (e.g. chimera)"
@@ -111,7 +113,7 @@ def generate_template_from_map(
         input_map.shape, input_spacing, filter_to_resolution
     ).astype(np.float32)
 
-    logging.info("Convoluting volume with filter and then downsampling.")
+    logger.info("Convoluting volume with filter and then downsampling.")
     return zoom(
         irfftn(rfftn(input_map) * lpf, s=input_map.shape),
         input_spacing / output_spacing,

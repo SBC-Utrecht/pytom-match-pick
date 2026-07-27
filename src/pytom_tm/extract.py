@@ -17,6 +17,8 @@ from pytom_tm.io import read_mrc
 from pytom_tm.mask import spherical_mask
 from pytom_tm.tmjob import TMJob
 
+logger = logging.getLogger(__name__)
+
 plotting_available = False
 try:
     import matplotlib.pyplot as plt
@@ -252,7 +254,7 @@ def extract_particles(
     # apply tomogram mask if provided
     tomogram_mask = None
     if ignore_tomogram_mask:
-        logging.warning("Ignoring tomogram mask")
+        logger.warning("Ignoring tomogram mask")
     elif tomogram_mask_path is not None:
         tomogram_mask = read_mrc(tomogram_mask_path)
     elif job.tomogram_mask is not None:
@@ -286,7 +288,7 @@ def extract_particles(
         particle_radius_px = int((particle_diameter / 2) / job.voxel_size)
     elif job.particle_diameter is not None:
         particle_radius_px = int((job.particle_diameter / 2) / job.voxel_size)
-        logging.info(
+        logger.info(
             "No particle diameter was provided, so using the diameter "
             "specified previously to mask out areas around peaks. Take care for "
             "strongly elongated particles as it might prevent correct "
@@ -311,9 +313,9 @@ def extract_particles(
         # N**(-1) = erfc( theta / ( sigma * sqrt(2) ) ) / 2
         # we need to find theta (i.e. the cut off)
         cut_off = erfcinv((2 * n_false_positives) / search_space) * np.sqrt(2) * sigma
-        logging.info(f"cut off for particle extraction: {cut_off}")
+        logger.info(f"cut off for particle extraction: {cut_off}")
     elif cut_off < 0:
-        logging.warning(
+        logger.warning(
             "Provided extraction score cut-off is smaller than 0. Changing to 0 as "
             "that is smallest allowed value."
         )

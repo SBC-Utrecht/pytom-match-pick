@@ -9,8 +9,11 @@ from multiprocessing.managers import BaseProxy
 
 import numpy.typing as npt
 
+from pytom_tm import configure_logging
 from pytom_tm.tmjob import TMJob
 from pytom_tm.utils import mute_stdout_stderr
+
+logger = logging.getLogger(__name__)
 
 try:  # new processes need to be spawned in order to set cupy to use the correct GPU
     mp.set_start_method("spawn")
@@ -49,7 +52,10 @@ def gpu_runner(
     else:
         mute_context = contextlib.nullcontext
     with mute_context():
-        logging.basicConfig(level=log_level)
+        # this runs in a freshly spawned child process, so its own pytom_tm
+        # logger needs to be (re)configured here rather than relying on the
+        # root logger
+        configure_logging(log_level)
         while True:
             try:
                 job = task_queue.get_nowait()
@@ -172,7 +178,7 @@ def run_job_parallel(
                 if len(results) == len(
                     jobs
                 ):  # its done if all the results from the spawn were send back
-                    logging.debug("Got all results from the child processes")
+                    logger.debug("Got all results from the child processes")
                     break
 
                 for p in procs:
@@ -189,7 +195,7 @@ def run_job_parallel(
                 time.sleep(1)
 
             [p.join() for p in procs]
-            logging.debug("Terminated the processes")
+            logger.debug("Terminated the processes")
 
         # merge split jobs; pass along the list of stats to annotate them in main_job
         return main_job.merge_sub_jobs(stats=results)

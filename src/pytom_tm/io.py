@@ -12,6 +12,8 @@ from lxml import etree
 
 from pytom_tm.dataclass import CtfData, RelionTiltSeriesMetaData, WarpTiltSeriesMetaData
 
+logger = logging.getLogger(__name__)
+
 
 class MultiColumnAngleFileError(ValueError):
     pass
@@ -288,17 +290,17 @@ def _wrap_mrcfile_readers(func, *args, **kwargs):
         mrc = func(*args, **kwargs)
     except ValueError as err:
         # see if permissive can safe this
-        logging.debug(f"mrcfile raised the following error: {err}, will try to recover")
+        logger.debug(f"mrcfile raised the following error: {err}, will try to recover")
         kwargs["permissive"] = True
         mrc = func(*args, **kwargs)
         if mrc.data is not None:
-            logging.warning(
+            logger.warning(
                 f"Loading {args[0]} in strict mode gave an error. "
                 "However, loading with 'permissive=True' did generate data, make sure "
                 "this is correct!"
             )
         else:
-            logging.debug("Could not reasonably recover")
+            logger.debug("Could not reasonably recover")
             raise ValueError(
                 f"{args[0]} header or data is too corrupt to recover, please fix the "
                 "header or data"
@@ -343,7 +345,7 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
             if not all(
                 mrc.voxel_size.x == s for s in attrgetter("y", "z")(mrc.voxel_size)
             ):
-                logging.warning(
+                logger.warning(
                     "Voxel size annotation in MRC is slightly different between "
                     f"dimensions, namely {mrc.voxel_size}. It might be a tiny "
                     "numerical inaccuracy, but please ensure this is not problematic."
@@ -380,7 +382,7 @@ def write_mrc(
     -------
     """
     if data.dtype not in [np.float32, np.float16]:
-        logging.warning(
+        logger.warning(
             "data for mrc writing is not np.float32 or np.float16, will convert to "
             "np.float32"
         )
@@ -445,7 +447,7 @@ def read_txt_file(
                         f"{len(line.strip().split())} columns"
                     )
                 else:
-                    logging.warning(
+                    logger.warning(
                         f"Found more than one column in file {file_name}, "
                         "only returning values from the first column"
                     )

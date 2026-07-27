@@ -52,7 +52,7 @@ RELION5_TOMOGRAMS_STAR = pathlib.Path(__file__).parent.joinpath(
 RELION5_TOMOGRAM = TEST_DATA.joinpath("rec_tomo200528_107.mrc")
 
 # Initial logging level
-LOG_LEVEL = logging.getLogger().level
+LOG_LEVEL = logging.getLogger("pytom_tm").level
 
 
 def prep_argv(arg_dict):
@@ -328,7 +328,7 @@ class TestEntryPoints(unittest.TestCase):
         )
 
         # reset the log level after the entry point modified it
-        logging.basicConfig(level=LOG_LEVEL, force=True)
+        entry_points.configure_logging(LOG_LEVEL)
 
         # test providing invalid gpu indices
         n_devices = cp.cuda.runtime.getDeviceCount()

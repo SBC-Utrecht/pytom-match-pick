@@ -4,6 +4,8 @@ import pathlib
 import pandas as pd
 import starfile
 
+logger = logging.getLogger(__name__)
+
 
 def merge_stars(
     input_star_files: list[pathlib.Path],
@@ -29,7 +31,7 @@ def merge_stars(
     # Warn if we end up with less files (due to symlinks pointing to the same thing
     # or the user giving the same star file multiple times)
     if len(files) != len(input_star_files):
-        logging.warning("Found duplicate input, only using unique star files")
+        logger.warning("Found duplicate input, only using unique star files")
 
     if len(files) == 0:
         raise ValueError("No starfiles in directory.")
@@ -44,7 +46,7 @@ def merge_stars(
             return out
         # Assuming dict here
         if not relion5_compat:
-            logging.warning(
+            logger.warning(
                 f"{f} seems to be a multi-data-block starfile, will only "
                 "concatenate the 'particles' data block "
             )
@@ -54,10 +56,10 @@ def merge_stars(
 
     if not relion5_compat:
         dataframes = (capture_read(f) for f in files)
-        logging.info("Concatting and writing star files")
+        logger.info("Concatting and writing star files")
         output = pd.concat(dataframes, ignore_index=True)
     else:
-        logging.info("Writing out 2-column relion5 star file")
+        logger.info("Writing out 2-column relion5 star file")
         data = []
         for fname in files:
             df = capture_read(fname, relion5_compat=True)

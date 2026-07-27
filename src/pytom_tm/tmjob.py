@@ -25,6 +25,8 @@ from pytom_tm.weights import (
     profile_to_weighting,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def load_json_to_tmjob(
     file_name: pathlib.Path, load_for_extraction: bool = True
@@ -411,7 +413,7 @@ class TMJob:
                 or round(self.voxel_size, 3)
                 != round(meta_data_template["voxel_size"], 3)
             ):
-                logging.debug(
+                logger.debug(
                     f"provided {self.voxel_size} tomogram "
                     f"{meta_data_tomo['voxel_size']} "
                     f"template {meta_data_template['voxel_size']}"
@@ -457,7 +459,7 @@ class TMJob:
             end - start for end, start in zip(search_end, self.search_origin)
         ]
 
-        logging.debug(f"origin, size = {self.search_origin}, {self.search_size}")
+        logger.debug(f"origin, size = {self.search_origin}, {self.search_size}")
         self.tomogram_mask = tomogram_mask
         if tomogram_mask is not None:
             temp = read_mrc(tomogram_mask)
@@ -522,7 +524,7 @@ class TMJob:
             f"{self.tomo_id}_whitening_filter.npy"
         )
         if self.whiten_spectrum and not job_loaded_for_extraction:
-            logging.info("Estimating whitening filter...")
+            logger.info("Estimating whitening filter...")
             patch_size = min(max(self.template_shape[0], 64), min(self.search_size))
             _, weights = estimate_whitening_filter(
                 tomogram=read_mrc(self.tomogram)[
@@ -931,11 +933,11 @@ class TMJob:
             # TODO: make sure this doesn't lead to weird race conditions
             for ctf, defocus_shift in zip(self.ts_metadata.ctf_data, defocus_offsets):
                 ctf.defocus = ctf.defocus + defocus_shift * 1e-10
-            logging.debug(
+            logger.debug(
                 "Patch center (nr. of voxels): "
                 f"{np.array_str(relative_patch_center_angstrom, precision=2)}"
             )
-            logging.debug(
+            logger.debug(
                 "Defocus values (um): "
                 f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ts_metadata.ctf_data]}",
             )
@@ -965,7 +967,7 @@ class TMJob:
             cut_off_radius=1.0,
         ).astype(np.float32)
 
-        if logging.DEBUG >= logging.root.level:
+        if logger.isEnabledFor(logging.DEBUG):
             write_mrc(
                 self.output_dir.joinpath("template_psf.mrc"),
                 template_filter,
@@ -978,7 +980,7 @@ class TMJob:
             )
 
         # next fast fft len
-        logging.debug(
+        logger.debug(
             "Next fast fft shape: "
             f"{tuple([next_fast_len(s, real=True) for s in self.search_size])}"
         )

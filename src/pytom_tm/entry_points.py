@@ -7,6 +7,7 @@ from os import urandom
 import numpy as np
 import starfile
 
+from pytom_tm import configure_logging
 from pytom_tm.dataclass import TiltSeriesMetaData
 from pytom_tm.extract import extract_particles
 from pytom_tm.io import (
@@ -29,6 +30,8 @@ from pytom_tm.io import (
 )
 from pytom_tm.merge_stars import merge_stars as merge_st
 from pytom_tm.tmjob import load_json_to_tmjob
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_argv(argv=None):
@@ -254,7 +257,7 @@ def pytom_create_template(argv=None):
     )
     args = parser.parse_args(argv)
     if not args.log_test:
-        logging.basicConfig(level=args.log, force=True)
+        configure_logging(args.log)
 
     # set input voxel size and give user warning if it does not match
     # with MRC annotation
@@ -264,7 +267,7 @@ def pytom_create_template(argv=None):
         if round(args.input_voxel_size_angstrom, 3) != round(
             input_meta_data["voxel_size"], 3
         ):
-            logging.warning(
+            logger.warning(
                 "Provided voxel size does not match voxel size annotated in input map."
             )
         map_spacing_angstrom = args.input_voxel_size_angstrom
@@ -297,7 +300,7 @@ def pytom_create_template(argv=None):
         output_box_size=args.box_size,
     ) * (-1 if args.invert else 1)
 
-    logging.debug(f"shape of template after processing is: {template.shape}")
+    logger.debug(f"shape of template after processing is: {template.shape}")
 
     write_mrc(
         output_path,
@@ -411,7 +414,7 @@ def estimate_roc(argv=None):
     # ---8<--- [end:estimate_roc_usage]
 
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log, force=True)
+    configure_logging(args.log)
 
     template_matching_job = load_json_to_tmjob(args.job_file)
     # Set cut off to -1 to ensure the number of particles gets extracted
@@ -590,7 +593,7 @@ def extract_candidates(argv=None):
     # ---8<--- [end:extract_candidates_usage]
 
     args = parser.parse_args(argv)
-    logging.basicConfig(level=args.log, force=True)
+    configure_logging(args.log)
 
     # load job and extract particles from the volumes
     job = load_json_to_tmjob(args.job_file)
@@ -995,7 +998,7 @@ def match_template(argv=None):
     )
     args = parser.parse_args(argv)
     if not args.log_test:
-        logging.basicConfig(level=args.log, force=True)
+        configure_logging(args.log)
 
     # set rng if not set
     if args.rng_seed is None:
@@ -1113,7 +1116,7 @@ def match_template(argv=None):
     check_argv = [i for i in argv if "-" in i]
     check_args, _ = check_input.parse_known_args(check_argv)
     for val in vars(check_args).values():
-        logging.warning(f"The following input argument was ignored: {val}")
+        logger.warning(f"The following input argument was ignored: {val}")
 
     if args.angular_search is None and args.particle_diameter is None:
         raise ValueError(
@@ -1227,6 +1230,6 @@ def merge_stars(argv=None):
     )
     args = parser.parse_args(argv)
     if not args.log_test:
-        logging.basicConfig(level=args.log, force=True)
+        configure_logging(args.log)
 
     merge_st(args.input_star_files, args.output_file, args.relion5_compat)
