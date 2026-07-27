@@ -1,14 +1,16 @@
-import pathlib
-import mrcfile
 import argparse
 import logging
-import numpy.typing as npt
-import numpy as np
-import starfile
+import pathlib
 from contextlib import contextmanager
 from operator import attrgetter
+
+import mrcfile
+import numpy as np
+import numpy.typing as npt
+import starfile
 from lxml import etree
-from pytom_tm.dataclass import CtfData, WarpTiltSeriesMetaData, RelionTiltSeriesMetaData
+
+from pytom_tm.dataclass import CtfData, RelionTiltSeriesMetaData, WarpTiltSeriesMetaData
 
 
 class MultiColumnAngleFileError(ValueError):
@@ -91,7 +93,7 @@ class LargerThanZero(argparse.Action):
         self,
         parser,
         namespace,
-        values: int | float,
+        values: float,
         option_string: str | None = None,
     ):
         if values <= 0.0:
@@ -259,8 +261,6 @@ class UnequalSpacingError(Exception):
     """Exception for an mrc file that has unequal spacing along the xyz dimensions
     annotated in its voxel size metadata."""
 
-    pass
-
 
 def write_angle_list(
     data: npt.NDArray[float],
@@ -274,10 +274,10 @@ def write_angle_list(
     @todo remove function
     """
     with open(file_name, "w") as fstream:
-        for i in range(data.shape[1]):
-            fstream.write(
-                " ".join([str(x) for x in [data[j, i] for j in order]]) + "\n"
-            )
+        fstream.writelines(
+            " ".join([str(x) for x in [data[j, i] for j in order]]) + "\n"
+            for i in range(data.shape[1])
+        )
 
 
 @contextmanager

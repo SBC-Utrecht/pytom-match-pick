@@ -1,10 +1,12 @@
+import gc
+
 import cupy as cp
 import cupy.typing as cpt
 import numpy.typing as npt
 import voltools as vt
-import gc
-from cupyx.scipy.fft import rfftn, irfftn
+from cupyx.scipy.fft import irfftn, rfftn
 from tqdm import tqdm
+
 from pytom_tm.correlation import normalise
 from pytom_tm.template import phase_randomize_template
 

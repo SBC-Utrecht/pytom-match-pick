@@ -1,10 +1,12 @@
-import unittest
-import pathlib
-from pytom_tm.angles import load_angle_list, angle_to_angle_list
-import numpy as np
 import itertools as itt
-import re
 import logging
+import pathlib
+import re
+import unittest
+
+import numpy as np
+
+from pytom_tm.angles import angle_to_angle_list, load_angle_list
 
 TEST_DATA_DIR = pathlib.Path(__file__).parent.joinpath("test_data")
 ERRONEOUS_ANGLE_FILE = TEST_DATA_DIR.joinpath("error_angles.txt")

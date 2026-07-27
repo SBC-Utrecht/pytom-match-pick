@@ -1,5 +1,5 @@
 import json
-from typing import Any, Type
+from typing import Any
 
 
 class JsonSerializable:
@@ -10,7 +10,7 @@ class JsonSerializable:
     defined, so we can pre-register which classes we expect to load in this way
     """
 
-    _registry: dict[str, Type["JsonSerializable"]] = {}
+    _registry: dict[str, type["JsonSerializable"]] = {}
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)

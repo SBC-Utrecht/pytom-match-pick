@@ -1,6 +1,7 @@
-import unittest
 import json
-from pytom_tm.json import JsonSerializable, CustomJSONEncoder
+import unittest
+
+from pytom_tm.json import CustomJSONEncoder, JsonSerializable
 
 
 class TestJSON(unittest.TestCase):

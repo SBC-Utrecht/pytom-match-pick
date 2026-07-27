@@ -2,8 +2,8 @@
 Functions in this file are cpu/gpu agnostic.
 """
 
-import numpy.typing as npt
 import cupy.typing as cpt
+import numpy.typing as npt
 
 
 def mean_under_mask(

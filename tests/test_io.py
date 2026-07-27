@@ -1,21 +1,22 @@
-import unittest
-import pathlib
-import warnings
 import contextlib
+import pathlib
+import unittest
+import warnings
 from tempfile import TemporaryDirectory
-import numpy as np
+
 import mrcfile
+import numpy as np
 from lxml import etree
 
 from pytom_tm.dataclass import CtfData, RelionTiltSeriesMetaData
 from pytom_tm.io import (
-    read_mrc,
-    read_mrc_meta_data,
-    write_mrc,
+    MultiColumnAngleFileError,
     parse_relion5_star_data,
     parse_warp_xml_data,
+    read_mrc,
+    read_mrc_meta_data,
     read_tlt_file,
-    MultiColumnAngleFileError,
+    write_mrc,
 )
 
 FAILING_MRC = pathlib.Path(__file__).parent.joinpath(

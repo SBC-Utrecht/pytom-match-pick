@@ -1,6 +1,7 @@
-import numpy as np
-import traceback
 import itertools
+import traceback
+
+import numpy as np
 from scipy.optimize import curve_fit
 from scipy.special import erf
 

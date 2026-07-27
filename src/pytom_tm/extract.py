@@ -1,20 +1,21 @@
-from packaging import version
+import logging
 import math
-import pandas as pd
+import pathlib
+
 import numpy as np
 import numpy.typing as npt
-import logging
-import scipy.ndimage as ndimage
-import pathlib
-from pytom_tm.tmjob import TMJob
-from pytom_tm.mask import spherical_mask
-from pytom_tm.angles import get_angle_list, convert_euler
-from pytom_tm.dataclass import RelionTiltSeriesMetaData
-from pytom_tm.io import read_mrc
-from scipy.special import erfcinv
+import pandas as pd
+from packaging import version
+from scipy import ndimage
 from scipy.optimize import curve_fit
+from scipy.special import erfcinv
 from tqdm import tqdm
 
+from pytom_tm.angles import convert_euler, get_angle_list
+from pytom_tm.dataclass import RelionTiltSeriesMetaData
+from pytom_tm.io import read_mrc
+from pytom_tm.mask import spherical_mask
+from pytom_tm.tmjob import TMJob
 
 plotting_available = False
 try:

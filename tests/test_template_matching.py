@@ -1,9 +1,11 @@
 import unittest
-import voltools as vt
+
 import numpy as np
-from pytom_tm.matching import TemplateMatchingGPU
-from pytom_tm.mask import spherical_mask
+import voltools as vt
+
 from pytom_tm.angles import angle_to_angle_list
+from pytom_tm.mask import spherical_mask
+from pytom_tm.matching import TemplateMatchingGPU
 
 
 class TestTM(unittest.TestCase):

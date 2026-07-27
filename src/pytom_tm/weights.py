@@ -1,11 +1,13 @@
+from collections.abc import Generator
+from itertools import pairwise
+
 import numpy as np
 import numpy.typing as npt
-import scipy.ndimage as ndimage
 import voltools as vt
-from typing import Generator
-from pytom_tm.io import UnequalSpacingError
+from scipy import ndimage
+
 from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
-from itertools import pairwise
+from pytom_tm.io import UnequalSpacingError
 
 # typing imports
 

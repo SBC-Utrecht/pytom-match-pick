@@ -1,12 +1,14 @@
-import numpy.typing as npt
-import multiprocessing as mp
+import contextlib
 import logging
+import multiprocessing as mp
 import queue
 import time
-import contextlib
+from functools import reduce
 from math import lcm
 from multiprocessing.managers import BaseProxy
-from functools import reduce
+
+import numpy.typing as npt
+
 from pytom_tm.tmjob import TMJob
 from pytom_tm.utils import mute_stdout_stderr
 

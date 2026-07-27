@@ -1,26 +1,29 @@
 from __future__ import annotations
-from packaging import version
-import pathlib
-import warnings
+
 import copy
 import itertools as itt
-import numpy as np
-import numpy.typing as npt
 import json
 import logging
-from scipy.fft import next_fast_len, rfftn, irfftn
+import pathlib
+import warnings
+
+import numpy as np
+import numpy.typing as npt
+from packaging import version
+from scipy.fft import irfftn, next_fast_len, rfftn
+
+from pytom_tm import __version__ as PYTOM_TM_VERSION
 from pytom_tm.angles import get_angle_list
+from pytom_tm.dataclass import CtfData, RelionTiltSeriesMetaData, TiltSeriesMetaData
+from pytom_tm.io import UnequalSpacingError, read_mrc, read_mrc_meta_data, write_mrc
+from pytom_tm.json import CustomJSONDecoder, CustomJSONEncoder
 from pytom_tm.matching import TemplateMatchingGPU
 from pytom_tm.weights import (
+    create_gaussian_band_pass,
     create_wedge,
     estimate_whitening_filter,
     profile_to_weighting,
-    create_gaussian_band_pass,
 )
-from pytom_tm.io import read_mrc_meta_data, read_mrc, write_mrc, UnequalSpacingError
-from pytom_tm.json import CustomJSONEncoder, CustomJSONDecoder
-from pytom_tm.dataclass import CtfData, TiltSeriesMetaData, RelionTiltSeriesMetaData
-from pytom_tm import __version__ as PYTOM_TM_VERSION
 
 
 def load_json_to_tmjob(

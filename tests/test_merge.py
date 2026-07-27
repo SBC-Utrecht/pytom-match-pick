@@ -1,12 +1,14 @@
-import unittest
-import pathlib
-import starfile
 import glob
+import pathlib
+import unittest
 from tempfile import TemporaryDirectory
+
 import pandas as pd
+import starfile
+from testing_utils import chdir, make_random_particles
+
 from pytom_tm.entry_points import merge_stars
 from pytom_tm.utils import mute_stdout_stderr
-from testing_utils import make_random_particles, chdir
 
 
 class TestMergeStars(unittest.TestCase):

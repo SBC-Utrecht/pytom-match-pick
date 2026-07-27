@@ -1,5 +1,7 @@
 import unittest
+
 import numpy as np
+
 from pytom_tm.extract import predict_tophat_mask
 
 

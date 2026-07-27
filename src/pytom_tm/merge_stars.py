@@ -1,7 +1,8 @@
+import logging
+import pathlib
+
 import pandas as pd
 import starfile
-import pathlib
-import logging
 
 
 def merge_stars(

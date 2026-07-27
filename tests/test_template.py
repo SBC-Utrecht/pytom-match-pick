@@ -1,6 +1,8 @@
 import unittest
+
 import numpy as np
 from scipy.ndimage import center_of_mass
+
 from pytom_tm.template import generate_template_from_map, phase_randomize_template
 
 

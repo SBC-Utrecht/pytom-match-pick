@@ -1,29 +1,30 @@
-import unittest
 import pathlib
+import unittest
 from dataclasses import asdict
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+
+import mrcfile
 import numpy as np
 import voltools as vt
-import mrcfile
-from tempfile import TemporaryDirectory, NamedTemporaryFile
-from pytom_tm.mask import spherical_mask
-from pytom_tm.angles import angle_to_angle_list
-from pytom_tm.tmjob import TMJob, TMJobError, load_json_to_tmjob, get_defocus_offsets
-from pytom_tm.io import (
-    read_mrc,
-    write_mrc,
-    UnequalSpacingError,
-    parse_relion5_star_data,
-)
-from pytom_tm.dataclass import CtfData, TiltSeriesMetaData, RelionTiltSeriesMetaData
-from pytom_tm.extract import extract_particles
 from testing_utils import (
-    CTF_PARAMS,
     ACCUMULATED_DOSE,
+    CTF_PARAMS,
     TILT_ANGLES,
     chdir,
     make_relion5_tomo_stars,
 )
 
+from pytom_tm.angles import angle_to_angle_list
+from pytom_tm.dataclass import CtfData, RelionTiltSeriesMetaData, TiltSeriesMetaData
+from pytom_tm.extract import extract_particles
+from pytom_tm.io import (
+    UnequalSpacingError,
+    parse_relion5_star_data,
+    read_mrc,
+    write_mrc,
+)
+from pytom_tm.mask import spherical_mask
+from pytom_tm.tmjob import TMJob, TMJobError, get_defocus_offsets, load_json_to_tmjob
 
 TOMO_SHAPE = (100, 107, 59)
 TEMPLATE_SIZE = 13
