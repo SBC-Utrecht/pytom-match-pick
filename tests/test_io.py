@@ -68,12 +68,12 @@ class TestWarpXMLParser(unittest.TestCase):
     def test_correct_defocus_units(self):
         # prevent issue 325 by testing if all defocus values are sane
         # (between 100 and 0.1 μm)
-        voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
+        _voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
         for ctf in ts_metadata.ctf_data:
             self.assertTrue(10e-6 >= ctf.defocus >= 0.1e-6)
 
     def test_correct_angle_sign(self):
-        voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
+        _voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
         # grab raw xml data
         tree = etree.parse(WARP_XML)
         tilt_angle_nodes = tree.findall(".//Angles")

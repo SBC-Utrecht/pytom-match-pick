@@ -498,7 +498,7 @@ class TestTMJob(unittest.TestCase):
             high_pass=100,
             whiten_spectrum=True,
         )
-        score, angle = job.start_job(0, return_volumes=True)
+        score, _angle = job.start_job(0, return_volumes=True)
         self.assertEqual(
             score.shape, job.tomo_shape, msg="TMJob with all options failed"
         )
@@ -516,7 +516,7 @@ class TestTMJob(unittest.TestCase):
             angle_increment=90.00,
             voxel_size=1.0,
         )
-        score, angle = job.start_job(0, return_volumes=True)
+        score, _angle = job.start_job(0, return_volumes=True)
         self.assertEqual(
             score.shape, job.tomo_shape, msg="TMJob with only wedge creation failed"
         )
@@ -535,7 +535,7 @@ class TestTMJob(unittest.TestCase):
             low_pass=10,
             high_pass=100,
         )
-        score, angle = job.start_job(0, return_volumes=True)
+        score, _angle = job.start_job(0, return_volumes=True)
         self.assertEqual(
             score.shape, job.tomo_shape, msg="TMJob with only band-pass failed"
         )
@@ -554,7 +554,7 @@ class TestTMJob(unittest.TestCase):
             voxel_size=1.0,
             whiten_spectrum=True,
         )
-        score, angle = job.start_job(0, return_volumes=True)
+        score, _angle = job.start_job(0, return_volumes=True)
         self.assertEqual(
             score.shape, job.tomo_shape, msg="TMJob with only whitening filter failed"
         )
@@ -681,7 +681,7 @@ class TestTMJob(unittest.TestCase):
             scores, angles = job.start_job(0, return_volumes=True)
             write_mrc(data_dir / "tomogram_scores.mrc", scores, job.voxel_size)
             write_mrc(data_dir / "tomogram_angles.mrc", angles, job.voxel_size)
-            df, scores = extract_particles(
+            _df, scores = extract_particles(
                 job, 100, particle_diameter=10, create_plot=False
             )
             self.assertNotEqual(
@@ -883,7 +883,7 @@ class TestTMJob(unittest.TestCase):
         )
 
         # extract particles after running the job
-        df, scores = extract_particles(
+        _df, scores = extract_particles(
             self.job, 100, particle_diameter=10, create_plot=False
         )
         self.assertNotEqual(
@@ -925,7 +925,7 @@ class TestTMJob(unittest.TestCase):
         self.assertNotIn("rec_", df_rel5["rlnTomoName"][0])
 
         # test extraction mask that does not cover the particle
-        df, scores = extract_particles(
+        _df, scores = extract_particles(
             self.job,
             5,
             100,
@@ -941,7 +941,7 @@ class TestTMJob(unittest.TestCase):
         # test if the extraction mask can be grabbed from the job instead
         job = self.job.copy()
         job.tomogram_mask = TEST_EXTRACTION_MASK_OUTSIDE
-        df, scores = extract_particles(
+        _df, scores = extract_particles(
             job,
             100,
             particle_diameter=10,
@@ -956,7 +956,7 @@ class TestTMJob(unittest.TestCase):
         # test if all masks are ignored if ignore_tomogram_mask=True
         # and that a warning is raised
         with self.assertLogs(level="WARNING") as cm:
-            df, scores = extract_particles(
+            _df, scores = extract_particles(
                 job,
                 100,
                 particle_diameter=10,
@@ -979,7 +979,7 @@ class TestTMJob(unittest.TestCase):
 
         # test mask that covers the particle
         # and should override the one now attached to the job
-        df, scores = extract_particles(
+        _df, scores = extract_particles(
             job,
             100,
             particle_diameter=5,
@@ -995,7 +995,7 @@ class TestTMJob(unittest.TestCase):
         # test extraction mask of int8 dtype:
         job = self.job.copy()
         job.tomogram_mask = TEST_EXTRACTION_MASK_INT8
-        df, scores = extract_particles(
+        _df, scores = extract_particles(
             job,
             100,
             particle_diameter=5,
@@ -1029,7 +1029,7 @@ class TestTMJob(unittest.TestCase):
             )
 
         # Test exraction with tophat filter and plotting
-        df, scores = extract_particles(
+        _df, scores = extract_particles(
             job,
             100,
             particle_diameter=5,
@@ -1140,7 +1140,7 @@ class TestTMJob(unittest.TestCase):
         job.start_job(0, return_volumes=False)
 
         # repeat of relion5 extraction in extraction test above but with better center
-        df_rel5, scores = extract_particles(
+        df_rel5, _scores = extract_particles(
             job, 100, particle_diameter=10, create_plot=False, relion5_compat=True
         )
         binning = job.ts_metadata.binning
@@ -1159,7 +1159,7 @@ class TestTMJob(unittest.TestCase):
         job_metadata2 = job.ts_metadata.replace(binning=2.0)
         job_bin2.ts_metadata = job_metadata2
 
-        df_rel5, scores = extract_particles(
+        df_rel5, _scores = extract_particles(
             job_bin2, 100, particle_diameter=10, create_plot=False, relion5_compat=True
         )
         binning = job_bin2.ts_metadata.binning

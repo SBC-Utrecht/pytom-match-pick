@@ -23,10 +23,10 @@ class TestAngles(unittest.TestCase):
             fstream.write(" ".join(map(str, [1.0] * 3)) + "\n")
         # create an unordered angle file
         with open(UNORDERED_ANGLE_FILE, "w") as fstream:
-            fstream.write(" ".join(["3.", "3.", "1."]) + "\n")
-            fstream.write(" ".join(["3", "2.", "1."]) + "\n")
-            fstream.write(" ".join(["2.", "3.", "1."]) + "\n")
-            fstream.write(" ".join(["3.", "2.", "2."]) + "\n")
+            fstream.write("3. 3. 1." + "\n")
+            fstream.write("3. 2. 1." + "\n")
+            fstream.write("2. 3. 1." + "\n")
+            fstream.write("3. 2. 2." + "\n")
 
     @classmethod
     def tearDownClass(cls) -> None:
