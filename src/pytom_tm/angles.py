@@ -88,7 +88,7 @@ def load_angle_list(
     with open(str(file_name)) as fstream:
         lines = fstream.readlines()
     angle_list = [tuple(map(float, x.strip().split(" "))) for x in lines]
-    if not all([len(a) == 3 for a in angle_list]):
+    if not all(len(a) == 3 for a in angle_list):
         raise ValueError(
             "Invalid angle file provided, each line should have 3 ZXZ Euler angles!"
         )
