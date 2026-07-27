@@ -24,7 +24,7 @@ def merge_stars(
         concatenating all the starfiles together (default)
     """
     # Make sure all paths are absolute and unique
-    files = set(f.resolve() for f in input_star_files)
+    files = {f.resolve() for f in input_star_files}
 
     # Warn if we end up with less files (due to symlinks pointing to the same thing
     # or the user giving the same star file multiple times)
