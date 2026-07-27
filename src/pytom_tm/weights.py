@@ -564,7 +564,7 @@ def _create_tilt_weighted_wedge(
             "in _create_tilt_weighted_wedge the list of CTF parameters per tilt does "
             "not have the same length as the tilt angle list!"
         )
-    if not all([shape[0] == s for s in shape[1:]]):
+    if not all(shape[0] == s for s in shape[1:]):
         raise UnequalSpacingError(
             "Input shape for structured wedge needs to be a square box. "
             "Otherwise the frequencies in fourier space are not equal across "
