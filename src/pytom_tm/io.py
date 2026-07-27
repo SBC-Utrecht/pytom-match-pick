@@ -157,7 +157,7 @@ class ParseTiltAngles(argparse.Action):
     ):
         if len(values) == 2:  # two wedge angles provided the min and max
             try:
-                values = sorted(list(map(float, values)))  # make them floats
+                values = sorted(map(float, values))  # make them floats
                 setattr(namespace, self.dest, values)
             except ValueError:
                 parser.error(
@@ -333,17 +333,15 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
         # allow small numerical inconsistencies in voxel size of MRC headers, sometimes
         # seen in Warp
         if not all(
-            [
-                np.round(mrc.voxel_size.x, 3) == np.round(s, 3)
-                for s in attrgetter("y", "z")(mrc.voxel_size)
-            ]
+            np.round(mrc.voxel_size.x, 3) == np.round(s, 3)
+            for s in attrgetter("y", "z")(mrc.voxel_size)
         ):
             raise UnequalSpacingError(
                 "Input volume voxel spacing is not identical in each dimension!"
             )
         else:
             if not all(
-                [mrc.voxel_size.x == s for s in attrgetter("y", "z")(mrc.voxel_size)]
+                mrc.voxel_size.x == s for s in attrgetter("y", "z")(mrc.voxel_size)
             ):
                 logging.warning(
                     "Voxel size annotation in MRC is slightly different between "
