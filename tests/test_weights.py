@@ -5,7 +5,7 @@ from testing_utils import ACCUMULATED_DOSE, CTF_PARAMS, TILT_ANGLES
 
 from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
 from pytom_tm.weights import (
-    _create_symmetric_wedge,
+    _create_binary_wedge,
     _masked_radial,
     create_ctf,
     create_gaussian_band_pass,
@@ -143,9 +143,9 @@ class TestWeights(unittest.TestCase):
             msg="1D bandpass filter does not have expected output shape",
         )
 
-    def test_create_symmetric_wedge(self):
-        with self.assertRaisesRegex(ValueError, "bigger than 90 degrees"):
-            _create_symmetric_wedge(self.volume_shape_even, 4, 1.0)
+    def test_create_binary_wedge(self):
+        with self.assertRaisesRegex(ValueError, "Negative wedge angles"):
+            _create_binary_wedge(self.volume_shape_even, 4, 4, 1.0)
 
     def test_create_wedge(self):
         temp = TiltSeriesMetaData(tilt_angles=[-91, 91])
