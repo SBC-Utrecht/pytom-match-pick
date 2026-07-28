@@ -191,7 +191,7 @@ class TemplateMatchingGPU:
 
         # create a 'random noise' version of the template
         shuffled_template = (
-            phase_randomize_template(template, mask=mask, seed=rng_seed)
+            phase_randomize_template(template, mask, seed=rng_seed)
             if noise_correction
             else None
         )

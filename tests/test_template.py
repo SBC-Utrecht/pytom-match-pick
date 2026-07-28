@@ -86,8 +86,10 @@ class TestTemplate(unittest.TestCase):
             )
 
     def test_phase_randomize_template(self):
+        full_mask = np.ones_like(self.template)
         randomized = phase_randomize_template(
-            self.template,  # use default seed
+            self.template,
+            full_mask,  # use default seed
         )
         self.assertEqual(self.template.shape, randomized.shape)
         self.assertGreater(
@@ -99,9 +101,36 @@ class TestTemplate(unittest.TestCase):
 
         randomized_seeded = phase_randomize_template(
             self.template,
+            full_mask,
             seed=11,
         )
         diff = np.abs(randomized_seeded - randomized).sum()
         self.assertNotEqual(
             diff, 0, msg="Different seed should return different randomization"
         )
+
+    def test_phase_randomize_template_support_mask(self):
+        # mask covers the structure with some margin, but not the full box, so the
+        # Gerchberg-Saxton support constraint actually restricts the result
+        support_mask = np.zeros_like(self.template)
+        support_mask[1:6, 1:6, 6:10] = 1
+
+        randomized = phase_randomize_template(self.template, support_mask)
+        self.assertEqual(self.template.shape, randomized.shape)
+        np.testing.assert_array_equal(
+            randomized * (1 - support_mask),
+            np.zeros_like(randomized),
+            err_msg="Result should be exactly zero outside the support mask.",
+        )
+        self.assertTrue(
+            np.any(randomized[support_mask.astype(bool)] != 0),
+            msg="Result should not be all zero inside the support mask.",
+        )
+
+    def test_phase_randomize_template_zero_mass_raises(self):
+        # an all-zero mask forces a zero amplitude spectrum, so the reconstructed
+        # result has ~0 mass everywhere and the mass-matching rescale would divide
+        # by ~0; this should raise instead of silently returning an unscaled result
+        empty_mask = np.zeros_like(self.template)
+        with self.assertRaises(ValueError):
+            phase_randomize_template(self.template, empty_mask)

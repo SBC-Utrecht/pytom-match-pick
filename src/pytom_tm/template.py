@@ -115,7 +115,7 @@ def generate_template_from_map(
 
 def phase_randomize_template(
     template: npt.NDArray[float],
-    mask: npt.NDArray[float] | None = None,
+    mask: npt.NDArray[float],
     n_iter: int = 40,
     seed: int = 321,
 ) -> npt.NDArray[float]:
@@ -128,20 +128,20 @@ def phase_randomize_template(
     self-conjugate DC/Nyquist points, which independent (e.g. permuted)
     phases would violate.
 
-    If a `mask` is provided, a Gerchberg-Saxton iteration alternates the
-    amplitude constraint in Fourier space with a real-space support constraint
-    for `n_iter` iterations, so the resulting noise stays compact instead of
+    A Gerchberg-Saxton iteration alternates the amplitude constraint in
+    Fourier space with a real-space support constraint from `mask` for
+    `n_iter` iterations, so the resulting noise stays compact instead of
     delocalizing over the full box.
 
     Parameters
     ----------
     template: npt.NDArray[float]
         input structure
-    mask: Optional[npt.NDArray[float]], default None
-        if provided, real-space support constraint used in a Gerchberg-Saxton
-        iteration; same dimensions as template
+    mask: npt.NDArray[float]
+        real-space support constraint used in a Gerchberg-Saxton iteration;
+        same dimensions as template
     n_iter: int, default 40
-        number of Gerchberg-Saxton iterations, only used if mask is provided
+        number of Gerchberg-Saxton iterations
     seed: int, default 321
         seed for the random number generator
 
@@ -155,20 +155,28 @@ def phase_randomize_template(
     # restrict to the signal that actually falls inside the mask, so the
     # amplitude spectrum being matched doesn't include density the support
     # constraint will discard anyway
-    t_eff = t * mask if mask is not None else t
+    t_eff = t * mask
     amplitude = np.abs(rfftn(t_eff))
 
     # Hermitian-valid random phases: phases of the rfftn of a random real field
     phase = np.angle(rfftn(rng.standard_normal(t.shape)))
     result = irfftn(amplitude * np.exp(1j * phase), s=t.shape)
 
-    if mask is not None:
-        for _ in range(n_iter):
-            result = result * mask
-            phase = np.angle(rfftn(result))
-            result = irfftn(amplitude * np.exp(1j * phase), s=t.shape)
+    for _ in range(n_iter):
         result = result * mask
-        if result.sum() > 0:  # match total mass under the (possibly soft) mask
-            result = result * (t_eff.sum() / (result * mask).sum())
+        phase = np.angle(rfftn(result))
+        result = irfftn(amplitude * np.exp(1j * phase), s=t.shape)
+    result = result * mask
+
+    # match total mass under the (possibly soft) mask; the sign of result.sum()
+    # is not an issue (the division below carries it through correctly), only
+    # a near-zero denominator is
+    result_sum = result.sum()
+    if np.isclose(result_sum, 0.0):
+        raise ValueError(
+            "Phase randomized template has ~zero mass under the mask, cannot "
+            "match it to the total mass of the input template."
+        )
+    result = result * (t_eff.sum() / result_sum)
 
     return result.astype(np.float32)

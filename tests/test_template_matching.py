@@ -149,7 +149,7 @@ class TestTM(unittest.TestCase):
         # template happens to correlate at that particular location.
         self.assertAlmostEqual(
             score_volume.max(),
-            1.01283,
+            0.43142,
             places=2,
             msg="lcc max value not almost equal to expected",
         )
