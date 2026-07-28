@@ -170,9 +170,9 @@ def _phase_randomize_template(
         result = irfftn(amplitude * np.exp(1j * phase), s=t.shape)
     result = result * mask
 
-    # the GS loop only fixes the full-box amplitude spectrum, not the sign of the
-    # masked result's mass, so align it with the input's; magnitude is left as-is
-    # since normalise() downstream is invariant to a positive rescale anyway
+    # the GS loop only fixes |amplitude|, so without this, result is identical for
+    # t and -t; this restores equivariance with t's sign, keeping the noise
+    # template's contrast convention consistent with the real template's
     if np.sign(result.sum()) != np.sign(t_eff.sum()):
         result = -result
 
