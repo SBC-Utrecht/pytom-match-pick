@@ -113,7 +113,7 @@ def generate_template_from_map(
     )
 
 
-def phase_randomize_template(
+def _phase_randomize_template(
     template: npt.NDArray[float],
     mask: npt.NDArray[float],
     n_iter: int = 40,
@@ -168,15 +168,10 @@ def phase_randomize_template(
         result = irfftn(amplitude * np.exp(1j * phase), s=t.shape)
     result = result * mask
 
-    # match total mass under the (possibly soft) mask; the sign of result.sum()
-    # is not an issue (the division below carries it through correctly), only
-    # a near-zero denominator is
-    result_sum = result.sum()
-    if np.isclose(result_sum, 0.0):
-        raise ValueError(
-            "Phase randomized template has ~zero mass under the mask, cannot "
-            "match it to the total mass of the input template."
-        )
-    result = result * (t_eff.sum() / result_sum)
+    # the GS loop only fixes the full-box amplitude spectrum, not the sign of the
+    # masked result's mass, so align it with the input's; magnitude is left as-is
+    # since normalise() downstream is invariant to a positive rescale anyway
+    if np.sign(result.sum()) != np.sign(t_eff.sum()):
+        result = -result
 
     return result.astype(np.float32)

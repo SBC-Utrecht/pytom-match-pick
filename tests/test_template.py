@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from scipy.ndimage import center_of_mass
-from pytom_tm.template import generate_template_from_map, phase_randomize_template
+from pytom_tm.template import generate_template_from_map, _phase_randomize_template
 
 
 class TestTemplate(unittest.TestCase):
@@ -87,7 +87,7 @@ class TestTemplate(unittest.TestCase):
 
     def test_phase_randomize_template(self):
         full_mask = np.ones_like(self.template)
-        randomized = phase_randomize_template(
+        randomized = _phase_randomize_template(
             self.template,
             full_mask,  # use default seed
         )
@@ -99,7 +99,7 @@ class TestTemplate(unittest.TestCase):
             "no longer be equal to the input.",
         )
 
-        randomized_seeded = phase_randomize_template(
+        randomized_seeded = _phase_randomize_template(
             self.template,
             full_mask,
             seed=11,
@@ -115,7 +115,7 @@ class TestTemplate(unittest.TestCase):
         support_mask = np.zeros_like(self.template)
         support_mask[1:6, 1:6, 6:10] = 1
 
-        randomized = phase_randomize_template(self.template, support_mask)
+        randomized = _phase_randomize_template(self.template, support_mask)
         self.assertEqual(self.template.shape, randomized.shape)
         np.testing.assert_array_equal(
             randomized * (1 - support_mask),
@@ -127,10 +127,9 @@ class TestTemplate(unittest.TestCase):
             msg="Result should not be all zero inside the support mask.",
         )
 
-    def test_phase_randomize_template_zero_mass_raises(self):
-        # an all-zero mask forces a zero amplitude spectrum, so the reconstructed
-        # result has ~0 mass everywhere and the mass-matching rescale would divide
-        # by ~0; this should raise instead of silently returning an unscaled result
+    def test_phase_randomize_template_empty_mask(self):
+        # an all-zero mask forces a zero amplitude spectrum, so the result stays
+        # zero throughout; the sign check (0 vs 0) should not error or alter that
         empty_mask = np.zeros_like(self.template)
-        with self.assertRaises(ValueError):
-            phase_randomize_template(self.template, empty_mask)
+        randomized = _phase_randomize_template(self.template, empty_mask)
+        np.testing.assert_array_equal(randomized, np.zeros_like(randomized))
