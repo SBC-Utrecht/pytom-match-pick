@@ -1,14 +1,16 @@
-import pathlib
-import mrcfile
 import argparse
 import logging
-import numpy.typing as npt
-import numpy as np
-import starfile
+import pathlib
 from contextlib import contextmanager
 from operator import attrgetter
+
+import mrcfile
+import numpy as np
+import numpy.typing as npt
+import starfile
 from lxml import etree
-from pytom_tm.dataclass import CtfData, WarpTiltSeriesMetaData, RelionTiltSeriesMetaData
+
+from pytom_tm.dataclass import CtfData, RelionTiltSeriesMetaData, WarpTiltSeriesMetaData
 
 
 class MultiColumnAngleFileError(ValueError):
@@ -91,7 +93,7 @@ class LargerThanZero(argparse.Action):
         self,
         parser,
         namespace,
-        values: int | float,
+        values: float,
         option_string: str | None = None,
     ):
         if values <= 0.0:
@@ -155,7 +157,7 @@ class ParseTiltAngles(argparse.Action):
     ):
         if len(values) == 2:  # two wedge angles provided the min and max
             try:
-                values = sorted(list(map(float, values)))  # make them floats
+                values = sorted(map(float, values))  # make them floats
                 setattr(namespace, self.dest, values)
             except ValueError:
                 parser.error(
@@ -259,8 +261,6 @@ class UnequalSpacingError(Exception):
     """Exception for an mrc file that has unequal spacing along the xyz dimensions
     annotated in its voxel size metadata."""
 
-    pass
-
 
 def write_angle_list(
     data: npt.NDArray[float],
@@ -274,10 +274,10 @@ def write_angle_list(
     @todo remove function
     """
     with open(file_name, "w") as fstream:
-        for i in range(data.shape[1]):
-            fstream.write(
-                " ".join([str(x) for x in [data[j, i] for j in order]]) + "\n"
-            )
+        fstream.writelines(
+            " ".join([str(x) for x in [data[j, i] for j in order]]) + "\n"
+            for i in range(data.shape[1])
+        )
 
 
 @contextmanager
@@ -333,17 +333,15 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
         # allow small numerical inconsistencies in voxel size of MRC headers, sometimes
         # seen in Warp
         if not all(
-            [
-                np.round(mrc.voxel_size.x, 3) == np.round(s, 3)
-                for s in attrgetter("y", "z")(mrc.voxel_size)
-            ]
+            np.round(mrc.voxel_size.x, 3) == np.round(s, 3)
+            for s in attrgetter("y", "z")(mrc.voxel_size)
         ):
             raise UnequalSpacingError(
                 "Input volume voxel spacing is not identical in each dimension!"
             )
         else:
             if not all(
-                [mrc.voxel_size.x == s for s in attrgetter("y", "z")(mrc.voxel_size)]
+                mrc.voxel_size.x == s for s in attrgetter("y", "z")(mrc.voxel_size)
             ):
                 logging.warning(
                     "Voxel size annotation in MRC is slightly different between "

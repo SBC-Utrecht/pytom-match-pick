@@ -1,11 +1,13 @@
-import pathlib
-import os
 import contextlib
+import os
+import pathlib
+
 import numpy as np
 import pandas as pd
 import starfile
-from pytom_tm.io import read_defocus_file, read_dose_file, read_tlt_file
+
 from pytom_tm.dataclass import CtfData
+from pytom_tm.io import read_defocus_file, read_dose_file, read_tlt_file
 
 # Dose and ctf params for tomo_104
 cs = 2.7

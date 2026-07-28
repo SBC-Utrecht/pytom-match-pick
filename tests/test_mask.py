@@ -1,9 +1,11 @@
 import unittest
-import voltools as vt
+
 import cupy as cp
-from pytom_tm.mask import spherical_mask, ellipsoidal_mask
+import voltools as vt
+
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.correlation import normalised_cross_correlation
+from pytom_tm.mask import ellipsoidal_mask, spherical_mask
 
 
 class TestMask(unittest.TestCase):

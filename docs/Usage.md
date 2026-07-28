@@ -30,13 +30,16 @@ Using an EM map as a reference structure generally leads to the best results. Al
 
 ```python exec="on" result="ansi" 
 import argparse
-code = ("""
+
+code = """
 ---8<--- "entry_points.py:create_template_usage"
-""")
-cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'type='))
+"""
+cleaned_lines = [
+    line.lstrip()
+    for line in code.splitlines()
+    if not any(keyword in line for keyword in ("action=", "type="))
 ]
-cleaned_code = '\n'.join(cleaned_lines)
+cleaned_code = "\n".join(cleaned_lines)
 exec(cleaned_code)
 print(parser.format_help())
 ```
@@ -47,13 +50,16 @@ The mask around the template can be quite tight to remove as much noise as possi
 
 ```python exec="on" result="ansi"
 import argparse
-code = ("""
+
+code = """
 ---8<--- "entry_points.py:create_mask_usage"
-""")
-cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'type='))
+"""
+cleaned_lines = [
+    line.lstrip()
+    for line in code.splitlines()
+    if not any(keyword in line for keyword in ("action=", "type="))
 ]
-cleaned_code = '\n'.join(cleaned_lines)
+cleaned_code = "\n".join(cleaned_lines)
 exec(cleaned_code)
 print(parser.format_help())
 ```
@@ -111,13 +117,18 @@ never seemed to clearly improve results.
 
 ```python exec="on" result="ansi"
 import argparse
-code = ("""
+
+code = """
 ---8<--- "entry_points.py:match_template_usage"
-""")
-cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'type=', 'error_on_multi_column='))
+"""
+cleaned_lines = [
+    line.lstrip()
+    for line in code.splitlines()
+    if not any(
+        keyword in line for keyword in ("action=", "type=", "error_on_multi_column=")
+    )
 ]
-cleaned_code = '\n'.join(cleaned_lines)
+cleaned_code = "\n".join(cleaned_lines)
 exec(cleaned_code)
 print(parser.format_help())
 ```
@@ -164,13 +175,16 @@ preliminary results: [10.5281/zenodo.13165643](https://doi.org/10.5281/zenodo.13
 
 ```python exec="on" result="ansi"
 import argparse
-code = ("""
+
+code = """
 ---8<--- "entry_points.py:extract_candidates_usage"
-""")
-cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'type='))
+"""
+cleaned_lines = [
+    line.lstrip()
+    for line in code.splitlines()
+    if not any(keyword in line for keyword in ("action=", "type="))
 ]
-cleaned_code = '\n'.join(cleaned_lines)
+cleaned_code = "\n".join(cleaned_lines)
 exec(cleaned_code)
 print(parser.format_help())
 ```
@@ -181,13 +195,16 @@ This script runs the Gaussian fit as described in the [IJMS publication](https:/
 
 ```python exec="on" result="ansi"
 import argparse
-code = ("""
+
+code = """
 ---8<--- "entry_points.py:estimate_roc_usage"
-""")
-cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'type='))
+"""
+cleaned_lines = [
+    line.lstrip()
+    for line in code.splitlines()
+    if not any(keyword in line for keyword in ("action=", "type="))
 ]
-cleaned_code = '\n'.join(cleaned_lines)
+cleaned_code = "\n".join(cleaned_lines)
 exec(cleaned_code)
 print(parser.format_help())
 ```
@@ -202,13 +219,16 @@ Without providing any parameters the script will try to merge all the starfiles 
 
 ```python exec="on" result="ansi"
 import argparse
-code = ("""
+
+code = """
 ---8<--- "entry_points.py:merge_stars_usage"
-""")
-cleaned_lines = [line.lstrip() for line in code.splitlines()
-    if not any(keyword in line for keyword in ('action=', 'type='))
+"""
+cleaned_lines = [
+    line.lstrip()
+    for line in code.splitlines()
+    if not any(keyword in line for keyword in ("action=", "type="))
 ]
-cleaned_code = '\n'.join(cleaned_lines)
+cleaned_code = "\n".join(cleaned_lines)
 exec(cleaned_code)
 print(parser.format_help())
 ```

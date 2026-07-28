@@ -1,5 +1,7 @@
 # this tests the tutorial.md
+import contextlib
 import subprocess
+
 from mdextractor import extract_md_blocks
 
 
@@ -10,7 +12,8 @@ def sanitize_block(block):
 
 
 print("Doing tutorial tests")
-lines = "".join(open("Tutorial.md").readlines())
+with open("Tutorial.md") as f:
+    lines = "".join(f.readlines())
 blocks = extract_md_blocks(lines)
 n_blocks = len(blocks)
 print(f"Found {n_blocks} code blocks")
@@ -23,12 +26,13 @@ for block in blocks:
         print(f"Running: {block}")
 
         block = sanitize_block(block)
-        outfile = None
+        outfile_path = None
         # Deal with stdout redirect
         if block[-2] == ">":
-            outfile = open(block[-1], "a+")
+            outfile_path = block[-1]
             block = block[:-2]
-        # Check=True makes sure this code returns early
-        subprocess.run(block, check=True, stdout=outfile)
-        if outfile is not None:
-            outfile.close()
+        with (
+            open(outfile_path, "a+") if outfile_path else contextlib.nullcontext()
+        ) as outfile:
+            # Check=True makes sure this code returns early
+            subprocess.run(block, check=True, stdout=outfile)

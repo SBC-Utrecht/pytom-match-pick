@@ -1,4 +1,5 @@
 from dataclasses import dataclass, replace
+
 from pytom_tm.json import JsonSerializable
 
 

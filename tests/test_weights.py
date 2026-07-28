@@ -1,17 +1,19 @@
-import numpy as np
 import unittest
+
+import numpy as np
+from testing_utils import ACCUMULATED_DOSE, CTF_PARAMS, TILT_ANGLES
+
+from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
 from pytom_tm.weights import (
-    create_wedge,
     _create_symmetric_wedge,
     _masked_radial,
     create_ctf,
     create_gaussian_band_pass,
-    radial_grid,
+    create_wedge,
     estimate_whitening_filter,
     profile_to_weighting,
+    radial_grid,
 )
-from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
-from testing_utils import TILT_ANGLES, ACCUMULATED_DOSE, CTF_PARAMS
 
 
 class TestWeights(unittest.TestCase):

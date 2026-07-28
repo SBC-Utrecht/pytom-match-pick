@@ -7,20 +7,21 @@ other unittests. If the parallel manager is tested first, the spawned process is
 closed which will allow the remaining test to use the GPU.
 """
 
-import unittest
-import time
-import numpy as np
-import voltools as vt
 import multiprocessing
 import pathlib
+import time
+import unittest
 from tempfile import TemporaryDirectory
-from pytom_tm.mask import spherical_mask
+
+import numpy as np
+import voltools as vt
+
 from pytom_tm.angles import angle_to_angle_list
 from pytom_tm.dataclass import TiltSeriesMetaData
+from pytom_tm.io import write_mrc
+from pytom_tm.mask import spherical_mask
 from pytom_tm.parallel import run_job_parallel, split_job_efficiently
 from pytom_tm.tmjob import TMJob
-from pytom_tm.io import write_mrc
-
 
 TOMO_SHAPE = (100, 107, 59)
 TEMPLATE_SIZE = 13

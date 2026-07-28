@@ -1,5 +1,5 @@
 import json
-from typing import Any, Type
+from typing import Any, ClassVar
 
 
 class JsonSerializable:
@@ -10,7 +10,7 @@ class JsonSerializable:
     defined, so we can pre-register which classes we expect to load in this way
     """
 
-    _registry: dict[str, Type["JsonSerializable"]] = {}
+    _registry: ClassVar[dict[str, type["JsonSerializable"]]] = {}
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -37,7 +37,7 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 class CustomJSONDecoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
-        super().__init__(object_hook=self.object_hook, *args, **kwargs)
+        super().__init__(*args, object_hook=self.object_hook, **kwargs)
 
     def object_hook(self, obj):
         if "__class__" in obj:

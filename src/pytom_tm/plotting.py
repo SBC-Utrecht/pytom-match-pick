@@ -1,6 +1,7 @@
-import numpy as np
-import traceback
 import itertools
+import traceback
+
+import numpy as np
 from scipy.optimize import curve_fit
 from scipy.special import erf
 
@@ -173,7 +174,7 @@ def evaluate_estimates(estimated_positions, ground_truth_positions, tolerance):
 
 
 def fdr_recall(correct_particles, scores):
-    assert all(i > j for i, j in itertools.pairwise(scores)), print(
+    assert all(i > j for i, j in itertools.pairwise(scores)), (
         "Scores list should be decreasing."
     )
 
@@ -374,10 +375,8 @@ def plist_quality_gaussian_fit(
         plot.draw_score_threshold(x_roc[cutoff], max(y))
         print(f" - optimal correlation coefficient threshold is {x_roc[cutoff]:.3f}")
         print(
-            (
-                " - this threshold approximately selects "
-                f"{(1 - cdf(x_roc[cutoff])) * population_integral:.1f} particles",
-            )
+            " - this threshold approximately selects "
+            f"{(1 - cdf(x_roc[cutoff])) * population_integral:.1f} particles"
         )
 
         # plot the fdr curve

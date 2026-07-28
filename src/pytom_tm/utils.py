@@ -1,6 +1,6 @@
+import contextlib
 import os
 import sys
-import contextlib
 
 
 @contextlib.contextmanager
@@ -10,18 +10,19 @@ def mute_stdout_stderr():
     will hard-exit out"""
 
     fail = False
-    outnull = open(os.devnull, "w")
     old_stdout = sys.stdout
     old_stderr = sys.stderr
-    sys.stdout = outnull
-    sys.stderr = outnull
-    try:
-        yield
-    except Exception:  # Bare exception to exit without printing anything
-        fail = True
-    finally:
-        sys.stdout = old_stdout
-        sys.stderr = old_stderr
-        outnull.close()
-        if fail:
-            sys.exit(2)
+    with open(os.devnull, "w") as outnull:
+        sys.stdout = outnull
+        sys.stderr = outnull
+        try:
+            yield
+        except Exception:  # noqa: BLE001
+            # -- Bare exception to exit without printing anything
+            fail = True
+        finally:
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+
+    if fail:
+        sys.exit(2)

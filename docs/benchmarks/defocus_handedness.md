@@ -47,7 +47,7 @@ correct and hopefully influence the results sufficiently to see a difference.
 The defocus offsets are calculated as
 
 ```python
-z_offset = z_coordinate * cos(tilt_angle) + x_coordinate * sin(tilt_angle) 
+z_offset = z_coordinate * cos(tilt_angle) + x_coordinate * sin(tilt_angle)
 ```
 
 where `z_coordinate` and `x_coordinate` are the center of the subvolume relative to 

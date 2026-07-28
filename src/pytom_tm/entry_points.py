@@ -1,32 +1,34 @@
 import argparse
-import sys
-import pathlib
 import logging
+import pathlib
+import sys
+from os import urandom
+
 import numpy as np
 import starfile
+
 from pytom_tm.dataclass import TiltSeriesMetaData
 from pytom_tm.extract import extract_particles
 from pytom_tm.io import (
-    LargerThanZero,
-    write_mrc,
-    read_mrc_meta_data,
-    read_mrc,
+    BetweenZeroAndOne,
+    CheckDirExists,
     CheckFileExists,
     CheckListOfFilesExists,
+    LargerThanZero,
+    ParseDefocus,
+    ParseDoseFile,
+    ParseGPUIndices,
     ParseLogging,
-    CheckDirExists,
     ParseSearch,
     ParseTiltAngles,
-    ParseDoseFile,
-    ParseDefocus,
-    BetweenZeroAndOne,
-    ParseGPUIndices,
     parse_relion5_star_data,
     parse_warp_xml_data,
+    read_mrc,
+    read_mrc_meta_data,
+    write_mrc,
 )
-from pytom_tm.tmjob import load_json_to_tmjob
 from pytom_tm.merge_stars import merge_stars as merge_st
-from os import urandom
+from pytom_tm.tmjob import load_json_to_tmjob
 
 
 def _parse_argv(argv=None):
@@ -36,7 +38,7 @@ def _parse_argv(argv=None):
 
 
 def pytom_create_mask(argv=None):
-    from pytom_tm.mask import spherical_mask, ellipsoidal_mask
+    from pytom_tm.mask import ellipsoidal_mask, spherical_mask
     # entry_point strings cannot use '\n' characters as this will break the website
     # snippet that displays the CLI help message
     # ---8<--- [start:create_mask_usage]
@@ -616,9 +618,9 @@ def extract_candidates(argv=None):
 
 
 def match_template(argv=None):
-    from pytom_tm.tmjob import TMJob
-    from pytom_tm.parallel import run_job_parallel
     from pytom_tm.dataclass import CtfData
+    from pytom_tm.parallel import run_job_parallel
+    from pytom_tm.tmjob import TMJob
 
     argv = _parse_argv(argv)
 

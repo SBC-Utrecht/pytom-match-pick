@@ -1,16 +1,17 @@
-import unittest
-import sys
-import pathlib
-import numpy as np
-import cupy as cp
 import logging
-from shutil import which
-from contextlib import redirect_stdout, redirect_stderr
+import pathlib
+import sys
+import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
+from shutil import which
 from tempfile import TemporaryDirectory
-from pytom_tm import entry_points
-from pytom_tm import io
+
+import cupy as cp
+import numpy as np
 from testing_utils import chdir
+
+from pytom_tm import entry_points, io
 
 # (command line function, function in entry_points file)
 ENTRY_POINTS_TO_TEST = [
@@ -26,7 +27,6 @@ try:
     from pytom_tm import plotting  # noqa: F401
 except RuntimeError:
     SKIP_PLOT = True
-    pass
 else:
     ENTRY_POINTS_TO_TEST.append(("pytom_estimate_roc.py", "estimate_roc"))
 
