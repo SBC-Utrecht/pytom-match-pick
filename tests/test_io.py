@@ -94,8 +94,11 @@ class TestWarpXMLParser(unittest.TestCase):
         self.assertEqual(ts_metadata.level_angle_y, 0.0)
 
     def test_level_angle_sign(self):
-        # LevelAngleX/LevelAngleY should be negated the same way tilt angles are,
-        # to swap from warp's internal convention to pytom's (see PR #334)
+        # LevelAngleY is negated the same way tilt angles are, to swap from warp's
+        # internal convention to pytom's (see PR #334). LevelAngleX is kept as-is:
+        # it composes as a separate rotation about a different axis than the tilt
+        # angle, so it does not follow the same sign convention (verified against
+        # a real WarpTools reconstruction via warpylib)
         raw_xml = WARP_XML.read_text(encoding="utf-8-sig")
         raw_xml = raw_xml.replace(
             'AreAnglesInverted="False"',
@@ -106,7 +109,7 @@ class TestWarpXMLParser(unittest.TestCase):
             level_angle_xml = pathlib.Path(tmp_dir).joinpath("level_angle.xml")
             level_angle_xml.write_text(raw_xml, encoding="utf-8")
             _, ts_metadata = parse_warp_xml_data(level_angle_xml, TEST_TOMOGRAM)
-        self.assertEqual(ts_metadata.level_angle_x, -1.5)
+        self.assertEqual(ts_metadata.level_angle_x, 1.5)
         self.assertEqual(ts_metadata.level_angle_y, 3.2)
 
 

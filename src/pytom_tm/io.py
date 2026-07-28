@@ -678,10 +678,10 @@ def parse_warp_xml_data(
 
     tree = etree.parse(warp_xml_path)
 
-    # WarpTools sample-leveling angles that rotate the missing wedge to compensate
-    # for a tilted sample. Negated for the same reason the tilt angles below are
-    # negated (see PR #334): swap from warp's internal convention to pytom's.
-    level_angle_x = -float(tree.getroot().get("LevelAngleX", 0.0))
+    # WarpTools sample-leveling is needed for modelling the wedge
+    # - level_angle_y needs to be negated akin to the tilt angles
+    # - level_angle_x is used as is (validated against warpylib)
+    level_angle_x = float(tree.getroot().get("LevelAngleX", 0.0))
     level_angle_y = -float(tree.getroot().get("LevelAngleY", 0.0))
 
     tilt_angle_nodes = tree.findall(".//Angles")
