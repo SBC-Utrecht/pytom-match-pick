@@ -366,8 +366,8 @@ def _create_binary_wedge(
     cut_off_radius: float,
     level_angle_x: float = 0.0,
 ) -> npt.NDArray[float]:
-    """This function returns a (symmetric or asymmetric) wedge object, built directly
-    from the extreme tilt angles.
+    """This function returns a wedge object, built directly from the extreme
+    tilt angles.
     Function should not be imported, user should call create_wedge().
 
     By the central-slice theorem, each tilt's 2D Fourier transform is a plane
