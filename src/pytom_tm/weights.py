@@ -368,7 +368,6 @@ def _create_binary_wedge(
 ) -> npt.NDArray[float]:
     """This function returns a wedge object, built directly from the extreme
     tilt angles.
-    Function should not be imported, user should call create_wedge().
 
     By the central-slice theorem, each tilt's 2D Fourier transform is a plane
     through the origin of 3D Fourier space. Ignoring the tilt axis y, this is
@@ -376,24 +375,10 @@ def _create_binary_wedge(
     - y * sin(level_angle_x) is just z after a fixed rigid tilt by the
     sample-leveling angle, applied once up front). As alpha sweeps from
     alpha_min to alpha_max, that line rotates, sweeping out covered vs.
-    missing directions. The plane at angle alpha has normal
-    (sin(alpha), 0, cos(alpha)), so x * sin(alpha) + z' * cos(alpha) is a
-    point's signed distance off that plane. Write the point's own polar
-    coordinates as r, phi in the (x, z') plane. Then that distance equals
-    r * cos(phi - alpha) as alpha varies - a single-humped cosine. The point
-    was actually sampled by some tilt in the range exactly when this trace
-    crosses zero somewhere during the sweep.
-
-    A single cosine hump has one interior peak and no interior trough. So the
-    minimum of the trace over [alpha_min, alpha_max] is always at one of its
-    two endpoints: lo = min(f_min, f_max). The maximum is different: it is
-    the interior peak r itself if phi falls inside the tilt range, otherwise
-    just the larger endpoint: hi = r if phi_in_range else max(f_min, f_max).
-    Whether zero lies inside [lo, hi] tells us whether the point is covered.
-    This is packed into one smooth signed number, min(-lo, hi): positive
-    inside the sampled region (larger means more solidly covered), negative
-    outside it, and zero right at the wedge boundary. The final clip-and-
-    rescale turns this into a soft 0-1 mask instead of a hard edge.
+    missing directions. arctan2(x, z') gives the angle phi of a point relative
+    to this plane. So, relative to the min and max tilt angle alpha, we can
+    determine the wedge. The rest of the code in this function is needed
+    to give the wedge as smooth edge.
 
     Parameters
     ----------
