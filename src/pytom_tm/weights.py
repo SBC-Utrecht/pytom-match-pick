@@ -582,7 +582,8 @@ def _create_tilt_weighted_wedge(
         ]
 
     # because of the now correct full->reduced transform above, we need
-    # to flip the xy-plane to stay consistent with previous behaviour
+    # to flip the xy-plane to stay consistent with previous behaviour.
+    # the flip inverts the plane, the roll gets the DC to the origin.
     tilt_weighted_wedge = np.roll(
         np.flip(tilt_weighted_wedge, axis=(0, 1)), shift=(1, 1), axis=(0, 1)
     )
