@@ -671,7 +671,8 @@ def parse_warp_xml_data(
     voxel_size: float
         tomogram voxel size
     ts_metadata: WarpTiltSeriesMetaData
-        associated tilt series metadata
+        associated tilt series metadata, with defocus_handedness set to -1 (or 1
+        if the XML's AreAnglesInverted flag is set)
     """
     # First determine the tomogram_voxel_size from the tomogram_path
     tomogram_meta = read_mrc_meta_data(tomogram_path)
@@ -684,6 +685,11 @@ def parse_warp_xml_data(
     # - level_angle_x is used as is (validated against warpylib)
     level_angle_x = float(tree.getroot().get("LevelAngleX", 0.0))
     level_angle_y = -float(tree.getroot().get("LevelAngleY", 0.0))
+
+    # Defocus handedness in WarpTools is set by the AreAnglesInverted flag. We
+    # empirically checked what setting corresponds with pytom-match-pick conventions.
+    are_angles_inverted = tree.getroot().get("AreAnglesInverted", "False") == "True"
+    defocus_handedness = 1 if are_angles_inverted else -1
 
     tilt_angle_nodes = tree.findall(".//Angles")
     tilt_defocus_nodes = tree.findall(".//GridCTF/Node")
@@ -735,6 +741,7 @@ def parse_warp_xml_data(
         dose_accumulation=flattened_tilt_dose,
         level_angle_x=level_angle_x,
         level_angle_y=level_angle_y,
+        defocus_handedness=defocus_handedness,
     )
 
     return tomogram_voxel_size, ts_metadata

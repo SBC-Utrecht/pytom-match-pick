@@ -584,8 +584,8 @@ class TestEntryPoints(unittest.TestCase):
         self.assertIn("--defocus-handedness", logs)
         self.assertNotIn("--phase-shift", logs)
 
-        # make sure no log for defocus handedness in warp
-        # but a log for phase shift
+        # make sure we also log defocus handedness and phase shift for warp:
+        # defocus handedness is derived from AreAnglesInverted in the warp xml
         arguments = match_defaults.copy()
         arguments["--defocus-handedness"] = "0"
         arguments["--phase-shift"] = "1"
@@ -594,5 +594,5 @@ class TestEntryPoints(unittest.TestCase):
         with self.assertLogs(level="WARNING") as cm:
             entry_points.match_template(prep_argv(arguments))
         logs = " ".join(cm.output)
-        self.assertNotIn("--defocus-handedness", logs)
+        self.assertIn("--defocus-handedness", logs)
         self.assertIn("--phase-shift", logs)

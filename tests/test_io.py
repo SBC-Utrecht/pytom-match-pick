@@ -119,6 +119,24 @@ class TestWarpXMLParser(unittest.TestCase):
         self.assertEqual(ts_metadata.level_angle_x, 1.5)
         self.assertEqual(ts_metadata.level_angle_y, 3.2)
 
+    def test_defocus_handedness_default(self):
+        # the fixture xml has AreAnglesInverted="False", which should give the
+        # default WarpTools defocus handedness of -1
+        _, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
+        self.assertEqual(ts_metadata.defocus_handedness, -1)
+
+    def test_defocus_handedness_inverted(self):
+        # AreAnglesInverted="True" should flip the defocus handedness to 1
+        raw_xml = WARP_XML.read_text(encoding="utf-8-sig")
+        raw_xml = raw_xml.replace(
+            'AreAnglesInverted="False"', 'AreAnglesInverted="True"', 1
+        )
+        with TemporaryDirectory() as tmp_dir:
+            inverted_xml = pathlib.Path(tmp_dir).joinpath("inverted.xml")
+            inverted_xml.write_text(raw_xml, encoding="utf-8")
+            _, ts_metadata = parse_warp_xml_data(inverted_xml, TEST_TOMOGRAM)
+        self.assertEqual(ts_metadata.defocus_handedness, 1)
+
 
 class TestBrokenMRC(unittest.TestCase):
     def setUp(self):

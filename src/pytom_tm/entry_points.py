@@ -910,7 +910,8 @@ def match_template(argv=None):
         "A value of 0 means no defocus gradient correction (default), 1 means "
         "correction assuming correct handedness (as specified in Pyle and "
         "Zianetti (2021)), -1 means the handedness will be inverted. If uncertain "
-        "better to leave off as an inverted correction might hamper results.",
+        "better to leave off as an inverted correction might hamper results. "
+        "Defocus handedness is set automatically when --warp-xml-file is used.",
     )
     filter_group.add_argument(
         "--spectral-whitening",
@@ -1071,8 +1072,6 @@ def match_template(argv=None):
             args.warp_xml_file,
             args.tomogram,
         )
-        # Replace is needed here to rerun the sanity checking
-        ts_metadata = ts_metadata.replace(defocus_handedness=args.defocus_handedness)
         dropped_args += [
             "--defocus",
             "--amplitude-contrast",
@@ -1084,6 +1083,7 @@ def match_template(argv=None):
             "--dose-accumulation",
             "--phase-shift",
             "--tomogram-ctf-model",
+            "--defocus-handedness",
         ]
 
     else:
