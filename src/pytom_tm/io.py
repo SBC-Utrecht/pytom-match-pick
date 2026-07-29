@@ -652,7 +652,7 @@ def parse_relion5_star_data(
 def parse_warp_xml_data(
     warp_xml_path: pathlib.Path,
     tomogram_path: pathlib.Path,
-    phase_flip_correction: bool = False,
+    phase_flip_correction: bool = True,
 ) -> tuple[float, WarpTiltSeriesMetaData]:
     """Read WarpTools metadata from a project directory.
 
@@ -662,8 +662,9 @@ def parse_warp_xml_data(
         path to the warp XML file containing metadata
     tomogram_path: pathlib.Path
         path to the tomogram for template matching
-    phase_flip_correction: bool, default False
-        whether phase flip correction was applied
+    phase_flip_correction: bool, default True
+        whether phase flip correction was applied; defaults to True because
+        tomograms reconstructed with WarpTools or AreTomo are always CTF-corrected
 
     Returns
     -------

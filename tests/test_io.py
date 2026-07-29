@@ -72,6 +72,13 @@ class TestWarpXMLParser(unittest.TestCase):
         for ctf in ts_metadata.ctf_data:
             self.assertTrue(10e-6 >= ctf.defocus >= 0.1e-6)
 
+    def test_phase_flip_default_on(self):
+        # warp/AreTomo reconstructions are always CTF-corrected, so phase flip
+        # correction should default to on for warp metadata
+        _voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
+        for ctf in ts_metadata.ctf_data:
+            self.assertTrue(ctf.flip_phase)
+
     def test_correct_angle_sign(self):
         _voxel_size, ts_metadata = parse_warp_xml_data(WARP_XML, TEST_TOMOGRAM)
         # grab raw xml data
