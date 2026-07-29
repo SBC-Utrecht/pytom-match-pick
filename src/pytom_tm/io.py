@@ -664,7 +664,7 @@ def parse_warp_xml_data(
         path to the tomogram for template matching
     phase_flip_correction: bool, default True
         whether phase flip correction was applied; defaults to True because
-        tomograms reconstructed with WarpTools or AreTomo are always CTF-corrected
+        tomograms reconstructed with WarpTools are always CTF-corrected
 
     Returns
     -------

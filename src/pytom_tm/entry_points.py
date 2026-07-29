@@ -911,7 +911,8 @@ def match_template(argv=None):
         "correction assuming correct handedness (as specified in Pyle and "
         "Zianetti (2021)), -1 means the handedness will be inverted. If uncertain "
         "better to leave off as an inverted correction might hamper results. "
-        "Defocus handedness is set automatically when --warp-xml-file is used.",
+        "Defocus handedness is set automatically when --warp-xml-file or "
+        "--relion5-tomograms-star is used.",
     )
     filter_group.add_argument(
         "--spectral-whitening",
