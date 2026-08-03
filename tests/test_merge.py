@@ -75,7 +75,7 @@ class TestMergeStars(unittest.TestCase):
         # Make a joined file via the entry point
         # mimick star expansion on a bash shell
         in_files = glob.glob(f"{self.dirname}/*.star")
-        with self.assertLogs(level="WARNING") as cm:
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
             merge_stars(["-i"] + in_files + ["-o", outfile, "--log-test"])
         for o in cm.output:
             if "multi-data-block" in o:
@@ -113,7 +113,7 @@ class TestMergeStars(unittest.TestCase):
             in_files = glob.glob(f"{outdir}/*.star")
 
             # Make a joined file via the entry point
-            with self.assertNoLogs(level="WARNING"):
+            with self.assertNoLogs(logger="pytom_tm", level="WARNING"):
                 merge_stars(
                     ["-i"]
                     + in_files
@@ -266,7 +266,7 @@ class TestMergeStars(unittest.TestCase):
         # Make a joined file via the entry point
         # mimick star expansion on a bash shell
         in_files = glob.glob(f"{self.dirname}/*.star")
-        with self.assertLogs(level="WARNING") as cm:
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
             # Give all the files twice
             merge_stars(["-i"] + in_files + in_files + ["-o", outfile, "--log-test"])
         for o in cm.output:

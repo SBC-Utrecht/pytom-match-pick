@@ -599,9 +599,9 @@ class TestTMJob(unittest.TestCase):
         )
 
         # check job loading and preventing whitening filter recalculation
-        with self.assertNoLogs(level="INFO"):
+        with self.assertNoLogs(logger="pytom_tm", level="INFO"):
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=True)
-        with self.assertLogs(level="INFO") as cm:
+        with self.assertLogs(logger="pytom_tm", level="INFO") as cm:
             _ = load_json_to_tmjob(TEST_JOB_JSON_WHITENING, load_for_extraction=False)
         self.assertIn("Estimating whitening filter...", "".join(cm.output))
 
@@ -894,7 +894,7 @@ class TestTMJob(unittest.TestCase):
             _ = extract_particles(self.job, 100, create_plot=False)
         job = self.job.copy()
         job.particle_diameter = 10
-        with self.assertLogs(level="INFO") as cm:
+        with self.assertLogs(logger="pytom_tm", level="INFO") as cm:
             _ = extract_particles(job, 100, create_plot=False)
         self.assertIn("No particle diameter was provided,", "".join(cm.output))
 
@@ -955,7 +955,7 @@ class TestTMJob(unittest.TestCase):
         )
         # test if all masks are ignored if ignore_tomogram_mask=True
         # and that a warning is raised
-        with self.assertLogs(level="WARNING") as cm:
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
             _df, scores = extract_particles(
                 job,
                 100,

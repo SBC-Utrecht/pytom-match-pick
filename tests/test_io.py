@@ -106,7 +106,7 @@ class TestBrokenMRC(unittest.TestCase):
 
     def test_read_mrc_minor_broken(self):
         # Test if this mrc can be read and if the approriate logs are printed
-        with self.assertLogs(level="WARNING") as cm:
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
             mrc = read_mrc(FAILING_MRC)
         self.assertIsNotNone(mrc)
         self.assertEqual(len(cm.output), 1)
@@ -122,7 +122,7 @@ class TestBrokenMRC(unittest.TestCase):
 
     def test_read_mrc_meta_data(self):
         # Test if this mrc can be read and if the approriate logs are printed
-        with self.assertLogs(level="WARNING") as cm:
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
             mrc = read_mrc_meta_data(FAILING_MRC)
         self.assertIsNotNone(mrc)
         self.assertEqual(len(cm.output), 1)
@@ -133,7 +133,7 @@ class TestBrokenMRC(unittest.TestCase):
         array = np.random.rand(27).reshape((3, 3, 3)).astype(np.float16)
         fname = pathlib.Path(self.tempdirname) / "test_half.mrc"
         # Make sure no warnings are raised
-        with self.assertNoLogs(level="WARNING"):
+        with self.assertNoLogs(logger="pytom_tm", level="WARNING"):
             write_mrc(fname, array, 1.0)
         # Make sure the file can be read back
         # make sure mode is as expected for float16
@@ -151,7 +151,7 @@ class TestBrokenMRC(unittest.TestCase):
         # make sure a warning is raised when writing an integer based array
         array = np.random.rand(27).reshape((3, 3, 3)).astype(np.int32)
         fname = pathlib.Path(self.tempdirname) / "test_cast.mrc"
-        with self.assertLogs(level="WARNING") as cm:
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
             write_mrc(fname, array, 1.0)
         self.assertEqual(len(cm.output), 1)
         self.assertIn("np.float32", cm.output[0])

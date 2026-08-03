@@ -26,7 +26,7 @@ class TestTemplate(unittest.TestCase):
             msg="Template was not padded to output box size",
         )
 
-        with self.assertLogs(level="WARNING") as cm:
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
             new_template = generate_template_from_map(
                 uneven_box, 1, 2, output_box_size=3
             )
@@ -73,7 +73,7 @@ class TestTemplate(unittest.TestCase):
 
     def test_lowpass_resolution(self):
         # Test too low filter resolution
-        with self.assertLogs(level="WARNING") as cm:
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
             _ = generate_template_from_map(
                 self.template, 1.0, 1.0, filter_to_resolution=1.5
             )
@@ -82,7 +82,7 @@ class TestTemplate(unittest.TestCase):
         self.assertIn("too low", cm.output[0])
 
         # Test working filter resolution
-        with self.assertNoLogs(level="WARNING"):
+        with self.assertNoLogs(logger="pytom_tm", level="WARNING"):
             _ = generate_template_from_map(
                 self.template, 1.0, 1.0, filter_to_resolution=2.5
             )

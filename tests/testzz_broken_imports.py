@@ -33,25 +33,25 @@ def cupy_import_error_mock(name, *args):
 class TestMissingDependencies(unittest.TestCase):
     def test_missing_cupy(self):
         # assert working import
-        with self.assertNoLogs(level="WARNING"):
+        with self.assertNoLogs(logger="pytom_tm", level="WARNING"):
             import pytom_tm
         cupy_not_found = module_not_found_mock("cupy")
         # Test missing cupy
         with unittest.mock.patch("builtins.__import__", side_effect=cupy_not_found):
-            with self.assertLogs(level="WARNING") as cm:
+            with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
                 reload(pytom_tm)
             self.assertEqual(len(cm.output), 1)
             self.assertIn("cupy installation not found or not functional", cm.output[0])
 
     def test_broken_cupy(self):
         # assert working import
-        with self.assertNoLogs(level="WARNING"):
+        with self.assertNoLogs(logger="pytom_tm", level="WARNING"):
             import pytom_tm
         # Test cupy ImportError
         with unittest.mock.patch(
             "builtins.__import__", side_effect=cupy_import_error_mock
         ):
-            with self.assertLogs(level="WARNING") as cm:
+            with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
                 reload(pytom_tm)
             self.assertEqual(len(cm.output), 1)
             self.assertIn("cupy installation not found or not functional", cm.output[0])

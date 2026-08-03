@@ -44,8 +44,11 @@ def configure_logging(level: int) -> None:
     handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s:%(message)s"))
     package_logger.addHandler(handler)
     package_logger.setLevel(level)
-    # Note: we deliberately leave `propagate` at its default (True). This means
-    # records still bubble up to the root logger's handlers if any are ever
-    # added elsewhere (e.g. by a test harness using unittest.assertLogs, or by
-    # another library) - but pytom_tm itself never configures or logs directly
-    # through the root logger.
+    # Now that a real handler is attached directly to the pytom_tm logger, stop
+    # propagating records up to the root logger. Otherwise anything else that
+    # happens to have a handler on the root logger (e.g. pytest's automatic log
+    # capture, or another library's basicConfig() call) would emit the same
+    # record a second time. Note this only takes effect once configure_logging()
+    # has actually been called; until then `propagate` stays at its default
+    # (True).
+    package_logger.propagate = False
