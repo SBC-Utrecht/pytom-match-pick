@@ -400,10 +400,15 @@ def _create_binary_wedge(
         wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
     if abs(alpha_min) > np.pi / 2 or abs(alpha_max) > np.pi / 2:
-        raise ValueError("Negative wedge angles are not defined")
+        raise ValueError(
+            "alpha_min and alpha_max (tilt angle plus level_angle_y) must lie "
+            "within [-90, 90] degrees"
+        )
 
-    # x and y are negated to match the missing-wedge orientation established
-    # for this codebase relative to WarpTools/AreTomo reconstructions
+    # x and y are negated to preserve the missing-wedge orientation convention
+    # of this codebase (which corresponds with AreTomo). This has been verified
+    # against both WarpTools and AreTomo reconstructions (their conventions
+    # differ from each other, see PR #334)
     x = -(np.fft.fftfreq(shape[0]) * shape[0] / (shape[0] // 2))[
         :, np.newaxis, np.newaxis
     ]

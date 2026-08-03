@@ -109,7 +109,7 @@ class TestWarpXMLParser(unittest.TestCase):
         raw_xml = WARP_XML.read_text(encoding="utf-8-sig")
         raw_xml = raw_xml.replace(
             'AreAnglesInverted="False"',
-            'AreAnglesInverted="False" LevelAngleX="1.5" LevelAngleY="-3.2"',
+            'AreAnglesInverted="False" LevelAngleX="1.5" LevelAngleY="3.2"',
             1,
         )
         with TemporaryDirectory() as tmp_dir:
@@ -117,7 +117,8 @@ class TestWarpXMLParser(unittest.TestCase):
             level_angle_xml.write_text(raw_xml, encoding="utf-8")
             _, ts_metadata = parse_warp_xml_data(level_angle_xml, TEST_TOMOGRAM)
         self.assertEqual(ts_metadata.level_angle_x, 1.5)
-        self.assertEqual(ts_metadata.level_angle_y, 3.2)
+        # Warp tilt angles are inverted on loading to match our convention
+        self.assertEqual(ts_metadata.level_angle_y, -3.2)
 
     def test_defocus_handedness_default(self):
         # the fixture xml has AreAnglesInverted="False", which should give the

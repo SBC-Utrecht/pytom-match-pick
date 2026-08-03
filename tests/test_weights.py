@@ -144,12 +144,12 @@ class TestWeights(unittest.TestCase):
         )
 
     def test_create_binary_wedge(self):
-        with self.assertRaisesRegex(ValueError, "Negative wedge angles"):
+        with self.assertRaisesRegex(ValueError, "alpha_min and alpha_max"):
             _create_binary_wedge(self.volume_shape_even, 4, 4, 1.0)
 
     def test_create_wedge(self):
         temp = TiltSeriesMetaData(tilt_angles=[-91, 91])
-        with self.assertRaisesRegex(ValueError, "Negative wedge angles"):
+        with self.assertRaisesRegex(ValueError, "alpha_min and alpha_max"):
             create_wedge(self.volume_shape_even, ts_metadata=temp, voxel_size=1.0)
         with self.assertRaises(
             ValueError,
