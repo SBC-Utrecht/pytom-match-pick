@@ -892,7 +892,9 @@ class TestTMJob(unittest.TestCase):
 
         # test for log if cutoff is negative
         with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
-            _ = extract_particles(self.job, 100, create_plot=False, cut_off=-1)
+            _ = extract_particles(
+                self.job, 100, particle_diameter=10, create_plot=False, cut_off=-1
+            )
         self.assertIn("No particle diameter was provided,", "".join(cm.output))
         self.assertNotEqual(
             len(scores), 0, msg="Here we expect to get some annotations."
