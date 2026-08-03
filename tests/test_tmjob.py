@@ -895,11 +895,12 @@ class TestTMJob(unittest.TestCase):
             _ = extract_particles(
                 self.job, 100, particle_diameter=10, create_plot=False, cut_off=-1
             )
-        self.assertIn("No particle diameter was provided,", "".join(cm.output))
         self.assertNotEqual(
             len(scores), 0, msg="Here we expect to get some annotations."
         )
+        self.assertIn("cut-off is smaller than 0", "".join(cm.output))
 
+        # test for particle diameter stuff
         with self.assertRaisesRegex(ValueError, "particle diameter"):
             _ = extract_particles(self.job, 100, create_plot=False)
         job = self.job.copy()
@@ -907,7 +908,7 @@ class TestTMJob(unittest.TestCase):
         with self.assertLogs(logger="pytom_tm", level="INFO") as cm:
             _df, scores = extract_particles(job, 100, create_plot=False)
 
-        self.assertIn("cut-off is smaller than 0", "".join(cm.output))
+        self.assertIn("No particle diameter was provided,", "".join(cm.output))
 
         # extract particles in relion5 style
         df_rel5, scores = extract_particles(
