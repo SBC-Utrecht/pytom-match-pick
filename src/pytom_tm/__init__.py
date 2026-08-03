@@ -32,7 +32,7 @@ def configure_logging(level: int) -> None:
         the logging level to set for the pytom_tm package logger, for example
         logging.INFO or logging.DEBUG
     """
-    package_logger = logging.getLogger(__name__)
+    package_logger = logger
     # remove any handlers that might have been added by a previous call, this
     # mimics the `force=True` behaviour of logging.basicConfig() but scoped to
     # the pytom_tm logger instead of the root logger
