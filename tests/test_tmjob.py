@@ -890,13 +890,22 @@ class TestTMJob(unittest.TestCase):
             len(scores), 0, msg="Here we expect to get some annotations."
         )
 
+        # test for log if cutoff is negative
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
+            _ = extract_particles(self.job, 100, create_plot=False, cutoff=-1)
+        self.assertIn("No particle diameter was provided,", "".join(cm.output))
+        self.assertNotEqual(
+            len(scores), 0, msg="Here we expect to get some annotations."
+        )
+
         with self.assertRaisesRegex(ValueError, "particle diameter"):
             _ = extract_particles(self.job, 100, create_plot=False)
         job = self.job.copy()
         job.particle_diameter = 10
         with self.assertLogs(logger="pytom_tm", level="INFO") as cm:
-            _ = extract_particles(job, 100, create_plot=False)
-        self.assertIn("No particle diameter was provided,", "".join(cm.output))
+            _df, scores = extract_particles(job, 100, create_plot=False)
+
+        self.assertIn("cut-off is smaller than 0", "".join(cm.output))
 
         # extract particles in relion5 style
         df_rel5, scores = extract_particles(
