@@ -156,6 +156,21 @@ class TestBrokenMRC(unittest.TestCase):
         self.assertEqual(len(cm.output), 1)
         self.assertIn("np.float32", cm.output[0])
 
+    def test_almost_equal_voxel_warning(self):
+        array = np.random.rand(27).reshape((3, 3, 3)).astype(np.float32)
+        fname = pathlib.Path(self.tempdirname) / "test_almost_equal_voxels.mrc"
+        # Make sure no warnings are raised
+        with self.assertNoLogs(logger="pytom_tm", level="WARNING"):
+            write_mrc(fname, array, voxel_size=(1.0, 1.0, 1.0001))
+        # Make sure a warning is raised when reading
+        with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
+            mrc = read_mrc(fname)
+        self.assertIsNotNone(mrc)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn(
+            "Voxel size annotation in MRC is slightly different", cm.output[0]
+        )
+
     def test_parse_relion5_star_data(self):
         tomogram = pathlib.Path("rec_tomo200528_107.mrc")
         voxel_size, metadata = parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)
