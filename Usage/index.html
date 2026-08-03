@@ -1526,14 +1526,15 @@ Filter control:
                         space constraint can be used (default: None)
   --per-tilt-weighting PER_TILT_WEIGHTING
                         Flag to activate per-tilt-weighting, only makes sense
-                        if a file with all tilt angles have been provided. In
-                        case not set, while a tilt angle file is provided, the
+                        if a file with all tilt angles has been provided. If
+                        not set while a tilt angle file is provided, the
                         minimum and maximum tilt angle are used to create a
                         binary wedge. The base functionality creates a fanned
                         wedge where each tilt is weighted by cos(tilt_angle).
                         If dose accumulation and CTF parameters are provided
                         these will all be incorporated in the tilt-weighting.
-                        (default: False)
+                        Per-tilt-weighting is always on when --warp-xml-file
+                        or --relion5-tomograms-star is used. (default: False)
   --voxel-size-angstrom VOXEL_SIZE_ANGSTROM
                         Voxel spacing of tomogram/template in angstrom, if not
                         provided will try to read from the MRC files. Argument
@@ -1580,7 +1581,9 @@ Filter control:
                         appropriate if the CTF was left uncorrected in the
                         tomogram. Option &#39;phase-flip&#39; : appropriate for IMOD&#39;s
                         strip-based phase flipping or reconstructions
-                        generated with novaCTF/3dctf. (default: None)
+                        generated with novaCTF/3dctf. Phase-flip correction is
+                        always on when --warp-xml-file is used. (default:
+                        None)
   --defocus-handedness {-1,0,1}
                         Specify the defocus handedness for defocus gradient
                         correction of the CTF in each subvolumes. The more
@@ -1594,7 +1597,9 @@ Filter control:
                         correct handedness (as specified in Pyle and Zianetti
                         (2021)), -1 means the handedness will be inverted. If
                         uncertain better to leave off as an inverted
-                        correction might hamper results. (default: 0)
+                        correction might hamper results. Defocus handedness is
+                        set automatically when --warp-xml-file or
+                        --relion5-tomograms-star is used. (default: 0)
   --spectral-whitening SPECTRAL_WHITENING
                         Calculate a whitening filtering from the power
                         spectrum of the tomogram; apply it to the tomogram
@@ -1628,7 +1633,9 @@ Additional options:
                         Here, you can provide a Warp xml file that has the
                         metadata for that tiltseries.This xml metadata file
                         will be in the tiltseries processing dir eg.
-                        &lt;cwd&gt;/warp_tiltseries/) (default: None)
+                        &lt;cwd&gt;/warp_tiltseries/). pytom-match-pick will fetch
+                        all the tilt-series metadata from this file and
+                        overwrite all other metadata options. (default: None)
 
 Device control:
   -g, --gpu-ids GPU_IDS [GPU_IDS ...]
