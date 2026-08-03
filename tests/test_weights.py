@@ -5,7 +5,7 @@ from testing_utils import ACCUMULATED_DOSE, CTF_PARAMS, TILT_ANGLES
 
 from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
 from pytom_tm.weights import (
-    _create_symmetric_wedge,
+    _create_binary_wedge,
     _masked_radial,
     create_ctf,
     create_gaussian_band_pass,
@@ -143,13 +143,13 @@ class TestWeights(unittest.TestCase):
             msg="1D bandpass filter does not have expected output shape",
         )
 
-    def test_create_symmetric_wedge(self):
-        with self.assertRaisesRegex(ValueError, "bigger than 90 degrees"):
-            _create_symmetric_wedge(self.volume_shape_even, 4, 1.0)
+    def test_create_binary_wedge(self):
+        with self.assertRaisesRegex(ValueError, "alpha_min and alpha_max"):
+            _create_binary_wedge(self.volume_shape_even, 4, 4, 1.0)
 
     def test_create_wedge(self):
         temp = TiltSeriesMetaData(tilt_angles=[-91, 91])
-        with self.assertRaisesRegex(ValueError, "Negative wedge angles"):
+        with self.assertRaisesRegex(ValueError, "alpha_min and alpha_max"):
             create_wedge(self.volume_shape_even, ts_metadata=temp, voxel_size=1.0)
         with self.assertRaises(
             ValueError,
@@ -322,6 +322,49 @@ class TestWeights(unittest.TestCase):
             self.reduced_even_shape_3d,
             msg="Tilt weighted wedge should also work without defocus and dose info.",
         )
+
+    def test_create_wedge_level_angle(self):
+        # level_angle_x/level_angle_y default to 0.0 and should not change the wedge
+        no_level_metadata = self.ts_metadata.replace(
+            level_angle_x=0.0, level_angle_y=0.0
+        )
+        level_metadata = self.ts_metadata.replace(level_angle_x=10.0, level_angle_y=5.0)
+
+        for per_tilt_weighting in (True, False):
+            baseline = create_wedge(
+                self.volume_shape_even,
+                no_level_metadata,
+                self.voxel_size,
+                per_tilt_weighting=per_tilt_weighting,
+            )
+            leveled = create_wedge(
+                self.volume_shape_even,
+                level_metadata,
+                self.voxel_size,
+                per_tilt_weighting=per_tilt_weighting,
+            )
+            self.assertEqual(leveled.shape, baseline.shape)
+            self.assertEqual(leveled.dtype, np.float32)
+            self.assertFalse(
+                np.allclose(baseline, leveled),
+                msg="Wedge with non-zero level angles should differ from the "
+                f"un-leveled wedge (per_tilt_weighting={per_tilt_weighting})",
+            )
+
+        # the binary wedge is built directly on the (independently normalized)
+        # frequency grid, so a non-zero level_angle_x also works for a non-cubic shape
+        irregular_metadata = level_metadata.replace(
+            tilt_angles=[TILT_ANGLES[0], TILT_ANGLES[-1]],
+            ctf_data=[CTF_PARAMS[0], CTF_PARAMS[-1]],
+            dose_accumulation=[ACCUMULATED_DOSE[0], ACCUMULATED_DOSE[-1]],
+        )
+        irregular_wedge = create_wedge(
+            self.volume_shape_irregular,
+            irregular_metadata,
+            self.voxel_size,
+            per_tilt_weighting=False,
+        )
+        self.assertEqual(irregular_wedge.shape, self.reduced_irregular_shape_3d)
 
     def test_ctf(self):
         ctf_data = CtfData(

@@ -796,11 +796,13 @@ def match_template(argv=None):
         default=False,
         required=False,
         help="Flag to activate per-tilt-weighting, only makes sense if a file with all "
-        "tilt angles have been provided. In case not set, while a tilt angle file is "
+        "tilt angles has been provided. If not set while a tilt angle file is "
         "provided, the minimum and maximum tilt angle are used to create a binary "
         "wedge. The base functionality creates a fanned wedge where each tilt is "
         "weighted by cos(tilt_angle). If dose accumulation and CTF parameters are "
-        "provided these will all be incorporated in the tilt-weighting.",
+        "provided these will all be incorporated in the tilt-weighting. "
+        "Per-tilt-weighting is always on when --warp-xml-file or "
+        "--relion5-tomograms-star is used.",
     )
     filter_group.add_argument(
         "--voxel-size-angstrom",
@@ -893,7 +895,8 @@ def match_template(argv=None):
         "Not using this option is appropriate if the CTF was left uncorrected in "
         "the tomogram. Option 'phase-flip' : appropriate for IMOD's strip-based "
         "phase flipping or reconstructions generated with "
-        "novaCTF/3dctf.",
+        "novaCTF/3dctf. Phase-flip correction is always on when --warp-xml-file "
+        "is used.",
     )
     filter_group.add_argument(
         "--defocus-handedness",
@@ -910,7 +913,9 @@ def match_template(argv=None):
         "A value of 0 means no defocus gradient correction (default), 1 means "
         "correction assuming correct handedness (as specified in Pyle and "
         "Zianetti (2021)), -1 means the handedness will be inverted. If uncertain "
-        "better to leave off as an inverted correction might hamper results.",
+        "better to leave off as an inverted correction might hamper results. "
+        "Defocus handedness is set automatically when --warp-xml-file or "
+        "--relion5-tomograms-star is used.",
     )
     filter_group.add_argument(
         "--spectral-whitening",
@@ -968,7 +973,9 @@ def match_template(argv=None):
         help="Here, you can provide a Warp xml file that has the metadata "
         "for that tiltseries."
         "This xml metadata file will be in the tiltseries processing dir "
-        "eg. <cwd>/warp_tiltseries/)",
+        "eg. <cwd>/warp_tiltseries/). pytom-match-pick will fetch all the "
+        "tilt-series metadata from this file and overwrite all other metadata "
+        "options.",
     )
     device_group = parser.add_argument_group("Device control")
     device_group.add_argument(
@@ -1068,10 +1075,7 @@ def match_template(argv=None):
         voxel_size, ts_metadata = parse_warp_xml_data(
             args.warp_xml_file,
             args.tomogram,
-            phase_flip_correction=phase_flip_correction,
         )
-        # Replace is needed here to rerun the sanity checking
-        ts_metadata = ts_metadata.replace(defocus_handedness=args.defocus_handedness)
         dropped_args += [
             "--defocus",
             "--amplitude-contrast",
@@ -1082,6 +1086,8 @@ def match_template(argv=None):
             "--voxel-size-angstrom",
             "--dose-accumulation",
             "--phase-shift",
+            "--tomogram-ctf-model",
+            "--defocus-handedness",
         ]
 
     else:

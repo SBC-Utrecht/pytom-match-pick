@@ -530,6 +530,9 @@ class TestEntryPoints(unittest.TestCase):
             self.assertIn(i, logs)
 
         # repeat for warp-xml
+        # --tomogram-ctf-model is also dropped here: phase-flip correction is
+        # always on for warp metadata, same as per-tilt-weighting
+        warp_dropped_options = dropped_options + ["--tomogram-ctf-model"]
         arguments = match_defaults.copy()
         del arguments["--relion5-tomograms-star"]
         arguments["--warp-xml-file"] = str(WARP_XML)
@@ -537,10 +540,10 @@ class TestEntryPoints(unittest.TestCase):
             entry_points.match_template(prep_argv(arguments))
         self.assertEqual(
             len([i for i in cm.output if ("WARN" in i and "-" in i)]),
-            len(dropped_options),
+            len(warp_dropped_options),
         )
         logs = " ".join(cm.output)
-        for i in dropped_options:
+        for i in warp_dropped_options:
             self.assertIn(i, logs)
 
         # make sure we also log on shorthand
@@ -581,8 +584,8 @@ class TestEntryPoints(unittest.TestCase):
         self.assertIn("--defocus-handedness", logs)
         self.assertNotIn("--phase-shift", logs)
 
-        # make sure no log for defocus handedness in warp
-        # but a log for phase shift
+        # make sure we also log defocus handedness and phase shift for warp:
+        # defocus handedness is derived from AreAnglesInverted in the warp xml
         arguments = match_defaults.copy()
         arguments["--defocus-handedness"] = "0"
         arguments["--phase-shift"] = "1"
@@ -591,5 +594,5 @@ class TestEntryPoints(unittest.TestCase):
         with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
             entry_points.match_template(prep_argv(arguments))
         logs = " ".join(cm.output)
-        self.assertNotIn("--defocus-handedness", logs)
+        self.assertIn("--defocus-handedness", logs)
         self.assertIn("--phase-shift", logs)

@@ -315,6 +315,10 @@ def create_wedge(
     else:
         tilt_angles_rad = ts_metadata.tilt_angles
 
+    # WarpTools sample-leveling angles (see WarpTiltSeriesMetaData), always in degrees
+    level_angle_x_rad = np.deg2rad(ts_metadata.level_angle_x)
+    level_angle_y_rad = np.deg2rad(ts_metadata.level_angle_y)
+
     if per_tilt_weighting is None:
         per_tilt_weighting = ts_metadata.per_tilt_weighting
     if per_tilt_weighting:
@@ -325,20 +329,19 @@ def create_wedge(
             voxel_size,
             accumulated_dose_per_tilt=ts_metadata.dose_accumulation,
             ctf_params_per_tilt=ts_metadata.ctf_data,
+            level_angle_x=level_angle_x_rad,
+            level_angle_y=level_angle_y_rad,
         ).astype(np.float32)
     else:
-        wedge_angles = (
-            np.pi / 2 - np.abs(min(tilt_angles_rad)),
-            np.pi / 2 - np.abs(max(tilt_angles_rad)),
-        )
-        if np.round(wedge_angles[0], 2) == np.round(wedge_angles[1], 2):
-            wedge = _create_symmetric_wedge(
-                shape, wedge_angles[0], cut_off_radius
-            ).astype(np.float32)
-        else:
-            wedge = _create_asymmetric_wedge(
-                shape, (wedge_angles[0], wedge_angles[1]), cut_off_radius
-            ).astype(np.float32)
+        alpha_min = min(tilt_angles_rad) + level_angle_y_rad
+        alpha_max = max(tilt_angles_rad) + level_angle_y_rad
+        wedge = _create_binary_wedge(
+            shape,
+            alpha_min,
+            alpha_max,
+            cut_off_radius,
+            level_angle_x=level_angle_x_rad,
+        ).astype(np.float32)
         if ts_metadata.ctf_data is not None:
             # - take ctf params from approx. middle tilt as those are most accurate
             ctf_data = ts_metadata.ctf_data[len(ts_metadata) // 2]
@@ -356,157 +359,89 @@ def create_wedge(
         return wedge
 
 
-def _create_symmetric_wedge(
-    shape: tuple[int, int, int], wedge_angle: float, cut_off_radius: float
-) -> npt.NDArray[float]:
-    """This function returns a symmetric wedge object.
-    Function should not be imported, user should call create_wedge().
-
-    Parameters
-    ----------
-    shape: tuple[int, int, int]
-        real space shape of volume to which it needs to be applied
-    wedge_angle: float
-        angle describing symmetric wedge in radians
-    cut_off_radius: float
-        cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
-
-    Returns
-    ----------
-    wedge: npt.NDArray[float]
-        wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
-    """
-    if wedge_angle < 0:
-        raise ValueError("Negative wedge angles are not defined")
-    elif wedge_angle > np.pi:
-        raise ValueError("Wedge angles bigger than 90 degrees are not defined")
-
-    # special treatment for the 0.0 angles
-    if wedge_angle == 0.0:
-        new_shape = (shape[0], shape[2] // 2 + 1)
-        wedge_2d = np.ones(shape=new_shape)
-    else:
-        x = (
-            np.abs(
-                np.arange(
-                    -shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1.0
-                )
-            )
-            / (shape[0] // 2)
-        )[:, np.newaxis]
-        z = np.arange(0, shape[2] // 2 + 1, 1.0) / (shape[2] // 2)
-
-        # calculate the wedge mask with smooth edges
-        wedge_2d = x - np.tan(wedge_angle) * z
-        limit = (wedge_2d.max() - wedge_2d.min()) / (2 * min(shape[0], shape[2]) // 2)
-        wedge_2d[wedge_2d > limit] = limit
-        wedge_2d[wedge_2d < -limit] = -limit
-        wedge_2d = (wedge_2d - wedge_2d.min()) / (wedge_2d.max() - wedge_2d.min())
-        wedge_2d[shape[0] // 2 + 1, 0] = (
-            1  # ensure that the zero frequency point equals 1
-        )
-
-    # duplicate in x
-    wedge = np.tile(wedge_2d[:, np.newaxis, :], (1, shape[1], 1))
-
-    wedge[radial_grid(shape, fftshifted=True) > cut_off_radius] = 0
-
-    # fourier shift to origin
-    return np.fft.ifftshift(wedge, axes=(0, 1))
-
-
-def _create_asymmetric_wedge(
+def _create_binary_wedge(
     shape: tuple[int, int, int],
-    wedge_angles: tuple[float, float],
+    alpha_min: float,
+    alpha_max: float,
     cut_off_radius: float,
+    level_angle_x: float = 0.0,
 ) -> npt.NDArray[float]:
-    """This function returns an asymmetric wedge object.
-    Function should not be imported, user should call create_wedge().
+    """This function returns a wedge object, built directly from the extreme
+    tilt angles.
+
+    By the central-slice theorem, each tilt's 2D Fourier transform is a plane
+    through the origin of 3D Fourier space. Ignoring the tilt axis y, this is
+    just a line through the origin in the x-z' plane (z' = z * cos(level_angle_x)
+    - y * sin(level_angle_x) is just z after a fixed rigid tilt by the
+    sample-leveling angle, applied once up front). As alpha sweeps from
+    alpha_min to alpha_max, that line rotates, sweeping out covered vs.
+    missing directions. arctan2(x, z') gives the angle phi of a point relative
+    to this plane. So, relative to the min and max tilt angle alpha, we can
+    determine the wedge. The rest of the code in this function is needed
+    to give the wedge as smooth edge.
 
     Parameters
     ----------
     shape: tuple[int, int, int]
         real space shape of volume to which it needs to be applied
-    wedge_angles: tuple[float, float]
-        two angles describing asymmetric missing wedge in radians
+    alpha_min: float
+        lowest tilt angle (including level_angle_y) in radians, in [-pi/2, pi/2]
+    alpha_max: float
+        highest tilt angle (including level_angle_y) in radians, in [-pi/2, pi/2]
     cut_off_radius: float
         cutoff as a fraction of nyquist, i.e. 1.0 means all the way to nyquist
+    level_angle_x: float, default 0.0
+        WarpTools sample-leveling angle in radians that rotates the wedge around the
+        x-axis
 
     Returns
     ----------
     wedge: npt.NDArray[float]
         wedge volume that is a reduced fourier space object in z, i.e. shape[2] // 2 + 1
     """
-    x = (
-        np.abs(
-            np.arange(-shape[0] // 2 + shape[0] % 2, shape[0] // 2 + shape[0] % 2, 1.0)
+    if abs(alpha_min) > np.pi / 2 or abs(alpha_max) > np.pi / 2:
+        raise ValueError(
+            "alpha_min and alpha_max (tilt angle plus level_angle_y) must lie "
+            "within [-90, 90] degrees"
         )
-        / (shape[0] // 2)
-    )[:, np.newaxis]
-    z = np.arange(0, shape[2] // 2 + 1, 1.0) / (shape[2] // 2)
 
-    # calculate wedge for first angle
-    wedge_section = x - np.tan(wedge_angles[0]) * z
-    limit = (wedge_section.max() - wedge_section.min()) / (
-        2 * min(shape[0], shape[2]) // 2
-    )
-    wedge_section[wedge_section > limit] = limit
-    wedge_section[wedge_section < -limit] = -limit
-    wedge_section = (wedge_section - wedge_section.min()) / (
-        wedge_section.max() - wedge_section.min()
-    )
+    # x and y are negated to preserve the missing-wedge orientation convention
+    # of this codebase (which corresponds with AreTomo). This has been verified
+    # against both WarpTools and AreTomo reconstructions (their conventions
+    # differ from each other, see PR #334)
+    x = -(np.fft.fftfreq(shape[0]) * shape[0] / (shape[0] // 2))[
+        :, np.newaxis, np.newaxis
+    ]
+    y = -(np.fft.fftfreq(shape[1]) * shape[1] / (shape[1] // 2))[
+        np.newaxis, :, np.newaxis
+    ]
+    z = radial_grid((shape[2],))[np.newaxis, np.newaxis, :]
 
-    # set top of the wedge
-    wedge_2d = wedge_section.copy()
+    # z rotated by level_angle_x within the (y, z) plane - see docstring
+    z_eff = z * np.cos(level_angle_x) - y * np.sin(level_angle_x)
 
-    # calculate wedge for second angle
-    wedge_section = x - np.tan(wedge_angles[1]) * z
-    limit = (wedge_section.max() - wedge_section.min()) / (
-        2 * min(shape[0], shape[2]) // 2
-    )
-    wedge_section[wedge_section > limit] = limit
-    wedge_section[wedge_section < -limit] = -limit
-    wedge_section = (wedge_section - wedge_section.min()) / (
-        wedge_section.max() - wedge_section.min()
-    )
+    r = np.sqrt(x**2 + z_eff**2)
+    phi = np.arctan2(x, z_eff)
 
-    # set bottom of wedge and put 0 frequency to 1
-    wedge_2d[shape[0] // 2 + 1 :] = wedge_section[shape[0] // 2 + 1 :]
-    wedge_2d[shape[0] // 2 + 1, 0] = 1
+    f_min = x * np.sin(alpha_min) + z_eff * np.cos(alpha_min)
+    f_max = x * np.sin(alpha_max) + z_eff * np.cos(alpha_max)
+    phi_in_range = (phi >= alpha_min) & (phi <= alpha_max)
 
-    # duplicate in x
-    wedge = np.tile(wedge_2d[:, np.newaxis, :], (1, shape[1], 1))
+    lo = np.minimum(f_min, f_max)
+    hi = np.where(phi_in_range, r, np.maximum(f_min, f_max))
 
-    wedge[radial_grid(shape, fftshifted=True) > cut_off_radius] = 0
+    # positive inside the sampled interval, negative outside, continuous and zero
+    # at the boundary
+    wedge = np.minimum(-lo, hi)
 
-    # fourier shift to origin
-    return np.fft.ifftshift(wedge, axes=(0, 1))
+    # normalize against the fixed clip bound
+    limit = (wedge.max() - wedge.min()) / (2 * min(shape[0], shape[2]) // 2)
+    wedge = np.clip(wedge, -limit, limit)
+    wedge = (wedge + limit) / (2 * limit)
 
+    wedge[radial_grid(shape) > cut_off_radius] = 0
 
-def _remove_friedel_symmetry(volume: npt.NDArray[float]) -> npt.NDArray[float]:
-    """Reduce a full (non-reduced) Fourier space volume to its reduced form by
-    exploiting Friedel symmetry (F(-q) = F(q) for a real-valued signal). The input
-    volume must already be fftshifted, i.e. the 0 frequency sits at the center of
-    each axis. Cropping the last axis to its first half (indices 0 to n // 2) and
-    flipping it maps the negative frequencies onto the positive ones, recovering
-    the same reduced representation that numpy.fft.rfftn would produce. A plain
-    slice from the center (without the flip) is not equivalent: for even n the
-    Nyquist bin is aliased and only stored at index 0 of the fftshifted array, so
-    a forward slice starting at the center would drop it.
-
-    Parameters
-    ----------
-    volume: npt.NDArray[float]
-        full (non-reduced) fftshifted fourier space volume, cubic in shape, with
-        the 0 frequency at the center of each axis
-
-    Returns
-    ----------
-    reduced: npt.NDArray[float]
-        volume with the last dimension reduced to shape[-1] // 2 + 1
-    """
-    reduced_dim = volume.shape[-1] // 2 + 1
-    return np.flip(volume[:, :, :reduced_dim], axis=2)
+    return wedge
 
 
 def _create_tilt_weighted_wedge(
@@ -516,6 +451,8 @@ def _create_tilt_weighted_wedge(
     pixel_size_angstrom: float,
     accumulated_dose_per_tilt: list[float, ...] | None = None,
     ctf_params_per_tilt: list[CtfData] | None = None,
+    level_angle_x: float = 0.0,
+    level_angle_y: float = 0.0,
 ) -> npt.NDArray[float]:
     """
     The following B-factor heuristic is used (as mentioned in the M paper, and
@@ -545,6 +482,11 @@ def _create_tilt_weighted_wedge(
         the accumulated dose in e− Å−2
     ctf_params_per_tilt: list[CtfData, ...], default None
         the ctf parameters per tilt angle, list of CtfData data classes
+    level_angle_x: float, default 0.0
+        WarpTools sample-leveling angle in radians that rotates the wedge around the
+        x-axis, combined into the same per-tilt rotation as the tilt angle below
+    level_angle_y: float, default 0.0
+        WarpTools sample-leveling angle in radians that is added to each tilt angle
 
     Returns
     -------
@@ -573,7 +515,11 @@ def _create_tilt_weighted_wedge(
 
     image_size = shape[0]  # assign to size variable as all dimensions are equal size
     tilt = np.zeros(shape)
-    q_grid = radial_grid(shape, fftshifted=True)
+    q_squared_2d = (
+        radial_grid((image_size, image_size), reduced=False, fftshifted=True)
+        / (2 * pixel_size_angstrom)
+    ) ** 2
+    q_grid_3d = radial_grid(shape)
     tilt_weighted_wedge = np.zeros((image_size, image_size, image_size // 2 + 1))
 
     # create ramp weights to correct tilt summation for overlap
@@ -604,44 +550,52 @@ def _create_tilt_weighted_wedge(
                 reduced=False,
                 fftshifted=True,
             )
-            tilt[:, :, image_size // 2] = ctf * ramp_weighting
+            plane = ctf * ramp_weighting
         else:
-            tilt[:, :, image_size // 2] = ramp_weighting
+            plane = ramp_weighting
 
-        # rotate the image weights to the tilt angle
-        rotated = _remove_friedel_symmetry(
-            vt.transform(
-                tilt,
-                rotation=(0, alpha, 0),
-                rotation_units="rad",
-                rotation_order="rxyz",
-                center=(image_size // 2,) * 3,
-                interpolation="filt_bspline",
-                device="cpu",
-            )
-        )
-
-        # weight with exposure and tilt dampening
+        plane = plane * np.cos(alpha)  # tilt-dependent dampening heuristic
         if accumulated_dose_per_tilt is not None:
-            q_squared = (q_grid / (2 * pixel_size_angstrom)) ** 2
             sigma_motion = np.sqrt(accumulated_dose_per_tilt[i] * 4 / (8 * np.pi**2))
-            weighted_tilt = (
-                rotated
-                * np.cos(alpha)  # apply tilt-dependent weighting
-                * np.exp(
-                    -2 * np.pi**2 * sigma_motion**2 * q_squared
-                )  # apply dose-weighting
-            )
-        else:
-            weighted_tilt = (
-                rotated * np.cos(alpha)  # apply tilt-dependent weighting
-            )
+            plane = plane * np.exp(-2 * np.pi**2 * sigma_motion**2 * q_squared_2d)
 
-        tilt_weighted_wedge += weighted_tilt
+        if image_size % 2 == 0:
+            # rotation with image_size//2 as the center is not symmetric
+            # -> this makes it symmetric
+            plane[0, :] = 0.0
+            plane[:, 0] = 0.0
 
-    tilt_weighted_wedge[q_grid > cut_off_radius] = 0
+        tilt[:, :, image_size // 2] = plane
 
-    return np.fft.ifftshift(tilt_weighted_wedge, axes=(0, 1))
+        # WarpTools composes this as TiltMatrix = Euler(alpha) * RotateX(level_angle_x)
+        # matrix product, so RotateX is applied first (innermost), Euler second
+        # (outermost). voltools' rotation_order names which slot maps to which
+        # axis, and the first slot ends up applied last (outermost)
+        rotated_full = vt.transform(
+            tilt,
+            rotation=(alpha + level_angle_y, level_angle_x, 0),
+            rotation_units="rad",
+            rotation_order="ryxz",
+            center=(image_size // 2,) * 3,
+            interpolation="filt_bspline",
+            device="cpu",
+        )
+        # this is the correct way to go from full FT with DC
+        # in the center to reduced FT form with DC at the origin
+        tilt_weighted_wedge += np.fft.ifftshift(rotated_full, axes=(0, 1, 2))[
+            :, :, : image_size // 2 + 1
+        ]
+
+    # because of the now correct full->reduced transform above, we need
+    # to flip the xy-plane to stay consistent with previous behaviour.
+    # the flip inverts the plane, the roll gets the DC to the origin.
+    tilt_weighted_wedge = np.roll(
+        np.flip(tilt_weighted_wedge, axis=(0, 1)), shift=(1, 1), axis=(0, 1)
+    )
+
+    tilt_weighted_wedge[q_grid_3d > cut_off_radius] = 0
+
+    return tilt_weighted_wedge
 
 
 def create_ctf(
