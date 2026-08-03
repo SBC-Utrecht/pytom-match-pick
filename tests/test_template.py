@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from scipy.ndimage import center_of_mass
 
-from pytom_tm.template import generate_template_from_map, phase_randomize_template
+from pytom_tm.template import _phase_randomize_template, generate_template_from_map
 
 
 class TestTemplate(unittest.TestCase):
@@ -88,8 +88,10 @@ class TestTemplate(unittest.TestCase):
             )
 
     def test_phase_randomize_template(self):
-        randomized = phase_randomize_template(
-            self.template,  # use default seed
+        full_mask = np.ones_like(self.template)
+        randomized = _phase_randomize_template(
+            self.template,
+            full_mask,  # use default seed
         )
         self.assertEqual(self.template.shape, randomized.shape)
         self.assertGreater(
@@ -99,11 +101,37 @@ class TestTemplate(unittest.TestCase):
             "no longer be equal to the input.",
         )
 
-        randomized_seeded = phase_randomize_template(
+        randomized_seeded = _phase_randomize_template(
             self.template,
-            11,  # use default seed
+            full_mask,
+            seed=11,
         )
         diff = np.abs(randomized_seeded - randomized).sum()
         self.assertNotEqual(
             diff, 0, msg="Different seed should return different randomization"
         )
+
+    def test_phase_randomize_template_support_mask(self):
+        # mask covers the structure with some margin, but not the full box, so the
+        # Gerchberg-Saxton support constraint actually restricts the result
+        support_mask = np.zeros_like(self.template)
+        support_mask[1:6, 1:6, 6:10] = 1
+
+        randomized = _phase_randomize_template(self.template, support_mask)
+        self.assertEqual(self.template.shape, randomized.shape)
+        np.testing.assert_array_equal(
+            randomized * (1 - support_mask),
+            np.zeros_like(randomized),
+            err_msg="Result should be exactly zero outside the support mask.",
+        )
+        self.assertTrue(
+            np.any(randomized[support_mask.astype(bool)] != 0),
+            msg="Result should not be all zero inside the support mask.",
+        )
+
+    def test_phase_randomize_template_empty_mask(self):
+        # an all-zero mask forces a zero amplitude spectrum, so the result stays
+        # zero throughout; the sign check (0 vs 0) should not error or alter that
+        empty_mask = np.zeros_like(self.template)
+        randomized = _phase_randomize_template(self.template, empty_mask)
+        np.testing.assert_array_equal(randomized, np.zeros_like(randomized))
