@@ -164,8 +164,7 @@ class TestBrokenMRC(unittest.TestCase):
             write_mrc(fname, array, voxel_size=(1.0, 1.0, 1.0001))
         # Make sure a warning is raised when reading
         with self.assertLogs(logger="pytom_tm", level="WARNING") as cm:
-            mrc = read_mrc(fname)
-        self.assertIsNotNone(mrc)
+            _ = read_mrc_meta_data(fname)
         self.assertEqual(len(cm.output), 1)
         self.assertIn(
             "Voxel size annotation in MRC is slightly different", cm.output[0]
