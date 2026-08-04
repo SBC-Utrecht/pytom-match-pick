@@ -3,6 +3,7 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 # Following: https://docs.pypi.org/trusted-publishers/using-a-publisher/
 # and https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
@@ -33,6 +34,7 @@ jobs:
   publish-to-testpypi:
     name: publish to test-pypi
     needs: build-release
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -51,6 +53,9 @@ jobs:
   test-testpypi:
      name: test testpypi deployment
      needs: publish-to-testpypi
+     if: |
+       always() &&
+       (needs.publish-to-testpypi.result == 'success' || needs.publish-to-testpypi.result == 'skipped')
      runs-on: [self-hosted, linux, x64, gpu]
      container:
        image: continuumio/miniconda3
