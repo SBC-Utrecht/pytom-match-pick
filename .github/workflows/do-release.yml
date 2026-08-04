@@ -78,6 +78,10 @@ jobs:
     needs: [build-release, test-testpypi]
     runs-on: ubuntu-latest
     environment: release
+    if:
+      always() &&
+      needs.build-release.result == 'success' &&
+      needs.test-testpypi.result == 'success'
     permissions:
       id-token: write
     steps:
