@@ -643,11 +643,12 @@ class TestWeights(unittest.TestCase):
             msg="Expected inter-tilt gaps inside the full wedge were not found.",
         )
 
-    def test_fanned_wedge_level_angles_match_legacy_cubic_rotation(self):
-        """Analytic fanning must retain the established cubic rotation convention."""
+    def test_fanned_wedge_level_angles_match_binary_wedge(self):
+        """Dense analytic fanning must agree with the leveled binary wedge."""
         shape = (96, 96, 96)
+
         metadata = self.ts_metadata.replace(
-            tilt_angles=[-60.0, -40.0, -20.0, 0.0, 20.0, 40.0, 60.0],
+            tilt_angles=np.linspace(-60.0, 60.0, 481).tolist(),
             angles_in_degrees=True,
             ctf_data=None,
             dose_accumulation=None,
@@ -655,50 +656,49 @@ class TestWeights(unittest.TestCase):
             level_angle_y=-7.0,
         )
 
-        analytic = create_wedge(
+        fanned = create_wedge(
             shape,
             metadata,
             voxel_size=1.0,
-            cut_off_radius=0.7,
+            cut_off_radius=0.65,
             fanned_binary=True,
         ).astype(bool)
 
-        # This invokes the current voltools-based, rotated-plane implementation.
-        # It is only suitable as a reference for cubic boxes.
-        legacy_weighted = create_wedge(
+        binary_wedge = create_wedge(
             shape,
             metadata,
             voxel_size=1.0,
-            cut_off_radius=0.7,
-            per_tilt_weighting=True,
+            cut_off_radius=0.65,
+            per_tilt_weighting=False,
         )
 
-        # The legacy wedge contains ramp weighting. A low threshold extracts its
-        # geometrical support while avoiding small interpolation tails.
-        legacy_support = legacy_weighted > 1e-3
-
-        # The ramp filter is zero or nearly zero around fx = 0, independently of
-        # sampling geometry. Exclude that region when comparing support geometry.
-        fx = np.fft.fftfreq(shape[0])[:, np.newaxis, np.newaxis]
         radial = radial_grid(shape)
-        comparison_region = (np.abs(fx) > 0.08) & (radial < 0.65)
 
-        intersection = np.count_nonzero(
-            analytic[comparison_region] & legacy_support[comparison_region]
-        )
-        union = np.count_nonzero(
-            analytic[comparison_region] | legacy_support[comparison_region]
-        )
-        jaccard = intersection / union
+        # The conventional wedge has a quantised/soft boundary. Test only
+        # well-inside voxels.
+        interior = (binary_wedge > 0.99) & (radial < 0.50)
 
-        self.assertGreater(
-            jaccard,
-            1,
+        # Test a region safely inside the missing wedge. Erosion removes
+        # Fourier voxels adjacent to the boundary.
+        missing_wedge = (binary_wedge == 0.0) & (radial < 0.50)
+        exterior = ndimage.binary_erosion(missing_wedge, iterations=2)
+
+        self.assertGreater(np.count_nonzero(interior), 0)
+        self.assertGreater(np.count_nonzero(exterior), 0)
+
+        self.assertTrue(
+            np.all(fanned[interior]),
             msg=(
-                "Analytic fanned-wedge support no longer agrees with the established "
-                "cubic voltools rotation convention. This commonly indicates an axis "
-                "sign, rotation-order, or level-angle composition error."
-                f"TODO: remove {jaccard=}"
+                "The fanned mask does not cover the interior of the leveled "
+                "binary wedge. Check the plane-normal convention."
+            ),
+        )
+
+        self.assertFalse(
+            np.any(fanned[exterior]),
+            msg=(
+                "The fanned mask leaks into the interior of the leveled "
+                "missing wedge. Check the plane-normal convention."
             ),
         )
 
