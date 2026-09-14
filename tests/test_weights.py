@@ -6,6 +6,7 @@ from testing_utils import ACCUMULATED_DOSE, CTF_PARAMS, TILT_ANGLES
 from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
 from pytom_tm.weights import (
     _create_binary_wedge,
+    _create_fanned_binary_wedge,
     _masked_radial,
     create_ctf,
     create_gaussian_band_pass,
@@ -501,4 +502,245 @@ class TestWeights(unittest.TestCase):
             ramp_profile.max(),
             msg="Nyquist frequency should map to the last profile value instead of "
             "rolling off towards 0.",
+        )
+
+    def test_fanned_wedge_non_cubic_shape(self):
+        """The analytic fanned-support construction must support rectangular
+        tomograms."""
+        tilt_angles_rad = np.deg2rad(np.arange(-60, 61, 3))
+
+        for shape in ((95, 121, 67), (64, 128, 48), (127, 96, 72)):
+            with self.subTest(shape=shape):
+                wedge = _create_fanned_binary_wedge(
+                    shape,
+                    tilt_angles_rad,
+                    cut_off_radius=0.9,
+                )
+
+                self.assertEqual(wedge.shape, (shape[0], shape[1], shape[2] // 2 + 1))
+                self.assertEqual(wedge.dtype, np.float32)
+                self.assertTrue(np.all(np.isfinite(wedge)))
+                self.assertTrue(np.all((wedge == 0.0) | (wedge == 1.0)))
+
+                # The fanned wedge must contain sampled Fourier coefficients.
+                self.assertGreater(np.count_nonzero(wedge), 0)
+
+    def test_fanned_wedge_converges_to_binary_wedge_for_dense_tilts(self):
+        """Dense tilt sampling should reproduce the interior/exterior of a full
+        wedge."""
+        shape = (96, 96, 96)
+        tilt_angles_deg = np.linspace(-65.0, 65.0, 521)
+
+        metadata = self.ts_metadata.replace(
+            tilt_angles=tilt_angles_deg.tolist(),
+            angles_in_degrees=True,
+            ctf_data=None,
+            dose_accumulation=None,
+        )
+
+        fanned = create_wedge(
+            shape,
+            metadata,
+            voxel_size=1.0,
+            cut_off_radius=0.8,
+            fanned_binary=True,
+        )
+
+        full_wedge = create_wedge(
+            shape,
+            metadata,
+            voxel_size=1.0,
+            cut_off_radius=0.8,
+            per_tilt_weighting=False,
+        )
+
+        # The normal binary wedge has a soft edge. Test only voxels well inside
+        # and well outside that transition, rather than requiring boundary equality.
+        radial = radial_grid(shape)
+        interior = (full_wedge > 0.99) & (radial < 0.70)
+        exterior = (full_wedge < 0.01) & (radial < 0.70)
+
+        self.assertGreater(np.count_nonzero(interior), 0)
+        self.assertGreater(np.count_nonzero(exterior), 0)
+
+        np.testing.assert_array_equal(
+            fanned[interior],
+            np.ones(np.count_nonzero(interior), dtype=np.float32),
+        )
+        np.testing.assert_array_equal(
+            fanned[exterior],
+            np.zeros(np.count_nonzero(exterior), dtype=np.float32),
+        )
+
+    def test_sparse_fanned_wedge_is_subset_of_full_wedge_and_retains_gaps(self):
+        """Sparse tilts must leave inter-tilt gaps while remaining within full
+        support."""
+        shape = (96, 96, 96)
+
+        sparse_metadata = self.ts_metadata.replace(
+            tilt_angles=[-60.0, -20.0, 20.0, 60.0],
+            angles_in_degrees=True,
+            ctf_data=None,
+            dose_accumulation=None,
+        )
+        dense_metadata = sparse_metadata.replace(
+            tilt_angles=np.linspace(-60.0, 60.0, 481).tolist(),
+        )
+
+        sparse_fanned = create_wedge(
+            shape,
+            sparse_metadata,
+            voxel_size=1.0,
+            cut_off_radius=0.75,
+            fanned_binary=True,
+        ).astype(bool)
+
+        dense_fanned = create_wedge(
+            shape,
+            dense_metadata,
+            voxel_size=1.0,
+            cut_off_radius=0.75,
+            fanned_binary=True,
+        ).astype(bool)
+
+        full_wedge = create_wedge(
+            shape,
+            sparse_metadata,
+            voxel_size=1.0,
+            cut_off_radius=0.75,
+            per_tilt_weighting=False,
+        )
+
+        # Use > 0 rather than a hard threshold because the conventional binary
+        # wedge intentionally has a soft boundary.
+        full_support = full_wedge > 0.0
+
+        # Sampling planes cannot create support outside the angular range of the
+        # conventional full wedge.
+        self.assertFalse(np.any(sparse_fanned & ~full_support))
+
+        # Dense sampling fills Fourier voxels that remain unsupported for sparse
+        # angular sampling: these are the inter-tilt gaps we want to retain.
+        inter_tilt_gap = dense_fanned & ~sparse_fanned
+
+        self.assertGreater(
+            np.count_nonzero(inter_tilt_gap),
+            0,
+            msg="Sparse fanned wedge unexpectedly contains no inter-tilt gaps.",
+        )
+
+        # The gaps should occur within the conventional full-wedge support, not
+        # merely in the missing wedge outside the acquisition range.
+        self.assertGreater(
+            np.count_nonzero(inter_tilt_gap & full_support),
+            0,
+            msg="Expected inter-tilt gaps inside the full wedge were not found.",
+        )
+
+    def test_fanned_wedge_level_angles_match_legacy_cubic_rotation(self):
+        """Analytic fanning must retain the established cubic rotation convention."""
+        shape = (96, 96, 96)
+        metadata = self.ts_metadata.replace(
+            tilt_angles=[-60.0, -40.0, -20.0, 0.0, 20.0, 40.0, 60.0],
+            angles_in_degrees=True,
+            ctf_data=None,
+            dose_accumulation=None,
+            level_angle_x=11.0,
+            level_angle_y=-7.0,
+        )
+
+        analytic = create_wedge(
+            shape,
+            metadata,
+            voxel_size=1.0,
+            cut_off_radius=0.7,
+            fanned_binary=True,
+        ).astype(bool)
+
+        # This invokes the current voltools-based, rotated-plane implementation.
+        # It is only suitable as a reference for cubic boxes.
+        legacy_weighted = create_wedge(
+            shape,
+            metadata,
+            voxel_size=1.0,
+            cut_off_radius=0.7,
+            per_tilt_weighting=True,
+        )
+
+        # The legacy wedge contains ramp weighting. A low threshold extracts its
+        # geometrical support while avoiding small interpolation tails.
+        legacy_support = legacy_weighted > 1e-3
+
+        # The ramp filter is zero or nearly zero around fx = 0, independently of
+        # sampling geometry. Exclude that region when comparing support geometry.
+        fx = np.fft.fftfreq(shape[0])[:, np.newaxis, np.newaxis]
+        radial = radial_grid(shape)
+        comparison_region = (np.abs(fx) > 0.08) & (radial < 0.65)
+
+        intersection = np.count_nonzero(
+            analytic[comparison_region] & legacy_support[comparison_region]
+        )
+        union = np.count_nonzero(
+            analytic[comparison_region] | legacy_support[comparison_region]
+        )
+        jaccard = intersection / union
+
+        self.assertGreater(
+            jaccard,
+            1,
+            msg=(
+                "Analytic fanned-wedge support no longer agrees with the established "
+                "cubic voltools rotation convention. This commonly indicates an axis "
+                "sign, rotation-order, or level-angle composition error."
+                f"TODO: remove {jaccard=}"
+            ),
+        )
+
+    def test_fanned_wedge_is_independent_of_ctf_and_dose_metadata(self):
+        """A binary geometrical support must not depend on CTF or dose weighting."""
+        shape = (96, 112, 80)
+
+        weighted_metadata = self.ts_metadata.replace(
+            tilt_angles=[-60.0, -40.0, -20.0, 0.0, 20.0, 40.0, 60.0],
+            angles_in_degrees=True,
+            ctf_data=[
+                CtfData(
+                    defocus=3.0e-6 + i * 1.0e-8,
+                    amplitude_contrast=0.08,
+                    voltage=300e3,
+                    spherical_aberration=2.7e-3,
+                    flip_phase=True,
+                )
+                for i in range(7)
+            ],
+            dose_accumulation=np.linspace(0.0, 120.0, 7).tolist(),
+        )
+        geometry_only_metadata = weighted_metadata.replace(
+            ctf_data=None,
+            dose_accumulation=None,
+        )
+
+        fanned_with_weights = create_wedge(
+            shape,
+            weighted_metadata,
+            voxel_size=1.5,
+            cut_off_radius=0.8,
+            fanned_binary=True,
+        )
+
+        fanned_geometry_only = create_wedge(
+            shape,
+            geometry_only_metadata,
+            voxel_size=1.5,
+            cut_off_radius=0.8,
+            fanned_binary=True,
+        )
+
+        np.testing.assert_array_equal(
+            fanned_with_weights,
+            fanned_geometry_only,
+            err_msg=(
+                "Fanned binary support must depend only on tilt geometry and must not "
+                "be affected by CTF or dose metadata."
+            ),
         )
