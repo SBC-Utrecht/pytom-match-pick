@@ -23,18 +23,18 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.53">
+      <meta name="generator" content="zensical-0.0.62">
     
     
       
-        <title>Tutorial - pytom-match-pick</title>
+        <title>Ribosomes on ER microsomes - pytom-match-pick</title>
       
     
     
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.20815dad.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.ce62732f.min.css">
       
       
 
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Tutorial
+              Ribosomes on ER microsomes
             
           </span>
         </div>
@@ -1172,7 +1172,7 @@
   
 
 
-  <h1 id="__skip">Tutorial</h1>
+  <h1 id="__skip">Ribosomes on ER microsomes</h1>
 
 <p>In this tutorial we are going to use template matching to detect human 80S ribosomes in a sample of ER-derived microsomes. As the tutorial dataset imaged isolated ER-derived vesicles with a 200 keV microscope, and the ice layer thickness is on the order of ~180 nm, the contrast is quite good. So, to make it more challenging, we are also going to test matching with only the 60S subunit. This way we can demonstrate some optimizations that can be made to maximize correlation. Besides, using <a href="https://elifesciences.org/reviewed-preprints/90486">baited reconstruction</a> can also be a good way to prevent bias in the template search. </p>
 <h3 id="note-on-visualization">Note on visualization</h3>
@@ -1204,7 +1204,7 @@ tool for interacting with tomograms and annotations.</p>
 <h3 id="tomogram-voxel-size-fix">Tomogram voxel size fix</h3>
 <p>I made the mistake to not annotate the voxel size in the tomograms correctly (thanks to @jinxsfe for pointing this out!). Please run the following command to fix the voxel size in the MRC headers:</p>
 <div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span>x<span class="w"> </span><span class="k">in</span><span class="w"> </span>dataset/*.mrc<span class="p">;</span><span class="w"> </span>
-<span class="k">do</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import mrcfile; mrc = mrcfile.mmap(&#39;</span><span class="nv">$x</span><span class="s2">&#39;, &#39;r+&#39;); mrc.voxel_size = 13.79&quot;</span><span class="p">;</span><span class="w"> </span>
+<span class="k">do</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import mrcfile; mrc = mrcfile.mmap('</span><span class="nv">$x</span><span class="s2">', 'r+'); mrc.voxel_size = 13.79"</span><span class="p">;</span><span class="w"> </span>
 <span class="k">done</span>
 </code></pre></div>
 <h2 id="template-matching">Template matching</h2>
@@ -1519,10 +1519,14 @@ cryo-ET! If you ran into any issues during the tutorial please let us know on ou
     
       
       
-      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["navigation.instant","navigation.tracking","navigation.tabs","navigation.tabs.sticky","navigation.expand","toc.follow","content.code.copy"],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["navigation.instant","navigation.tracking","navigation.tabs","navigation.tabs.sticky","navigation.expand","toc.follow","content.code.copy"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.69c251d7.min.js"></script>
+      <script src="../../assets/javascripts/bundle.8dcc8e9c.min.js"></script>
       
         <script src="../../javascripts/katex.js"></script>
       
