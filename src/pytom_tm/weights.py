@@ -500,10 +500,12 @@ def _create_fanned_binary_wedge(
     for alpha in tilt_angles_rad:
         beta = alpha + level_angle_y
 
-        # Normal of R_y(beta) @ R_x(level_angle_x) @ e_z.
-        normal_x = np.sin(beta) * cos_lx
-        normal_y = -sin_lx
-        normal_z = np.cos(beta) * cos_lx
+        # This is the normal implied by _create_binary_wedge in the unshifted
+        # NumPy rfftn coordinate system. The signs account for that function's
+        # historical negation of its x and y frequency axes.
+        normal_x = -np.sin(beta)
+        normal_y = sin_lx * np.cos(beta)
+        normal_z = cos_lx * np.cos(beta)
 
         # A target Fourier cell is sampled if the ideal plane intersects it.
         half_projected_cell_width = 0.5 * (

@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+from scipy import ndimage
 from testing_utils import ACCUMULATED_DOSE, CTF_PARAMS, TILT_ANGLES
 
 from pytom_tm.dataclass import CtfData, TiltSeriesMetaData
@@ -558,7 +559,12 @@ class TestWeights(unittest.TestCase):
         # and well outside that transition, rather than requiring boundary equality.
         radial = radial_grid(shape)
         interior = (full_wedge > 0.99) & (radial < 0.70)
-        exterior = (full_wedge < 0.01) & (radial < 0.70)
+
+        missing_wedge = (full_wedge == 0.0) & (radial < 0.70)
+
+        # Exclude cells close to the conventional-wedge boundary. A fanned mask
+        # represents finite Fourier cells, while full_wedge has a soft/quantised edge.
+        exterior = ndimage.binary_erosion(missing_wedge, iterations=2)
 
         self.assertGreater(np.count_nonzero(interior), 0)
         self.assertGreater(np.count_nonzero(exterior), 0)

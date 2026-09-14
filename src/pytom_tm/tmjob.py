@@ -920,8 +920,9 @@ class TMJob:
 
         # create wedge filters
         if (
-            self.ts_metadata.per_tilt_weighting or self.tomogram_fanned_wedge
-        ) and self.ts_metadata.defocus_handedness != 0:
+            self.ts_metadata.per_tilt_weighting
+            and self.ts_metadata.defocus_handedness != 0
+        ):
             # adjust ctf parameters for this specific patch in the tomogram
             full_tomo_center = np.array(self.tomo_shape) / 2
             patch_center = np.array(self.search_origin) + np.array(self.search_size) / 2
@@ -959,6 +960,7 @@ class TMJob:
             self.ts_metadata,
             self.voxel_size,
             cut_off_radius=1.0,
+            per_tilt_weighting=False,
             fanned_binary=self.tomogram_fanned_wedge,
         ).astype(np.float32)
         tomo_filter *= tomo_wedge
