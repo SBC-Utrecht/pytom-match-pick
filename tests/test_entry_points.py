@@ -9,6 +9,8 @@ from tempfile import TemporaryDirectory
 
 import cupy as cp
 import numpy as np
+import pandas as pd
+import starfile
 from testing_utils import chdir
 
 from pytom_tm import entry_points, io
@@ -50,6 +52,7 @@ RELION5_TOMOGRAMS_STAR = pathlib.Path(__file__).parent.joinpath(
     "Data/relion5_project_example/Tomograms/job009/tomograms.star"
 )
 RELION5_TOMOGRAM = TEST_DATA.joinpath("rec_tomo200528_107.mrc")
+WARPTOOLS_TOMOGRAM = TEST_DATA.joinpath("rec_tomo200528_1.00Apx.mrc")
 
 # Initial logging level
 LOG_LEVEL = logging.getLogger("pytom_tm").level
@@ -87,6 +90,7 @@ class TestEntryPoints(unittest.TestCase):
         io.write_mrc(MASK, np.ones((5, 5, 5), dtype=np.float32), 1)
         io.write_mrc(TOMOGRAM, volume, 1)
         io.write_mrc(RELION5_TOMOGRAM, np.zeros((10, 10, 10), dtype=np.float32), 1)
+        io.write_mrc(WARPTOOLS_TOMOGRAM, volume, 1)
         np.savetxt(TILT_ANGLES, np.linspace(-50, 50, 35))
         np.savetxt(
             TILT_ANGLES_MULTI_COLUMN,
@@ -102,6 +106,7 @@ class TestEntryPoints(unittest.TestCase):
         MASK.unlink()
         TOMOGRAM.unlink()
         RELION5_TOMOGRAM.unlink()
+        WARPTOOLS_TOMOGRAM.unlink()
         TILT_ANGLES.unlink()
         TILT_ANGLES_MULTI_COLUMN.unlink()
         DOSE.unlink()
@@ -451,37 +456,71 @@ class TestEntryPoints(unittest.TestCase):
         self.assertTrue((self.outputdir / f"{tomo_id}_roc.svg").exists())
 
     def test_extract_candidates(self):
-        match_defaults = {
-            "-t": str(TEMPLATE),
-            "-m": str(MASK),
-            "-v": str(TOMOGRAM),
-            "-d": str(self.outputdir),
-            "--angular-search": "35",
-            "--tilt-angles": str(TILT_ANGLES),
-            "--per-tilt-weighting": "",
-            "--dose-accumulation": str(DOSE),
-            "--defocus": str(DEFOCUS_IMOD),
-            "--amplitude-contrast": "0.08",
-            "--spherical-aberration": "2.7",
-            "--voltage": "300",
-            "--tomogram-ctf-model": "phase-flip",
-            "-g": "0",
-        }
-        # generate match
-        entry_points.match_template(prep_argv(match_defaults))
-        tomo_id = f"{TOMOGRAM.stem}"
-        extract_defaults = {
-            "-j": str(self.outputdir / f"{tomo_id}_job.json"),
-            "-n": "1",
-            "--particle-diameter": "5",
-        }
+        def run_pipeline(
+            tomogram: pathlib.Path, match_extra_args: dict[str, str]
+        ) -> pd.DataFrame:
+            """Run template matching and extraction on a tomogram,
+            test for a valid star file and return it as a pd.DataFrame.
+            """
+            entry_points.match_template(
+                prep_argv(
+                    {
+                        "-t": str(TEMPLATE),
+                        "-m": str(MASK),
+                        "-d": str(self.outputdir),
+                        "-v": str(tomogram),
+                        "--angular-search": "35",
+                        "--tilt-angles": str(TILT_ANGLES),
+                        "--per-tilt-weighting": "",
+                        "--dose-accumulation": str(DOSE),
+                        "--defocus": str(DEFOCUS_IMOD),
+                        "--amplitude-contrast": "0.08",
+                        "--spherical-aberration": "2.7",
+                        "--voltage": "300",
+                        "--tomogram-ctf-model": "phase-flip",
+                        "-g": "0",
+                        **match_extra_args,
+                    }
+                )
+            )
+            tomo_id = f"{tomogram.stem}"
+            entry_points.extract_candidates(
+                prep_argv(
+                    {
+                        "-j": str(self.outputdir / f"{tomo_id}_job.json"),
+                        "-n": "1",
+                        "--particle-diameter": "5",
+                        "-c": "0",
+                    }
+                )
+            )
 
-        def start(arg_dict):
-            entry_points.extract_candidates(prep_argv(arg_dict))
+            # make sure the starfile is valid
+            output_star = self.outputdir / f"{tomo_id}_particles.star"
+            self.assertTrue(output_star.exists())
+            star: pd.DataFrame = starfile.read(output_star)  # pyright: ignore[reportAssignmentType]
+            self.assertIsInstance(star, pd.DataFrame)
+            self.assertIn("rlnMicrographName", star.columns)
+            self.assertEqual(len(star), 1)
+            return star
 
-        # make sure we can run extraction
-        start(extract_defaults)
-        self.assertTrue((self.outputdir / f"{tomo_id}_particles.star").exists())
+        star = run_pipeline(TOMOGRAM, {})
+        self.assertEqual(star.at[0, "rlnMicrographName"], TOMOGRAM.stem)
+
+        # check that the tomogram is only renamed if warp xml data is passed
+        # and the filename ends in typical warp fashion
+        # 1. warp xml but tomo name does not match
+        star = run_pipeline(TOMOGRAM, {"--warp-xml-file": str(WARP_XML)})
+        self.assertEqual(star.at[0, "rlnMicrographName"], TOMOGRAM.stem)
+        # 1. name matches but no warp xml file
+        star = run_pipeline(WARPTOOLS_TOMOGRAM, {})
+        self.assertEqual(star.at[0, "rlnMicrographName"], WARPTOOLS_TOMOGRAM.stem)
+        # 3. warp xml and tomo name matches -> renames
+        star = run_pipeline(WARPTOOLS_TOMOGRAM, {"--warp-xml-file": str(WARP_XML)})
+        self.assertEqual(
+            star.at[0, "rlnMicrographName"],
+            WARPTOOLS_TOMOGRAM.stem.replace("_1.00Apx", ".tomostar"),
+        )
 
     @unittest.mock.patch("pytom_tm.parallel.run_job_parallel")
     def test_dropped_logging(self, mock_run):
