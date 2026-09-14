@@ -508,7 +508,7 @@ class TestWeights(unittest.TestCase):
     def test_fanned_wedge_errors(self):
         tilt_angles_rad = np.deg2rad(np.arange(-60, 61, 3))
         # test one dim smaller than 2
-        with self.assertRaisesRegex(ValueError, "each real-space dimension >= 2"):
+        with self.assertRaisesRegex(ValueError, r"real-space dimension .* >= 2"):
             _ = _create_fanned_binary_wedge((2, 2, 1), tilt_angles_rad)
         # test no tilt angles
         with self.assertRaisesRegex(ValueError, "tilt_angles_rad"):
