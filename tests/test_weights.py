@@ -505,6 +505,25 @@ class TestWeights(unittest.TestCase):
             "rolling off towards 0.",
         )
 
+    def test_fanned_wedge_errors(self):
+        tilt_angles_rad = np.deg2rad(np.arange(-60, 61, 3))
+        # test one dim smaller than 2
+        with self.assertRaisesRegex(ValueError, "each real-space dimension >= 2"):
+            _ = _create_fanned_binary_wedge((2, 2, 1), tilt_angles_rad)
+        # test no tilt angles
+        with self.assertRaisesRegex(ValueError, "tilt_angles_rad"):
+            _ = _create_fanned_binary_wedge(
+                (2, 2, 2),
+                [],
+            )
+
+        # test 2D tilt angles
+        with self.assertRaisesRegex(ValueError, "tilt_angles_rad"):
+            _ = _create_fanned_binary_wedge(
+                (2, 2, 2),
+                [[1, 2, 3]],
+            )
+
     def test_fanned_wedge_non_cubic_shape(self):
         """The analytic fanned-support construction must support rectangular
         tomograms."""
