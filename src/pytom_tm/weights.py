@@ -268,6 +268,7 @@ def create_wedge(
     low_pass: float | None = None,
     high_pass: float | None = None,
     per_tilt_weighting: bool | None = None,
+    fanned_binary: bool = False,
 ) -> npt.NDArray[float]:
     """This function returns a wedge volume that is either symmetric or asymmetric
     depending on wedge angle input.
@@ -288,7 +289,9 @@ def create_wedge(
         high pass filter resolution in A
     per_tilt_weighting: bool | None, default None
         if given, use this instead of ts_metadata.per_tilt_weighting (default)
-
+    fanned_binary: bool, default False
+        if given, return an analytic fanned binary wedge of the sampled angles
+        with only a cutoff applied, no other filters
     Returns
     -------
     wedge: npt.NDArray[float]
@@ -318,8 +321,18 @@ def create_wedge(
     level_angle_x_rad = np.deg2rad(ts_metadata.level_angle_x)
     level_angle_y_rad = np.deg2rad(ts_metadata.level_angle_y)
 
+    if fanned_binary:
+        return _create_fanned_binary_wedge(
+            shape,
+            tilt_angles_rad,
+            cut_off_radius,
+            level_angle_x=level_angle_x_rad,
+            level_angle_y=level_angle_y_rad,
+        )
+
     if per_tilt_weighting is None:
         per_tilt_weighting = ts_metadata.per_tilt_weighting
+
     if per_tilt_weighting:
         wedge = _create_tilt_weighted_wedge(
             shape,
@@ -331,6 +344,7 @@ def create_wedge(
             level_angle_x=level_angle_x_rad,
             level_angle_y=level_angle_y_rad,
         ).astype(np.float32)
+
     else:
         alpha_min = min(tilt_angles_rad) + level_angle_y_rad
         alpha_max = max(tilt_angles_rad) + level_angle_y_rad
@@ -441,6 +455,69 @@ def _create_binary_wedge(
     wedge[radial_grid(shape) > cut_off_radius] = 0
 
     return wedge
+
+
+def _create_fanned_binary_wedge(
+    shape: tuple[int, int, int],
+    tilt_angles_rad: list[float] | np.ndarray,
+    cut_off_radius: float = 1.0,
+    level_angle_x: float = 0.0,
+    level_angle_y: float = 0.0,
+) -> np.ndarray:
+    """Return a binary union of Fourier planes sampled by individual tilts.
+
+    Output has NumPy rfftn layout: (nx, ny, nz // 2 + 1).  This implementation
+    is valid for rectangular volumes because all plane tests are performed in
+    physical Fourier coordinates rather than by rotating a sampled cube.
+    """
+    nx, ny, nz = shape
+    if min(shape) < 2:
+        raise ValueError("Fanned wedge requires each real-space dimension to be >= 2.")
+
+    tilt_angles_rad = np.asarray(tilt_angles_rad, dtype=np.float64)
+    if tilt_angles_rad.ndim != 1 or tilt_angles_rad.size == 0:
+        raise ValueError("tilt_angles_rad must be a non-empty one-dimensional array.")
+
+    # Frequency coordinates in cycles per voxel. A common voxel size cancels
+    # from the plane test, so physical units are unnecessary here.
+    fx_1d = np.fft.fftfreq(nx)
+    fy_1d = np.fft.fftfreq(ny)
+    fz_1d = np.fft.rfftfreq(nz)
+
+    fx = fx_1d[:, None, None]
+    fy = fy_1d[None, :, None]
+    fz = fz_1d[None, None, :]
+
+    dfx = 1.0 / nx
+    dfy = 1.0 / ny
+    dfz = 1.0 / nz
+
+    covered = np.zeros((nx, ny, nz // 2 + 1), dtype=bool)
+
+    cos_lx = np.cos(level_angle_x)
+    sin_lx = np.sin(level_angle_x)
+
+    for alpha in tilt_angles_rad:
+        beta = alpha + level_angle_y
+
+        # Normal of R_y(beta) @ R_x(level_angle_x) @ e_z.
+        normal_x = np.sin(beta) * cos_lx
+        normal_y = -sin_lx
+        normal_z = np.cos(beta) * cos_lx
+
+        # A target Fourier cell is sampled if the ideal plane intersects it.
+        half_projected_cell_width = 0.5 * (
+            abs(normal_x) * dfx + abs(normal_y) * dfy + abs(normal_z) * dfz
+        )
+
+        distance_to_plane = normal_x * fx + normal_y * fy + normal_z * fz
+        covered |= np.abs(distance_to_plane) <= half_projected_cell_width
+
+    # Keep the package's existing spherical cut-off convention.
+    radial_frequency = np.sqrt((fx / 0.5) ** 2 + (fy / 0.5) ** 2 + (fz / 0.5) ** 2)
+    covered[radial_frequency > cut_off_radius] = False
+
+    return covered.astype(np.float32)
 
 
 def _create_tilt_weighted_wedge(

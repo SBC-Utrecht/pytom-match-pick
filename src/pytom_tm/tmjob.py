@@ -959,10 +959,8 @@ class TMJob:
             self.ts_metadata,
             self.voxel_size,
             cut_off_radius=1.0,
-            per_tilt_weighting=self.tomogram_fanned_wedge,
+            fanned_binary=self.tomogram_fanned_wedge,
         ).astype(np.float32)
-        if self.tomogram_fanned_wedge:
-            tomo_wedge = (tomo_wedge != 0).astype(np.float32)
         tomo_filter *= tomo_wedge
         # for the template a binary or per-tilt-weighted wedge is generated
         # depending on the options
