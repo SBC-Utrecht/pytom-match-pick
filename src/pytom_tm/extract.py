@@ -332,11 +332,13 @@ def extract_particles(
 
     # remove relion5 reconstructed tomogram name as it messes with linking the tilt
     # series id when extracting subtomos
-    warp_match = re.match(r"(.*)(_\d+\.\d+Apx)", tomogram_id)
     if relion5_compat and tomogram_id.startswith("rec_"):
         tomogram_id = tomogram_id[4:]
-    # replace Warp suffix with .tomostar for compatibility with WarpTools
-    elif isinstance(job.ts_metadata, WarpTiltSeriesMetaData) and warp_match is not None:
+    # adjust the suffix of WarpTools reconstructed tomograms by replacing
+    # "*_[1+ digits].[2 digits]Apx" with ".tomostar"
+    elif (
+        warp_match := re.match(r"(.*)_\d+\.\d{2}Apx$", tomogram_id)
+    ) is not None and isinstance(job.ts_metadata, WarpTiltSeriesMetaData):
         tomogram_id = warp_match.groups()[0] + ".tomostar"
 
     data = []
