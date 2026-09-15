@@ -108,7 +108,7 @@ class TestTMJob(unittest.TestCase):
             # the temporary filtered tomogram should be cleaned up even when the
             # parallel run fails partway through
             self.assertIsNone(
-                self.job.filtered_tomogram,
+                self.job.filtered_tomogram_path,
                 msg="filtered tomogram path was not cleared after a failed run",
             )
             self.assertEqual(
@@ -129,7 +129,7 @@ class TestTMJob(unittest.TestCase):
 
         # the temporary filtered tomogram should be cleaned up once the run finishes
         self.assertIsNone(
-            self.job.filtered_tomogram,
+            self.job.filtered_tomogram_path,
             msg="filtered tomogram path was not cleared after the run finished",
         )
         self.assertEqual(

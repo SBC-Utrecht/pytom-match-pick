@@ -206,6 +206,4 @@ def run_job_parallel(
     finally:
         # remove the temporary filtered tomogram (if one was generated for the
         # split above) now that all sub jobs are done with it
-        if main_job.filtered_tomogram is not None:
-            main_job.filtered_tomogram.unlink(missing_ok=True)
-            main_job.filtered_tomogram = None
+        main_job.clear_filtered_tomogram()

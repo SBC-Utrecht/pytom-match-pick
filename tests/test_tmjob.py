@@ -481,7 +481,7 @@ class TestTMJob(unittest.TestCase):
         # matter how many times / ways the job gets split, and the result should be
         # shared by every resulting sub job
         job = self.job.copy()
-        self.assertIsNone(job.filtered_tomogram)
+        self.assertIsNone(job.filtered_tomogram_path)
 
         with patch(
             "pytom_tm.tmjob.write_mrc", side_effect=write_mrc
@@ -502,13 +502,13 @@ class TestTMJob(unittest.TestCase):
             "the job was split both by volume and (per subvolume) by rotation",
         )
 
-        self.assertIsNotNone(job.filtered_tomogram)
-        self.assertTrue(job.filtered_tomogram.exists())
+        self.assertIsNotNone(job.filtered_tomogram_path)
+        self.assertTrue(job.filtered_tomogram_path.exists())
         for x in sub_jobs:
             for sub_x in x.sub_jobs:
                 self.assertEqual(
-                    sub_x.filtered_tomogram,
-                    job.filtered_tomogram,
+                    sub_x.filtered_tomogram_path,
+                    job.filtered_tomogram_path,
                     msg="sub jobs should share the same filtered tomogram file",
                 )
 

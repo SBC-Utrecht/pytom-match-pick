@@ -563,7 +563,7 @@ class TMJob:
         # path to a fully filtered (bandpass + whitening + wedge) copy of the
         # tomogram, shared by all sub jobs so the filtering only has to happen once,
         # see _generate_filtered_tomogram()
-        self.filtered_tomogram = None
+        self._filtered_tomogram_path = None
 
     @property
     def tomogram_filter(self) -> npt.NDArray[float]:
@@ -576,6 +576,25 @@ class TMJob:
         if self._template_filter is None:
             self._generate_filters()
         return self._template_filter
+
+    @property
+    def filtered_tomogram_path(self) -> pathlib.Path | None:
+        """Path to the temporary filtered tomogram, or None if it hasn't been
+        generated (see _generate_filtered_tomogram()). Read-only: sub jobs pick this
+        up through TMJob.copy(), and TMJob.clear_filtered_tomogram() removes it.
+        """
+        return self._filtered_tomogram_path
+
+    @property
+    def filtered_tomogram(self) -> npt.NDArray[float]:
+        """The fully filtered tomogram (bandpass + whitening + wedge), padded to the
+        fast fft shape. Loaded from disk when self.filtered_tomogram_path was
+        pregenerated for a split (shared by all sub jobs), otherwise filtered here
+        directly.
+        """
+        if self._filtered_tomogram_path is not None:
+            return read_mrc(self._filtered_tomogram_path)
+        return self._filter_full_tomogram()
 
     def copy(self) -> TMJob:
         """Create a copy of the TMJob
@@ -606,7 +625,7 @@ class TMJob:
         # pop cached numpy arrays we don't want to dump, and the path to the
         # temporary filtered tomogram, which is only valid for the duration of a
         # parallel run and is removed once that run finishes
-        for c in ["_tomogram_filter", "_template_filter", "filtered_tomogram"]:
+        for c in ["_tomogram_filter", "_template_filter", "_filtered_tomogram_path"]:
             d.pop(c)
 
         d["search_x"] = [
@@ -688,23 +707,31 @@ class TMJob:
         return np.real(irfftn(rfftn(fast_tomo) * tomo_filter, s=fast_tomo_shape))
 
     def _generate_filtered_tomogram(self) -> None:
-        """Filter the full tomogram once and cache it to self.filtered_tomogram, so
-        that sub jobs can load it directly instead of each redundantly re-filtering
-        the entire tomogram.
+        """Filter the full tomogram once and cache it to
+        self.filtered_tomogram_path, so that sub jobs can load it directly instead
+        of each redundantly re-filtering the entire tomogram.
         """
-        if self.filtered_tomogram is not None:
+        if self._filtered_tomogram_path is not None:
             return
 
         fast_tomo = self._filter_full_tomogram()
 
-        self.filtered_tomogram = self.output_dir.joinpath(
+        self._filtered_tomogram_path = self.output_dir.joinpath(
             f"{self.tomo_id}_filtered_tomogram.mrc"
         )
         write_mrc(
-            self.filtered_tomogram,
+            self._filtered_tomogram_path,
             fast_tomo[: self.tomo_shape[0], : self.tomo_shape[1], : self.tomo_shape[2]],
             self.voxel_size,
         )
+
+    def clear_filtered_tomogram(self) -> None:
+        """Delete the temporary filtered tomogram from disk (if one was generated)
+        and clear the cached path, e.g. once a parallel run has finished with it.
+        """
+        if self._filtered_tomogram_path is not None:
+            self._filtered_tomogram_path.unlink(missing_ok=True)
+            self._filtered_tomogram_path = None
 
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
         """Split the search into sub_jobs by dividing the rotations. Sub jobs will
@@ -956,12 +983,9 @@ class TMJob:
         """
         from pytom_tm.matching import TemplateMatchingGPU
 
-        if self.filtered_tomogram is not None:
-            # tomogram was already fully filtered once for all sub jobs sharing
-            # this search, see TMJob._generate_filtered_tomogram()
-            fast_tomo = read_mrc(self.filtered_tomogram)
-        else:
-            fast_tomo = self._filter_full_tomogram()
+        # loaded from disk if this search was split (see
+        # TMJob._generate_filtered_tomogram()), otherwise filtered directly
+        fast_tomo = self.filtered_tomogram
 
         # load template and mask
         template, mask = (read_mrc(self.template), read_mrc(self.mask))
