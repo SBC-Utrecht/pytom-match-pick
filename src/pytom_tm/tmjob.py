@@ -560,6 +560,10 @@ class TMJob:
         # caching stuff
         self._tomogram_filter = None
         self._template_filter = None
+        # path to a fully filtered (bandpass + whitening + wedge) copy of the
+        # tomogram, shared by all sub jobs so the filtering only has to happen once,
+        # see _generate_filtered_tomogram()
+        self._filtered_tomogram_path = None
 
     @property
     def tomogram_filter(self) -> npt.NDArray[float]:
@@ -572,6 +576,25 @@ class TMJob:
         if self._template_filter is None:
             self._generate_filters()
         return self._template_filter
+
+    @property
+    def filtered_tomogram_path(self) -> pathlib.Path | None:
+        """Path to the temporary filtered tomogram, or None if it hasn't been
+        generated (see _generate_filtered_tomogram()). Read-only: sub jobs pick this
+        up through TMJob.copy(), and TMJob.clear_filtered_tomogram() removes it.
+        """
+        return self._filtered_tomogram_path
+
+    @property
+    def filtered_tomogram(self) -> npt.NDArray[float]:
+        """The fully filtered tomogram (bandpass + whitening + wedge), padded to the
+        fast fft shape. Loaded from disk when self.filtered_tomogram_path was
+        pregenerated for a split (shared by all sub jobs), otherwise filtered here
+        directly.
+        """
+        if self._filtered_tomogram_path is not None:
+            return read_mrc(self._filtered_tomogram_path)
+        return self._filter_full_tomogram()
 
     def copy(self) -> TMJob:
         """Create a copy of the TMJob
@@ -599,8 +622,10 @@ class TMJob:
         d.pop("search_origin")
         d.pop("search_size")
 
-        # pop cached numpy arrays that we don't want to dump
-        for c in ["_tomogram_filter", "_template_filter"]:
+        # pop cached numpy arrays we don't want to dump, and the path to the
+        # temporary filtered tomogram, which is only valid for the duration of a
+        # parallel run and is removed once that run finishes
+        for c in ["_tomogram_filter", "_template_filter", "_filtered_tomogram_path"]:
             d.pop(c)
 
         d["search_x"] = [
@@ -659,6 +684,55 @@ class TMJob:
         self._tomogram_filter = tomo_filter
         self._template_filter = template_filter
 
+    def _filter_full_tomogram(self) -> npt.NDArray[float]:
+        """Apply the common tomogram filter (bandpass + whitening + wedge) to the
+        full tomogram, padded to the fast fft shape.
+
+        Note that (unlike the template wedge) the tomogram wedge does not depend on
+        the patch-specific defocus, so this filtering is identical for every sub job.
+        """
+        tomo = read_mrc(self.tomogram)
+        fast_tomo_shape = tuple(next_fast_len(s, real=True) for s in tomo.shape)
+        fast_tomo = np.zeros(fast_tomo_shape, dtype=np.float32)
+        fast_tomo[: tomo.shape[0], : tomo.shape[1], : tomo.shape[2]] = tomo
+
+        tomo_filter = self.tomogram_filter * create_wedge(
+            fast_tomo_shape,
+            self.ts_metadata,
+            self.voxel_size,
+            cut_off_radius=1.0,
+            per_tilt_weighting=False,
+        ).astype(np.float32)
+
+        return np.real(irfftn(rfftn(fast_tomo) * tomo_filter, s=fast_tomo_shape))
+
+    def _generate_filtered_tomogram(self) -> None:
+        """Filter the full tomogram once and cache it to
+        self.filtered_tomogram_path, so that sub jobs can load it directly instead
+        of each redundantly re-filtering the entire tomogram.
+        """
+        if self._filtered_tomogram_path is not None:
+            return
+
+        fast_tomo = self._filter_full_tomogram()
+
+        self._filtered_tomogram_path = self.output_dir.joinpath(
+            f"{self.tomo_id}_filtered_tomogram.mrc"
+        )
+        write_mrc(
+            self._filtered_tomogram_path,
+            fast_tomo[: self.tomo_shape[0], : self.tomo_shape[1], : self.tomo_shape[2]],
+            self.voxel_size,
+        )
+
+    def clear_filtered_tomogram(self) -> None:
+        """Delete the temporary filtered tomogram from disk (if one was generated)
+        and clear the cached path, e.g. once a parallel run has finished with it.
+        """
+        if self._filtered_tomogram_path is not None:
+            self._filtered_tomogram_path.unlink(missing_ok=True)
+            self._filtered_tomogram_path = None
+
     def split_rotation_search(self, n: int) -> list[TMJob, ...]:
         """Split the search into sub_jobs by dividing the rotations. Sub jobs will
         obtain the key self.job_key + str(i) when looping over range(n).
@@ -681,6 +755,8 @@ class TMJob:
 
         # pregenerate the common part of the filters
         self._generate_filters()
+        # pregenerate the filtered tomogram so sub jobs don't each redo this
+        self._generate_filtered_tomogram()
 
         sub_jobs = []
         for i in range(n):
@@ -732,6 +808,8 @@ class TMJob:
             )
         # pregenerate the common part of the filters
         self._generate_filters()
+        # pregenerate the filtered tomogram so sub jobs don't each redo this
+        self._generate_filtered_tomogram()
 
         search_size = self.search_size
         if self.tomogram_mask is not None:
@@ -905,12 +983,9 @@ class TMJob:
         """
         from pytom_tm.matching import TemplateMatchingGPU
 
-        tomo = read_mrc(self.tomogram)
-        fast_tomo = np.zeros(
-            tuple([next_fast_len(s, real=True) for s in tomo.shape]),
-            dtype=np.float32,
-        )
-        fast_tomo[: tomo.shape[0], : tomo.shape[1], : tomo.shape[2]] = tomo
+        # loaded from disk if this search was split (see
+        # TMJob._generate_filtered_tomogram()), otherwise filtered directly
+        fast_tomo = self.filtered_tomogram
 
         # load template and mask
         template, mask = (read_mrc(self.template), read_mrc(self.mask))
@@ -943,24 +1018,10 @@ class TMJob:
                 f"{[round(ctf.defocus * 1e6, 2) for ctf in self.ts_metadata.ctf_data]}",
             )
 
-        # grab common tomogram and template filter
-        # (or generated them if this job isn't volume split)
-        tomo_filter = self.tomogram_filter
+        # grab common template filter (or generate it if this job isn't volume split)
         template_filter = self.template_filter
-        # The wedge filters use the patch specific defocus, so can't be pregenerated
-        # when splitting the volume
-
-        # for the tomogram a binary wedge is generated to explicitly set the missing
-        # wedge region to 0
-        tomo_filter *= create_wedge(
-            fast_tomo.shape,
-            self.ts_metadata,
-            self.voxel_size,
-            cut_off_radius=1.0,
-            per_tilt_weighting=False,
-        ).astype(np.float32)
-        # for the template a binary or per-tilt-weighted wedge is generated
-        # depending on the options
+        # The template wedge uses the patch specific defocus, so it can't be
+        # pregenerated when splitting the volume
         template_filter *= create_wedge(
             self.template_shape,
             self.ts_metadata,
@@ -990,10 +1051,7 @@ class TMJob:
             dtype=np.float32,
         )
 
-        # apply optional filters to tomogram and slice it down to subvolume
-        # TODO: we might want to rewrite this to only do this and the tomo loading
-        # once in a volume split
-        fast_tomo = np.real(irfftn(rfftn(fast_tomo) * tomo_filter, s=fast_tomo.shape))
+        # slice the (already filtered) tomogram down to the subvolume
         search_volume[
             : self.search_size[0], : self.search_size[1], : self.search_size[2]
         ] = np.ascontiguousarray(
