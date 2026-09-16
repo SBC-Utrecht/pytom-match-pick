@@ -628,12 +628,64 @@ class TestTMJob(unittest.TestCase):
         # TMJob with none of these weighting options is tested in all other runs
         # in this file.
 
+    def test_fanned_tomogram_wedge(self):
+        ref_job = self.job.copy()
+        ref_score, ref_angle = ref_job.start_job(0, return_volumes=True)
+        # Give many angles to mimic full sampling but still test fanned tomogram
+        new_metadata = TS_METADATA.replace(tilt_angles=list(np.linspace(-90, 90, 1800)))
+        fanned_job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            ts_metadata=new_metadata,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=1.0,
+            tomogram_fanned_wedge=True,
+        )
+        score, angle = fanned_job.start_job(0, return_volumes=True)
+        self.assertEqual(score.shape, ref_score.shape)
+        self.assertEqual(angle.shape, ref_angle.shape)
+        self.assertTrue(np.all(np.isfinite(score)))
+        self.assertTrue(np.all(np.isfinite(angle)))
+
+        # make sure we get some scores
+        self.assertGreater(np.count_nonzero(score), 0)
+
+        # now test that naive fanning would have failed
+        naive_fanned_job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            ts_metadata=TS_METADATA,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=1.0,
+            tomogram_fanned_wedge=True,
+        )
+        score, angle = naive_fanned_job.start_job(0, return_volumes=True)
+        with self.assertRaises(AssertionError):
+            np.testing.assert_allclose(score, ref_score)
+        with self.assertRaises(AssertionError):
+            np.testing.assert_allclose(angle, ref_angle)
+
     def test_load_json_to_tmjob(self):
         # check base job loading
         job = load_json_to_tmjob(TEST_JOB_JSON)
         self.assertIsInstance(
             job, TMJob, msg="TMJob could not be properly loaded from disk."
         )
+        self.assertFalse(job.tomogram_fanned_wedge)
+
+        job.tomogram_fanned_wedge = True
+        json_location = TEST_DATA_DIR.joinpath("job_tomogram_fanned_wedge.json")
+        job.write_to_json(json_location)
+        loaded_job = load_json_to_tmjob(json_location)
+        self.assertTrue(loaded_job.tomogram_fanned_wedge)
 
         # check job loading and preventing whitening filter recalculation
         with self.assertNoLogs(logger="pytom_tm", level="INFO"):

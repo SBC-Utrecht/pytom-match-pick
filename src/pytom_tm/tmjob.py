@@ -96,6 +96,7 @@ def load_json_to_tmjob(
         # Use 'get' for backwards compatibility
         high_pass=data.get("high_pass", None),
         whiten_spectrum=data.get("whiten_spectrum", False),
+        tomogram_fanned_wedge=data.get("tomogram_fanned_wedge", False),
         rotational_symmetry=data.get("rotational_symmetry", 1),
         # if version number is not in the .json, it must be 0.3.0 or older
         pytom_tm_version_number=data.get("pytom_tm_version_number", "0.3.0"),
@@ -286,6 +287,7 @@ class TMJob:
         low_pass: float | None = None,
         high_pass: float | None = None,
         whiten_spectrum: bool = False,
+        tomogram_fanned_wedge: bool = False,
         rotational_symmetry: int = 1,
         pytom_tm_version_number: str = PYTOM_TM_VERSION,
         job_loaded_for_extraction: bool = False,
@@ -334,6 +336,8 @@ class TMJob:
             template
         whiten_spectrum: bool, default False
             whether to apply spectrum whitening
+        tomogram_fanned_wedge: bool, default False
+            wether the binary tomogram mask should be full or a fanned wedge
         rotational_symmetry: int, default 1
             specify a rotational symmetry around the z-axis, is only valid if the
             symmetry axis of the template is aligned with the z-axis
@@ -519,6 +523,7 @@ class TMJob:
         self.high_pass = high_pass
 
         self.whiten_spectrum = whiten_spectrum
+        self.tomogram_fanned_wedge = tomogram_fanned_wedge
         self.whitening_filter = self.output_dir.joinpath(
             f"{self.tomo_id}_whitening_filter.npy"
         )
@@ -702,6 +707,7 @@ class TMJob:
             self.voxel_size,
             cut_off_radius=1.0,
             per_tilt_weighting=False,
+            fanned_binary=self.tomogram_fanned_wedge,
         ).astype(np.float32)
 
         return np.real(irfftn(rfftn(fast_tomo) * tomo_filter, s=fast_tomo_shape))
