@@ -707,7 +707,7 @@ class TMJob:
             self.voxel_size,
             cut_off_radius=1.0,
             per_tilt_weighting=False,
-            fanned_binary=self.tomogram_fanned_wedge
+            fanned_binary=self.tomogram_fanned_wedge,
         ).astype(np.float32)
 
         return np.real(irfftn(rfftn(fast_tomo) * tomo_filter, s=fast_tomo_shape))
