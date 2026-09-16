@@ -2,6 +2,7 @@ import pathlib
 import unittest
 from dataclasses import asdict
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from unittest.mock import patch
 
 import mrcfile
 import numpy as np
@@ -474,6 +475,42 @@ class TestTMJob(unittest.TestCase):
         # make sure we can still json dump
         with NamedTemporaryFile(suffix=".json") as temp:
             job.write_to_json(pathlib.Path(temp.name))
+
+    def test_filtered_tomogram_generated_once(self):
+        # the (expensive) full tomogram filtering should happen exactly once, no
+        # matter how many times / ways the job gets split, and the result should be
+        # shared by every resulting sub job
+        job = self.job.copy()
+        self.assertIsNone(job.filtered_tomogram_path)
+
+        with patch(
+            "pytom_tm.tmjob.write_mrc", side_effect=write_mrc
+        ) as mocked_write_mrc:
+            sub_jobs = job.split_volume_search((2, 2, 1))
+            for x in sub_jobs:
+                x.split_rotation_search(2)
+
+        filtered_tomogram_writes = [
+            call.args[0]
+            for call in mocked_write_mrc.call_args_list
+            if str(call.args[0]).endswith("_filtered_tomogram.mrc")
+        ]
+        self.assertEqual(
+            len(filtered_tomogram_writes),
+            1,
+            msg="the filtered tomogram should only be generated once, even though "
+            "the job was split both by volume and (per subvolume) by rotation",
+        )
+
+        self.assertIsNotNone(job.filtered_tomogram_path)
+        self.assertTrue(job.filtered_tomogram_path.exists())
+        for x in sub_jobs:
+            for sub_x in x.sub_jobs:
+                self.assertEqual(
+                    sub_x.filtered_tomogram_path,
+                    job.filtered_tomogram_path,
+                    msg="sub jobs should share the same filtered tomogram file",
+                )
 
     def test_tm_job_weighting_options(self):
         # run with all options

@@ -138,64 +138,72 @@ def run_job_parallel(
     """
     jobs = split_job_efficiently(main_job, volume_splits, len(gpu_ids))
 
-    # ================== Execution of jobs =========================
-    if len(jobs) == 1:
-        return main_job.start_job(gpu_ids[0], return_volumes=True)
+    try:
+        # ================== Execution of jobs =========================
+        if len(jobs) == 1:
+            return main_job.start_job(gpu_ids[0], return_volumes=True)
 
-    elif len(jobs) >= len(gpu_ids):
-        results = []
+        elif len(jobs) >= len(gpu_ids):
+            results = []
 
-        with mp.Manager() as manager:
-            task_queue = (
-                manager.Queue()
-            )  # the list of tasks where processes can get there next task from
-            result_queue = (
-                manager.Queue()
-            )  # this will accumulate results from the processes
+            with mp.Manager() as manager:
+                task_queue = (
+                    manager.Queue()
+                )  # the list of tasks where processes can get there next task from
+                result_queue = (
+                    manager.Queue()
+                )  # this will accumulate results from the processes
 
-            [task_queue.put_nowait(j) for j in jobs]  # put all tasks
+                [task_queue.put_nowait(j) for j in jobs]  # put all tasks
 
-            # set the processes and start them!
-            procs = [
-                mp.Process(
-                    target=gpu_runner,
-                    args=(
-                        g,
-                        task_queue,
-                        result_queue,
-                        main_job.log_level,
-                        unittest_mute,
-                    ),
-                )
-                for g in gpu_ids
-            ]
-            [p.start() for p in procs]
+                # set the processes and start them!
+                procs = [
+                    mp.Process(
+                        target=gpu_runner,
+                        args=(
+                            g,
+                            task_queue,
+                            result_queue,
+                            main_job.log_level,
+                            unittest_mute,
+                        ),
+                    )
+                    for g in gpu_ids
+                ]
+                [p.start() for p in procs]
 
-            while True:
-                while not result_queue.empty():
-                    results.append(result_queue.get_nowait())
+                while True:
+                    while not result_queue.empty():
+                        results.append(result_queue.get_nowait())
 
-                if len(results) == len(
-                    jobs
-                ):  # its done if all the results from the spawn were send back
-                    logger.debug("Got all results from the child processes")
-                    break
+                    if len(results) == len(
+                        jobs
+                    ):  # its done if all the results from the spawn were send back
+                        logger.debug("Got all results from the child processes")
+                        break
 
-                for p in procs:
-                    # if one of the processes is no longer alive and has a failed exit
-                    # we should error
-                    if not p.is_alive() and p.exitcode != 0:  # to prevent a deadlock
-                        [
-                            x.terminate() for x in procs
-                        ]  # kill all spawned processes if something broke
-                        raise RuntimeError(
-                            "One or more of the processes stopped unexpectedly."
-                        )
+                    for p in procs:
+                        # if one of the processes is no longer alive and has a failed
+                        # exit we should error
+                        if (
+                            not p.is_alive() and p.exitcode != 0
+                        ):  # to prevent a deadlock
+                            [
+                                x.terminate() for x in procs
+                            ]  # kill all spawned processes if something broke
+                            raise RuntimeError(
+                                "One or more of the processes stopped unexpectedly."
+                            )
 
-                time.sleep(1)
+                    time.sleep(1)
 
-            [p.join() for p in procs]
-            logger.debug("Terminated the processes")
+                [p.join() for p in procs]
+                logger.debug("Terminated the processes")
 
-        # merge split jobs; pass along the list of stats to annotate them in main_job
-        return main_job.merge_sub_jobs(stats=results)
+            # merge split jobs; pass along the list of stats to annotate them in
+            # main_job
+            return main_job.merge_sub_jobs(stats=results)
+    finally:
+        # remove the temporary filtered tomogram (if one was generated for the
+        # split above) now that all sub jobs are done with it
+        main_job.clear_filtered_tomogram()

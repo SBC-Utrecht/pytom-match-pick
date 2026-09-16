@@ -105,6 +105,17 @@ class TestTMJob(unittest.TestCase):
                 msg="a process was still lingering after a parallel job with partially "
                 "invalid resources was started",
             )
+            # the temporary filtered tomogram should be cleaned up even when the
+            # parallel run fails partway through
+            self.assertIsNone(
+                self.job.filtered_tomogram_path,
+                msg="filtered tomogram path was not cleared after a failed run",
+            )
+            self.assertEqual(
+                list(TEST_DATA_DIR.glob("*_filtered_tomogram.mrc")),
+                [],
+                msg="filtered tomogram file was not removed after a failed run",
+            )
         else:  # pragma: no cover
             self.fail("This should have given a RuntimeError")
 
@@ -115,6 +126,17 @@ class TestTMJob(unittest.TestCase):
         self.assertTrue(score.max() > 0.931, msg="lcc max value lower than expected")
         self.assertEqual(ANGLE_ID, angle[ind])
         self.assertSequenceEqual(LOCATION, ind)
+
+        # the temporary filtered tomogram should be cleaned up once the run finishes
+        self.assertIsNone(
+            self.job.filtered_tomogram_path,
+            msg="filtered tomogram path was not cleared after the run finished",
+        )
+        self.assertEqual(
+            list(TEST_DATA_DIR.glob("*_filtered_tomogram.mrc")),
+            [],
+            msg="filtered tomogram file was not removed after the run finished",
+        )
 
     def test_split_job_efficiently(self):
         # test more volume splits than gpus
