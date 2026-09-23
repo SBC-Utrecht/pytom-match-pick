@@ -86,6 +86,8 @@ def load_json_to_tmjob(
         ts_metadata=data["ts_metadata"],
         angle_increment=data.get("angle_increment", data["rotation_file"]),
         mask_is_spherical=data["mask_is_spherical"],
+        mirror_template=data.get("mirror_template", False),
+        invert_template_contrast=data.get("invert_template_contrast", False),
         voxel_size=data["voxel_size"],
         search_x=data["search_x"],
         search_y=data["search_y"],
@@ -279,6 +281,8 @@ class TMJob:
         voxel_size: float | None = None,
         angle_increment: str | float | None = None,
         mask_is_spherical: bool = True,
+        mirror_template: bool = False,
+        invert_template_contrast: bool = False,
         search_x: list[int, int] | None = None,
         search_y: list[int, int] | None = None,
         search_z: list[int, int] | None = None,
@@ -318,6 +322,12 @@ class TMJob:
             angular increment of template search
         mask_is_spherical: bool, default True
             whether template mask is spherical, reduces computation complexity
+        mirror_template: bool, default False
+            mirror the template (and mask) geometry before matching, i.e. flip along
+            the first axis
+        invert_template_contrast: bool, default False
+            multiply the template by -1 before matching, to flip its contrast; only
+            the template is affected, not the mask
         search_x: Optional[list[int, int]], default None
             restrict tomogram search region along the x-axis
         search_y: Optional[list[int, int]], default None
@@ -354,6 +364,8 @@ class TMJob:
         """
         self.mask = mask
         self.mask_is_spherical = mask_is_spherical
+        self.mirror_template = mirror_template
+        self.invert_template_contrast = invert_template_contrast
         self.output_dir = output_dir
 
         self.tomogram = tomogram
@@ -989,6 +1001,11 @@ class TMJob:
 
         # load template and mask
         template, mask = (read_mrc(self.template), read_mrc(self.mask))
+        if self.mirror_template:
+            template = np.flip(template, axis=0)
+            mask = np.flip(mask, axis=0)
+        if self.invert_template_contrast:
+            template = template * -1
 
         # create wedge filters
         if (

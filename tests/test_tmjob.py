@@ -628,12 +628,111 @@ class TestTMJob(unittest.TestCase):
         # TMJob with none of these weighting options is tested in all other runs
         # in this file.
 
+    def test_tm_job_mirror_and_invert_template(self):
+        baseline_job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            ts_metadata=TS_METADATA,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=1.0,
+        )
+        self.assertFalse(baseline_job.mirror_template)
+        self.assertFalse(baseline_job.invert_template_contrast)
+        baseline_score, _ = baseline_job.start_job(0, return_volumes=True)
+
+        # inverting the template contrast should negate the (normalized) score map
+        inverted_job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            ts_metadata=TS_METADATA,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=1.0,
+            invert_template_contrast=True,
+        )
+        inverted_score, _ = inverted_job.start_job(0, return_volumes=True)
+        np.testing.assert_allclose(
+            inverted_score,
+            -baseline_score,
+            atol=1e-5,
+            err_msg="--invert-template-contrast should negate the score map",
+        )
+
+        # mirroring the template (and mask) on-the-fly should give the same result
+        # as pre-flipping the template and mask MRC files on disk
+        mirrored_template_path = TEST_DATA_DIR.joinpath("template_mirrored.mrc")
+        mirrored_mask_path = TEST_DATA_DIR.joinpath("mask_mirrored.mrc")
+        write_mrc(mirrored_template_path, np.flip(read_mrc(TEST_TEMPLATE), axis=0), 1.0)
+        write_mrc(mirrored_mask_path, np.flip(read_mrc(TEST_MASK), axis=0), 1.0)
+
+        pre_mirrored_job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            mirrored_template_path,
+            mirrored_mask_path,
+            TEST_DATA_DIR,
+            ts_metadata=TS_METADATA,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=1.0,
+        )
+        pre_mirrored_score, _ = pre_mirrored_job.start_job(0, return_volumes=True)
+
+        on_the_fly_mirrored_job = TMJob(
+            "0",
+            10,
+            TEST_TOMOGRAM,
+            TEST_TEMPLATE,
+            TEST_MASK,
+            TEST_DATA_DIR,
+            ts_metadata=TS_METADATA,
+            angle_increment=ANGULAR_SEARCH,
+            voxel_size=1.0,
+            mirror_template=True,
+        )
+        on_the_fly_mirrored_score, _ = on_the_fly_mirrored_job.start_job(
+            0, return_volumes=True
+        )
+        np.testing.assert_allclose(
+            on_the_fly_mirrored_score,
+            pre_mirrored_score,
+            atol=1e-5,
+            err_msg="--mirror-template should match matching against a pre-flipped "
+            "template and mask",
+        )
+
     def test_load_json_to_tmjob(self):
         # check base job loading
         job = load_json_to_tmjob(TEST_JOB_JSON)
         self.assertIsInstance(
             job, TMJob, msg="TMJob could not be properly loaded from disk."
         )
+        self.assertFalse(
+            job.mirror_template,
+            msg="mirror_template should default to False for backward compatible "
+            "loading of jobs written before this option existed",
+        )
+        self.assertFalse(
+            job.invert_template_contrast,
+            msg="invert_template_contrast should default to False for backward "
+            "compatible loading of jobs written before this option existed",
+        )
+
+        # check mirror_template/invert_template_contrast round-trip through json
+        job.mirror_template = True
+        job.invert_template_contrast = True
+        round_trip_json = TEST_DATA_DIR.joinpath("job_mirror_invert.json")
+        job.write_to_json(round_trip_json)
+        round_trip_job = load_json_to_tmjob(round_trip_json)
+        self.assertTrue(round_trip_job.mirror_template)
+        self.assertTrue(round_trip_job.invert_template_contrast)
 
         # check job loading and preventing whitening filter recalculation
         with self.assertNoLogs(logger="pytom_tm", level="INFO"):
