@@ -629,6 +629,14 @@ class TestTMJob(unittest.TestCase):
         # in this file.
 
     def test_tm_job_mirror_and_invert_template(self):
+        # The final score map is a max-projection over all searched rotations, which
+        # is not linear in the template values: negating the template does not simply
+        # negate the resulting max-projected score map. To verify the (linear) effect
+        # of --invert-template-contrast in isolation, restrict the angular search to
+        # a single, fixed rotation so the max-projection has only one candidate.
+        single_angle_search = TEST_DATA_DIR.joinpath("single_angle_search.txt")
+        np.savetxt(single_angle_search, np.zeros((1, 3)))
+
         baseline_job = TMJob(
             "0",
             10,
@@ -637,7 +645,7 @@ class TestTMJob(unittest.TestCase):
             TEST_MASK,
             TEST_DATA_DIR,
             ts_metadata=TS_METADATA,
-            angle_increment=ANGULAR_SEARCH,
+            angle_increment=single_angle_search,
             voxel_size=1.0,
         )
         self.assertFalse(baseline_job.mirror_template)
@@ -653,7 +661,7 @@ class TestTMJob(unittest.TestCase):
             TEST_MASK,
             TEST_DATA_DIR,
             ts_metadata=TS_METADATA,
-            angle_increment=ANGULAR_SEARCH,
+            angle_increment=single_angle_search,
             voxel_size=1.0,
             invert_template_contrast=True,
         )
