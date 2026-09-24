@@ -680,6 +680,23 @@ def match_template(argv=None):
         help="Flag to set when the mask is not spherical. It adds the required "
         "computations for non-spherical masks and roughly doubles computation time.",
     )
+    template_group = parser.add_argument_group("Template preprocessing")
+    template_group.add_argument(
+        "--mirror-template",
+        action="store_true",
+        required=False,
+        help="Mirror the template (and mask) geometry before matching, i.e. flip "
+        "along the first axis. Equivalent to the --mirror option in "
+        "pytom_create_template.py but applied at search time.",
+    )
+    template_group.add_argument(
+        "--invert-template-contrast",
+        action="store_true",
+        required=False,
+        help="Multiply the template by -1 before matching, to flip its contrast. "
+        "Equivalent to the --invert option in pytom_create_template.py but applied "
+        "at search time. Only the template is affected, not the mask.",
+    )
     rotation_group = parser.add_argument_group("Angular search")
     rotation_group.add_argument(
         "--particle-diameter",
@@ -1143,6 +1160,8 @@ def match_template(argv=None):
         mask_is_spherical=True
         if args.non_spherical_mask is None
         else (not args.non_spherical_mask),
+        mirror_template=args.mirror_template,
+        invert_template_contrast=args.invert_template_contrast,
         search_x=args.search_x,
         search_y=args.search_y,
         search_z=args.search_z,
