@@ -627,7 +627,7 @@ class TestTMJob(unittest.TestCase):
 
         # TMJob with none of these weighting options is tested in all other runs
         # in this file.
-    
+
     def test_tm_job_mirror_and_invert_template(self):
         # The final score map is a max-projection over all searched rotations, which
         # is not linear in the template values: negating the template does not simply
@@ -715,7 +715,7 @@ class TestTMJob(unittest.TestCase):
             err_msg="--mirror-template should match matching against a pre-flipped "
             "template and mask",
         )
-        
+
     def test_fanned_tomogram_wedge(self):
         ref_job = self.job.copy()
         ref_score, ref_angle = ref_job.start_job(0, return_volumes=True)
@@ -778,7 +778,7 @@ class TestTMJob(unittest.TestCase):
             msg="invert_template_contrast should default to False for backward "
             "compatible loading of jobs written before this option existed",
         )
-        
+
         # Test fanned wedge round-tripping
         job.tomogram_fanned_wedge = True
         json_location = TEST_DATA_DIR.joinpath("job_tomogram_fanned_wedge.json")
