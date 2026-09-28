@@ -1,3 +1,4 @@
+import json
 import logging
 import pathlib
 import sys
@@ -317,6 +318,17 @@ class TestEntryPoints(unittest.TestCase):
         # test if we can set the rng seed, see issue #194
         arguments["--rng-seed"] = "42"
         start(arguments)
+
+        # test the mirror-template and invert-template-contrast flags
+        arguments = defaults.copy()
+        arguments["--mirror-template"] = ""
+        arguments["--invert-template-contrast"] = ""
+        start(arguments)
+        job_json = json.loads(
+            self.outputdir.joinpath(f"{TOMOGRAM.stem}_job.json").read_text()
+        )
+        self.assertTrue(job_json["mirror_template"])
+        self.assertTrue(job_json["invert_template_contrast"])
 
         # test debug files
         arguments = defaults.copy()
