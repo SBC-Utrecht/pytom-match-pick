@@ -805,12 +805,22 @@ class TestWeights(unittest.TestCase):
             self.assertTrue(output_file.exists())
             self.assertGreater(output_file.stat().st_size, 0)
 
+        # test rejection on wrong tomogram dimensions
+        wrong_tomogram = np.zeros((32, 40), dtype=np.float32)
+        with self.assertRaisesRegex(ValueError, "must be a 3D array"):
+            output_file = Path(temporary_directory) / "diagnostic2.png"
+            save_fanned_wedge_debug_plot(
+                wrong_tomogram,
+                wedge,
+                output_file,
+            )
+
         # test rejection on wrong shape
         tomogram = np.zeros((32, 40, 24), dtype=np.float32)
         wrong_wedge = np.zeros((32, 40, 24), dtype=np.float32)
 
         with TemporaryDirectory() as temporary_directory:
-            output_file = Path(temporary_directory) / "diagnostic.png"
+            output_file = Path(temporary_directory) / "diagnostic3.png"
 
             with self.assertRaisesRegex(ValueError, "shape does not match"):
                 save_fanned_wedge_debug_plot(
