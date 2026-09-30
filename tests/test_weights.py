@@ -1,4 +1,6 @@
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import numpy as np
 from scipy import ndimage
@@ -16,6 +18,12 @@ from pytom_tm.weights import (
     profile_to_weighting,
     radial_grid,
 )
+
+SKIP_PLOT = False
+try:
+    from pytom_tm import plotting  # noqa: F401
+except RuntimeError:
+    SKIP_PLOT = True
 
 
 class TestWeights(unittest.TestCase):
@@ -769,3 +777,44 @@ class TestWeights(unittest.TestCase):
                 "be affected by CTF or dose metadata."
             ),
         )
+
+    @unittest.skipIf(SKIP_PLOT, "plotting modules not installed")
+    def test_save_fanned_wedge_debug_plot(self):
+        from pytom.plotting import save_fanned_wedge_debug_plot
+
+        """The fanned-wedge diagnostic should write a valid PNG."""
+        shape = (32, 40, 24)
+        rng = np.random.default_rng(0)
+
+        tomogram = rng.normal(size=shape).astype(np.float32)
+        wedge = np.ones(
+            (shape[0], shape[1], shape[2] // 2 + 1),
+            dtype=np.float32,
+        )
+
+        with TemporaryDirectory() as temporary_directory:
+            output_file = Path(temporary_directory) / "diagnostic.png"
+
+            save_fanned_wedge_debug_plot(
+                tomogram,
+                wedge,
+                output_file,
+                title="test",
+            )
+
+            self.assertTrue(output_file.exists())
+            self.assertGreater(output_file.stat().st_size, 0)
+
+        # test rejection on wrong shape
+        tomogram = np.zeros((32, 40, 24), dtype=np.float32)
+        wrong_wedge = np.zeros((32, 40, 24), dtype=np.float32)
+
+        with TemporaryDirectory() as temporary_directory:
+            output_file = Path(temporary_directory) / "diagnostic.png"
+
+            with self.assertRaisesRegex(ValueError, "shape does not match"):
+                save_fanned_wedge_debug_plot(
+                    tomogram,
+                    wrong_wedge,
+                    output_file,
+                )
