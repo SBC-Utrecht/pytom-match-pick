@@ -780,7 +780,7 @@ class TestWeights(unittest.TestCase):
 
     @unittest.skipIf(SKIP_PLOT, "plotting modules not installed")
     def test_save_fanned_wedge_debug_plot(self):
-        from pytom.plotting import save_fanned_wedge_debug_plot
+        from pytom_tm.plotting import save_fanned_wedge_debug_plot
 
         """The fanned-wedge diagnostic should write a valid PNG."""
         shape = (32, 40, 24)
