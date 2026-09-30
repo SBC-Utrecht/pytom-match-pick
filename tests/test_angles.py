@@ -64,7 +64,8 @@ class TestAngles(unittest.TestCase):
 
         # Resample to smaller angle if angle is too big for healpix behavior to show up
         # see: https://github.com/ntessore/healpix/issues/99
-        if angle > 58:
+        if angle > 58:  # pragma: no cover
+            # flaky for test coverage
             angle = 1 + np.random.random() * 57
             angles = angle_to_angle_list(angle, log_level=logging.INFO)
 
