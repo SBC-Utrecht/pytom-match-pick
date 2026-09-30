@@ -99,6 +99,11 @@ def load_json_to_tmjob(
         high_pass=data.get("high_pass", None),
         whiten_spectrum=data.get("whiten_spectrum", False),
         tomogram_fanned_wedge=data.get("tomogram_fanned_wedge", False),
+        debug_fanned_wedge=(
+            pathlib.Path(data["debug_fanned_wedge"])
+            if data.get("debug_fanned_wedge") is not None
+            else None
+        ),
         rotational_symmetry=data.get("rotational_symmetry", 1),
         # if version number is not in the .json, it must be 0.3.0 or older
         pytom_tm_version_number=data.get("pytom_tm_version_number", "0.3.0"),
@@ -292,6 +297,7 @@ class TMJob:
         high_pass: float | None = None,
         whiten_spectrum: bool = False,
         tomogram_fanned_wedge: bool = False,
+        debug_fanned_wedge: pathlib.Path | None = None,
         rotational_symmetry: int = 1,
         pytom_tm_version_number: str = PYTOM_TM_VERSION,
         job_loaded_for_extraction: bool = False,
@@ -348,6 +354,11 @@ class TMJob:
             whether to apply spectrum whitening
         tomogram_fanned_wedge: bool, default False
             wether the binary tomogram mask should be full or a fanned wedge
+        debug_fanned_wedge: optional[pathlib.Path], default None
+            If given, writes a diagnostic PNG containing the central x-z slice of the
+            tomogram power spectrum and the fanned Fourier support. This
+            argument should be an output directory. This diagnostic PNG is
+            generated once before the tomogram is filtered.
         rotational_symmetry: int, default 1
             specify a rotational symmetry around the z-axis, is only valid if the
             symmetry axis of the template is aligned with the z-axis
@@ -536,6 +547,7 @@ class TMJob:
 
         self.whiten_spectrum = whiten_spectrum
         self.tomogram_fanned_wedge = tomogram_fanned_wedge
+        self.debug_fanned_wedge = debug_fanned_wedge
         self.whitening_filter = self.output_dir.joinpath(
             f"{self.tomo_id}_whitening_filter.npy"
         )
@@ -712,8 +724,7 @@ class TMJob:
         fast_tomo_shape = tuple(next_fast_len(s, real=True) for s in tomo.shape)
         fast_tomo = np.zeros(fast_tomo_shape, dtype=np.float32)
         fast_tomo[: tomo.shape[0], : tomo.shape[1], : tomo.shape[2]] = tomo
-
-        tomo_filter = self.tomogram_filter * create_wedge(
+        tomo_wedge = create_wedge(
             fast_tomo_shape,
             self.ts_metadata,
             self.voxel_size,
@@ -721,6 +732,24 @@ class TMJob:
             per_tilt_weighting=False,
             fanned_binary=self.tomogram_fanned_wedge,
         ).astype(np.float32)
+        if self.debug_fanned_wedge is not None:
+            from pytom_tm.plotting import save_fanned_wedge_debug_plot
+
+            debug_file = self.debug_fanned_wedge.joinpath(
+                f"{self.tomo_id}_{self.job_key}_fanned_wedge_xz.png"
+            )
+
+            save_fanned_wedge_debug_plot(
+                fast_tomo,
+                tomo_wedge,
+                debug_file,
+                title=(
+                    f"{self.tomo_id}, job {self.job_key}, central x-z Fourier slice"
+                ),
+            )
+            logger.info("Wrote fanned-wedge diagnostic to %s", debug_file)
+
+        tomo_filter = self.tomogram_filter * tomo_wedge
 
         return np.real(irfftn(rfftn(fast_tomo) * tomo_filter, s=fast_tomo_shape))
 

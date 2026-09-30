@@ -1022,6 +1022,18 @@ def match_template(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+    debug_group.add_argument(
+        "--debug-fanned-wedge",
+        type=pathlib.Path,
+        required=False,
+        default=None,
+        help=(
+            "Write diagnostic PNGs containing the central x-z slice of the "
+            "tomogram power spectrum and the fanned Fourier support. The "
+            "argument is an output directory.The diagnostic plot "
+            "is generated once before the tomogram is filtered."
+        ),
+    )
 
     # ---8<--- [end:match_template_usage]
 
