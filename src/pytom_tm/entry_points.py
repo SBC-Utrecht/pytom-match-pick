@@ -822,6 +822,15 @@ def match_template(argv=None):
         "--relion5-tomograms-star is used.",
     )
     filter_group.add_argument(
+        "--tomogram-fanned-wedge",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Use a binary version of the per-tilt-weighted wedge for the "
+        "tomogram instead of the full binary wedge defined by the minimum "
+        "and maximum tilt angles.",
+    )
+    filter_group.add_argument(
         "--voxel-size-angstrom",
         type=float,
         required=False,
@@ -1013,6 +1022,18 @@ def match_template(argv=None):
         action=ParseLogging,
         help="Can be set to `info` or `debug`",
     )
+    debug_group.add_argument(
+        "--debug-fanned-wedge",
+        type=pathlib.Path,
+        required=False,
+        default=None,
+        help=(
+            "Write diagnostic PNGs containing the central x-z slice of the "
+            "tomogram power spectrum and the fanned Fourier support. The "
+            "argument is an output directory.The diagnostic plot "
+            "is generated once before the tomogram is filtered."
+        ),
+    )
 
     # ---8<--- [end:match_template_usage]
 
@@ -1169,6 +1190,7 @@ def match_template(argv=None):
         low_pass=args.low_pass,
         high_pass=args.high_pass,
         whiten_spectrum=args.spectral_whitening,
+        tomogram_fanned_wedge=args.tomogram_fanned_wedge,
         rotational_symmetry=args.z_axis_rotational_symmetry,
         particle_diameter=args.particle_diameter,
         random_phase_correction=args.random_phase_correction,

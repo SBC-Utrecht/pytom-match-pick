@@ -1,5 +1,6 @@
 import itertools
 import traceback
+from pathlib import Path
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -394,3 +395,112 @@ def plist_quality_gaussian_fit(
         if output_figure_name.suffix not in [".svg", ".png"]:
             output_figure_name = output_figure_name + ".png"
         plot.write(output_figure_name)
+
+
+def save_fanned_wedge_debug_plot(
+    tomogram: np.ndarray,
+    fanned_wedge: np.ndarray,
+    output_file: Path,
+    title: str | None = None,
+) -> None:
+    """Save central x-z views of tomogram power and fanned Fourier support.
+
+    Parameters
+    ----------
+    tomogram:
+        Padded tomogram. Its shape must correspond to
+        the real-space shape used to generate fanned_wedge.
+    fanned_wedge:
+        Binary reduced Fourier-space mask with shape
+        (nx, ny, nz // 2 + 1).
+    output_file:
+        PNG path to write.
+    title:
+        Optional figure title.
+    """
+    if tomogram.ndim != 3:
+        raise ValueError("tomogram must be a 3D array.")
+
+    expected_wedge_shape = (
+        tomogram.shape[0],
+        tomogram.shape[1],
+        tomogram.shape[2] // 2 + 1,
+    )
+    if fanned_wedge.shape != expected_wedge_shape:
+        raise ValueError(
+            "fanned_wedge shape does not match the tomogram's reduced "
+            f"Fourier shape. Expected {expected_wedge_shape}, got "
+            f"{fanned_wedge.shape}."
+        )
+
+    output_file = Path(output_file)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Use the same real-space-to-reduced-Fourier convention as the matching code.
+    spectrum = np.fft.rfftn(tomogram)
+    power = spectrum.real**2 + spectrum.imag**2
+
+    # Shift only the full Fourier axes. The reduced z axis remains in rfftn order.
+    shifted_power = np.fft.fftshift(power, axes=(0, 1))
+    shifted_wedge = np.fft.fftshift(fanned_wedge, axes=(0, 1))
+
+    # Central y plane after shifting x and y.
+    y_center = shifted_power.shape[1] // 2
+    power_xz = shifted_power[:, y_center, :]
+    wedge_xz = shifted_wedge[:, y_center, :]
+
+    # Log scaling is essential because the power spectrum usually spans many
+    # orders of magnitude.
+    power_xz = np.maximum(power_xz, 0.0)
+    power_xz /= max(float(power_xz.max()), np.finfo(np.float32).tiny)
+    log_power_xz = np.log10(power_xz + 1e-6)
+
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(12, 5),
+        constrained_layout=True,
+    )
+
+    power_image = axes[0].imshow(
+        log_power_xz.T,
+        origin="lower",
+        aspect="auto",
+        cmap="magma",
+        vmin=-6,
+        vmax=0,
+    )
+    axes[0].set_title("Tomogram power spectrum")
+    axes[0].set_xlabel("x frequency")
+    axes[0].set_ylabel("z frequency")
+    fig.colorbar(power_image, ax=axes[0], label="log10(normalized power)")
+
+    wedge_image = axes[1].imshow(
+        wedge_xz.T,
+        origin="lower",
+        aspect="auto",
+        cmap="gray",
+        vmin=0,
+        vmax=1,
+    )
+    axes[1].set_title("Fanned Fourier support")
+    axes[1].set_xlabel("x frequency")
+    axes[1].set_ylabel("z frequency")
+    fig.colorbar(wedge_image, ax=axes[1], label="support")
+
+    # Overlay the support boundary on the power spectrum. This makes sign and
+    # angle-convention errors immediately visible.
+    axes[0].contour(
+        wedge_xz.T,
+        levels=[0.5],
+        colors="cyan",
+        linewidths=0.8,
+    )
+
+    if title is not None:
+        fig.suptitle(title)
+
+    fig.savefig(output_file, dpi=200, bbox_inches="tight")
+    plt.close(fig)
