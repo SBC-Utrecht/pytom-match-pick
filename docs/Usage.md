@@ -3,7 +3,7 @@ Features in a tomogram that resemble a structural 'template' can be localized in
 
 ## Requirements
 
-For usage you need at least a set of reconstructed tomograms in the MRC format and a template structure in the MRC format. Tomograms in IMOD format (.rec) are also okay but need to be renamed (or softlinked!) to have the correct extension (.mrc). Tomograms are ideally binned 6x or 8x to prevent excessive runtimes. The template can be an EM reconstruction (from the EMDB) or a PDB that was coverted to a density (for example via Chimera molmap).
+For usage you need at least a set of reconstructed tomograms in the MRC format and a template structure in the MRC format. Tomograms in IMOD format (.rec) are also okay but need to be renamed (or softlinked!) to have the correct extension (.mrc). Tomograms are ideally binned 6x or 8x to prevent excessive runtimes. Tomograms (and tomogram masks) can also be read directly from OME-Zarr directories (OME-NGFF 0.4 on Zarr v2 or OME-Zarr 0.5 on Zarr v3), after installing the optional dependency: `pip install pytom-match-pick[zarr]`; the full-resolution level is used, and the voxel size is taken from its metadata. The template can be an EM reconstruction (from the EMDB) or a PDB that was coverted to a density (for example via Chimera molmap).
 
 ## Template matching workflow
 

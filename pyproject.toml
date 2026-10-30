@@ -40,8 +40,9 @@ dependencies = [
 
 [project.optional-dependencies]
 plotting = ["matplotlib", "seaborn"]
+zarr = ["zarr>=3"]
 dev = ["ruff", "pre-commit", "zensical", "mkdocs-material", "markdown-exec", "mkdocs-glightbox"]
-all = ["pytom-match-pick[plotting]", "pytom-match-pick[dev]"]
+all = ["pytom-match-pick[plotting]", "pytom-match-pick[zarr]", "pytom-match-pick[dev]"]
 
 
 [project.scripts]

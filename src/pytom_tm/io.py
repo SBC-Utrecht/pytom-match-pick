@@ -70,6 +70,26 @@ class CheckFileExists(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
+class CheckVolumeExists(argparse.Action):
+    """argparse.Action subclass to check if an expected input volume exists: an MRC
+    file or an OME-Zarr directory."""
+
+    def __call__(
+        self,
+        parser,
+        namespace,
+        values: pathlib.Path,
+        option_string: str | None = None,
+    ):
+        if not (values.is_file() or is_zarr(values)):
+            parser.error(
+                f"{option_string} got a path that is neither a file nor an OME-Zarr "
+                f"directory: {values}"
+            )
+
+        setattr(namespace, self.dest, values)
+
+
 class CheckListOfFilesExists(argparse.Action):
     """argparse.Action subclass to check if an expected input file exists."""
 
@@ -310,6 +330,105 @@ def _wrap_mrcfile_readers(func, *args, **kwargs):
     mrc.close()
 
 
+_ZARR_MARKERS = ("zarr.json", ".zgroup", ".zarray")
+# conversion factors of OME-Zarr spatial units to Angstrom
+_UNIT_TO_ANGSTROM = {
+    None: 1.0,
+    "angstrom": 1.0,
+    "nanometer": 10.0,
+    "micrometer": 1e4,
+}
+
+
+def is_zarr(path: pathlib.Path) -> bool:
+    """Whether path is a Zarr directory (v2 or v3), rather than an MRC file.
+
+    Parameters
+    ----------
+    path: pathlib.Path
+        path on disk
+
+    Returns
+    -------
+    output: bool
+        True if path is a directory ending in .zarr or holding Zarr metadata
+    """
+    path = pathlib.Path(path)
+    return path.is_dir() and (
+        path.suffix == ".zarr" or any(path.joinpath(m).exists() for m in _ZARR_MARKERS)
+    )
+
+
+def _open_ome_zarr(path: pathlib.Path) -> tuple:
+    """Open the full-resolution level of an OME-Zarr image (OME-NGFF 0.4 on Zarr v2,
+    or OME-Zarr 0.5 on Zarr v3).
+
+    Parameters
+    ----------
+    path: pathlib.Path
+        path to the OME-Zarr directory
+
+    Returns
+    -------
+    array, axes, voxel_size: tuple
+        the level-0 Zarr array, the names of its axes, and the voxel size per axis in Å
+    """
+    try:
+        import zarr
+    except ImportError as err:
+        raise ImportError(
+            f"Reading {path} needs zarr; install it with "
+            "'pip install pytom-match-pick[zarr]'"
+        ) from err
+
+    group = zarr.open_group(str(path), mode="r")
+    attrs = group.attrs.asdict()
+    multiscales = attrs.get("multiscales", attrs.get("ome", {}).get("multiscales"))
+    if not multiscales:
+        raise ValueError(f"{path} has no OME-Zarr multiscales metadata")
+    image = multiscales[0]
+    dataset = image["datasets"][0]
+    axes = [axis["name"] if isinstance(axis, dict) else axis for axis in image["axes"]]
+    units = [
+        axis.get("unit") if isinstance(axis, dict) else None for axis in image["axes"]
+    ]
+    scale = [1.0] * len(axes)
+    for transforms in (
+        dataset.get("coordinateTransformations", []),
+        image.get("coordinateTransformations", []),
+    ):
+        for transform in transforms:
+            if transform.get("type") == "scale":
+                scale = [a * b for a, b in zip(scale, transform["scale"])]
+    if sorted(axes) != ["x", "y", "z"]:
+        raise ValueError(f"{path} is not a 3D (z, y, x) image; its axes are {axes}")
+    for unit in units:
+        if unit not in _UNIT_TO_ANGSTROM:
+            raise ValueError(f"{path} has an unsupported spatial unit: {unit}")
+    voxel_size = {
+        name: s * _UNIT_TO_ANGSTROM[unit] for name, s, unit in zip(axes, scale, units)
+    }
+    return group[dataset["path"]], axes, voxel_size
+
+
+def _read_ome_zarr_meta_data(file_name: pathlib.Path) -> dict:
+    array, axes, voxel_size = _open_ome_zarr(file_name)
+    shape = dict(zip(axes, array.shape))
+    sizes = [voxel_size[name] for name in "xyz"]
+    if not all(np.round(sizes[0], 3) == np.round(s, 3) for s in sizes[1:]):
+        raise UnequalSpacingError(
+            "Input volume voxel spacing is not identical in each dimension!"
+        )
+    return {"shape": tuple(int(shape[name]) for name in "xyz"), "voxel_size": sizes[0]}
+
+
+def _read_ome_zarr(file_name: pathlib.Path, transpose: bool) -> npt.NDArray[float]:
+    array, axes, _ = _open_ome_zarr(file_name)
+    # put the axes in MRC order (z, y, x), then pytom's (x, y, z) if transposing
+    data = np.transpose(np.asarray(array[...]), [axes.index(name) for name in "zyx"])
+    return np.ascontiguousarray(data.T) if transpose else data
+
+
 def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
     """Read the metadata of provided MRC file path (using mrcfile) and return as dict.
 
@@ -317,10 +436,13 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
     decimals) the function will raise an UnequalSpacingError as it could mean template
     matching on these volumes might not be consistent.
 
+    An OME-Zarr directory (see read_mrc) is read the same way, from the metadata of its
+    full-resolution level.
+
     Parameters
     ----------
     file_name: pathlib.Path
-        path to an MRC file
+        path to an MRC file or an OME-Zarr directory
 
     Returns
     -------
@@ -329,6 +451,8 @@ def read_mrc_meta_data(file_name: pathlib.Path) -> dict:
         dimensions of the file and key 'voxel_size' containing the voxel size along
         x, y, and z and dimensions in Å units
     """
+    if is_zarr(file_name):
+        return _read_ome_zarr_meta_data(file_name)
     meta_data = {}
     with _wrap_mrcfile_readers(mrcfile.mmap, file_name) as mrc:
         meta_data["shape"] = tuple(map(int, attrgetter("nx", "ny", "nz")(mrc.header)))
@@ -399,10 +523,14 @@ def read_mrc(file_name: pathlib.Path, transpose: bool = True) -> npt.NDArray[flo
     """Read an MRC file from disk. Data is transposed after reading as pytom internally
     uses xyz ordering and MRCs use zyx.
 
+    The path can also be an OME-Zarr directory (OME-NGFF 0.4 on Zarr v2, or OME-Zarr
+    0.5 on Zarr v3, needs the 'zarr' extra); its full-resolution level is read and its
+    axes are put in MRC order first.
+
     Parameters
     ----------
     file_name: pathlib.Path
-        path to file on disk
+        path to file on disk, or to an OME-Zarr directory
     transpose: bool, default True
         True (default) transposes the volume after reading, setting to False prevents
         transpose but probably not a good idea when using the functions from this module
@@ -412,6 +540,8 @@ def read_mrc(file_name: pathlib.Path, transpose: bool = True) -> npt.NDArray[flo
     data: npt.NDArray[float]
         returns the MRC data as a numpy array
     """
+    if is_zarr(file_name):
+        return _read_ome_zarr(file_name, transpose)
     with _wrap_mrcfile_readers(mrcfile.open, file_name) as mrc:
         data = np.ascontiguousarray(mrc.data.T) if transpose else mrc.data
     return data
