@@ -15,6 +15,7 @@ from pytom_tm.io import (
     CheckDirExists,
     CheckFileExists,
     CheckListOfFilesExists,
+    CheckVolumeExists,
     LargerThanZero,
     ParseDefocus,
     ParseDoseFile,
@@ -476,7 +477,7 @@ def extract_candidates(argv=None):
         "--tomogram-mask",
         type=pathlib.Path,
         required=False,
-        action=CheckFileExists,
+        action=CheckVolumeExists,
         help="Here you can provide a mask for the extraction with dimensions "
         "(in pixels) equal to the tomogram. All values in the mask that are smaller or "
         "equal to 0 will be removed, all values larger than 0 are considered regions "
@@ -652,8 +653,9 @@ def match_template(argv=None):
         "--tomogram",
         type=pathlib.Path,
         required=True,
-        action=CheckFileExists,
-        help="Tomographic volume; MRC file.",
+        action=CheckVolumeExists,
+        help="Tomographic volume; MRC file or OME-Zarr directory (needs the 'zarr' "
+        "extra).",
     )
     io_group.add_argument(
         "-d",
@@ -776,10 +778,10 @@ def match_template(argv=None):
         "--tomogram-mask",
         type=pathlib.Path,
         required=False,
-        action=CheckFileExists,
+        action=CheckVolumeExists,
         help="Here you can provide a mask for matching with dimensions (in pixels) "
-        "equal to the tomogram. If a subvolume only has values <= 0 for this mask it "
-        "will be skipped.",
+        "equal to the tomogram; MRC file or OME-Zarr directory. If a subvolume only "
+        "has values <= 0 for this mask it will be skipped.",
     )
 
     filter_group = parser.add_argument_group("Filter control")

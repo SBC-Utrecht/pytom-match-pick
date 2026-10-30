@@ -1,4 +1,7 @@
+import argparse
 import contextlib
+import importlib.util
+import io
 import pathlib
 import unittest
 import warnings
@@ -10,7 +13,10 @@ from lxml import etree
 
 from pytom_tm.dataclass import CtfData, RelionTiltSeriesMetaData
 from pytom_tm.io import (
+    CheckVolumeExists,
     MultiColumnAngleFileError,
+    UnequalSpacingError,
+    is_zarr,
     parse_relion5_star_data,
     parse_warp_xml_data,
     read_mrc,
@@ -254,3 +260,117 @@ class TestBrokenMRC(unittest.TestCase):
             ValueError, msg="Partially matching tomogram name should raise an error."
         ):
             parse_relion5_star_data(RELION5_TOMOGRAMS_STAR, tomogram)
+
+
+def _write_ome_zarr(
+    path, data_zyx, voxel_size, zarr_format, unit="angstrom", axes="zyx"
+):
+    """A minimal single-level OME-Zarr image: OME-NGFF 0.4 on Zarr v2, OME-Zarr 0.5 on
+    Zarr v3."""
+    import zarr
+
+    group = zarr.open_group(str(path), mode="w", zarr_format=zarr_format)
+    order = ["zyx".index(name) for name in axes]
+    array = group.create_array("0", shape=data_zyx.transpose(order).shape, dtype="f4")
+    array[...] = data_zyx.transpose(order)
+    sizes = voxel_size if isinstance(voxel_size, tuple) else (voxel_size,) * 3
+    image = {
+        "axes": [{"name": name, "type": "space", "unit": unit} for name in axes],
+        "datasets": [
+            {
+                "path": "0",
+                "coordinateTransformations": [
+                    {"type": "scale", "scale": [sizes["zyx".index(n)] for n in axes]}
+                ],
+            }
+        ],
+    }
+    if zarr_format == 2:
+        group.attrs["multiscales"] = [{"version": "0.4", **image}]
+    else:
+        group.attrs["ome"] = {"version": "0.5", "multiscales": [image]}
+
+
+HAS_ZARR = importlib.util.find_spec("zarr") is not None
+
+
+@unittest.skipUnless(HAS_ZARR, "the zarr extra is not installed")
+class TestOmeZarr(unittest.TestCase):
+    def setUp(self):
+        self._tmp = TemporaryDirectory()
+        self.tmp = pathlib.Path(self._tmp.name)
+        rng = np.random.default_rng(1)
+        self.data_zyx = rng.normal(size=(6, 7, 8)).astype(np.float32)
+        self.mrc = self.tmp.joinpath("tomogram.mrc")
+        mrcfile.write(self.mrc, self.data_zyx, voxel_size=10.0)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_read_like_mrc(self):
+        for zarr_format in (2, 3):
+            with self.subTest(zarr_format=zarr_format):
+                path = self.tmp.joinpath(f"tomogram-v{zarr_format}.zarr")
+                _write_ome_zarr(path, self.data_zyx, 10.0, zarr_format)
+                self.assertTrue(is_zarr(path))
+                self.assertEqual(read_mrc_meta_data(path), read_mrc_meta_data(self.mrc))
+                np.testing.assert_array_equal(read_mrc(path), read_mrc(self.mrc))
+                np.testing.assert_array_equal(
+                    read_mrc(path, transpose=False), self.data_zyx
+                )
+
+    def test_axis_order_and_units(self):
+        path = self.tmp.joinpath("xyz.zarr")
+        _write_ome_zarr(path, self.data_zyx, 1.0, 3, unit="nanometer", axes="xyz")
+        meta = read_mrc_meta_data(path)
+        self.assertEqual(meta["shape"], (8, 7, 6))
+        self.assertAlmostEqual(meta["voxel_size"], 10.0)
+        np.testing.assert_array_equal(read_mrc(path), read_mrc(self.mrc))
+
+    def test_anisotropic_spacing_raises(self):
+        path = self.tmp.joinpath("anisotropic.zarr")
+        _write_ome_zarr(path, self.data_zyx, (10.0, 10.0, 12.0), 3)
+        with self.assertRaises(UnequalSpacingError):
+            read_mrc_meta_data(path)
+
+    def test_not_an_image(self):
+        import zarr
+
+        path = self.tmp.joinpath("plain.zarr")
+        zarr.open_group(str(path), mode="w")
+        with self.assertRaises(ValueError):
+            read_mrc_meta_data(path)
+        self.assertFalse(is_zarr(self.mrc))
+        self.assertFalse(is_zarr(self.tmp.joinpath("missing.zarr")))
+
+    def test_argument_accepts_zarr_directories(self):
+        path = self.tmp.joinpath("tomogram.zarr")
+        _write_ome_zarr(path, self.data_zyx, 10.0, 3)
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-v", type=pathlib.Path, action=CheckVolumeExists)
+        self.assertEqual(parser.parse_args(["-v", str(path)]).v, path)
+        self.assertEqual(parser.parse_args(["-v", str(self.mrc)]).v, self.mrc)
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            parser.parse_args(["-v", str(self.tmp)])
+
+    def test_template_matching_job_from_zarr(self):
+        from pytom_tm.dataclass import TiltSeriesMetaData
+        from pytom_tm.tmjob import TMJob
+
+        path = self.tmp.joinpath("TS_01.zarr")
+        _write_ome_zarr(path, self.data_zyx, 10.0, 2)
+        template = self.tmp.joinpath("template.mrc")
+        mrcfile.write(template, np.zeros((4, 4, 4), dtype=np.float32), voxel_size=10.0)
+        job = TMJob(
+            "0",
+            10,
+            path,
+            template,
+            template,
+            self.tmp,
+            TiltSeriesMetaData(tilt_angles=[-60, 60]),
+            angle_increment=30.0,
+            voxel_size=10.0,
+        )
+        self.assertEqual(job.tomo_id, "TS_01")
+        self.assertEqual(job.tomo_shape, (8, 7, 6))
